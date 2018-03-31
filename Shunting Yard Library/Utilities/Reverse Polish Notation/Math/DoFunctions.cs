@@ -54,7 +54,7 @@ namespace AbMath.Utilities
 
             public static double ln(params double[] Arguments)
             {
-                return Math.Log(Arguments[0], Arguments[1]);
+                return Math.Log(Arguments[0]);
             }
 
             public static double Log(params double[] Arguments)

@@ -72,7 +72,7 @@ namespace TestHarness
         [TestMethod]
         public void Functions()
         {
-            RPN Test = new RPN("sin ( max ( 2 , 3 ) / 3 * 3.1415 )");
+            RPN Test = new RPN("sin( max( 2 , 3 )/3 * 3.1415 )");
             Test.Logger += Write;
             Test.Compute();
             PostFix Math = new PostFix(Test);
@@ -107,6 +107,16 @@ namespace TestHarness
             Test.Compute();
             PostFix Math = new PostFix(Test);
             Assert.AreEqual(1, Math.Compute());
+        }
+
+        [TestMethod]
+        public void Log()
+        {
+            RPN Test = new RPN("log(16,2)");
+            Test.Logger += Write;
+            Test.Compute();
+            PostFix Math = new PostFix(Test);
+            Assert.AreEqual(4, Math.Compute());
         }
 
         public void Write(object sender,string Event)
