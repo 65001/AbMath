@@ -136,6 +136,18 @@ namespace TestHarness
             }
         }
 
+        [TestMethod]
+        public void Aliasing()
+        {
+            RPN Test = new RPN("4÷2");
+            Test.Logger += Write;
+            Test.Compute();
+            Console.WriteLine(Test.Polish.Print());
+            if ("4 2 /" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
 
         [TestMethod]
         public void UniaryStart()
