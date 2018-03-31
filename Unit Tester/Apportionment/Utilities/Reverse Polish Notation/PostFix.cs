@@ -119,6 +119,21 @@ namespace TestHarness
             Assert.AreEqual(4, Math.Compute());
         }
 
+        [TestMethod]
+        public void Reset()
+        {
+            RPN Test = new RPN("x^2");
+            Test.Logger += Write;
+            Test.Compute();
+            
+            PostFix Math = new PostFix(Test);
+            Math.SetVariable("x", "2");
+            Assert.AreEqual(4, Math.Compute());
+            Math.Reset();
+            Math.SetVariable("x", "3");
+            Assert.AreEqual(9, Math.Compute());
+        }
+
         public void Write(object sender,string Event)
         {
             Console.WriteLine(Event);

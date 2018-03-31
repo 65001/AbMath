@@ -85,6 +85,13 @@ namespace AbMath.Utilities
                         WriteToken("Operator");
                         i = i + 1;
                     }
+                    //Add equivalent for variables?
+                    else if (RPN.IsVariable(Token) && (RPN.IsLeftBracket(Character) || RPN.IsRightBracket(Character) || RPN.IsOperator(Character)))
+                    {
+                        WriteToken("Edge Case 2");
+                        Token = Character;
+                        WriteToken("Edge Case 2");
+                    }
                     else if (RPN.IsOperator(Character))
                     {
                         Token += Character;

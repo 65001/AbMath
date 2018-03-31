@@ -105,6 +105,16 @@ namespace AbMath.Utilities
         }
 
 
+        public IReadOnlyDictionary<string,Functions> ReadOnlyFunctions
+        {
+            get { return functions; }
+        }
+
+        public IReadOnlyDictionary<string, Operators> ReadOnlyOperators
+        {
+            get { return Ops; }
+        }
+
         #region Fake Extension Methods
         public bool IsNumber(string value)
         {

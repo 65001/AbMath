@@ -7,7 +7,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace TestHarness
 {
     [TestClass]
-    public class RPNTest
+    public class TokenizerTest
+
     {
         [TestMethod]
         public void VariableAdd()
@@ -121,6 +122,20 @@ namespace TestHarness
                 Assert.Fail();
             }
         }
+
+        [TestMethod]
+        public void VariableExponents()
+        {
+            RPN Test = new RPN("x^2");
+            Test.Logger += Write;
+            Test.Compute();
+            Console.WriteLine(Test.Polish.Print());
+            if ("x 2 ^" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
 
         [TestMethod]
         public void UniaryStart()
