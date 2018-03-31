@@ -71,7 +71,7 @@ namespace AbMath.Utilities
         private double[] GetArguments(int ArgCount)
         {
             double[] Arguments = new double[ArgCount];
-            if (Stack.Count < ArgCount)
+            if (Stack.Count < ArgCount )
             {
                 throw new InvalidOperationException($"Syntax Error!");
             }
