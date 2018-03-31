@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -7,7 +8,7 @@ namespace AbMath.Utilities
 {
     public partial class RPN
     {
-        public class Tokenizer
+        public class Tokenizer : ITokenizer<string>
         {
             private RPN RPN;
             private string Equation;
@@ -23,6 +24,8 @@ namespace AbMath.Utilities
 
             public List<string> Tokenize()
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
                 Tokens = new List<string>();
                 Token = string.Empty;
                 RPN.Logger?.Invoke(this, $"┌{"".PadRight(68,'─')}┐");
@@ -42,6 +45,16 @@ namespace AbMath.Utilities
                     if (i < (Length - 1))
                     {
                         ReadAhead = Equation.Substring((i + 1), 1);
+                    }
+
+                    //Alias Functionality
+                    if (RPN.aliases.ContainsKey(Token))
+                    {
+                        Token = RPN.aliases[Token];
+                    }
+                    else if (RPN.aliases.ContainsKey(Character))
+                    {
+                        Character = RPN.aliases[Character];
                     }
 
                     //WhiteSpace Rule
@@ -115,8 +128,10 @@ namespace AbMath.Utilities
                 }
 
                 RPN.Logger?.Invoke(this, $"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(13, '─')}┴{"".PadRight(18, '─')}┘");
-
+                SW.Stop();
+                Logger($"Execution Time {SW.ElapsedMilliseconds}(ms) Elappsed Ticks: {SW.ElapsedTicks}");
                 RPN.Logger?.Invoke(this, "");
+
                 return Tokens;
             }
 
@@ -130,6 +145,11 @@ namespace AbMath.Utilities
                 Rule = _Rule;
                 Tokens.Add(Token);
                 Token = string.Empty;
+            }
+
+            void Logger(string Message)
+            {
+                RPN.Logger?.Invoke(this, Message);
             }
         }
     }

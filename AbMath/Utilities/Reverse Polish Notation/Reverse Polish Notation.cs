@@ -34,6 +34,7 @@ namespace AbMath.Utilities
 
         Dictionary<string, Operators> Ops = new Dictionary<string, Operators>();
         Dictionary<string, Functions> functions = new Dictionary<string, Functions>();
+        Dictionary<string, string> aliases = new Dictionary<string, string>();
 
         List<string> LeftBracket = new List<string>();
         List<string> RightBracket = new List<string>();
@@ -45,13 +46,44 @@ namespace AbMath.Utilities
 
         public bool ContainsVariables = false;
 
-        Tokenizer tokenizer;
-        Shunt shunt;
+        ITokenizer<string> tokenizer;
+        IShunt<string> shunt;
 
+        #region Constructors
         public RPN(string equation)
         {
             Equation = equation;
+            Startup();
+            tokenizer = new Tokenizer(this);
+            shunt = new Shunt(this);
+        }
 
+        public RPN(string equation, ITokenizer<string> CustomTokenizer)
+        {
+            Equation = equation;
+            Startup();
+            tokenizer = CustomTokenizer;
+            shunt = new Shunt(this);
+        }
+
+        public RPN(string equation, IShunt<string> CustomShunter)
+        {
+            Equation = equation;
+            Startup();
+            tokenizer = new Tokenizer(this);
+            shunt = CustomShunter;
+        }
+
+        public RPN(string equation, ITokenizer<string> CustomTokenizer, IShunt<string> CustomShunter)
+        {
+            Equation = equation;
+            Startup();
+            tokenizer = CustomTokenizer;
+            shunt = CustomShunter;
+        }
+
+        private void Startup()
+        {
             DefaultOperators();
             DefaultFunctions();
 
@@ -64,10 +96,14 @@ namespace AbMath.Utilities
             RightBracket.Add("]");
             RightBracket.Add(",");
 
-            tokenizer = new Tokenizer(this);
-            shunt = new Shunt(this);
+            aliases.Add("÷", "/");
+            aliases.Add("π", "pi");
+            aliases.Add("≠", "!=");
+            aliases.Add("≥",">=");
+            aliases.Add("≤", "<=");
         }
-        
+        #endregion
+
         public void AddOperator(string Operator,Operators operators)
         {
             if (Ops.ContainsKey(Operator) == true)
@@ -87,6 +123,15 @@ namespace AbMath.Utilities
             functions.Add(Function, Args);
         }
 
+        public void AddAlias(string Key, string Value)
+        {
+            if (aliases.ContainsKey(Key))
+            {
+                aliases[Key] = Value;
+            }
+            aliases.Add(Key, Value);
+        }
+
         public Operators GetOperators(string Token)
         {
             return Ops[Token];
@@ -104,7 +149,6 @@ namespace AbMath.Utilities
             Variables =  Variables.Distinct().ToList();
         }
 
-
         public IReadOnlyDictionary<string,Functions> ReadOnlyFunctions
         {
             get { return functions; }
@@ -113,6 +157,11 @@ namespace AbMath.Utilities
         public IReadOnlyDictionary<string, Operators> ReadOnlyOperators
         {
             get { return Ops; }
+        }
+
+        public IReadOnlyDictionary<string, string> Aliases
+        {
+             get { return aliases; } 
         }
 
         #region Fake Extension Methods
@@ -176,8 +225,6 @@ namespace AbMath.Utilities
             }
             return true;
         }
-
-        
         #endregion
     }
 }

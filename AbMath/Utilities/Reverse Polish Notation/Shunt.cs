@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace AbMath.Utilities
@@ -12,9 +13,11 @@ namespace AbMath.Utilities
         ///</summary>
 
         //Should be able to correctly shunt functions?
-        public class Shunt
+        public class Shunt : IShunt<string>
         {
             private RPN RPN;
+            Queue<string> Output;
+            Stack<string> Operator;
 
             public Shunt(RPN rpn)
             {
@@ -24,8 +27,12 @@ namespace AbMath.Utilities
             //Todo make ShuntYard smart about uniary negative signs 
             public Queue<string> ShuntYard(List<string> Tokens)
             {
-                Queue<string> Output = new Queue<string>(Tokens.Count);
-                Stack<string> Operator = new Stack<string>(20);
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
+                Output = new Queue<string>(Tokens.Count);
+                Operator = new Stack<string>(20);
+
                 RPN.Logger?.Invoke(this, $"┌{"".PadRight(117, '─')}┐");
                 RPN.Logger?.Invoke(this, $"│{"Shunting Yard Algorithm",48}{"",69}│");
                 RPN.Logger?.Invoke(this, $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(14, '─')}┬{"".PadRight(16, '─')}┬{"".PadRight(22, '─')}┬{"".PadRight(26, '─')}┤");
@@ -92,7 +99,11 @@ namespace AbMath.Utilities
                     RPN.Logger?.Invoke(this, Log);
                 }
                 Dump();
-                RPN.Logger?.Invoke(this, $"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(14, '─')}┴{"".PadRight(16, '─')}┴{"".PadRight(22, '─')}┴{"".PadRight(26, '─')}┘");
+                Logger($"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(14, '─')}┴{"".PadRight(16, '─')}┴{"".PadRight(22, '─')}┴{"".PadRight(26, '─')}┘");
+                SW.Stop();
+                Logger($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
+                Logger("");
+
                 return Output;
 
                 void RightBracketRule(string Token)
@@ -150,21 +161,28 @@ namespace AbMath.Utilities
                     catch (Exception ex) { }
                     return false;
                 }
+            }
 
-                //Moves all remaining data from the stack onto the queue
-                void Dump()
+            /// <summary>
+            /// Moves all remaining data from the stack onto the queue
+            /// </summary>
+            void Dump()
+            {
+                while (Operator.Count > 0)
                 {
-                    while (Operator.Count > 0)
-                    {
-                        string Peek = Operator.Peek();
+                    string Peek = Operator.Peek();
 
-                        if (RPN.IsLeftBracket(Peek) == true || RPN.IsRightBracket(Peek) == true)
-                        {
-                            throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
-                        }
-                        Output.Enqueue(Operator.Pop());
+                    if (RPN.IsLeftBracket(Peek) == true || RPN.IsRightBracket(Peek) == true)
+                    {
+                        throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }
+                    Output.Enqueue(Operator.Pop());
                 }
+            }
+
+            void Logger(string Message)
+            {
+                RPN.Logger?.Invoke(this, Message);
             }
         }
     }
