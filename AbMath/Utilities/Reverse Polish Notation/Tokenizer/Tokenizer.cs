@@ -12,7 +12,12 @@ namespace AbMath.Utilities
         {
             private RPN RPN;
             private string Equation;
+
             private string Token;
+            private string Character;
+            private string PrevToken;
+            private string ReadAhead;
+
             private List<string> Tokens;
             private string Rule;
 
@@ -28,18 +33,18 @@ namespace AbMath.Utilities
                 SW.Start();
                 Tokens = new List<string>();
                 Token = string.Empty;
-                RPN.Logger?.Invoke(this, $"┌{"".PadRight(68,'─')}┐");
-                RPN.Logger?.Invoke(this, $"│{"Tokenizer",28}{"",40}│");
-                RPN.Logger?.Invoke(this, $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(13, '─')}┬{"".PadRight(18, '─')}┤");
-                RPN.Logger?.Invoke(this, $"│{"#",-3} │ {"Character",-10} │ {"Token",-15} │ {"Tokens Count",-12}│ {"Action",-16} │");
-                //RPN.Logger?.Invoke(this,  "│#   │ Character  │ Token             │ Tokens Count│");
+                Logger( $"┌{"".PadRight(68,'─')}┐");
+                Logger( $"│{"Tokenizer",28}{"",40}│");
+                Logger( $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(13, '─')}┬{"".PadRight(18, '─')}┤");
+                Logger( $"│{"#",-3} │ {"Character",-10} │ {"Token",-15} │ {"Tokens Count",-12}│ {"Action",-16} │");
+
                 int Length = Equation.Length;
 
                 for (int i = 0; i < Length; i++)
                 {
-                    string Character = Equation.Substring(i, 1);
-                    string PrevToken = Tokens.LastOrDefault();
-                    string ReadAhead = string.Empty;
+                    Character = Equation.Substring(i, 1);
+                    PrevToken = Tokens.LastOrDefault();
+                    ReadAhead = string.Empty;
                     Rule = string.Empty;
 
                     if (i < (Length - 1))
@@ -47,15 +52,7 @@ namespace AbMath.Utilities
                         ReadAhead = Equation.Substring((i + 1), 1);
                     }
 
-                    //Alias Functionality
-                    if (RPN.aliases.ContainsKey(Token))
-                    {
-                        Token = RPN.aliases[Token];
-                    }
-                    else if (RPN.aliases.ContainsKey(Character))
-                    {
-                        Character = RPN.aliases[Character];
-                    }
+                    Alias();
 
                     //WhiteSpace Rule
                     if (string.IsNullOrWhiteSpace(Character) && Character != ",")
@@ -124,15 +121,31 @@ namespace AbMath.Utilities
                     {
                         Token += Character;
                     }
-                    RPN.Logger?.Invoke(this, $"│{i,-3} │ {Character,-10} │ {Token,-15} │ {Tokens.Count,-12}│ {Rule,-16} │");
+                    Logger( $"│{i,-3} │ {Character,-10} │ {Token,-15} │ {Tokens.Count,-12}│ {Rule,-16} │");
                 }
 
-                RPN.Logger?.Invoke(this, $"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(13, '─')}┴{"".PadRight(18, '─')}┘");
+                Logger($"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(13, '─')}┴{"".PadRight(18, '─')}┘");
                 SW.Stop();
                 Logger($"Execution Time {SW.ElapsedMilliseconds}(ms) Elappsed Ticks: {SW.ElapsedTicks}");
                 RPN.Logger?.Invoke(this, "");
 
                 return Tokens;
+            }
+
+            /// <summary>
+            /// Transforms characters and tokens from mathematical notation into notation
+            /// that AbMath understands.
+            /// </summary>
+            void Alias()
+            {
+                if (RPN.aliases.ContainsKey(Token))
+                {
+                    Token = RPN.aliases[Token];
+                }
+                else if (RPN.aliases.ContainsKey(Character))
+                {
+                    Character = RPN.aliases[Character];
+                }
             }
 
             void WriteToken(string _Rule)

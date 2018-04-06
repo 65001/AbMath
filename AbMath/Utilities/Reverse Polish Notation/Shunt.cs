@@ -33,10 +33,10 @@ namespace AbMath.Utilities
                 Output = new Queue<string>(Tokens.Count);
                 Operator = new Stack<string>(20);
 
-                RPN.Logger?.Invoke(this, $"┌{"".PadRight(117, '─')}┐");
-                RPN.Logger?.Invoke(this, $"│{"Shunting Yard Algorithm",48}{"",69}│");
-                RPN.Logger?.Invoke(this, $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(14, '─')}┬{"".PadRight(16, '─')}┬{"".PadRight(22, '─')}┬{"".PadRight(26, '─')}┤");
-                RPN.Logger?.Invoke(this, $"│{"#",-3} │ {"Token",-10} │ {"Stack Count",-15} │ {"Stack Peek",-12} │ {"Type",-15}│ {"RPN",-20} │ {"Action",-24} │");
+                Logger( $"┌{"".PadRight(117, '─')}┐");
+                Logger( $"│{"Shunting Yard Algorithm",48}{"",69}│");
+                Logger( $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(14, '─')}┬{"".PadRight(16, '─')}┬{"".PadRight(22, '─')}┬{"".PadRight(26, '─')}┤");
+                Logger( $"│{"#",-3} │ {"Token",-10} │ {"Stack Count",-15} │ {"Stack Peek",-12} │ {"Type",-15}│ {"RPN",-20} │ {"Action",-24} │");
                 for (int i = 0; i < Tokens.Count; i++)
                 {
                     string Token = Tokens[i];
