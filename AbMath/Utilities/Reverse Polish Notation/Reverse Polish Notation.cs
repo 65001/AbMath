@@ -10,7 +10,7 @@ namespace AbMath.Utilities
     /// Used for math equations
     /// </summary>
     /// 
-    
+
     //TODO
     //ABS
     //ARCSIN,ARCTAN,ARCCOS
@@ -19,6 +19,7 @@ namespace AbMath.Utilities
     //Generify
     //Auto Scaling from decimal to double to Big Integer
     //Complex Number Support sqrt(-1) = i
+    //Add Implement Variadic Functions
 
     //TODO
     //Add a data class so that other classes such as
