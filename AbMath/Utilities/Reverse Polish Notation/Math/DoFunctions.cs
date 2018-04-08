@@ -52,6 +52,18 @@ namespace AbMath.Utilities
                 return Arguments[1];
             }
 
+            public static double Lcm(params double[] Arguments)
+            {
+                return (Arguments[0] * Arguments[1]) / Gcd(Arguments);
+            }
+
+            public static double Gcd(params double[] Arguments)
+            {
+                Arguments[0] = Math.Abs(Arguments[0]);
+                Arguments[1] = Math.Abs(Arguments[1]);
+                return (Arguments[1] == 0) ? Arguments[0] : Gcd(Arguments[1], Arguments[0] % Arguments[1]);
+            }
+
             public static double ln(params double[] Arguments)
             {
                 return Math.Log(Arguments[0]);
@@ -59,7 +71,7 @@ namespace AbMath.Utilities
 
             public static double Log(params double[] Arguments)
             {
-                if (Arguments.Length == 0)
+                if (Arguments.Length == 1)
                 {
                     return Math.Log(Arguments[0]);
                 }

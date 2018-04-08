@@ -19,6 +19,10 @@ namespace AbMath.Utilities
             Queue<string> Output;
             Stack<string> Operator;
 
+            //TODO: Implement Variadic Functions
+            //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
+            Stack<int> Arity;
+
             public Shunt(RPN rpn)
             {
                 RPN = rpn;

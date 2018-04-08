@@ -9,6 +9,21 @@ namespace AbMath.Utilities
     /// Reverse Polish Notation
     /// Used for math equations
     /// </summary>
+    /// 
+    
+    //TODO
+    //ABS
+    //ARCSIN,ARCTAN,ARCCOS
+    //Random
+    //Random(Min,Max)
+    //Generify
+    //Auto Scaling from decimal to double to Big Integer
+    //Complex Number Support sqrt(-1) = i
+
+    //TODO
+    //Add a data class so that other classes such as
+    //the Tokenizer, Shunter, and the like don't need a copy of RPN.
+
     public partial class RPN
     {
         public enum Assoc { Left, Right };

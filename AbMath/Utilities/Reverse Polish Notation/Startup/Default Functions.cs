@@ -50,6 +50,18 @@ namespace AbMath.Utilities
                 Compute = new Run(DoFunctions.Round)
             });
 
+            AddFunction("gcd", new Functions
+            {
+                Arguments = 2,
+                Compute = new Run(DoFunctions.Gcd)
+            });
+
+            AddFunction("lcm", new Functions
+            {
+                Arguments = 2,
+                Compute = new Run(DoFunctions.Lcm)
+            });
+
             AddFunction("ln", new Functions
             {
                 Arguments = 1,
