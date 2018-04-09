@@ -13,4 +13,9 @@ namespace AbMath.Utilities
     {
         List<T> Tokenize();
     }
+
+    public interface ITerm<T> { }
+
+    public interface IFunction<T> { }
+    public interface IOperator<T> { }
 }
