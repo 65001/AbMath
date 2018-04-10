@@ -45,10 +45,10 @@ namespace Test_Console
                 if (RPN.ContainsVariables)
                 {
                     Console.WriteLine("Set the variables");
-                    for (int i = 0; i < RPN.Variables.Count; i++)
+                    for (int i = 0; i < RPN.data.Variables.Count; i++)
                     {
-                        Console.Write(RPN.Variables[i] + "=");
-                        postFix.SetVariable(RPN.Variables[i], Console.ReadLine());
+                        Console.Write(RPN.data.Variables[i] + "=");
+                        postFix.SetVariable(RPN.data.Variables[i], Console.ReadLine());
                     }
                 }
 

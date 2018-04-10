@@ -15,7 +15,7 @@ namespace TestHarness
             RPN Test = new RPN("2 + 2 + 2");
             Test.Logger += Write;
             Test.Compute();
-            PostFix Math = new PostFix(Test);
+            PostFix Math = new PostFix(Test.data);
             Assert.AreEqual(6, Math.Compute());
         }
 
