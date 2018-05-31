@@ -47,6 +47,19 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void LeftVariable()
+        {
+            RPN Test = new RPN("x2");
+            Test.Logger += Write;
+            Test.Compute();
+
+            if ("x 2 *" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void Right()
         {
             RPN Test = new RPN("sin(2)4");

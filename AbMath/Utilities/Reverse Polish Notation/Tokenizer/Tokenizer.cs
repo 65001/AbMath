@@ -81,6 +81,15 @@ namespace AbMath.Utilities
                             WriteToken("Left Implicit");
                         }
                     }
+                    else if (Data.IsVariable(Token) && Data.IsNumber(Character))
+                    {
+                        WriteToken("Left Implicit 2");
+                        Token = Character;
+                        if (Data.IsLeftBracket(Character) || (i == (Equation.Length - 1)))
+                        {
+                            WriteToken("Left Implicit 2");
+                        }
+                    }
                     else if (Data.IsFunction(Token) && Data.IsLeftBracket(Character))
                     {
                         WriteToken("Function Start");

@@ -72,11 +72,16 @@ namespace AbMath.Utilities
                         {
                             Data.AddVariable(Token);
                         }
-
                     }
-                    else if (string.IsNullOrEmpty(Prev) == false && Data.IsRightBracket(Prev) && Data.IsLeftBracket(Token))
+                    else if (string.IsNullOrEmpty(Prev) == false && Data.IsRightBracket(Prev)  &&  Data.IsLeftBracket(Token)  )
                     {
                         Type = "Implicit Left 2";
+                        OperatorRule("*");
+                        Operator.Push(Token);
+                    }
+                    else if (string.IsNullOrEmpty(Prev) == false && Data.IsVariable(Prev) && Data.IsNumber(Token))
+                    {
+                        Type = "Implicit Left 3";
                         OperatorRule("*");
                         Operator.Push(Token);
                     }
