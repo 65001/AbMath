@@ -51,7 +51,7 @@ namespace AbMath.Utilities
         public Queue<string> Polish;
         public List<string> Tokens;
 
-        public bool ContainsVariables = false;
+        public bool ContainsVariables { get { return data.ContainsVariables; } }
 
         ITokenizer<string> tokenizer;
         IShunt<string> shunt;
