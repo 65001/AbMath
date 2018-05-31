@@ -3,4 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;C:\Users\Abhishek\Documents\Visual Studio 2017\Projects\AbMath\AbMath\bin\Release\netstandard2.0\AbMath.dll&quot; &quot;C:\Users\Abhishek\Documents\Visual Studio 2017\Projects\AbMath\AbMath\AbMath.dll&quot; /Y" />
+  </Target>
 </Project>
