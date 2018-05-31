@@ -1,15 +1,14 @@
 using System;
 using AbMath.Discrete.Apportionment;
-using AbMath.Utilities;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace TestHarness
 {
-    [TestClass]
+    [TestFixture]
     public class Apportionment
     {
-        [TestMethod]
+        [Test]
         public void Hamilton()
         {
             Dictionary<string, double> Expected = new Dictionary<string, double>()
@@ -29,7 +28,7 @@ namespace TestHarness
             Run(new Hamilton<string>(Pop, Allocation), Expected);
         }
 
-        [TestMethod]
+        [Test]
         public void Jefferson()
         {
             Dictionary<string, double> Expected = new Dictionary<string, double>()
@@ -47,7 +46,7 @@ namespace TestHarness
             Run(new Jefferson<string>(Pop, Allocation), Expected);
         }
 
-        [TestMethod]
+        [Test]
         public void Webster()
         {
             Dictionary<string, double> Expected = new Dictionary<string, double>()
@@ -66,7 +65,7 @@ namespace TestHarness
             Run(new Webster<string>(Pop, Allocation), Expected);
         }
 
-        [TestMethod]
+        [Test]
         public void HunningtonHill()
         {
             Dictionary<string, double> Expected = new Dictionary<string, double>()

@@ -46,12 +46,45 @@ namespace AbMath.Utilities
                 for (int i = 0; i < Tokens.Count; i++)
                 {
                     string Token = Tokens[i];
+
+                    string Ahead = ((i+1) < Tokens.Count) ? Tokens[i+1] : string.Empty;
+                    string Prev = (i > 0) ? Tokens[i - 1] : string.Empty;
+
                     string Action = string.Empty;
                     string Notation = string.Empty;
                     string Stack = string.Empty;
                     string Type = string.Empty;
 
-                    if (Data.IsNumber(Token))
+                    
+                    if (string.IsNullOrEmpty(Ahead) == false && (Data.IsNumber(Token) || Data.IsVariable(Token)) && (Data.IsFunction(Ahead) || Data.IsLeftBracket(Ahead) || Data.IsVariable(Ahead) ))
+                    {
+                        //This will flip the order of the multiplication :(
+                        Type = "Implicit Left";
+                        OperatorRule("*");
+                        Operator.Push(Token);
+                        if (Data.IsVariable(Token))
+                        {
+                            Data.AddVariable(Token);
+                        }
+
+                    }
+                    else if (string.IsNullOrEmpty(Prev) == false && Data.IsRightBracket(Prev) && Data.IsLeftBracket(Token))
+                    {
+                        Type = "Implicit Left 2";
+                        OperatorRule("*");
+                        Operator.Push(Token);
+                    }
+                    else if (Prev != "," && string.IsNullOrEmpty(Prev) == false && Data.IsRightBracket(Prev) && (Data.IsNumber(Token) || Data.IsVariable(Token)))
+                    {
+                        Type = "Implicit Right";
+                        OperatorRule("*");
+                        Output.Enqueue(Token);
+                        if (Data.IsVariable(Token))
+                        {
+                            Data.AddVariable(Token);
+                        }
+                    }
+                    else if (Data.IsNumber(Token))
                     {
                         Action = "Added token to output";
                         Type = "Number";
@@ -107,6 +140,7 @@ namespace AbMath.Utilities
                 Write($"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(14, '─')}┴{"".PadRight(16, '─')}┴{"".PadRight(22, '─')}┴{"".PadRight(26, '─')}┘");
                 SW.Stop();
                 Write($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
+                Write($"Reverse Polish Notation:\n{Output.Print()}");
                 Write("");
 
                 return Output;

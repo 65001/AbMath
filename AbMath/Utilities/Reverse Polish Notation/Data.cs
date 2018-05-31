@@ -98,7 +98,7 @@ namespace AbMath.Utilities
             }
             public bool IsVariable(string value)
             {
-                return !(IsNumber(value) || IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value));
+                return value != "." &&  !(IsNumber(value) || IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value));
             }
 
             public bool IsLeftBracket(string value)
