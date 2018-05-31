@@ -30,7 +30,7 @@ namespace AbMath.Utilities
 
             public static double Round(params double[] Arguments)
             {
-                return Math.Round(Arguments[1] * Math.Pow(10, Arguments[0])) / Math.Pow(10, Arguments[0]);
+                return Math.Round(Arguments[0] * Math.Pow(10, Arguments[1])) / Math.Pow(10, Arguments[1]);
             }
 
             //Two Arguments
