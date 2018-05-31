@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/65001/AbMath.svg?branch=master)](https://travis-ci.org/65001/AbMath)
+
 # AbMath
 AbMath is a library that implements mathematical constructs such as Reverse Polish Notation, the shunting yard alogrithim, and apportionment. 
 
