@@ -7,7 +7,7 @@ namespace Test_Console
     {
         static void Main(string[] args)
         {
-            Console.Title = "Math Solver 1.0.2";
+            Console.Title = "Math Solver 1.0.3";
             Console.WindowWidth = Console.BufferWidth;
             Console.WriteLine("(C) 2018. Abhishek Sathiabalan");
 
