@@ -1,7 +1,7 @@
 language: csharp
 #solution: "Unit Tester.sln"
 mono: none
-dotnet: 2.1.201
+dotnet: 2.1
 
 install:
   - dotnet restore
