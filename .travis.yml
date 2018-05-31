@@ -8,5 +8,6 @@ install:
   #- nuget restore "Unit Tester.sln"
   #- nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
 script:
+  - cd "Unit Tester/Apportionment/"
   - dotnet build 
-  - dotnet test "Unit Tester/Apportionment/Unit Tester.csproj"
+  - dotnet test
