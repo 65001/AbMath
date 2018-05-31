@@ -1,12 +1,9 @@
 language: csharp
-#solution: "Unit Tester.sln"
 mono: none
 dotnet: 2.0.0
 
 install:
   - dotnet restore
-  #- nuget restore "Unit Tester.sln"
-  #- nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
 script:
   - cd "Unit Tester/Apportionment/"
   - dotnet build 
