@@ -1,16 +1,14 @@
 ﻿using System;
-using AbMath.Discrete.Apportionment;
 using AbMath.Utilities;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace TestHarness
 {
-    [TestClass]
+    [TestFixture]
     public class TokenizerTest
-
     {
-        [TestMethod]
+        [Test]
         public void VariableAdd()
         {
             RPN Test = new RPN("2+x");
@@ -22,7 +20,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void SimpleAdd()
         {
             RPN Test = new RPN("2 + 2");
@@ -35,7 +33,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void MultiTermAdd()
         {
             RPN Test = new RPN("2 + 2 + 2");
@@ -47,7 +45,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void SimpleSubtract()
         {
             RPN Test = new RPN("4 - 2");
@@ -58,7 +56,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void Wikipedia()
         {
             RPN Test = new RPN("3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3");
@@ -71,7 +69,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void Functions()
         {
             RPN Test = new RPN("sin ( max ( 2 , 3 ) / 3 * 3.1415 )");
@@ -84,7 +82,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void Variables()
         {
             RPN Test = new RPN("2 * x");
@@ -97,7 +95,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void CompositeMax()
         {
             RPN Test = new RPN("max(sqrt(16),100)");
@@ -110,7 +108,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void VariableMultiplication()
         {
             RPN Test = new RPN("v + a * t");
@@ -123,7 +121,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void VariableExponents()
         {
             RPN Test = new RPN("x^2");
@@ -136,7 +134,7 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void Aliasing()
         {
             RPN Test = new RPN("4÷2");
@@ -149,13 +147,25 @@ namespace TestHarness
             }
         }
 
-        [TestMethod]
+        [Test]
         public void UniaryStart()
         {
             RPN Test = new RPN("-2 + 4");
             Test.Logger += Write;
             Test.Compute();
             if ("-2 4 +" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void VariableContains()
+        {
+            RPN Test = new RPN("x * 2");
+            Test.Logger += Write;
+            Test.Compute();
+            if ("x 2 *" != Test.Polish.Print() || Test.data.ContainsVariables == false)
             {
                 Assert.Fail();
             }

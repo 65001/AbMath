@@ -7,18 +7,19 @@ namespace Test_Console
     {
         static void Main(string[] args)
         {
-            Console.Title = "Math Solver 1.0.1";
+            Console.Title = "Math Solver 1.0.2";
             Console.WindowWidth = Console.BufferWidth;
             Console.WriteLine("(C) 2018. Abhishek Sathiabalan");
 
             Console.WriteLine("Recent Changes:");
             Console.WriteLine("Uniary negative is now implemented.");
             Console.WriteLine("Composite Function bug should now be fixed.");
+            Console.WriteLine("Implict multiplication.");
 
             Console.WriteLine("");
             Console.WriteLine("Known Bugs:");
             Console.WriteLine("Space between terms is necessary.");
-            Console.WriteLine("Implict multiplication.");
+            
             Console.WriteLine();
 
             while (1 == 1)
@@ -38,17 +39,15 @@ namespace Test_Console
                 
                 RPN.Compute();
 
-                Console.WriteLine("Reverse Polish Notation:");
-                Console.WriteLine(RPN.Polish.Print());
                 PostFix postFix = new PostFix(RPN);
 
                 if (RPN.ContainsVariables)
                 {
                     Console.WriteLine("Set the variables");
-                    for (int i = 0; i < RPN.Variables.Count; i++)
+                    for (int i = 0; i < RPN.data.Variables.Count; i++)
                     {
-                        Console.Write(RPN.Variables[i] + "=");
-                        postFix.SetVariable(RPN.Variables[i], Console.ReadLine());
+                        Console.Write(RPN.data.Variables[i] + "=");
+                        postFix.SetVariable(RPN.data.Variables[i], Console.ReadLine());
                     }
                 }
 

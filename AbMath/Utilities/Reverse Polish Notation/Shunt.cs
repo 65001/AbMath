@@ -15,7 +15,7 @@ namespace AbMath.Utilities
         //Should be able to correctly shunt functions?
         public class Shunt : IShunt<string>
         {
-            private RPN RPN;
+            private Data Data;
             Queue<string> Output;
             Stack<string> Operator;
 
@@ -23,9 +23,11 @@ namespace AbMath.Utilities
             //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
             Stack<int> Arity;
 
-            public Shunt(RPN rpn)
+            public event EventHandler<string> Logger;
+
+            public Shunt(Data data)
             {
-                RPN = rpn;
+                Data = data;
             }
 
             //Todo make ShuntYard smart about uniary negative signs 
@@ -37,43 +39,76 @@ namespace AbMath.Utilities
                 Output = new Queue<string>(Tokens.Count);
                 Operator = new Stack<string>(20);
 
-                Logger( $"┌{"".PadRight(117, '─')}┐");
-                Logger( $"│{"Shunting Yard Algorithm",48}{"",69}│");
-                Logger( $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(14, '─')}┬{"".PadRight(16, '─')}┬{"".PadRight(22, '─')}┬{"".PadRight(26, '─')}┤");
-                Logger( $"│{"#",-3} │ {"Token",-10} │ {"Stack Count",-15} │ {"Stack Peek",-12} │ {"Type",-15}│ {"RPN",-20} │ {"Action",-24} │");
+                Write( $"┌{"".PadRight(117, '─')}┐");
+                Write( $"│{"Shunting Yard Algorithm",48}{"",69}│");
+                Write( $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(14, '─')}┬{"".PadRight(16, '─')}┬{"".PadRight(22, '─')}┬{"".PadRight(26, '─')}┤");
+                Write( $"│{"#",-3} │ {"Token",-10} │ {"Stack Count",-15} │ {"Stack Peek",-12} │ {"Type",-15}│ {"RPN",-20} │ {"Action",-24} │");
                 for (int i = 0; i < Tokens.Count; i++)
                 {
                     string Token = Tokens[i];
+
+                    string Ahead = ((i+1) < Tokens.Count) ? Tokens[i+1] : string.Empty;
+                    string Prev = (i > 0) ? Tokens[i - 1] : string.Empty;
+
                     string Action = string.Empty;
                     string Notation = string.Empty;
                     string Stack = string.Empty;
                     string Type = string.Empty;
 
-                    if (RPN.IsNumber(Token))
+                    
+                    if (string.IsNullOrEmpty(Ahead) == false && (Data.IsNumber(Token) || Data.IsVariable(Token)) && (Data.IsFunction(Ahead) || Data.IsLeftBracket(Ahead) || Data.IsVariable(Ahead) ))
+                    {
+                        //This will flip the order of the multiplication :(
+                        Type = "Implicit Left";
+                        OperatorRule("*");
+                        Operator.Push(Token);
+                        if (Data.IsVariable(Token))
+                        {
+                            Data.AddVariable(Token);
+                        }
+
+                    }
+                    else if (string.IsNullOrEmpty(Prev) == false && Data.IsRightBracket(Prev) && Data.IsLeftBracket(Token))
+                    {
+                        Type = "Implicit Left 2";
+                        OperatorRule("*");
+                        Operator.Push(Token);
+                    }
+                    else if (Prev != "," && string.IsNullOrEmpty(Prev) == false && Data.IsRightBracket(Prev) && (Data.IsNumber(Token) || Data.IsVariable(Token)))
+                    {
+                        Type = "Implicit Right";
+                        OperatorRule("*");
+                        Output.Enqueue(Token);
+                        if (Data.IsVariable(Token))
+                        {
+                            Data.AddVariable(Token);
+                        }
+                    }
+                    else if (Data.IsNumber(Token))
                     {
                         Action = "Added token to output";
                         Type = "Number";
                         Output.Enqueue(Token);
                     }
-                    else if (RPN.IsFunction(Token))
+                    else if (Data.IsFunction(Token))
                     {
                         Action = "Added token to stack";
                         Type = "Function";
                         Operator.Push(Token);
                     }
-                    else if (RPN.IsOperator(Token))
+                    else if (Data.IsOperator(Token))
                     {
                         Type = "Operator";
                         Action = "Operator Rules";
                         OperatorRule(Token);
                     }
-                    else if (RPN.IsLeftBracket(Token))
+                    else if (Data.IsLeftBracket(Token))
                     {
                         Type = "Left Bracket";
                         Action = "Added token to stack";
                         Operator.Push(Token);
                     }
-                    else if (RPN.IsRightBracket(Token))
+                    else if (Data.IsRightBracket(Token))
                     {
                         Type = "Right Bracket";
                         Action = "Right Bracket Rules";
@@ -83,13 +118,12 @@ namespace AbMath.Utilities
                         }
                         RightBracketRule(Token);
                     }
-                    else if (RPN.IsVariable(Token))
+                    else if (Data.IsVariable(Token))
                     {
                         Action = "Added token to output";
                         Type = "Variable";
-                        RPN.ContainsVariables = true;
                         Output.Enqueue(Token);
-                        RPN.Variables.Add(Token);
+                        Data.AddVariable(Token);
                     }
                     else
                     {
@@ -100,20 +134,21 @@ namespace AbMath.Utilities
                     Stack = Operator.SafePeek();
 
                     string Log = $"│{i,-3} │ {Token,-10} │ {Operator.Count,-15} │ {Stack,-12} │ {Type,-14} │ {Notation,-20} │ {Action,-24} │";
-                    RPN.Logger?.Invoke(this, Log);
+                    Write(Log);
                 }
                 Dump();
-                Logger($"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(14, '─')}┴{"".PadRight(16, '─')}┴{"".PadRight(22, '─')}┴{"".PadRight(26, '─')}┘");
+                Write($"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(14, '─')}┴{"".PadRight(16, '─')}┴{"".PadRight(22, '─')}┴{"".PadRight(26, '─')}┘");
                 SW.Stop();
-                Logger($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
-                Logger("");
+                Write($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
+                Write($"Reverse Polish Notation:\n{Output.Print()}");
+                Write("");
 
                 return Output;
 
                 void RightBracketRule(string Token)
                 {
                     string Peek = Operator.Peek();
-                    while (RPN.IsLeftBracket(Operator.Peek()) == false)
+                    while (Data.IsLeftBracket(Operator.Peek()) == false)
                     {
                         if (Operator.Count == 0)
                         {
@@ -155,12 +190,12 @@ namespace AbMath.Utilities
                     {
                         return Operator.Count > 0 && 
                                 (
-                                    (RPN.IsFunction(Operator.Peek()) == true) ||
-                                    (RPN.Ops[Operator.Peek()].weight > RPN.Ops[Token].weight) ||
-                                    (RPN.Ops[Operator.Peek()].weight == RPN.Ops[Token].weight && RPN.Ops[Token].Assoc == Assoc.Left)
+                                    (Data.IsFunction(Operator.Peek()) == true) ||
+                                    (Data.Operators[Operator.Peek()].weight > Data.Operators[Token].weight) ||
+                                    (Data.Operators[Operator.Peek()].weight == Data.Operators[Token].weight && Data.Operators[Token].Assoc == Assoc.Left)
                                     
                                 )
-                                && RPN.IsLeftBracket(Operator.Peek()) == false;
+                                && Data.IsLeftBracket(Operator.Peek()) == false;
                     }
                     catch (Exception ex) { }
                     return false;
@@ -176,7 +211,7 @@ namespace AbMath.Utilities
                 {
                     string Peek = Operator.Peek();
 
-                    if (RPN.IsLeftBracket(Peek) == true || RPN.IsRightBracket(Peek) == true)
+                    if (Data.IsLeftBracket(Peek) == true || Data.IsRightBracket(Peek) == true)
                     {
                         throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }
@@ -184,9 +219,9 @@ namespace AbMath.Utilities
                 }
             }
 
-            void Logger(string Message)
+            void Write(string Message)
             {
-                RPN.Logger?.Invoke(this, Message);
+                Logger?.Invoke(this, Message);
             }
         }
     }
