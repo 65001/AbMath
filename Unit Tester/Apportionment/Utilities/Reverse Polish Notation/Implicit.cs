@@ -1,9 +1,8 @@
 ﻿using System;
 using AbMath.Utilities;
-using System.Collections.Generic;
 using NUnit.Framework;
 
-namespace TestHarness
+namespace AbMath.Tests
 {
     [TestFixture]
     public class ImplicitShunting

@@ -3,7 +3,7 @@ using AbMath.Discrete.Apportionment;
 using System.Collections.Generic;
 using NUnit.Framework;
 
-namespace TestHarness
+namespace AbMath.Tests
 {
     [TestFixture]
     public class Apportionment
