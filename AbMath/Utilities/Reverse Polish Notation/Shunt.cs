@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using AbMath.CLITables;
 
 namespace AbMath.Utilities
 {
@@ -39,10 +40,16 @@ namespace AbMath.Utilities
                 Output = new Queue<string>(Tokens.Count);
                 Operator = new Stack<string>(20);
 
-                Write( $"┌{"".PadRight(117, '─')}┐");
-                Write( $"│{"Shunting Yard Algorithm",48}{"",69}│");
-                Write( $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(14, '─')}┬{"".PadRight(16, '─')}┬{"".PadRight(22, '─')}┬{"".PadRight(26, '─')}┤");
-                Write( $"│{"#",-3} │ {"Token",-10} │ {"Stack Count",-15} │ {"Stack Peek",-12} │ {"Type",-15}│ {"RPN",-20} │ {"Action",-24} │");
+                Tables tables = new Tables(new Config {Title = "Shunting Yard Algorithm" });
+                tables.Add(new Schema { Column = "#", Width = 3 });
+                tables.Add(new Schema { Column = "Token", Width = 10 });
+                tables.Add(new Schema { Column = "Stack Count", Width = 15 });
+                tables.Add(new Schema { Column = "Stack Peek", Width = 12 });
+                tables.Add(new Schema { Column = "Type", Width = 15 });
+                tables.Add(new Schema { Column = "RPN", Width = 20 });
+                tables.Add(new Schema { Column = "Action", Width = 30 });
+
+                Write(tables.GenerateHeaders());
                 for (int i = 0; i < Tokens.Count; i++)
                 {
                     string Token = Tokens[i];
@@ -55,7 +62,6 @@ namespace AbMath.Utilities
                     string Stack = string.Empty;
                     string Type = string.Empty;
 
-                    
                     if (string.IsNullOrEmpty(Ahead) == false && (Data.IsNumber(Token) || Data.IsVariable(Token)) && (Data.IsFunction(Ahead) || Data.IsLeftBracket(Ahead) || Data.IsVariable(Ahead) ))
                     {
                         //This will flip the order of the multiplication :(
@@ -130,14 +136,23 @@ namespace AbMath.Utilities
                         throw new NotImplementedException(Token);
                     }
 
+                    var print = new string[] { i.ToString(), Token, Operator.Count.ToString(), Operator.SafePeek() ?? string.Empty, Type, Output.Print(), Action };
+                    tables.Add(print);
+
                     Notation = Output.Print();
                     Stack = Operator.SafePeek();
 
-                    string Log = $"│{i,-3} │ {Token,-10} │ {Operator.Count,-15} │ {Stack,-12} │ {Type,-14} │ {Notation,-20} │ {Action,-24} │";
-                    Write(Log);
+                    Write(tables.GenerateNextRow());
                 }
                 Dump();
-                Write($"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(14, '─')}┴{"".PadRight(16, '─')}┴{"".PadRight(22, '─')}┴{"".PadRight(26, '─')}┘");
+                Write(tables.GenerateFooter());
+
+                if (tables.SuggestedRedraw)
+                {
+                    tables.Clear();
+                    Write(tables.ToString());
+                }
+
                 SW.Stop();
                 Write($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
                 Write($"Reverse Polish Notation:\n{Output.Print()}");

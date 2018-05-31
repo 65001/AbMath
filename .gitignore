@@ -325,3 +325,5 @@ ASALocalRun/
 
 #GD
 *\desktop.ini
+.vscode/launch.json
+.vscode/tasks.json

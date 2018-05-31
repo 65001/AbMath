@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using AbMath.CLITables;
 
 namespace AbMath.Utilities
 {
@@ -17,6 +18,7 @@ namespace AbMath.Utilities
             private string Character;
             private string PrevToken;
             private string ReadAhead;
+            private Tables tables;
 
             private List<string> Tokens;
             private string Rule;
@@ -34,12 +36,16 @@ namespace AbMath.Utilities
                 Stopwatch SW = new Stopwatch();
                 SW.Start();
                 Tokens = new List<string>();
+
+                tables = new Tables(new Config { Title = "Tokenizer" });
+                tables.Add(new Schema { Column="#",Width=3 });
+                tables.Add(new Schema { Column = "Character", Width = 10 });
+                tables.Add(new Schema { Column = "Token", Width = 15 });
+                tables.Add(new Schema { Column = "# Tokens", Width = 11 });
+                tables.Add(new Schema { Column = "Action", Width = 16 });
+                Write(tables.GenerateHeaders());
+
                 Token = string.Empty;
-                Write( $"┌{"".PadRight(68,'─')}┐");
-                Write( $"│{"Tokenizer",28}{"",40}│");
-                Write( $"├{"".PadRight(4, '─') }┬{"".PadRight(12, '─')}┬{"".PadRight(17, '─')}┬{"".PadRight(13, '─')}┬{"".PadRight(18, '─')}┤");
-                Write( $"│{"#",-3} │ {"Character",-10} │ {"Token",-15} │ {"Tokens Count",-12}│ {"Action",-16} │");
-                
                 int Length = Equation.Length;
 
                 for (int i = 0; i < Length; i++)
@@ -132,11 +138,18 @@ namespace AbMath.Utilities
                     {
                         Token += Character;
                     }
-                    Write( $"│{i,-3} │ {Character,-10} │ {Token,-15} │ {Tokens.Count,-12}│ {Rule,-16} │");
+                    tables.Add(new string[] { i.ToString(), Character, Token, Tokens.Count.ToString(), Rule });
+                    Write(tables.GenerateNextRow());
                 }
+                Write(tables.GenerateFooter());
 
-                Write($"└{"".PadRight(4, '─') }┴{"".PadRight(12, '─')}┴{"".PadRight(17, '─')}┴{"".PadRight(13, '─')}┴{"".PadRight(18, '─')}┘");
+                if (tables.SuggestedRedraw)
+                {
+                    tables.Clear();
+                    Write(tables.ToString());
+                }
                 SW.Stop();
+
                 Write($"Execution Time {SW.ElapsedMilliseconds}(ms) Elappsed Ticks: {SW.ElapsedTicks}");
                 Write("");
 
