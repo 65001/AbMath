@@ -5,14 +5,16 @@ using System.Text;
 
 namespace AbMath.Utilities
 {
-    public class PostFix
+    public class PostFix : IEvaluator<double>
     {
         private RPN.Data Data;
-        private Queue<string> Input;
+        private Queue<RPN.Term> Input;
         private Stack<double> Stack;
 
+        public event EventHandler<string> Logger;
+
         //Sadly the PostFix part of the code must know of RPN..
-        public PostFix(RPN RPN)
+        public PostFix(RPN RPN) 
         {
             Data = RPN.data;
             Reset();
@@ -30,10 +32,10 @@ namespace AbMath.Utilities
             
             for (int i = 0; i < Length; i++)
             {
-                string Token = Input.Dequeue();
-                if (Data.IsVariable(Token) && Token == variable)
+                RPN.Term Token = Input.Dequeue();
+                if (Token.Type == RPN.Type.Variable && Token.Value == variable)
                 {
-                    Input.Enqueue(number);
+                    Input.Enqueue(new RPN.Term {Arguments = 0,Type = RPN.Type.Number,Value = number });
                 }
                 else
                 {
@@ -46,26 +48,30 @@ namespace AbMath.Utilities
         {
             while (Input.Count > 0)
             {
-                string Token = Input.Dequeue();
-                if (Data.IsNumber(Token))
+                RPN.Term Token = Input.Dequeue();
+                switch (Token.Type)
                 {
-                    Stack.Push(double.Parse(Token));
-                }
-                else if (Data.IsOperator(Token))
-                {
-                    RPN.Operators Operator = Data.Operators[Token];
-                    double[] Arguments = GetArguments(Operator.Arguments);
-                    Stack.Push(Operator.Compute(Arguments));
-                }
-                else if (Data.IsFunction(Token))
-                {
-                    RPN.Functions functions = Data.Functions[Token];
-                    double[] Arguments = GetArguments(functions.Arguments);
-                    Stack.Push(functions.Compute(Arguments));
-                }
-                else
-                {
-                    throw new NotImplementedException(Token + " " + Token.Length);
+                    case RPN.Type.Number:
+                        Stack.Push(double.Parse(Token.Value));
+                        break;
+                    case RPN.Type.Operator:
+                        {
+                            RPN.Operators Operator = Data.Operators[Token.Value];
+                            double[] Arguments = GetArguments(Token.Arguments);
+                            double Ans = Operator.Compute(Arguments);
+                            Stack.Push(Ans);
+                        }
+                        break;
+                    case RPN.Type.Function:
+                        {
+                            RPN.Functions functions = Data.Functions[Token.Value];
+                            double[] Arguments = GetArguments(Token.Arguments);
+                            double Ans = functions.Compute(Arguments);
+                            Stack.Push(Ans);
+                        }
+                        break;
+                    default:
+                        throw new NotImplementedException(Token + " " + Token.ToString().Length);
                 }
             }
 
@@ -79,11 +85,12 @@ namespace AbMath.Utilities
         private double[] GetArguments(int ArgCount)
         {
             double[] Arguments = new double[ArgCount];
+            
             if (Stack.Count < ArgCount )
             {
                 throw new InvalidOperationException($"Syntax Error!");
             }
-
+            
             for (int i = ArgCount; i > 0; i--)
             {
                 Arguments[i - 1] = Stack.Pop();
@@ -93,8 +100,13 @@ namespace AbMath.Utilities
 
         public void Reset()
         {
-            Input = new Queue<string>(Data.Polish);
+            Input = new Queue<RPN.Term>(Data.Polish);
             Stack = new Stack<double>();
+        }
+
+        void Write(string Message)
+        {
+            Logger?.Invoke(this, Message);
         }
     }
 }

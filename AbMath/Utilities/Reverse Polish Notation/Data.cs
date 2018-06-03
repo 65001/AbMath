@@ -25,7 +25,7 @@ namespace AbMath.Utilities
             public IReadOnlyList<string> Variables { get { return variables; } }
 
             public string Equation;
-            public Queue<string> Polish { get; set; }
+            public Queue<Term> Polish { get; set; }
             public bool ContainsVariables { get; private set; }
 
 
@@ -82,6 +82,11 @@ namespace AbMath.Utilities
                 return Operators.ContainsKey(value);
             }
 
+            public bool IsOperator(Term term)
+            {
+                return term.Type == Type.Operator;
+            }
+
             public bool IsUniary(string value)
             {
                 return IsOperator(value) && (value == "-" || value == "−" || value == "+");
@@ -96,6 +101,8 @@ namespace AbMath.Utilities
             {
                 return Functions.ContainsKey(value);
             }
+
+            
             public bool IsVariable(string value)
             {
                 return value != "." &&  !(IsNumber(value) || IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value));
@@ -105,9 +112,20 @@ namespace AbMath.Utilities
             {
                 return LeftBracket.Contains(value);
             }
+
             public bool IsRightBracket(string value)
             {
                 return RightBracket.Contains(value);
+            }
+
+            public Type Resolve(string value)
+            {
+                if (IsNumber(value)) { return Type.Number; }
+                if (IsOperator(value)) { return Type.Operator; }
+                if (IsFunction(value)) { return Type.Function; }
+                if (IsLeftBracket(value)) { return Type.LParen; }
+                if (IsRightBracket(value)) { return Type.RParen; }
+                return Type.Variable;
             }
 
             void DefaultAliases()
@@ -264,8 +282,8 @@ namespace AbMath.Utilities
                 });
 
                 //Assingment Operators
-                AddOperator("->", new Operators { });
-                AddOperator("<-", new Operators { });
+                AddOperator("->", new Operators {Assoc = Assoc.Left,weight = 0, Arguments = 2 });
+                AddOperator("<-", new Operators { Assoc = Assoc.Left, weight = 0, Arguments = 2 });
             }
 
             void DefaultFunctions()
