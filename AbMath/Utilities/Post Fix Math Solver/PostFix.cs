@@ -12,13 +12,13 @@ namespace AbMath.Utilities
         private Stack<double> Stack;
 
         //Sadly the PostFix part of the code must know of RPN..
-        public PostFix(RPN RPN)
+        public PostFix(in RPN RPN)
         {
             Data = RPN.data;
             Reset();
         }
 
-        public PostFix(RPN.Data data)
+        public PostFix(in RPN.Data data)
         {
             Data = data;
             Reset();

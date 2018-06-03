@@ -179,6 +179,12 @@ namespace AbMath.CLITables
             return sum;
         }
 
+        public string Redraw()
+        {
+            Clear();
+            return ToString();
+        }
+
         public void Clear()
         {
             for(int i = cursor.beginy; i < cursor.endy; i++)

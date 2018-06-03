@@ -26,7 +26,7 @@ namespace AbMath.Utilities
 
             public event EventHandler<string> Logger;
 
-            public Shunt(Data data)
+            public Shunt(in Data data)
             {
                 Data = data;
             }
@@ -39,12 +39,14 @@ namespace AbMath.Utilities
 
                 Output = new Queue<string>(Tokens.Count);
                 Operator = new Stack<string>(20);
+                Arity = new Stack<int>();
 
                 Tables tables = new Tables(new Config {Title = "Shunting Yard Algorithm" });
                 tables.Add(new Schema { Column = "#", Width = 3 });
                 tables.Add(new Schema { Column = "Token", Width = 10 });
                 tables.Add(new Schema { Column = "Stack Count", Width = 15 });
                 tables.Add(new Schema { Column = "Stack Peek", Width = 12 });
+                tables.Add(new Schema { Column = "Arity", Width=5});
                 tables.Add(new Schema { Column = "Type", Width = 15 });
                 tables.Add(new Schema { Column = "RPN", Width = 20 });
                 tables.Add(new Schema { Column = "Action", Width = 30 });
@@ -105,7 +107,7 @@ namespace AbMath.Utilities
                     {
                         Action = "Added token to stack";
                         Type = "Function";
-                        Operator.Push(Token);
+                        WriteFunction(Token);
                     }
                     else if (Data.IsOperator(Token))
                     {
@@ -141,7 +143,7 @@ namespace AbMath.Utilities
                         throw new NotImplementedException(Token);
                     }
 
-                    var print = new string[] { i.ToString(), Token, Operator.Count.ToString(), Operator.SafePeek() ?? string.Empty, Type, Output.Print(), Action };
+                    var print = new string[] { i.ToString(), Token, Operator.Count.ToString(), Operator.SafePeek() ?? string.Empty, Arity.SafePeek().ToString() , Type, Output.Print(), Action };
                     tables.Add(print);
 
                     Notation = Output.Print();
@@ -154,8 +156,7 @@ namespace AbMath.Utilities
 
                 if (tables.SuggestedRedraw)
                 {
-                    tables.Clear();
-                    Write(tables.ToString());
+                    Write(tables.Redraw());
                 }
 
                 SW.Stop();
@@ -174,12 +175,25 @@ namespace AbMath.Utilities
                         {
                             throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
                         }
+
+                        if(Arity.Count > 0)
+                        {
+                            Arity.Pop();
+                        }
                         Peek = Operator.Pop();
                         Output.Enqueue(Peek);
                     }
                     //For functions and composite functions the to work, we must return now.
                     if (Token == ",")
                     {
+                        if (Arity.Count == 0)
+                        {
+                            Arity.Push(1);
+                        }
+                        else
+                        {
+                            Arity.Push(Arity.Pop() + 1);
+                        }
                         return;
                     }
                     //Pops the left bracket or Parentheses from the stack. 
@@ -219,6 +233,12 @@ namespace AbMath.Utilities
                     }
                     catch (Exception ex) { }
                     return false;
+                }
+
+                void WriteFunction(string Function)
+                {
+                    Operator.Push(Function);
+                    Arity.Push(1);
                 }
             }
 

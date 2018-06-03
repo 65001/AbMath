@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using AbMath.Utilities;
 
 namespace Test_Console
 {
     class Program
     {
+        private static RPN RPN;
         static void Main(string[] args)
         {
             Console.Title = "Math Solver 1.0.3";
@@ -34,7 +36,7 @@ namespace Test_Console
                     if (Equation.Length == 0) { Console.Clear(); }
                 }
 
-                RPN RPN = new RPN(Equation);
+                RPN = new RPN(Equation);
                 RPN.Logger += Write;
                 
                 RPN.Compute();

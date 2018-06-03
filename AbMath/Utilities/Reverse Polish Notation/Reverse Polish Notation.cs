@@ -25,7 +25,7 @@ namespace AbMath.Utilities
     //Add a data class so that other classes such as
     //the Tokenizer, Shunter, and the like don't need a copy of RPN.
 
-    public partial class RPN 
+    public partial class RPN
     {
         public enum Assoc { Left, Right };
         public delegate double Run(params double[] arguments);
@@ -36,11 +36,11 @@ namespace AbMath.Utilities
         {
             public double weight;
             public int Arguments;
-            public Assoc Assoc;            
+            public Assoc Assoc;
             public Run Compute;
         }
 
-        public struct Functions 
+        public struct Functions
         {
             public int Arguments;
             public Run Compute;

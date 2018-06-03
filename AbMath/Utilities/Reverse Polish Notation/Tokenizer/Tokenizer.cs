@@ -12,7 +12,7 @@ namespace AbMath.Utilities
         public class Tokenizer : ITokenizer<string>
         {
             private Data Data;
-            private string Equation;
+            private string Equation { get { return Data.Equation; } }
 
             private string Token;
             private string Character;
@@ -25,10 +25,9 @@ namespace AbMath.Utilities
 
            public event EventHandler<string> Logger;
 
-            public Tokenizer(Data data)
+            public Tokenizer(in Data data)
             {
                 Data = data;
-                Equation = data.Equation;
             }
 
             public List<string> Tokenize()
@@ -68,8 +67,9 @@ namespace AbMath.Utilities
                         WriteToken("WhiteSpace");
                     }
                     //Unary Input at the start of the input or after another operator or left parenthesis
-                    else if ((i == 0 && Data.IsUniary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken)) && Data.IsUniary(Character)))
+                    else if ((i == 0 && Data.IsUniary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken)) && Data.IsUniary(Character) && Data.IsNumber(Token) == false ))
                     {
+                        Rule = "Uniary";
                         Token += Character;
                     }
                     else if ( ( Data.IsNumber(Token) ) && ( Data.IsVariable(Character) || Data.IsLeftBracket(Character)))
@@ -145,6 +145,7 @@ namespace AbMath.Utilities
                     }
                     else
                     {
+                        Rule = "Append";
                         Token += Character;
                     }
                     tables.Add(new string[] { i.ToString(), Character, Token, Tokens.Count.ToString(), Rule });
@@ -154,8 +155,7 @@ namespace AbMath.Utilities
 
                 if (tables.SuggestedRedraw)
                 {
-                    tables.Clear();
-                    Write(tables.ToString());
+                    Write(tables.Redraw());
                 }
                 SW.Stop();
 

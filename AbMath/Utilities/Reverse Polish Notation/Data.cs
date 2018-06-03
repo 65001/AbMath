@@ -197,6 +197,7 @@ namespace AbMath.Utilities
                     Compute = new Run(DoOperators.Subtract)
                 });
 
+                //Evaluations
                 AddOperator(">", new Operators
                 {
                     Assoc = Assoc.Left,
@@ -237,6 +238,7 @@ namespace AbMath.Utilities
                     Compute = new Run(DoOperators.LessThanOrEquals)
                 });
 
+                //Logic
                 AddOperator("!=", new Operators
                 {
                     Assoc = Assoc.Left,
@@ -260,6 +262,10 @@ namespace AbMath.Utilities
                     Arguments = 2,
                     Compute = new Run(DoOperators.Or)
                 });
+
+                //Assingment Operators
+                AddOperator("->", new Operators { });
+                AddOperator("<-", new Operators { });
             }
 
             void DefaultFunctions()

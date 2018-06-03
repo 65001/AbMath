@@ -45,6 +45,18 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void MultiTermAddNoSpace()
+        {
+            RPN Test = new RPN("2+2+2");
+            Test.Compute();
+
+            if ("2 2 + 2 +" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void SimpleSubtract()
         {
             RPN Test = new RPN("4 - 2");
