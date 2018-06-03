@@ -42,6 +42,7 @@ namespace Test_Console
                 RPN.Compute();
 
                 PostFix postFix = new PostFix(RPN);
+                postFix.Logger += Write;   
 
                 if (RPN.ContainsVariables)
                 {

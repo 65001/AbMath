@@ -14,7 +14,7 @@ namespace AbMath.Utilities
     //TODO
     //ABS
     //ARCSIN,ARCTAN,ARCCOS
-    //Random
+    //Random()
     //Random(Min,Max)
     //Generify
     //Auto Scaling from decimal to double to Big Integer
@@ -28,9 +28,12 @@ namespace AbMath.Utilities
     public partial class RPN
     {
         public enum Assoc { Left, Right };
+
+        public enum Type {LParen,RParen,Number,Variable,Function,Operator };
         public delegate double Run(params double[] arguments);
 
         public event EventHandler<string> Logger;
+
 
         public struct Operators
         {
@@ -46,15 +49,27 @@ namespace AbMath.Utilities
             public Run Compute;
         }
 
+        public struct Term
+        {
+            public string Value;
+            public int Arguments;
+            public Type Type;
+            public override string ToString()
+            {
+                return Value;
+            }
+
+        }
+
         public string Equation;
 
-        public Queue<string> Polish;
-        public List<string> Tokens;
+        public Queue<Term> Polish;
+        public List<Term> Tokens;
 
         public bool ContainsVariables { get { return data.ContainsVariables; } }
 
-        ITokenizer<string> tokenizer;
-        IShunt<string> shunt;
+        ITokenizer<Term> tokenizer;
+        IShunt<Term> shunt;
         public Data data { get; private set; }
 
 
@@ -67,7 +82,7 @@ namespace AbMath.Utilities
             shunt = new Shunt(data);
         }
 
-        public RPN(string equation, ITokenizer<string> CustomTokenizer)
+        public RPN(string equation, ITokenizer<Term> CustomTokenizer)
         {
             Equation = equation;
             Startup();
@@ -75,7 +90,7 @@ namespace AbMath.Utilities
             shunt = new Shunt(data);
         }
 
-        public RPN(string equation, IShunt<string> CustomShunter)
+        public RPN(string equation, IShunt<Term> CustomShunter)
         {
             Equation = equation;
             Startup();
@@ -83,7 +98,7 @@ namespace AbMath.Utilities
             shunt = CustomShunter;
         }
 
-        public RPN(string equation, ITokenizer<string> CustomTokenizer, IShunt<string> CustomShunter)
+        public RPN(string equation, ITokenizer<Term> CustomTokenizer, IShunt<Term> CustomShunter)
         {
             Equation = equation;
             Startup();

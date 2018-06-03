@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static AbMath.Utilities.RPN;
 using System.Text;
 
 namespace AbMath.Utilities
@@ -34,6 +35,34 @@ namespace AbMath.Utilities
             T value = stack.Pop();
             stack.Push(value);
             return value;
+        }
+    }
+
+    public static class TermExtensions
+    {
+        public static bool IsNumber(this Term Term)
+        {
+            return Term.Type == RPN.Type.Number;
+        }
+
+        public static bool IsFunction(this RPN.Term term)
+        {
+            return term.Type == RPN.Type.Function;
+        }
+
+        public static bool IsVariable(this Term term)
+        {
+            return term.Type == RPN.Type.Variable;
+        }
+
+        public static bool IsLeftBracket(this Term term)
+        {
+            return term.Type == RPN.Type.LParen;
+        }
+
+        public static bool IsRightBracket(this Term term)
+        {
+            return term.Type == RPN.Type.RParen;
         }
     }
 }

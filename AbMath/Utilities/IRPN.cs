@@ -15,4 +15,10 @@ namespace AbMath.Utilities
         List<T> Tokenize();
         event EventHandler<string> Logger;
     }
+
+    public interface IEvaluator<T>
+    {
+        T Compute();
+        event EventHandler<string> Logger;
+    }
 }
