@@ -25,7 +25,7 @@ namespace AbMath.Utilities
 
            public event EventHandler<string> Logger;
 
-            public Tokenizer(in Data data)
+            public Tokenizer(Data data)
             {
                 Data = data;
             }

@@ -26,7 +26,7 @@ namespace AbMath.Utilities
 
             public event EventHandler<string> Logger;
 
-            public Shunt(in Data data)
+            public Shunt(Data data)
             {
                 Data = data;
             }
