@@ -9,7 +9,7 @@ namespace AbMath.Utilities
 {
     public partial class RPN
     {
-        public class Tokenizer : ITokenizer<string>
+        public class Tokenizer : ITokenizer<Term>
         {
             private Data Data;
             private string Equation { get { return Data.Equation; } }
@@ -20,7 +20,7 @@ namespace AbMath.Utilities
             private string ReadAhead;
             private Tables tables;
 
-            private List<string> Tokens;
+            private List<Term> Tokens;
             private string Rule;
 
            public event EventHandler<string> Logger;
@@ -30,11 +30,11 @@ namespace AbMath.Utilities
                 Data = data;
             }
 
-            public List<string> Tokenize()
+            public List<Term> Tokenize()
             {
                 Stopwatch SW = new Stopwatch();
                 SW.Start();
-                Tokens = new List<string>();
+                Tokens = new List<Term>();
 
                 tables = new Tables(new Config { Title = "Tokenizer" });
                 tables.Add(new Schema { Column="#",Width=3 });
@@ -50,7 +50,7 @@ namespace AbMath.Utilities
                 for (int i = 0; i < Length; i++)
                 {
                     Character = Equation.Substring(i, 1);
-                    PrevToken = Tokens.LastOrDefault();
+                    PrevToken = Tokens.LastOrDefault().Value;
                     ReadAhead = string.Empty;
                     Rule = string.Empty;
 
@@ -189,7 +189,24 @@ namespace AbMath.Utilities
                 }
 
                 Rule = _Rule;
-                Tokens.Add(Token);
+                //Resolve!!
+                Term term = new Term
+                {
+                    Value = Token,
+                    Type = Data.Resolve(Token),
+                    Arguments = 0
+                };
+
+                if(term.Type == Type.Function)
+                {
+                    term.Arguments = Data.Functions[Token].Arguments;
+                }
+                else if (term.Type == Type.Operator)
+                {
+                    term.Arguments = Data.Operators[Token].Arguments;
+                }
+
+                Tokens.Add(term);
                 Token = string.Empty;
             }
 
