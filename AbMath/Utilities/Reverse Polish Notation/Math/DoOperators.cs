@@ -8,6 +8,11 @@ namespace AbMath.Utilities
     {
         public static class DoOperators
         {
+            public static double AddSelf(params double[] Arguments)
+            {
+                return ++Arguments[0];
+            }
+
             public static double Add(params double[] Arguments)
             {
                 return Arguments[0] + Arguments[1];
@@ -107,10 +112,7 @@ namespace AbMath.Utilities
 
             public static double And(params double[] Arguments)
             {
-                if ( (Arguments[0] == 1 && Arguments[1] == 1)
-                     ||
-                     (Arguments[0] == 0 && Arguments[1] == 0)
-                    )
+                if ( (Arguments[0] == 1 && Arguments[1] == 1) ||(Arguments[0] == 0 && Arguments[1] == 0))
                 {
                     return 1;
                 }
@@ -124,6 +126,16 @@ namespace AbMath.Utilities
                     return 1;
                 }
                 return 0;
+            }
+
+            public static double E(params double[] Arguments)
+            {
+                return Arguments[0] * Math.Pow(10, Arguments[1]);
+            }
+
+            public static void Store(ref Data data,params string[] Arguments)
+            {
+                data.AddStore(Arguments[0], Arguments[1]);
             }
         }
     }

@@ -29,8 +29,9 @@ namespace AbMath.Utilities
     {
         public enum Assoc { Left, Right };
 
-        public enum Type {LParen,RParen,Number,Variable,Function,Operator };
+        public enum Type {LParen,RParen,Number,Variable,Function,Operator,Null };
         public delegate double Run(params double[] arguments);
+        public delegate void Store(ref Data data,params string[] arguments);
 
         public event EventHandler<string> Logger;
 
@@ -38,22 +39,24 @@ namespace AbMath.Utilities
         public struct Operators
         {
             public double weight;
-            public int Arguments;
             public Assoc Assoc;
+            public int Arguments;
             public Run Compute;
+            public Store Store;
         }
 
         public struct Functions
         {
             public int Arguments;
             public Run Compute;
+            public Store Store;
         }
 
         public struct Term
         {
-            public string Value;
+            public string Value { get; set; }
             public int Arguments;
-            public Type Type;
+            public Type Type { get; set; }
             public override string ToString()
             {
                 return Value;

@@ -16,6 +16,7 @@ namespace AbMath.Utilities
             List<string> leftbracket;
             List<string> rightbracket;
             List<string> variables;
+            Dictionary<string, string> variableStore;
 
             public IReadOnlyDictionary<string,Functions> Functions { get { return functions; } }
             public IReadOnlyDictionary<string,Operators> Operators { get { return operators; } }
@@ -38,6 +39,7 @@ namespace AbMath.Utilities
                 leftbracket = new List<string>();
                 rightbracket = new List<string>();
                 variables = new List<string>();
+                variableStore = new Dictionary<string, string>();
 
                 DefaultFunctions();
                 DefaultOperators();
@@ -65,6 +67,17 @@ namespace AbMath.Utilities
                 ContainsVariables = true;
                 variables.Add(Token);
                 variables = variables.Distinct().ToList();
+            }
+
+            public void AddStore(string Variable,string Value)
+            {
+                AddVariable(Variable);
+                if (variableStore.ContainsKey(Variable))
+                {
+                    variableStore[Variable] = Value;
+                    return;
+                }
+                variableStore.Add(Variable, Value);
             }
 
             public void AddFunction(string Key, Functions Func)
@@ -102,7 +115,6 @@ namespace AbMath.Utilities
                 return Functions.ContainsKey(value);
             }
 
-            
             public bool IsVariable(string value)
             {
                 return value != "." &&  !(IsNumber(value) || IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value));
@@ -159,6 +171,14 @@ namespace AbMath.Utilities
                     Compute = new Run(DoOperators.Power)
                 });
 
+                AddOperator("E", new Operators
+                {
+                    Assoc = Assoc.Right,
+                    weight = 4,
+                    Arguments = 2,
+                    Compute = new Run(DoOperators.E)
+                });
+
                 AddOperator("!", new Operators
                 {
                     Assoc = Assoc.Left,
@@ -197,6 +217,14 @@ namespace AbMath.Utilities
                     weight = 2,
                     Arguments = 2,
                     Compute = new Run(DoOperators.Add)
+                });
+
+                AddOperator("++", new Operators
+                {
+                    Assoc = Assoc.Left,
+                    weight = 2,
+                    Arguments = 1,
+                    Compute = new Run(DoOperators.AddSelf)
                 });
 
                 AddOperator("−", new Operators
@@ -282,8 +310,8 @@ namespace AbMath.Utilities
                 });
 
                 //Assingment Operators
-                AddOperator("->", new Operators {Assoc = Assoc.Left,weight = 0, Arguments = 2 });
-                AddOperator("<-", new Operators { Assoc = Assoc.Left, weight = 0, Arguments = 2 });
+                //AddOperator(":", new Operators {Assoc = Assoc.Left,weight = 0, Arguments = 2, Compute = new Run(DoOperators.Store));
+                //AddOperator("<-", new Operators { Assoc = Assoc.Left, weight = 0, Arguments = 2 });
             }
 
             void DefaultFunctions()
@@ -363,7 +391,7 @@ namespace AbMath.Utilities
                 AddFunction("e", new Functions
                 {
                     Arguments = 0,
-                    Compute = new Run(DoFunctions.E)
+                    Compute = new Run(DoFunctions.EContstant)
                 });
             }
         }
