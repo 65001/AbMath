@@ -18,6 +18,26 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void ComplexIncrement()
+        {
+            RPN Test = new RPN("2++ + 2 + 2");
+            Test.Logger += Write;
+            Test.Compute();
+            PostFix Math = new PostFix(Test.data);
+            Assert.AreEqual(7, Math.Compute());
+        }
+
+        [Test]
+        public void Increment()
+        {
+            RPN Test = new RPN("7++");
+            Test.Logger += Write;
+            Test.Compute();
+            PostFix Math = new PostFix(Test.data);
+            Assert.AreEqual(8, Math.Compute());
+        }
+
+        [Test]
         public void Mod()
         {
             RPN Test = new RPN("5 % 2");

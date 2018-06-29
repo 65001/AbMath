@@ -8,6 +8,19 @@ namespace AbMath.Tests
     public class TokenizerTest
     {
         [Test]
+        public void MultiTermMultiply()
+        {
+            RPN Test = new RPN("(30.1)2.5(278)");
+            Test.Logger += Write;
+            Test.Compute();
+
+            if ("30.1 2.5 * 278 *" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void VariableAdd()
         {
             RPN Test = new RPN("2+x");

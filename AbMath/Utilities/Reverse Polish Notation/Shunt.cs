@@ -19,6 +19,9 @@ namespace AbMath.Utilities
             private Data Data;
             Queue<Term> Output;
             Stack<Term> Operator;
+            Term Prev;
+            Term Token;
+            Term Ahead;
 
             //TODO: Implement Variadic Functions
             //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
@@ -55,51 +58,48 @@ namespace AbMath.Utilities
                 Write(tables.GenerateHeaders());
                 for (int i = 0; i < Tokens.Count; i++)
                 {
-                    Term Token = Tokens[i];
-                    Term? Ahead = null;
-                    Term? Prev = null;
-
-                    if ((i + 1) < Tokens.Count)
-                    {
-                        Ahead = Tokens[i + 1];
-                    }
-                    if( (i > 0))
-                    {
-                        Prev = Tokens[i - 1];
-                    }
+                    Token = Tokens[i];
+                    Ahead = ((i + 1) < Tokens.Count)? Tokens[i + 1] : GenerateNull();
+                    Prev = (i > 0) ? Tokens[i - 1]  : GenerateNull();
 
                     string Action = string.Empty;
                     string Stack = string.Empty;
                     string Type = string.Empty;
 
-
-                    if (Ahead != null && (Token.Type == RPN.Type.Number || Token.Type == RPN.Type.Variable) && ( ((Term)Ahead).IsFunction() || ((Term)Ahead).Type == RPN.Type.LParen || ((Term)Ahead).Type == RPN.Type.Variable ))
+                    if (Chain())
+                    {
+                        Type = "Chain Multiplication";
+                        //Right
+                        OperatorRule(GenerateMultiply());
+                        Output.Enqueue(Token);
+                        if (Token.IsVariable())
+                        {
+                            Data.AddVariable(Token.Value);
+                        }
+                        //Left
+                        OperatorRule(GenerateMultiply());
+                    }
+                    else if (LeftImplicit())
                     {
                         //This will flip the order of the multiplication :(
                         Type = "Implicit Left";
-                        OperatorRule(Multiply());
+                        OperatorRule(GenerateMultiply());
                         Operator.Push(Token);
                         if (Token.IsVariable())
                         {
                             Data.AddVariable(Token.Value);
                         }
                     }
-                    else if (Prev != null && ((Term)Prev).IsRightBracket() && Token.IsLeftBracket())
+                    else if (Prev.Type != RPN.Type.Null && (Prev.Type == RPN.Type.RParen && Token.Type == RPN.Type.LParen) || (Prev.Type == RPN.Type.Variable && Token.Type == RPN.Type.Number)) 
                     {
                         Type = "Implicit Left 2";
-                        OperatorRule(Multiply());
+                        OperatorRule(GenerateMultiply());
                         Operator.Push(Token);
                     }
-                    else if (Prev != null && ((Term)Prev).IsVariable() && Token.IsNumber())
-                    {
-                        Type = "Implicit Left 3";
-                        OperatorRule(Multiply());
-                        Operator.Push(Token);
-                    }
-                    else if ( (Prev != null && Prev.Value.ToString() != ",") && ((Term)Prev).IsRightBracket() && (Token.IsNumber() || Token.IsVariable()))
+                    else if (RightImplicit())
                     {
                         Type = "Implicit Right";
-                        OperatorRule(Multiply());
+                        OperatorRule(GenerateMultiply());
                         Output.Enqueue(Token);
                         if (Token.IsVariable())
                         {
@@ -154,7 +154,6 @@ namespace AbMath.Utilities
                         }
                     }
 
-
                     var print = new string[] { i.ToString(), Token.Value, Operator.Count.ToString(), Operator.SafePeek().Value ?? string.Empty, Arity.SafePeek().ToString() , Type, Output.Print(), Action };
                     tables.Add(print);
 
@@ -174,88 +173,110 @@ namespace AbMath.Utilities
                 Write("");
 
                 return Output;
-
-                void RightBracketRule(Term Token)
-                {
-                    while (Operator.Peek().Type !=  RPN.Type.LParen)
-                    {
-                        if (Operator.Count == 0)
-                        {
-                            throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
-                        }
-
-                        Term output = Operator.Pop();
-                        if (Arity.Count > 0)
-                        {
-                            //output.Arguments = 
-                            Arity.Pop();
-                        }
-                        Write("Enqueuing " + output.ToString());
-                        Output.Enqueue(output);
-                    }
-                    //For functions and composite functions the to work, we must return now.
-                    if (Token.Value == ",")
-                    {
-                        if (Arity.Count == 0)
-                        {
-                            Arity.Push(1);
-                        }
-                        else
-                        {
-                            Arity.Push(Arity.Pop() + 1);
-                        }
-                        return;
-                    }
-
-                    //Pops the left bracket or Parentheses from the stack. 
-                    Operator.Pop();
-                }
-
-                //Sort Stack equivalent in sb
-                void OperatorRule(Term Token)
-                {
-                    //TODO: Revisit 
-                     bool Go = true;
-                     while (DoOperatorRule(Token) == true && Go == true)
-                     {
-                         Output.Enqueue(Operator.Pop());
-
-                        if (Operator.Count == 0)
-                        {
-                            Go = false;
-                        }
-                     }
-                    Operator.Push(Token);
-                }
-
-                bool DoOperatorRule(Term Token)
-                {
-                    try
-                    {
-                        return Operator.Count > 0 && 
-                                (
-                                    (Data.IsFunction(Operator.Peek().Value) == true) ||
-                                    (Data.Operators[Operator.Peek().Value].weight > Data.Operators[Token.Value].weight) ||
-                                    (Data.Operators[Operator.Peek().Value].weight == Data.Operators[Token.Value].weight && Data.Operators[Token.Value].Assoc == Assoc.Left)
-                                    
-                                )
-                                && Data.IsLeftBracket(Operator.Peek().Value) == false;
-                    }
-                    catch (Exception ex) { }
-                    return false;
-                }
-
-                void WriteFunction(Term Function)
-                {
-                    Operator.Push(Function);
-                    Arity.Push(0);
-                }
-
-                Term Multiply()
-                {
-                    return new Term { Value = "*", Arguments = 2, Type = Type.Operator };
-                }
             }
+
+            void RightBracketRule(Term Token)
+            {
+                while (Operator.Peek().Type != RPN.Type.LParen)
+                {
+                    if (Operator.Count == 0)
+                    {
+                        throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
+                    }
+
+                    Term output = Operator.Pop();
+                    if (Arity.Count > 0)
+                    {
+                        //output.Arguments = 
+                        Arity.Pop();
+                    }
+                    Write("Enqueuing " + output.ToString());
+                    Output.Enqueue(output);
+                }
+                //For functions and composite functions the to work, we must return now.
+                if (Token.Value == ",")
+                {
+                    if (Arity.Count == 0)
+                    {
+                        Arity.Push(1);
+                    }
+                    else
+                    {
+                        Arity.Push(Arity.Pop() + 1);
+                    }
+                    return;
+                }
+
+                //Pops the left bracket or Parentheses from the stack. 
+                Operator.Pop();
+            }
+
+            //Sort Stack equivalent in sb
+            void OperatorRule(Term Token)
+            {
+                //TODO: Revisit 
+                bool Go = true;
+                while (DoOperatorRule(Token) == true && Go == true)
+                {
+                    Output.Enqueue(Operator.Pop());
+
+                    if (Operator.Count == 0)
+                    {
+                        Go = false;
+                    }
+                }
+                Operator.Push(Token);
+            }
+
+            bool DoOperatorRule(Term Token)
+            {
+                try
+                {
+                    return Operator.Count > 0 &&
+                            (
+                                (Data.IsFunction(Operator.Peek().Value) == true) ||
+                                (Data.Operators[Operator.Peek().Value].weight > Data.Operators[Token.Value].weight) ||
+                                (Data.Operators[Operator.Peek().Value].weight == Data.Operators[Token.Value].weight && Data.Operators[Token.Value].Assoc == Assoc.Left)
+
+                            )
+                            && Data.IsLeftBracket(Operator.Peek().Value) == false;
+                }
+                catch (Exception ex) { }
+                return false;
+            }
+
+            bool LeftImplicit()
+            {
+                return Ahead.Type != RPN.Type.Null && (Token.Type == RPN.Type.Number || Token.Type == RPN.Type.Variable) && (Ahead.Type == RPN.Type.Function || Ahead.Type == RPN.Type.LParen || Ahead.Type == RPN.Type.Variable);
+            }
+
+            bool RightImplicit()
+            {
+                return Prev.Type != RPN.Type.Null && Prev.Value != "," && Prev.Type == RPN.Type.RParen && (Token.Type == RPN.Type.Number || Token.Type == RPN.Type.Variable);
+            }
+
+            bool Chain()
+            {
+                return LeftImplicit() == true && RightImplicit() == true;
+            }
+
+            void WriteFunction(Term Function)
+            {
+                Operator.Push(Function);
+                Arity.Push(0);
+            }
+
+            Term GenerateMultiply()
+            {
+                return new Term { Value = "*", Arguments = 2, Type = Type.Operator };
+            }
+
+            Term GenerateNull()
+            {
+                return new Term { Type = RPN.Type.Null };
+            }
+
+            
 
             /// <summary>
             /// Moves all remaining data from the stack onto the queue
@@ -264,9 +285,9 @@ namespace AbMath.Utilities
             {
                 while (Operator.Count > 0)
                 {
-                    string Peek = Operator.Peek().Value;
+                    Term Peek = Operator.Peek();
 
-                    if (Data.IsLeftBracket(Peek) == true || Data.IsRightBracket(Peek) == true)
+                    if (Peek.Type == Type.LParen || Peek.Type == Type.RParen)
                     {
                         throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }

@@ -67,7 +67,8 @@ namespace AbMath.Utilities
                         WriteToken("WhiteSpace");
                     }
                     //Unary Input at the start of the input or after another operator or left parenthesis
-                    else if ((i == 0 && Data.IsUniary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken)) && Data.IsUniary(Character) && Data.IsNumber(Token) == false ))
+                    else if ((i == 0 && Data.IsUniary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken)) && Data.IsUniary(Character) && Data.IsNumber(Token) == false && 
+                        Data.IsOperator(Character + ReadAhead) == false))
                     {
                         Rule = "Uniary";
                         Token += Character;
@@ -108,18 +109,18 @@ namespace AbMath.Utilities
                         Token = Character;
                         WriteToken("Function End");
                     }
-                    else if (Data.IsNumber(Token) && (Data.IsLeftBracket(Character) || Data.IsRightBracket(Character) || Data.IsOperator(Character)))
-                    {
-                        WriteToken("Edge Case 1");
-                        Token = Character;
-                        WriteToken("Edge Case 1");
-                    }
                     else if (Data.IsOperator(Character + ReadAhead))
                     {
                         WriteToken("Operator");
                         Token = Character + ReadAhead;
                         WriteToken("Operator");
                         i = i + 1;
+                    }
+                    else if (Data.IsNumber(Token) && (Data.IsLeftBracket(Character) || Data.IsRightBracket(Character) || Data.IsOperator(Character)))
+                    {
+                        WriteToken("Edge Case 1");
+                        Token = Character;
+                        WriteToken("Edge Case 1");
                     }
                     //Add equivalent for variables?
                     else if (Data.IsVariable(Token) && (Data.IsLeftBracket(Character) || Data.IsRightBracket(Character) || Data.IsOperator(Character)))

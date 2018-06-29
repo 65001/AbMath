@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,6 +11,7 @@ namespace AbMath.Utilities
         private RPN.Data Data;
         private Queue<RPN.Term> Input;
         private Stack<double> Stack;
+        private Stopwatch Stopwatch;
 
         public event EventHandler<string> Logger;
 
@@ -46,6 +48,9 @@ namespace AbMath.Utilities
 
         public double Compute()
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             while (Input.Count > 0)
             {
                 RPN.Term Token = Input.Dequeue();
@@ -53,6 +58,8 @@ namespace AbMath.Utilities
                 {
                     case RPN.Type.Number:
                         Stack.Push(double.Parse(Token.Value));
+                        break;
+                    case RPN.Type.Variable:
                         break;
                     case RPN.Type.Operator:
                         {
@@ -77,8 +84,13 @@ namespace AbMath.Utilities
 
             if (Stack.Count == 1)
             {
+                stopwatch.Stop();
+                Write($"Evaluation Time: {stopwatch.ElapsedMilliseconds} (ms) {stopwatch.ElapsedTicks} Ticks");
                 return Stack.Pop();
             }
+
+            stopwatch.Stop();
+            Write($"Evaluation Time: {stopwatch.ElapsedMilliseconds} (ms) {stopwatch.ElapsedTicks} Ticks");
             return double.NaN;
         }
 

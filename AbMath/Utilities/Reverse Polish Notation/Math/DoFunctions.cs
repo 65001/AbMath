@@ -87,10 +87,12 @@ namespace AbMath.Utilities
                 return Math.PI;
             }
 
-            public static double E(params double[] Arguments)
+            public static double EContstant(params double[] Arguments)
             {
                 return Math.E;
             }
+
+            
         }
     }
 }

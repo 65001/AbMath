@@ -55,8 +55,9 @@ namespace Test_Console
                 }
 
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.Write("Answer:");
-                Console.WriteLine(postFix.Compute());
+                double Answer = postFix.Compute();
+
+                Console.Write($"Answer: {Answer}");
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("Press any key to continue...");
