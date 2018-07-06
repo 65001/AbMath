@@ -72,7 +72,7 @@ namespace AbMath.Utilities
                 return Math.Log(Arguments[0]);
             }
 
-            public static double Log(params double[] Arguments)
+            public static double Log (params double[] Arguments)
             {
                 if (Arguments.Length == 1)
                 {

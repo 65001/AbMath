@@ -14,7 +14,7 @@ namespace AbMath.Tests
             Test.Logger += Write;
             Test.Compute();
 
-            if ("2 sin 4 *" != Test.Polish.Print())
+            if ("2 sin 4 *" != Test.Polish.Print() && "4 2 sin *" != Test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -27,7 +27,7 @@ namespace AbMath.Tests
             Test.Logger += Write;
             Test.Compute();
 
-            if ("2 4 *" != Test.Polish.Print())
+            if ("2 4 *" != Test.Polish.Print() && "4 2 *" != Test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -40,7 +40,7 @@ namespace AbMath.Tests
             Test.Logger += Write;
             Test.Compute();
 
-            if ("x 2 *" != Test.Polish.Print())
+            if ("x 2 *" != Test.Polish.Print() && "2 x *" != Test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -54,6 +54,19 @@ namespace AbMath.Tests
             Test.Compute();
 
             if ("x 2 *" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Mix()
+        {
+            RPN Test = new RPN("12(3) + 8(1.01)");
+            Test.Logger += Write;
+            Test.Compute();
+
+            if ("12 3 * 8 1.01 * +" != Test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -92,7 +105,7 @@ namespace AbMath.Tests
             Test.Logger += Write;
             Test.Compute();
 
-            if ("y x *" != Test.Polish.Print())
+            if ("y x *" != Test.Polish.Print() && "x y *" != Test.Polish.Print())
             {
                 Assert.Fail();
             }
