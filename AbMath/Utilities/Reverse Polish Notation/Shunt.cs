@@ -45,7 +45,7 @@ namespace AbMath.Utilities
 
                 Arity = new Stack<int>();
 
-                Tables tables = new Tables(new Config {Title = "Shunting Yard Algorithm" });
+                Tables<string> tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm" });
                 tables.Add(new Schema { Column = "#", Width = 3 });
                 tables.Add(new Schema { Column = "Token", Width = 10 });
                 tables.Add(new Schema { Column = "Stack Count", Width = 15 });

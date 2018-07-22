@@ -4,9 +4,12 @@ using System.Text;
 
 namespace AbMath.CLITables
 {
-     public struct Config
+
+    public enum Format { Default, MarkDown };
+    public struct Config
     {
         public string Title { get; set; }
+        public Format Format;
     }
 
     public struct Schema
@@ -19,31 +22,113 @@ namespace AbMath.CLITables
     {
         public int beginy;
         public int endy;
+        public bool Exists;
     }
 
-    public class Tables
+    public static class CharacterSheetFactory
+    {
+        public static CharacterSheet Default()
+        {
+            return new CharacterSheet
+            {
+                TopLeft = '┌',
+                TopRight = '┐',
+
+                Continue = '─',
+                Down = '│',
+
+                MidLeft = '├',
+                MidRight = '┤',
+                MidTerminate = '┬',
+
+                BottomLeft = '└',
+                BottomTerminate = '┴',
+                BottomRight = '┘'
+            }; 
+        }
+
+        public static CharacterSheet MarkDown() {
+            return new CharacterSheet {
+                TopLeft = '-',
+                TopRight = '-',
+
+                Continue = '-',
+                Down = '|',
+
+                MidLeft = '|',
+                MidRight = '|',
+                MidTerminate = '-',
+
+                BottomLeft = '-',
+                BottomTerminate = '-',
+                BottomRight = '-'
+            };
+        }
+    }
+
+    /// <summary>
+    /// Replace these characters with a Unicode set if
+    /// the characters don't display in your locale
+    /// </summary>
+    public struct CharacterSheet
+    {
+        public char TopLeft;
+        public char TopRight;
+
+        public char Down;
+        public char Continue;
+
+        public char MidLeft;
+        public char MidTerminate;
+        public char MidRight;
+
+        public char BottomLeft;
+        public char BottomTerminate;
+        public char BottomRight;
+    }
+
+    public class Tables<T>
     {
         private List<Schema> schemas;
-        private List<string[]> data;
+        private List<T[]> data;
         private Config config;
         private Cursor cursor;
         public bool SuggestedRedraw { get; private set; }
-
+        public CharacterSheet Sheet;
 
         public Tables(Config Config)
         {
             config = Config;
             schemas = new List<Schema>();
-            data = new List<string[]>();
-            cursor = new Cursor {beginy = Console.CursorTop  };
+            data = new List<T[]>();
+            try
+            {
+                cursor = new Cursor { beginy = Console.CursorTop, Exists = true };
+            }
+            catch(Exception ex)
+            {
+                cursor = new Cursor {Exists = false };
+            }
+            //AutoGeneration
+            switch (config.Format)
+            {
+                case Format.MarkDown:
+                    Sheet = CharacterSheetFactory.MarkDown();
+                    break;
+                case Format.Default:
+                default:
+                    Sheet = CharacterSheetFactory.Default();
+                    break;
+            }
         }
 
-        public void Add(Schema schema)
+        public Tables<T> Add(Schema schema)
         {
             schemas.Add(schema);
+            return this;
         }
 
-        public void Add(string[] row)
+        public Tables<T> Add(T[] row)
         {
             for (int i = 0; i < row.Length; i++)
             {
@@ -53,6 +138,7 @@ namespace AbMath.CLITables
                 }
             }
             data.Add(row);
+            return this;
         }
 
         //Top
@@ -66,12 +152,12 @@ namespace AbMath.CLITables
             int ceiling = (int)Math.Ceiling((decimal)sum / 2);
             int Length = config.Title.Length;
 
-            sb.AppendLine($"┌{"".PadRight(sum, '─')}┐");
-            sb.AppendLine($"│{"".PadRight(floor - Length)}{config.Title}{"".PadRight(ceiling)}│");
+            sb.AppendLine($"{Sheet.TopLeft}{"".PadRight(sum, Sheet.Continue)}{Sheet.TopRight}");
+            sb.AppendLine($"{Sheet.Down}{"".PadRight(floor - Length)}{config.Title}{"".PadRight(ceiling)}{Sheet.Down}");
 
-            sb.AppendLine(Lines(new char[] { '├', '┬', '┤' }));
+            sb.AppendLine(Lines(new char[] { Sheet.MidLeft, Sheet.MidTerminate, Sheet.MidRight }));
 
-            sb.Append("│");
+            sb.Append(Sheet.Down);
             for (int i = 0; i < schemas.Count; i++)
             {
                 int dif = schemas[i].Width - schemas[i].Column.Length;
@@ -98,7 +184,6 @@ namespace AbMath.CLITables
 
         private string GenerateRow(int index)
         {
-
             if (index > data.Count)
             {
                 throw new IndexOutOfRangeException($"The Index was {index} but the max is {data.Count}!");
@@ -111,10 +196,10 @@ namespace AbMath.CLITables
 
 
             var sb = new StringBuilder();
-            sb.Append("│");
+            sb.Append(Sheet.Down);
             for (int i = 0; i < schemas.Count; i++)
             {
-                sb.Append(Row(data[index][i] ?? string.Empty, schemas[i].Width - data[index][i].Length, i));
+                sb.Append(Row(data[index][i].ToString() ?? string.Empty, schemas[i].Width - data[index][i].ToString().Length, i));
             }
             return sb.ToString();
         }
@@ -123,8 +208,11 @@ namespace AbMath.CLITables
         //any addtional footers?
         public string GenerateFooter()
         {
-            string footer = Lines(new char[] { '└', '┴', '┘' });
-            cursor.endy = Console.CursorTop + 1;
+            string footer = Lines(new char[] { Sheet.BottomLeft, Sheet.BottomTerminate, Sheet.BottomRight });
+            if (cursor.Exists)
+            {
+                cursor.endy = Console.CursorTop + 1;
+            }
             return footer;
         }
 
@@ -139,11 +227,11 @@ namespace AbMath.CLITables
                 data = string.Empty;
                 if (i == (schemas.Count - 1))
                 {
-                    data = $"{"".PadRight(schemas[i].Width + 2, '─')}";
+                    data = $"{"".PadRight(schemas[i].Width + 2, Sheet.Continue)}";
                 }
                 else
                 {
-                    data = $"{"".PadRight(schemas[i].Width + ((i == 0) ? 1 : 2), '─')}{chars[1]}";
+                    data = $"{"".PadRight(schemas[i].Width + ((i == 0) ? 1 : 2), Sheet.Continue)}{chars[1]}";
                 }
                 sb.Append(data);
             }
@@ -159,11 +247,11 @@ namespace AbMath.CLITables
                 //Overrides user width suggestion when an overflow occurs.
                 schemas[i] = new Schema { Column = schemas[i].Column, Width = schemas[i].Width + Math.Abs(dif) };
                 SuggestedRedraw = true;
-                temp = (i == 0) ? $"{output}│" : $" {output} │";
+                temp = (i == 0) ? $"{output}{Sheet.Down}" : $" {output} {Sheet.Down}";
             }
             else
             {
-                temp = (i == 0) ? $"{output}{"".PadRight(dif)} │" : $" {output}{"".PadRight(dif)} │";
+                temp = (i == 0) ? $"{output}{"".PadRight(dif)} {Sheet.Down}" : $" {output}{"".PadRight(dif)} {Sheet.Down}";
             }
             return temp;
         }
@@ -187,11 +275,14 @@ namespace AbMath.CLITables
 
         public void Clear()
         {
-            for(int i = cursor.beginy; i < cursor.endy; i++)
+            if (cursor.Exists)
             {
-                Clear(i);
+                for (int i = cursor.beginy; i < cursor.endy; i++)
+                {
+                    Clear(i);
+                }
+                Console.SetCursorPosition(0, cursor.beginy);
             }
-            Console.SetCursorPosition(0, cursor.beginy);
         }
 
         void Clear(int y)

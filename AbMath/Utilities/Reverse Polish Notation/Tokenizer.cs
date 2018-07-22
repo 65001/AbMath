@@ -18,7 +18,7 @@ namespace AbMath.Utilities
             private string Character;
             private string PrevToken;
             private string ReadAhead;
-            private Tables tables;
+            private Tables<string> tables;
 
             private List<Term> Tokens;
             private string Rule;
@@ -36,7 +36,7 @@ namespace AbMath.Utilities
                 SW.Start();
                 Tokens = new List<Term>();
 
-                tables = new Tables(new Config { Title = "Tokenizer" });
+                tables = new Tables<string>(new Config { Title = "Tokenizer"});
                 tables.Add(new Schema { Column="#",Width=3 });
                 tables.Add(new Schema { Column = "Character", Width = 10 });
                 tables.Add(new Schema { Column = "Token", Width = 15 });
