@@ -45,7 +45,7 @@ namespace AbMath.Utilities
 
                 Arity = new Stack<int>();
 
-                Tables tables = new Tables(new Config {Title = "Shunting Yard Algorithm" });
+                Tables<string> tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm" });
                 tables.Add(new Schema { Column = "#", Width = 3 });
                 tables.Add(new Schema { Column = "Token", Width = 10 });
                 tables.Add(new Schema { Column = "Stack Count", Width = 15 });
@@ -70,12 +70,7 @@ namespace AbMath.Utilities
                     {
                         Type = "Chain Multiplication";
                         //Right
-                        OperatorRule(GenerateMultiply());
-                        Output.Enqueue(Token);
-                        if (Token.IsVariable())
-                        {
-                            Data.AddVariable(Token.Value);
-                        }
+                        Implicit();
                         //Left
                         OperatorRule(GenerateMultiply());
                     }
@@ -83,12 +78,7 @@ namespace AbMath.Utilities
                     {
                         //This will flip the order of the multiplication :(
                         Type = "Implicit Left";
-                        OperatorRule(GenerateMultiply());
-                        Operator.Push(Token);
-                        if (Token.IsVariable())
-                        {
-                            Data.AddVariable(Token.Value);
-                        }
+                        Implicit();
                     }
                     else if (Prev.Type != RPN.Type.Null && (Prev.Type == RPN.Type.RParen && Token.Type == RPN.Type.LParen) || (Prev.Type == RPN.Type.Variable && Token.Type == RPN.Type.Number)) 
                     {
@@ -99,12 +89,7 @@ namespace AbMath.Utilities
                     else if (RightImplicit())
                     {
                         Type = "Implicit Right";
-                        OperatorRule(GenerateMultiply());
-                        Output.Enqueue(Token);
-                        if (Token.IsVariable())
-                        {
-                            Data.AddVariable(Token.Value);
-                        }
+                        Implicit();
                     }
                     else
                     {
@@ -173,6 +158,16 @@ namespace AbMath.Utilities
                 Write("");
 
                 return Output;
+            }
+
+            void Implicit()
+            {
+                OperatorRule(GenerateMultiply());
+                Output.Enqueue(Token);
+                if (Token.IsVariable())
+                {
+                    Data.AddVariable(Token.Value);
+                }
             }
 
             void RightBracketRule(Term Token)
