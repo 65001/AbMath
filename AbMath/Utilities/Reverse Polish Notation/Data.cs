@@ -13,6 +13,9 @@ namespace AbMath.Utilities
             Dictionary<string,Functions> functions;
             Dictionary<string,Operators> operators;
             Dictionary<string, string> aliases;
+
+            Dictionary<double, string> autoFormat;
+
             List<string> leftbracket;
             List<string> rightbracket;
             List<string> variables;
@@ -21,6 +24,7 @@ namespace AbMath.Utilities
             public IReadOnlyDictionary<string,Functions> Functions { get { return functions; } }
             public IReadOnlyDictionary<string,Operators> Operators { get { return operators; } }
             public IReadOnlyDictionary<string, string> Aliases { get { return aliases; ; } }
+            public IReadOnlyDictionary<double,string> Format { get { return autoFormat; }}
             public IReadOnlyList<string> LeftBracket { get { return leftbracket; } }
             public IReadOnlyList<string> RightBracket { get { return rightbracket; } }
             public IReadOnlyList<string> Variables { get { return variables; } }
@@ -36,6 +40,8 @@ namespace AbMath.Utilities
                 functions = new Dictionary<string, Functions>();
                 operators = new Dictionary<string, Operators>();
                 aliases = new Dictionary<string, string>();
+                autoFormat = new Dictionary<double, string>();
+
                 leftbracket = new List<string>();
                 rightbracket = new List<string>();
                 variables = new List<string>();
@@ -45,6 +51,7 @@ namespace AbMath.Utilities
                 DefaultOperators();
                 DefaultAliases();
                 DefaultBrackets();
+                DefaultFormats();
             }
 
             public void AddLeftBracket(string value)
@@ -88,6 +95,11 @@ namespace AbMath.Utilities
             public void AddOperator(string Key, Operators Ops)
             {
                 operators.Add(Key, Ops);
+            }
+
+            public void AddFormat(double number, string format)
+            {
+                autoFormat.Add(number,format);
             }
 
             public bool IsOperator(string value)
@@ -147,6 +159,11 @@ namespace AbMath.Utilities
                 AddAlias("≠", "!=");
                 AddAlias("≥", ">=");
                 AddAlias("≤", "<=");
+                AddAlias("ne","!=");
+                AddAlias("ge",">=");
+                AddAlias("le","<=");
+                AddAlias("and","&&");
+                AddAlias("or","||");
             }
 
             void DefaultBrackets()
@@ -393,6 +410,14 @@ namespace AbMath.Utilities
                     Arguments = 0,
                     Compute = new Run(DoFunctions.EContstant)
                 });
+            }
+
+            void DefaultFormats()
+            {
+                AddFormat(Math.Sqrt(2)/2, "√2 / 2");
+                AddFormat(- Math.Sqrt(2) / 2, "-√2 / 2");
+                AddFormat(Math.Sqrt(3)/2, "√3 / 2");
+                AddFormat(- Math.Sqrt(3) / 2, "-√3 / 2");
             }
         }
     }

@@ -8,6 +8,18 @@ namespace AbMath.Tests
     public class TokenizerTest
     {
         [Test]
+        public void ComplexFunction()
+        {
+            RPN test = new RPN("sin(16pi)");
+            test.Logger += Write;
+            test.Compute();
+            if ("16 pi * sin" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void MultiTermMultiply()
         {
             RPN Test = new RPN("(30.1)2.5(278)");

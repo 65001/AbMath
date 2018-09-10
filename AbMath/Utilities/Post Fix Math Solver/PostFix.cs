@@ -86,6 +86,10 @@ namespace AbMath.Utilities
             {
                 stopwatch.Stop();
                 Write($"Evaluation Time: {stopwatch.ElapsedMilliseconds} (ms) {stopwatch.ElapsedTicks} Ticks");
+                if (Data.Format.ContainsKey(Stack.Peek()))
+                {
+                    Write($"The answer may also be written in the following manner: {Data.Format[Stack.Peek()]}");
+                }
                 return Stack.Pop();
             }
 

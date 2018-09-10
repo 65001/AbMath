@@ -10,6 +10,7 @@ namespace AbMath.Utilities
         {
             public static double Sin(params double[] Arguments)
             {
+                // -1 <= sin(x) <= 1
                 return Math.Sin(Arguments[0]);
             }
 
