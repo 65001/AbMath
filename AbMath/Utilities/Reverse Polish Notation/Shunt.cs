@@ -23,7 +23,7 @@ namespace AbMath.Utilities
             Term Token;
             Term Ahead;
 
-            //TODO: Implement Variadic Functions
+            //TODO: Implement Variadic Function
             //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
             Stack<int> Arity;
 
@@ -91,6 +91,12 @@ namespace AbMath.Utilities
                         Type = "Implicit Right";
                         Implicit();
                     }
+                    else if (Prev.Type == RPN.Type.RParen && Token.Type == RPN.Type.Function )
+                    {
+                        Type = "Implicit Left Functional";
+                        OperatorRule(GenerateMultiply());
+                        WriteFunction(Token);
+                    }
                     else
                     {
                         switch (Token.Type)
@@ -104,10 +110,6 @@ namespace AbMath.Utilities
                                 Action = "Added token to stack";
                                 Type = "Function";
                                 WriteFunction(Token);
-                                if (Data.Functions[Token.Value].Arguments > 0)
-                                {
-                                    Arity.Push(1);
-                                }
                                 break;
                             case RPN.Type.Operator:
                                 Type = "Operator";
@@ -252,13 +254,17 @@ namespace AbMath.Utilities
 
             bool Chain()
             {
-                return LeftImplicit() == true && RightImplicit() == true;
+                return LeftImplicit()  && RightImplicit();
             }
 
             void WriteFunction(Term Function)
             {
                 Operator.Push(Function);
                 Arity.Push(0);
+                if (Data.Functions[Function.Value].Arguments > 0)
+                {
+                    Arity.Push(1);
+                }
             }
 
             Term GenerateMultiply()
@@ -268,7 +274,7 @@ namespace AbMath.Utilities
 
             Term GenerateNull()
             {
-                return new Term { Type = RPN.Type.Null };
+                return new Term { Type = Type.Null };
             }
 
             
@@ -280,9 +286,9 @@ namespace AbMath.Utilities
             {
                 while (Operator.Count > 0)
                 {
-                    Term Peek = Operator.Peek();
+                    Term peek = Operator.Peek();
 
-                    if (Peek.Type == Type.LParen || Peek.Type == Type.RParen)
+                    if (peek.Type == Type.LParen || peek.Type == Type.RParen)
                     {
                         throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }
@@ -296,9 +302,9 @@ namespace AbMath.Utilities
                 }
             }
 
-            void Write(string Message)
+            void Write(string message)
             {
-                Logger?.Invoke(this, Message);
+                Logger?.Invoke(this, message);
             }
         }
     }

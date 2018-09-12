@@ -10,24 +10,24 @@ namespace AbMath.Utilities
     {
         public class Data
         {
-            Dictionary<string,Functions> functions;
-            Dictionary<string,Operators> operators;
-            Dictionary<string, string> aliases;
+            private readonly Dictionary<string,Function> functions;
+            private readonly Dictionary<string,Operator> operators;
+            private readonly Dictionary<string, string> aliases;
 
-            Dictionary<double, string> autoFormat;
+            private readonly Dictionary<double, string> _autoFormat;
 
-            List<string> leftbracket;
-            List<string> rightbracket;
-            List<string> variables;
-            Dictionary<string, string> variableStore;
+            private readonly List<string> leftbracket;
+            private readonly List<string> rightbracket;
+            private List<string> variables;
+            private readonly Dictionary<string, string> variableStore;
 
-            public IReadOnlyDictionary<string,Functions> Functions { get { return functions; } }
-            public IReadOnlyDictionary<string,Operators> Operators { get { return operators; } }
-            public IReadOnlyDictionary<string, string> Aliases { get { return aliases; ; } }
-            public IReadOnlyDictionary<double,string> Format { get { return autoFormat; }}
-            public IReadOnlyList<string> LeftBracket { get { return leftbracket; } }
-            public IReadOnlyList<string> RightBracket { get { return rightbracket; } }
-            public IReadOnlyList<string> Variables { get { return variables; } }
+            public IReadOnlyDictionary<string,Function> Functions => functions; 
+            public IReadOnlyDictionary<string,Operator> Operators => operators; 
+            public IReadOnlyDictionary<string, string> Aliases =>  aliases; 
+            public IReadOnlyDictionary<double,string> Format => _autoFormat; 
+            public IReadOnlyList<string> LeftBracket => leftbracket; 
+            public IReadOnlyList<string> RightBracket => rightbracket;
+            public IReadOnlyList<string> Variables => variables; 
 
             public string Equation;
             public Queue<Term> Polish { get; set; }
@@ -37,10 +37,10 @@ namespace AbMath.Utilities
             public Data(string equation)
             {
                 Equation = equation;
-                functions = new Dictionary<string, Functions>();
-                operators = new Dictionary<string, Operators>();
+                functions = new Dictionary<string, Function>();
+                operators = new Dictionary<string, Operator>();
                 aliases = new Dictionary<string, string>();
-                autoFormat = new Dictionary<double, string>();
+                _autoFormat = new Dictionary<double, string>();
 
                 leftbracket = new List<string>();
                 rightbracket = new List<string>();
@@ -69,37 +69,37 @@ namespace AbMath.Utilities
                 aliases.Add(key, value);
             }
 
-            public void AddVariable(string Token)
+            public void AddVariable(string token)
             {
                 ContainsVariables = true;
-                variables.Add(Token);
+                variables.Add(token);
                 variables = variables.Distinct().ToList();
             }
 
-            public void AddStore(string Variable,string Value)
+            public void AddStore(string variable,string value)
             {
-                AddVariable(Variable);
-                if (variableStore.ContainsKey(Variable))
+                AddVariable(variable);
+                if (variableStore.ContainsKey(variable))
                 {
-                    variableStore[Variable] = Value;
+                    variableStore[variable] = value;
                     return;
                 }
-                variableStore.Add(Variable, Value);
+                variableStore.Add(variable, value);
             }
 
-            public void AddFunction(string Key, Functions Func)
+            public void AddFunction(string key, Function func)
             {
-                functions.Add(Key, Func);
+                functions.Add(key, func);
             }
 
-            public void AddOperator(string Key, Operators Ops)
+            public void AddOperator(string key, Operator ops)
             {
-                operators.Add(Key, Ops);
+                operators.Add(key, ops);
             }
 
             public void AddFormat(double number, string format)
             {
-                autoFormat.Add(number,format);
+                _autoFormat.Add(number,format);
             }
 
             public bool IsOperator(string value)
@@ -112,7 +112,7 @@ namespace AbMath.Utilities
                 return term.Type == Type.Operator;
             }
 
-            public bool IsUniary(string value)
+            public bool IsUnary(string value)
             {
                 return IsOperator(value) && (value == "-" || value == "−" || value == "+");
             }
@@ -180,150 +180,150 @@ namespace AbMath.Utilities
 
             void DefaultOperators()
             {
-                AddOperator("^", new Operators
+                AddOperator("^", new Operator
                 {
                     Assoc = Assoc.Right,
                     weight = 4,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Power)
+                    Compute = DoOperators.Power
                 });
 
-                AddOperator("E", new Operators
+                AddOperator("E", new Operator
                 {
                     Assoc = Assoc.Right,
                     weight = 4,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.E)
+                    Compute = DoOperators.E
                 });
 
-                AddOperator("!", new Operators
+                AddOperator("!", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 4,
                     Arguments = 1,
-                    Compute = new Run(DoOperators.Factorial)
+                    Compute = DoOperators.Factorial
                 });
 
-                AddOperator("%", new Operators
+                AddOperator("%", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 3,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Mod)
+                    Compute = DoOperators.Mod
                 });
 
-                AddOperator("/", new Operators
+                AddOperator("/", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 3,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Divide)
+                    Compute = DoOperators.Divide
                 });
 
-                AddOperator("*", new Operators
+                AddOperator("*", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 3,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Multiply)
+                    Compute = DoOperators.Multiply
                 });
 
-                AddOperator("+", new Operators
+                AddOperator("+", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 2,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Add)
+                    Compute = DoOperators.Add
                 });
 
-                AddOperator("++", new Operators
+                AddOperator("++", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 2,
                     Arguments = 1,
-                    Compute = new Run(DoOperators.AddSelf)
+                    Compute = DoOperators.AddSelf
                 });
 
-                AddOperator("−", new Operators
+                AddOperator("−", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 2,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Subtract)
+                    Compute = DoOperators.Subtract
                 });
 
-                AddOperator("-", new Operators
+                AddOperator("-", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 2,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Subtract)
+                    Compute = DoOperators.Subtract
                 });
 
                 //Evaluations
-                AddOperator(">", new Operators
+                AddOperator(">", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.GreateerThan)
+                    Compute = DoOperators.GreateerThan
                 });
 
-                AddOperator("<", new Operators
+                AddOperator("<", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.LessThan)
+                    Compute = DoOperators.LessThan
                 });
 
-                AddOperator("=", new Operators
+                AddOperator("=", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Equals)
+                    Compute = DoOperators.Equals
                 });
 
-                AddOperator(">=", new Operators
+                AddOperator(">=", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.GreaterThanOrEquals)
+                    Compute = DoOperators.GreaterThanOrEquals
                 });
 
-                AddOperator("<=", new Operators
+                AddOperator("<=", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.LessThanOrEquals)
+                    Compute = DoOperators.LessThanOrEquals
                 });
 
                 //Logic
-                AddOperator("!=", new Operators
+                AddOperator("!=", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.NotEquals)
+                    Compute = DoOperators.NotEquals
                 });
 
-                AddOperator("&&", new Operators
+                AddOperator("&&", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.And)
+                    Compute = DoOperators.And
                 });
 
-                AddOperator("||", new Operators
+                AddOperator("||", new Operator
                 {
                     Assoc = Assoc.Left,
                     weight = 1,
                     Arguments = 2,
-                    Compute = new Run(DoOperators.Or)
+                    Compute = DoOperators.Or
                 });
 
                 //Assingment Operators
@@ -333,82 +333,82 @@ namespace AbMath.Utilities
 
             void DefaultFunctions()
             {
-                AddFunction("sin", new Functions
+                AddFunction("sin", new Function
                 {
                     Arguments = 1,
-                    Compute = new Run(DoFunctions.Sin)
+                    Compute = DoFunctions.Sin
                 });
 
-                AddFunction("cos", new Functions
+                AddFunction("cos", new Function
                 {
                     Arguments = 1,
-                    Compute = new Run(DoFunctions.Cos)
+                    Compute = DoFunctions.Cos
                 });
 
-                AddFunction("tan", new Functions
+                AddFunction("tan", new Function
                 {
                     Arguments = 1,
-                    Compute = new Run(DoFunctions.Tan)
+                    Compute = DoFunctions.Tan
                 });
 
-                AddFunction("max", new Functions
+                AddFunction("max", new Function
                 {
                     Arguments = 2,
-                    Compute = new Run(DoFunctions.Max)
+                    Compute = DoFunctions.Max
                 });
 
-                AddFunction("min", new Functions
+                AddFunction("min", new Function
                 {
                     Arguments = 2,
-                    Compute = new Run(DoFunctions.Min)
+                    Compute = DoFunctions.Min
                 });
 
-                AddFunction("sqrt", new Functions
+                AddFunction("sqrt", new Function
                 {
                     Arguments = 1,
-                    Compute = new Run(DoFunctions.Sqrt)
+                    Compute = DoFunctions.Sqrt
                 });
 
-                AddFunction("round", new Functions
+                AddFunction("round", new Function
                 {
                     Arguments = 2,
-                    Compute = new Run(DoFunctions.Round)
+                    Compute = DoFunctions.Round
                 });
 
-                AddFunction("gcd", new Functions
+                AddFunction("gcd", new Function
                 {
                     Arguments = 2,
-                    Compute = new Run(DoFunctions.Gcd)
+                    Compute = DoFunctions.Gcd
                 });
 
-                AddFunction("lcm", new Functions
+                AddFunction("lcm", new Function
                 {
                     Arguments = 2,
-                    Compute = new Run(DoFunctions.Lcm)
+                    Compute = DoFunctions.Lcm
                 });
 
-                AddFunction("ln", new Functions
+                AddFunction("ln", new Function
                 {
                     Arguments = 1,
-                    Compute = new Run(DoFunctions.ln)
+                    Compute = DoFunctions.ln
                 });
 
-                AddFunction("log", new Functions
+                AddFunction("log", new Function
                 {
                     Arguments = 2,
-                    Compute = new Run(DoFunctions.Log)
+                    Compute = DoFunctions.Log
                 });
 
-                AddFunction("pi", new Functions
+                AddFunction("pi", new Function
                 {
                     Arguments = 0,
-                    Compute = new Run(DoFunctions.Pi)
+                    Compute = DoFunctions.Pi
                 });
 
-                AddFunction("e", new Functions
+                AddFunction("e", new Function
                 {
                     Arguments = 0,
-                    Compute = new Run(DoFunctions.EContstant)
+                    Compute = DoFunctions.EContstant
                 });
             }
 

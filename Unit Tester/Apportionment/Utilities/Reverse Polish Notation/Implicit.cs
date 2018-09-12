@@ -124,6 +124,19 @@ namespace AbMath.Tests
             }
         }
 
+        [Test]
+        public void MultipleFunctions()
+        {
+            RPN Test = new RPN("sin(x)sin(x)");
+            Test.Logger += Write;
+            Test.Compute();
+
+            if ("x sin x sin *" != Test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
         public void Write(object sender, string Event)
         {
             Console.WriteLine(Event);

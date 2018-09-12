@@ -63,7 +63,7 @@ namespace AbMath.Utilities
                         break;
                     case RPN.Type.Operator:
                         {
-                            RPN.Operators Operator = Data.Operators[Token.Value];
+                            RPN.Operator Operator = Data.Operators[Token.Value];
                             double[] Arguments = GetArguments(Token.Arguments);
                             double Ans = Operator.Compute(Arguments);
                             Stack.Push(Ans);
@@ -71,9 +71,9 @@ namespace AbMath.Utilities
                         break;
                     case RPN.Type.Function:
                         {
-                            RPN.Functions functions = Data.Functions[Token.Value];
+                            RPN.Function function = Data.Functions[Token.Value];
                             double[] Arguments = GetArguments(Token.Arguments);
-                            double Ans = functions.Compute(Arguments);
+                            double Ans = function.Compute(Arguments);
                             Stack.Push(Ans);
                         }
                         break;

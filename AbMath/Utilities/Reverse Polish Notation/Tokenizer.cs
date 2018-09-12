@@ -67,7 +67,7 @@ namespace AbMath.Utilities
                         WriteToken("WhiteSpace");
                     }
                     //Unary Input at the start of the input or after another operator or left parenthesis
-                    else if ((i == 0 && Data.IsUniary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken)) && Data.IsUniary(Character) && Data.IsNumber(Token) == false && 
+                    else if ((i == 0 && Data.IsUnary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken)) && Data.IsUnary(Character) && Data.IsNumber(Token) == false && 
                         Data.IsOperator(Character + ReadAhead) == false))
                     {
                         Rule = "Uniary";

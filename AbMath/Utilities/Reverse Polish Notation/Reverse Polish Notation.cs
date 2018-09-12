@@ -19,7 +19,7 @@ namespace AbMath.Utilities
     //Generify
     //Auto Scaling from decimal to double to Big Integer
     //Complex Number Support sqrt(-1) = i
-    //Add Implement Variadic Functions
+    //Add Implement Variadic Function
 
     //TODO
     //Add a data class so that other classes such as
@@ -36,7 +36,7 @@ namespace AbMath.Utilities
         public event EventHandler<string> Logger;
 
 
-        public struct Operators
+        public struct Operator
         {
             public double weight;
             public Assoc Assoc;
@@ -45,7 +45,7 @@ namespace AbMath.Utilities
             public Store Store;
         }
 
-        public struct Functions
+        public struct Function
         {
             public int Arguments;
             public Run Compute;
