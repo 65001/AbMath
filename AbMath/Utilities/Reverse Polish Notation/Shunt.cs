@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using System.Text;
 using AbMath.CLITables;
 
@@ -80,7 +81,7 @@ namespace AbMath.Utilities
                         Type = "Implicit Left";
                         Implicit();
                     }
-                    else if (Prev.Type != RPN.Type.Null && (Prev.Type == RPN.Type.RParen && Token.Type == RPN.Type.LParen) || (Prev.Type == RPN.Type.Variable && Token.Type == RPN.Type.Number)) 
+                    else if (!Prev.IsNull()  && (Prev.IsRightBracket() && Token.IsLeftBracket()) || (Prev.IsVariable() && Token.IsNumber())) 
                     {
                         Type = "Implicit Left 2";
                         OperatorRule(GenerateMultiply());
@@ -91,7 +92,7 @@ namespace AbMath.Utilities
                         Type = "Implicit Right";
                         Implicit();
                     }
-                    else if (Prev.Type == RPN.Type.RParen && Token.Type == RPN.Type.Function )
+                    else if (Prev.IsRightBracket() && Token.IsFunction())
                     {
                         Type = "Implicit Left Functional";
                         OperatorRule(GenerateMultiply());
@@ -174,7 +175,7 @@ namespace AbMath.Utilities
 
             void RightBracketRule(Term Token)
             {
-                while (Operator.Peek().Type != RPN.Type.LParen)
+                while (!Operator.Peek().IsLeftBracket())
                 {
                     if (Operator.Count == 0)
                     {
@@ -213,7 +214,7 @@ namespace AbMath.Utilities
             {
                 //TODO: Revisit 
                 bool Go = true;
-                while (DoOperatorRule(Token) == true && Go == true)
+                while (DoOperatorRule(Token) && Go)
                 {
                     Output.Enqueue(Operator.Pop());
 
@@ -244,12 +245,12 @@ namespace AbMath.Utilities
 
             bool LeftImplicit()
             {
-                return Ahead.Type != RPN.Type.Null && (Token.Type == RPN.Type.Number || Token.Type == RPN.Type.Variable) && (Ahead.Type == RPN.Type.Function || Ahead.Type == RPN.Type.LParen || Ahead.Type == RPN.Type.Variable);
+                return !Ahead.IsNull() && (Token.IsNumber() || Token.IsVariable()) && (Ahead.IsFunction() || Ahead.IsLeftBracket() || Ahead.IsVariable());
             }
 
             bool RightImplicit()
             {
-                return Prev.Type != RPN.Type.Null && Prev.Value != "," && Prev.Type == RPN.Type.RParen && (Token.Type == RPN.Type.Number || Token.Type == RPN.Type.Variable);
+                return !Prev.IsNull() && Prev.Value != "," && Prev.IsRightBracket() && (Token.IsNumber() || Token.IsVariable());
             }
 
             bool Chain()
@@ -299,6 +300,7 @@ namespace AbMath.Utilities
                         Arity.Pop();
                     }
                     Output.Enqueue(output);
+                    
                 }
             }
 

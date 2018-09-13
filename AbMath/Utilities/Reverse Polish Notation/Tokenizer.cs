@@ -12,7 +12,7 @@ namespace AbMath.Utilities
         public class Tokenizer : ITokenizer<Term>
         {
             private Data Data;
-            private string Equation { get { return Data.Equation; } }
+            private string Equation => Data.Equation; 
 
             private string Token;
             private string Character;

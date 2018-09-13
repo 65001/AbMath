@@ -40,12 +40,17 @@ namespace AbMath.Utilities
 
     public static class TermExtensions
     {
-        public static bool IsNumber(this Term Term)
+        public static bool IsNumber(this Term term)
         {
-            return Term.Type == RPN.Type.Number;
+            return term.Type == RPN.Type.Number;
         }
 
-        public static bool IsFunction(this RPN.Term term)
+        public static bool IsNull(this Term term)
+        {
+            return term.Type == RPN.Type.Null;
+        }
+
+        public static bool IsFunction(this Term term)
         {
             return term.Type == RPN.Type.Function;
         }

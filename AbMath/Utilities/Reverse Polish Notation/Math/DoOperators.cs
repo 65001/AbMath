@@ -50,10 +50,23 @@ namespace AbMath.Utilities
             //TODO Implement
             public static double Factorial(params double[] Arguments)
             {
-                double i = Arguments[0];
-                if (i <= 1)
-                    return 1;
-                return i * Factorial(i - 1);
+                double max = Arguments[0];
+                if (max < 0)
+                {
+                    return double.NaN;
+                }
+
+                double answer = 1;
+                for (int i = 1; i <= max; i++)
+                {
+                    answer *= i;
+
+                    if (answer >= double.PositiveInfinity)
+                    {
+                        break;
+                    }
+                }
+                return answer;
             }
 
             public static double GreateerThan(params double[] Arguments)

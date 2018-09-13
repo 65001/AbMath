@@ -82,6 +82,12 @@ namespace AbMath.Utilities
                 return Math.Log(Arguments[0], Arguments[1]);
             }
 
+            public static double Sum(params double[] Arguments)
+            {
+
+                return 0;
+            }
+
             //Constants 
             public static double Pi(params double[] Arguments)
             {

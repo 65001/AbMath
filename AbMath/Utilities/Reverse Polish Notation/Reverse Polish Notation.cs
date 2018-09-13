@@ -55,6 +55,7 @@ namespace AbMath.Utilities
         public struct Term
         {
             public string Value { get; set; }
+
             public int Arguments;
             public Type Type { get; set; }
             public override string ToString()
@@ -69,7 +70,7 @@ namespace AbMath.Utilities
         public Queue<Term> Polish;
         public List<Term> Tokens;
 
-        public bool ContainsVariables { get { return data.ContainsVariables; } }
+        public bool ContainsVariables  => data.ContainsVariables; 
 
         ITokenizer<Term> tokenizer;
         IShunt<Term> shunt;
