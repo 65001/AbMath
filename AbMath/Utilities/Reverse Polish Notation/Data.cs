@@ -410,6 +410,13 @@ namespace AbMath.Utilities
                     Arguments = 0,
                     Compute = DoFunctions.EContstant
                 });
+
+                AddFunction("bounded",new Function()
+                    {
+                        Arguments = 3,
+                        Compute = DoFunctions.Bounded
+                    }
+                );
             }
 
             void DefaultFormats()

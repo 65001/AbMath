@@ -67,13 +67,18 @@ namespace AbMath.Utilities
                         WriteToken("WhiteSpace");
                     }
                     //Unary Input at the start of the input or after another operator or left parenthesis
-                    else if ((i == 0 && Data.IsUnary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken)) && Data.IsUnary(Character) && Data.IsNumber(Token) == false && 
-                        Data.IsOperator(Character + ReadAhead) == false))
+                    else if ((i == 0 && Data.IsUnary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken) || PrevToken ==",") && Data.IsUnary(Character) && !Data.IsNumber(Token) && 
+                        !Data.IsOperator(Character + ReadAhead)))
                     {
-                        Rule = "Uniary";
+                        Rule = "Unary";
                         Token += Character;
+                        if(!string.IsNullOrWhiteSpace(ReadAhead) && Data.IsVariable(ReadAhead))
+                        {
+                            Token += "1";
+                            WriteToken("Unary");
+                        }
                     }
-                    else if ( ( Data.IsNumber(Token) ) && ( Data.IsVariable(Character) || Data.IsLeftBracket(Character)))
+                    else if ( ( Data.IsNumber(Token) ) && ( Data.IsVariable(Character) || Data.IsLeftBracket(Character) || Data.IsFunction(Character)))
                     {
                         WriteToken("Left Implicit");
                         Token = Character;

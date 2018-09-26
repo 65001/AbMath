@@ -56,6 +56,27 @@ namespace AbMath.Utilities
                 return Arguments[1];
             }
 
+            public static double Bounded(params double[] Arguments)
+            {
+                //0 - Test, 1 - Floor , 2 - Ceiling 
+                if (Arguments[1] <= Arguments[0] && Arguments[0] <= Arguments[2])
+                {
+                    return Arguments[0];
+                }
+
+                if (Arguments[1] >= Arguments[0])
+                {
+                    return Arguments[1];
+                }
+
+                if (Arguments[2] <= Arguments[0])
+                {
+                    return Arguments[2];
+                }
+
+                return Arguments[0];
+            }
+
             public static double Lcm(params double[] Arguments)
             {
                 return (Arguments[0] * Arguments[1]) / Gcd(Arguments);

@@ -14,9 +14,9 @@ namespace Test_Console
             Console.WriteLine("(C) 2018. Abhishek Sathiabalan");
 
             Console.WriteLine("Recent Changes:");
-            Console.WriteLine("Uniary negative is now implemented.");
+            Console.WriteLine("Unary negative is now implemented.");
             Console.WriteLine("Composite Function bug should now be fixed.");
-            Console.WriteLine("Implict multiplication.");
+            Console.WriteLine("Implicit multiplication.");
 
             Console.WriteLine("");
             Console.WriteLine("Known Bugs:");

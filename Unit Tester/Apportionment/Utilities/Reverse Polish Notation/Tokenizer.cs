@@ -8,12 +8,36 @@ namespace AbMath.Tests
     public class TokenizerTest
     {
         [Test]
+        public void UnaryFunction()
+        {
+            RPN test = new RPN("-pi");
+            test.Logger += Write;
+            test.Compute();
+            if ("-1 pi *" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void ComplexFunction()
         {
             RPN test = new RPN("sin(16pi)");
             test.Logger += Write;
             test.Compute();
             if ("16 pi * sin" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void ConstantFunction()
+        {
+            RPN test = new RPN("2e");
+            test.Logger += Write;
+            test.Compute();
+            if ("2 e *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
