@@ -27,18 +27,15 @@ namespace AbMath.Utilities
 
     public partial class RPN
     {
-        public enum Assoc { Left, Right };
-
         public enum Type {LParen,RParen,Number,Variable,Function,Operator,Null };
         public delegate double Run(params double[] arguments);
         public delegate void Store(ref Data data,params string[] arguments);
 
         public event EventHandler<string> Logger;
 
-
         public struct Operator
         {
-            public double weight;
+            public double Weight;
             public Assoc Assoc;
             public int Arguments;
             public Run Compute;
@@ -65,7 +62,7 @@ namespace AbMath.Utilities
 
         }
 
-        public string Equation;
+        public string Equation { get; private set; }
 
         public Queue<Term> Polish;
         public List<Term> Tokens;
@@ -108,6 +105,17 @@ namespace AbMath.Utilities
             Startup();
             tokenizer = CustomTokenizer;
             shunt = CustomShunter;
+        }
+
+        /**
+         * Set's a new equation with the default Tokenizer
+         */
+        public void SetEquation(string equation)
+        {
+            Equation = equation;
+            data = new Data(Equation);
+            tokenizer = new Tokenizer(data);
+            shunt = new Shunt(data);
         }
 
         private void Startup()

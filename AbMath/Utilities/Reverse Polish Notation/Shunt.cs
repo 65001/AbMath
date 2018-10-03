@@ -233,8 +233,8 @@ namespace AbMath.Utilities
                     return Operator.Count > 0 &&
                             (
                                 (Data.IsFunction(Operator.Peek().Value) == true) ||
-                                (Data.Operators[Operator.Peek().Value].weight > Data.Operators[Token.Value].weight) ||
-                                (Data.Operators[Operator.Peek().Value].weight == Data.Operators[Token.Value].weight && Data.Operators[Token.Value].Assoc == Assoc.Left)
+                                (Data.Operators[Operator.Peek().Value].Weight > Data.Operators[Token.Value].Weight) ||
+                                (Data.Operators[Operator.Peek().Value].Weight == Data.Operators[Token.Value].Weight && Data.Operators[Token.Value].Assoc == Assoc.Left)
 
                             )
                             && Data.IsLeftBracket(Operator.Peek().Value) == false;

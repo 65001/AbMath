@@ -4,6 +4,7 @@ using System.Text;
 
 namespace AbMath.Utilities
 {
+    public enum Assoc { Left, Right };
     public interface IShunt<T>
     {
         Queue<T> ShuntYard(List<T> Tokens);
@@ -20,5 +21,10 @@ namespace AbMath.Utilities
     {
         T Compute();
         event EventHandler<string> Logger;
+    }
+
+    public interface IOperator<T>
+    {
+        double Weight { get; set; }
     }
 }

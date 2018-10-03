@@ -72,7 +72,7 @@ namespace AbMath.Utilities
                     {
                         Rule = "Unary";
                         Token += Character;
-                        if(!string.IsNullOrWhiteSpace(ReadAhead) && Data.IsVariable(ReadAhead))
+                        if(!string.IsNullOrWhiteSpace(ReadAhead) && (Data.IsVariable(ReadAhead) || Data.IsLeftBracket(ReadAhead) ))
                         {
                             Token += "1";
                             WriteToken("Unary");

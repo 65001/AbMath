@@ -232,6 +232,26 @@ namespace AbMath.Tests
             }
         }
 
+        [Test]
+        public void DoubleTokenize()
+        {
+            RPN test = new RPN("x * 2");
+            test.Logger += Write;
+            test.Compute();
+            if ("x 2 *" != test.Polish.Print() || test.data.ContainsVariables == false)
+            {
+                Assert.Fail();
+            }
+
+            test.SetEquation("2x + 2");
+            test.Compute();
+            if ("2 x * 2 +" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+
+        }
+
         public void Write(object sender, string Event)
         {
             Console.WriteLine(Event);

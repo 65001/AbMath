@@ -164,6 +164,7 @@ namespace AbMath.Utilities
                 AddAlias("le","<=");
                 AddAlias("and","&&");
                 AddAlias("or","||");
+                AddAlias("Σ","sum");
             }
 
             void DefaultBrackets()
@@ -183,7 +184,7 @@ namespace AbMath.Utilities
                 AddOperator("^", new Operator
                 {
                     Assoc = Assoc.Right,
-                    weight = 4,
+                    Weight = 4,
                     Arguments = 2,
                     Compute = DoOperators.Power
                 });
@@ -191,7 +192,7 @@ namespace AbMath.Utilities
                 AddOperator("E", new Operator
                 {
                     Assoc = Assoc.Right,
-                    weight = 4,
+                    Weight = 4,
                     Arguments = 2,
                     Compute = DoOperators.E
                 });
@@ -199,7 +200,7 @@ namespace AbMath.Utilities
                 AddOperator("!", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 4,
+                    Weight = 4,
                     Arguments = 1,
                     Compute = DoOperators.Factorial
                 });
@@ -207,7 +208,7 @@ namespace AbMath.Utilities
                 AddOperator("%", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 3,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Mod
                 });
@@ -215,7 +216,7 @@ namespace AbMath.Utilities
                 AddOperator("/", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 3,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Divide
                 });
@@ -223,7 +224,7 @@ namespace AbMath.Utilities
                 AddOperator("*", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 3,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Multiply
                 });
@@ -231,7 +232,7 @@ namespace AbMath.Utilities
                 AddOperator("+", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 2,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Add
                 });
@@ -239,7 +240,7 @@ namespace AbMath.Utilities
                 AddOperator("++", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 2,
+                    Weight = 2,
                     Arguments = 1,
                     Compute = DoOperators.AddSelf
                 });
@@ -247,7 +248,7 @@ namespace AbMath.Utilities
                 AddOperator("−", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 2,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Subtract
                 });
@@ -255,7 +256,7 @@ namespace AbMath.Utilities
                 AddOperator("-", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 2,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Subtract
                 });
@@ -264,7 +265,7 @@ namespace AbMath.Utilities
                 AddOperator(">", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.GreateerThan
                 });
@@ -272,7 +273,7 @@ namespace AbMath.Utilities
                 AddOperator("<", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.LessThan
                 });
@@ -280,7 +281,15 @@ namespace AbMath.Utilities
                 AddOperator("=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
+                    Arguments = 2,
+                    Compute = DoOperators.Equals
+                });
+
+                AddOperator("==", new Operator
+                {
+                    Assoc = Assoc.Left,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.Equals
                 });
@@ -288,7 +297,7 @@ namespace AbMath.Utilities
                 AddOperator(">=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.GreaterThanOrEquals
                 });
@@ -296,7 +305,7 @@ namespace AbMath.Utilities
                 AddOperator("<=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.LessThanOrEquals
                 });
@@ -305,7 +314,7 @@ namespace AbMath.Utilities
                 AddOperator("!=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.NotEquals
                 });
@@ -313,7 +322,7 @@ namespace AbMath.Utilities
                 AddOperator("&&", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.And
                 });
@@ -321,14 +330,14 @@ namespace AbMath.Utilities
                 AddOperator("||", new Operator
                 {
                     Assoc = Assoc.Left,
-                    weight = 1,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.Or
                 });
 
                 //Assingment Operators
-                //AddOperator(":", new Operators {Assoc = Assoc.Left,weight = 0, Arguments = 2, Compute = new Run(DoOperators.Store));
-                //AddOperator("<-", new Operators { Assoc = Assoc.Left, weight = 0, Arguments = 2 });
+                //AddOperator(":", new Operators {Assoc = Assoc.Left,Weight = 0, Arguments = 2, Compute = new Run(DoOperators.Store));
+                //AddOperator("<-", new Operators { Assoc = Assoc.Left, Weight = 0, Arguments = 2 });
             }
 
             void DefaultFunctions()
@@ -415,6 +424,13 @@ namespace AbMath.Utilities
                     {
                         Arguments = 3,
                         Compute = DoFunctions.Bounded
+                    }
+                );
+
+                AddFunction("sum", new Function()
+                    {
+                        Arguments = 3,
+                        Compute = DoFunctions.Sum
                     }
                 );
             }

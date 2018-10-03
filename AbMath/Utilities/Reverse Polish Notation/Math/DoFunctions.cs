@@ -105,8 +105,14 @@ namespace AbMath.Utilities
 
             public static double Sum(params double[] Arguments)
             {
-
-                return 0;
+                double sum = 0;
+                int lowerBound = (int)Arguments[1];
+                int upperBound = (int)Arguments[2];
+                for (int i = lowerBound; i < upperBound; i++)
+                {
+                    sum += Arguments[0];
+                }
+                return sum;
             }
 
             //Constants 
