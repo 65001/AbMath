@@ -10,11 +10,11 @@ namespace AbMath.Tests
         [Test]
         public void Left()
         {
-            RPN Test = new RPN("4sin(2)");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("4sin(2)");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("2 sin 4 *" != Test.Polish.Print() && "4 2 sin *" != Test.Polish.Print())
+            if ("2 sin 4 *" != test.Polish.Print() && "4 2 sin *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -23,11 +23,11 @@ namespace AbMath.Tests
         [Test]
         public void LeftBracket()
         {
-            RPN Test = new RPN("4(2)");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("4(2)");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("2 4 *" != Test.Polish.Print() && "4 2 *" != Test.Polish.Print())
+            if ("2 4 *" != test.Polish.Print() && "4 2 *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -36,11 +36,11 @@ namespace AbMath.Tests
         [Test]
         public void LeftEOS()
         {
-            RPN Test = new RPN("2x");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("2x");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("x 2 *" != Test.Polish.Print() && "2 x *" != Test.Polish.Print())
+            if ("x 2 *" != test.Polish.Print() && "2 x *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -49,11 +49,11 @@ namespace AbMath.Tests
         [Test]
         public void LeftVariable()
         {
-            RPN Test = new RPN("x2");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("x2");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("x 2 *" != Test.Polish.Print())
+            if ("x 2 *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -62,11 +62,11 @@ namespace AbMath.Tests
         [Test]
         public void Mix()
         {
-            RPN Test = new RPN("12(3) + 8(1.01)");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("12(3) + 8(1.01)");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("12 3 * 8 1.01 * +" != Test.Polish.Print())
+            if ("12 3 * 8 1.01 * +" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -75,11 +75,11 @@ namespace AbMath.Tests
         [Test]
         public void Right()
         {
-            RPN Test = new RPN("sin(2)4");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("sin(2)4");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("2 sin 4 *" != Test.Polish.Print())
+            if ("2 sin 4 *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -88,11 +88,11 @@ namespace AbMath.Tests
         [Test]
         public void RightBracket()
         {
-            RPN Test = new RPN("(2)4");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("(2)4");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("2 4 *" != Test.Polish.Print())
+            if ("2 4 *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -101,11 +101,11 @@ namespace AbMath.Tests
         [Test]
         public void VariableLeft()
         {
-            RPN Test = new RPN("x(y)");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("x(y)");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("y x *" != Test.Polish.Print() && "x y *" != Test.Polish.Print())
+            if ("y x *" != test.Polish.Print() && "x y *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -114,11 +114,11 @@ namespace AbMath.Tests
         [Test]
         public void VariableRight()
         {
-            RPN Test = new RPN("(x)(y)");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("(x)(y)");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("x y *" != Test.Polish.Print())
+            if ("x y *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -127,11 +127,24 @@ namespace AbMath.Tests
         [Test]
         public void MultipleFunctions()
         {
-            RPN Test = new RPN("sin(x)sin(x)");
-            Test.Logger += Write;
-            Test.Compute();
+            RPN test = new RPN("sin(x)sin(x)");
+            test.Logger += Write;
+            test.Compute();
 
-            if ("x sin x sin *" != Test.Polish.Print())
+            if ("x sin x sin *" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Unary()
+        {
+            RPN test = new RPN("-(3^2)");
+            test.Logger += Write;
+            test.Compute();
+
+            if ("-1 3 2 ^ *" != test.Polish.Print())
             {
                 Assert.Fail();
             }

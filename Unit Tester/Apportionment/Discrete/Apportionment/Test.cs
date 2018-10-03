@@ -11,64 +11,64 @@ namespace AbMath.Tests
         [Test]
         public void Hamilton()
         {
-            Dictionary<string, double> Expected = new Dictionary<string, double>()
+            Dictionary<string, double> expected = new Dictionary<string, double>()
             {
                 { "VA", 1 },
                 { "CA", 2 },
                 { "FL", 1 },
                 { "WV", 1}
             };
-            Dictionary<string, double> Pop = new Dictionary<string, double>() {
+            Dictionary<string, double> pop = new Dictionary<string, double>() {
                 { "VA", 5 },
                 { "CA", 7 },
                 { "FL", 4 },
                 { "WV",2 } };
 
-            double Allocation = 5;
-            Run(new Hamilton<string>(Pop, Allocation), Expected);
+            double allocation = 5;
+            Run(new Hamilton<string>(pop, allocation), expected);
         }
 
         [Test]
         public void Jefferson()
         {
-            Dictionary<string, double> Expected = new Dictionary<string, double>()
+            Dictionary<string, double> expected = new Dictionary<string, double>()
             {
                 { "Eng", 3 },
                 { "History", 7 },
                 { "Psych", 5 }
             };
-            Dictionary<string, double> Pop = new Dictionary<string, double>() {
+            Dictionary<string, double> pop = new Dictionary<string, double>() {
                 { "Eng", 231 },
                 { "History", 502 },
                 { "Psych", 355 } };
 
-            double Allocation = 15;
-            Run(new Jefferson<string>(Pop, Allocation), Expected);
+            double allocation = 15;
+            Run(new Jefferson<string>(pop, allocation), expected);
         }
 
         [Test]
         public void Webster()
         {
-            Dictionary<string, double> Expected = new Dictionary<string, double>()
+            Dictionary<string, double> expected = new Dictionary<string, double>()
             {
                 { "A", 3 },
                 { "B", 2 },
                 { "C", 2 },
             };
-            Dictionary<string, double> Pop = new Dictionary<string, double>() {
+            Dictionary<string, double> pop = new Dictionary<string, double>() {
                { "A", 53 },
                { "B", 24 },
                { "C", 23 }
             };
 
-            double Allocation = 7;
-            Run(new Webster<string>(Pop, Allocation), Expected);
+            double allocation = 7;
+            Run(new Webster<string>(pop, allocation), expected);
         }
 
         [Test]
         public void HunningtonHill()
         {
-            Dictionary<string, double> Expected = new Dictionary<string, double>()
+            Dictionary<string, double> expected = new Dictionary<string, double>()
             {
                 {"A",2 },
                 {"B",6 },
@@ -77,7 +77,7 @@ namespace AbMath.Tests
                 {"E",7 },
                 {"Z",5 }
             };
-            Dictionary<string, double> Pop = new Dictionary<string, double>()
+            Dictionary<string, double> pop = new Dictionary<string, double>()
             {
                 {"A",24000 },
                 {"B",56000 },
@@ -87,21 +87,21 @@ namespace AbMath.Tests
                 {"Z",47000 }
             };
 
-            double Allocation = 25;
-            Run(new Hunnington<string>(Pop, Allocation), Expected);
+            double allocation = 25;
+            Run(new Hunnington<string>(pop, allocation), expected);
         }
 
-        static void Run<T>(IApportionment<T> Test, Dictionary<T, double> Expected)
+        static void Run<T>(IApportionment<T> test, Dictionary<T, double> expected)
         {
-            var Results = Test.Run();
-            Verify(Expected, Results, Test);
+            var results = test.Run();
+            Verify(expected, results, test);
         }
 
-        static void Verify<T>(Dictionary<T, double> Expected, Dictionary<T, double> Results, IApportionment<T> Test)
+        private static void Verify<T>(Dictionary<T, double> expected, Dictionary<T, double> results, IApportionment<T> Test)
         {
-            foreach (KeyValuePair<T, double> kv in Results)
+            foreach (KeyValuePair<T, double> kv in results)
             {
-                if (Expected.ContainsKey(kv.Key) == false || Expected[kv.Key] != kv.Value)
+                if (expected.ContainsKey(kv.Key) == false || Math.Abs(expected[kv.Key] - kv.Value) > .0001)
                 {
                     Assert.Fail();
                 }
