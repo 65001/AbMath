@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
-using AbMath.CLITables;
+using CLI;
 
 namespace AbMath.Utilities
 {

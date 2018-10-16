@@ -167,6 +167,26 @@ namespace AbMath.Tests
             Assert.AreEqual(16, math.Compute());
         }
 
+        [Test]
+        public void ComplexReset()
+        {
+            RPN test = new RPN("x^2");
+            test.Logger += Write;
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            math.SetVariable("x", "2");
+            Assert.AreEqual(4, math.Compute());
+
+            test.SetEquation("2x");
+            test.Compute();
+
+            math = new PostFix(test);
+            math.SetVariable("x", "3");
+            Assert.AreEqual(6, math.Compute());
+
+        }
+
         public void Write(object sender,string Event)
         {
             Console.WriteLine(Event);

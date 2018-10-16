@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AbMath.CLITables
+namespace CLI
 {
 
     public enum Format { Default, MarkDown };
