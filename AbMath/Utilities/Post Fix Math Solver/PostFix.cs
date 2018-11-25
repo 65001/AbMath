@@ -71,7 +71,9 @@ namespace AbMath.Utilities
                         break;
                     case RPN.Type.Function:
                         {
+                            //Looks up the function in the Dict
                             RPN.Function function = Data.Functions[Token.Value];
+
                             double[] Arguments = GetArguments(Token.Arguments);
                             double Ans = function.Compute(Arguments);
                             Stack.Push(Ans);
@@ -102,9 +104,9 @@ namespace AbMath.Utilities
         {
             double[] Arguments = new double[ArgCount];
             
-            if (Stack.Count < ArgCount )
+           if (Stack.Count < ArgCount )
             {
-                throw new InvalidOperationException($"Syntax Error!");
+                throw new InvalidOperationException($"Syntax Error! Asked for {ArgCount} but only had {Stack.Count} in Stack");
             }
             
             for (int i = ArgCount; i > 0; i--)

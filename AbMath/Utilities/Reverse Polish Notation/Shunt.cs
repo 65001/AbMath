@@ -20,6 +20,7 @@ namespace AbMath.Utilities
             private Data Data;
             Queue<Term> Output;
             Stack<Term> Operator;
+
             Term Prev;
             Term Token;
             Term Ahead;
@@ -57,6 +58,7 @@ namespace AbMath.Utilities
                 tables.Add(new Schema { Column = "Action", Width = 30 });
 
                 Write(tables.GenerateHeaders());
+
                 for (int i = 0; i < Tokens.Count; i++)
                 {
                     Token = Tokens[i];
@@ -66,6 +68,7 @@ namespace AbMath.Utilities
                     string Action = string.Empty;
                     string Stack = string.Empty;
                     string Type = string.Empty;
+
 
                     if (Chain())
                     {
@@ -155,6 +158,26 @@ namespace AbMath.Utilities
                     Write(tables.Redraw());
                 }
 
+                Write("");
+                Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity" });
+                arityTables.Add(new Schema { Column = "#", Width = 3 });
+                arityTables.Add(new Schema { Column = "Token", Width = 10 });
+                arityTables.Add(new Schema { Column = "Arity", Width = 5 });
+                Write(arityTables.GenerateHeaders());
+
+                for (int i = 0; i < Output.Count; i++)
+                {
+                    Term arityTerm = Output.Dequeue();
+                    Output.Enqueue(arityTerm);
+
+                    string[] message =  {i.ToString(), arityTerm.Value, arityTerm.Arguments.ToString() };
+                    arityTables.Add(message);
+                    Write( arityTables.GenerateNextRow() );
+                }
+
+                Write(arityTables.GenerateFooter());
+                Write("");
+
                 SW.Stop();
                 Write($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
                 Write($"Reverse Polish Notation:\n{Output.Print()}");
@@ -183,14 +206,25 @@ namespace AbMath.Utilities
                     }
 
                     Term output = Operator.Pop();
-                    if (Arity.Count > 0)
+                    //This ensures that only functions 
+                    //can have variable number of arguments
+                    if (Data.Vardiac && output.IsFunction() )
                     {
-                        //output.Arguments = 
-                        Arity.Pop();
+                        int args = Arity.Pop();
+                        //TODO Variadic Function
+                        output.Arguments = args;
+                        //In the case of a composite function we must pop
+
+                        if (args == 0)
+                        {
+                            args = 1;
+                        }
+                        
+                        Arity.Push(args);
                     }
-                    Write("Enqueuing " + output.ToString());
                     Output.Enqueue(output);
                 }
+
                 //For functions and composite functions the to work, we must return now.
                 if (Token.Value == ",")
                 {
@@ -294,13 +328,14 @@ namespace AbMath.Utilities
                         throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }
                     var output = Operator.Pop();
-                    if (Arity.Count > 0)
+
+                    if (Data.Vardiac && Arity.Count > 0 && peek.IsFunction())
                     {
-                        //output.Arguments = 
-                        Arity.Pop();
+                        //TODO Variadic Function
+                        output.Arguments = Arity.Pop();
                     }
+
                     Output.Enqueue(output);
-                    
                 }
             }
 

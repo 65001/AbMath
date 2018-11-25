@@ -16,6 +16,7 @@ namespace AbMath.Utilities
     //ARCSIN,ARCTAN,ARCCOS
     //Random()
     //Random(Min,Max)
+
     //Generify
     //Auto Scaling from decimal to double to Big Integer
     //Complex Number Support sqrt(-1) = i
@@ -47,6 +48,7 @@ namespace AbMath.Utilities
             public int Arguments;
             public Run Compute;
             public Store Store;
+            public Stack<int> Arity;
         }
 
         public struct Term
@@ -69,8 +71,8 @@ namespace AbMath.Utilities
 
         public bool ContainsVariables  => data.ContainsVariables; 
 
-        ITokenizer<Term> tokenizer;
-        IShunt<Term> shunt;
+        ITokenizer<Term> _tokenizer;
+        IShunt<Term> _shunt;
         public Data data { get; private set; }
 
 
@@ -79,32 +81,32 @@ namespace AbMath.Utilities
         {
             Equation = equation;
             Startup();
-            tokenizer = new Tokenizer(data);
-            shunt = new Shunt(data);
+            _tokenizer = new Tokenizer(data);
+            _shunt = new Shunt(data);
         }
 
         public RPN(string equation, ITokenizer<Term> CustomTokenizer)
         {
             Equation = equation;
             Startup();
-            tokenizer = CustomTokenizer;
-            shunt = new Shunt(data);
+            _tokenizer = CustomTokenizer;
+            _shunt = new Shunt(data);
         }
 
         public RPN(string equation, IShunt<Term> CustomShunter)
         {
             Equation = equation;
             Startup();
-            tokenizer = new Tokenizer(data);
-            shunt = CustomShunter;
+            _tokenizer = new Tokenizer(data);
+            _shunt = CustomShunter;
         }
 
         public RPN(string equation, ITokenizer<Term> CustomTokenizer, IShunt<Term> CustomShunter)
         {
             Equation = equation;
             Startup();
-            tokenizer = CustomTokenizer;
-            shunt = CustomShunter;
+            _tokenizer = CustomTokenizer;
+            _shunt = CustomShunter;
         }
 
         /**
@@ -114,8 +116,8 @@ namespace AbMath.Utilities
         {
             Equation = equation;
             data = new Data(Equation);
-            tokenizer = new Tokenizer(data);
-            shunt = new Shunt(data);
+            _tokenizer = new Tokenizer(data);
+            _shunt = new Shunt(data);
         }
 
         private void Startup()
@@ -126,11 +128,11 @@ namespace AbMath.Utilities
 
         public void Compute()
         {
-            tokenizer.Logger += Logger;
-            Tokens = tokenizer.Tokenize();
+            _tokenizer.Logger += Logger;
+            Tokens = _tokenizer.Tokenize();
 
-            shunt.Logger += Logger;
-            Polish = shunt.ShuntYard(Tokens);
+            _shunt.Logger += Logger;
+            Polish = _shunt.ShuntYard(Tokens);
             data.Polish = Polish;
         }
     }

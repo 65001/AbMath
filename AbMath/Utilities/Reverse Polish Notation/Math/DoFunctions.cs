@@ -40,11 +40,16 @@ namespace AbMath.Utilities
             //Two Arguments
             public static double Max(params double[] Arguments)
             {
-                if (Arguments[0] > Arguments[1])
+                double max = 0;
+                for (int i = 0; i < Arguments.Length; i++)
                 {
-                    return Arguments[0];
+                    if (Arguments[i] > max)
+                    {
+                        max = Arguments[i];
+                    }
                 }
-                return Arguments[1];
+
+                return max;
             }
 
             public static double Min(params double[] Arguments)
