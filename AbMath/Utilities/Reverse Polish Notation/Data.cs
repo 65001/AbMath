@@ -37,7 +37,7 @@ namespace AbMath.Utilities
              * This function enables vardiac functions,
              * this currentley makes complex functions not work
              */
-            public bool Vardiac = true; 
+            public bool Vardiac = false; 
 
 
             public Data(string equation)
