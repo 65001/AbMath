@@ -6,7 +6,7 @@ namespace AbMath.Discrete.Apportionment
 {
     public class Hunnington<T> : Apportionment<T>, IApportionment<T>
     {
-        private readonly double Tolerance = .1;
+        private readonly double _tolerance = .1;
         public double Divisor { get; private set; }
         public double MaxIterations { get; private set; }
 
@@ -25,40 +25,40 @@ namespace AbMath.Discrete.Apportionment
         {
             Divisor = StandardDivisor;
 
-            int Itterations = 0;
+            int iterations = 0;
             Dictionary<T, double> Quota = (_Input.StandardQuota(Divisor)).Floor();
-            while (Quota.Sum() != Allocation)
+            while (Math.Abs(Quota.Sum() - Allocation) > .00001)
             {
 
                 if (Quota.Sum() > Allocation)
                 {
-                    Divisor += Tolerance;
+                    Divisor += _tolerance;
                 }
                 else
                 {
-                    Divisor -= Tolerance;
+                    Divisor -= _tolerance;
                 }
 
                 if (Divisor != 0)
                 {
                     Quota = _Input.StandardQuota(Divisor).Floor();
                 }
-                Dictionary<T, double> GeometricMean = new Dictionary<T, double>();
+                Dictionary<T, double> geometricMean = new Dictionary<T, double>();
                 foreach (KeyValuePair<T, double> kv in Quota)
                 {
-                    GeometricMean.Add(kv.Key, Math.Sqrt(kv.Value * (kv.Value + 1)));
+                    geometricMean.Add(kv.Key, Math.Sqrt(kv.Value * (kv.Value + 1)));
                 }
 
                 foreach (KeyValuePair<T, double> kv in Quota)
                 {
-                    if (kv.Value > GeometricMean[kv.Key])
+                    if (kv.Value > geometricMean[kv.Key])
                     {
                         Quota[kv.Key] = kv.Value + 1;
                     }
                 }
 
-                Itterations += 1;
-                if (Itterations > MaxIterations)
+                iterations += 1;
+                if (iterations > MaxIterations)
                 {
                     throw new TimeoutException();
                 }

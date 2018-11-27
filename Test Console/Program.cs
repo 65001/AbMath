@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
-using AbMath.Utilities;
+using System.Diagnostics;
+using AbMath.Calculator;
 
 namespace Test_Console
 {
@@ -17,26 +17,22 @@ namespace Test_Console
             Console.WriteLine("Unary negative is now implemented.");
             Console.WriteLine("Composite Function bug should now be fixed.");
             Console.WriteLine("Implicit multiplication.");
-
-            Console.WriteLine("");
-            Console.WriteLine("Known Bugs:");
-            Console.WriteLine("Space between terms is necessary.");
-            
+            Console.WriteLine("Variadic Function Support");            
             Console.WriteLine();
 
-            while (1 == 1)
+            while (true)
             {
                 Console.ForegroundColor = ConsoleColor.Gray;
-                string Equation = string.Empty;
-                while (string.IsNullOrWhiteSpace(Equation))
+                string equation = string.Empty;
+                while (string.IsNullOrWhiteSpace(equation))
                 {
                     Console.Write("Equation>");
-                    Equation = Console.ReadLine();
+                    equation = Console.ReadLine();
 
-                    if (Equation.Length == 0) { Console.Clear(); }
+                    if (equation.Length == 0) { Console.Clear(); }
                 }
 
-                RPN = new RPN(Equation);
+                RPN = new RPN(equation);
                 RPN.Logger += Write;
                 
                 RPN.Compute();
@@ -47,17 +43,17 @@ namespace Test_Console
                 if (RPN.ContainsVariables)
                 {
                     Console.WriteLine("Set the variables");
-                    for (int i = 0; i < RPN.data.Variables.Count; i++)
+                    for (int i = 0; i < RPN.Data.Variables.Count; i++)
                     {
-                        Console.Write(RPN.data.Variables[i] + "=");
-                        postFix.SetVariable(RPN.data.Variables[i], Console.ReadLine());
+                        Console.Write(RPN.Data.Variables[i] + "=");
+                        postFix.SetVariable(RPN.Data.Variables[i], Console.ReadLine());
                     }
                 }
 
                 Console.ForegroundColor = ConsoleColor.White;
-                double Answer = postFix.Compute();
+                double answer = postFix.Compute();
 
-                Console.Write($"Answer: {Answer}");
+                Console.Write($"Answer: {answer}");
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("Press any key to continue...");

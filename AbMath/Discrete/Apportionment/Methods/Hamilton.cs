@@ -16,29 +16,29 @@ namespace AbMath.Discrete.Apportionment
 
         public Dictionary<T, double> Run()
         {
-            Dictionary<T, double> Quota = new Dictionary<T, double>();
+            Dictionary<T, double> quota = new Dictionary<T, double>();
             foreach (KeyValuePair<T, double> kv in STDQuota)
             {
-                Quota.Add(kv.Key, Math.Floor(kv.Value));
+                quota.Add(kv.Key, Math.Floor(kv.Value));
             }
 
-            while (Quota.Sum() < Allocation)
+            while (quota.Sum() < Allocation)
             {
-                KeyValuePair<T, double> AddKey = new KeyValuePair<T, double>();
-                double Highest = 0;
-                foreach (KeyValuePair<T, double> kv in Quota)
+                KeyValuePair<T, double> addKey = new KeyValuePair<T, double>();
+                double highest = 0;
+                foreach (KeyValuePair<T, double> kv in quota)
                 {
                     double Delta = STDQuota[kv.Key] - kv.Value;
-                    if (Delta > Highest)
+                    if (Delta > highest)
                     {
-                        AddKey = kv;
-                        Highest = Delta;
+                        addKey = kv;
+                        highest = Delta;
                     }
                 }
-                Quota[AddKey.Key] += 1;
+                quota[addKey.Key] += 1;
             }
-            _Output = Quota;
-            return Quota;
+            _Output = quota;
+            return quota;
         }
     }
 }

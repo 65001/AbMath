@@ -4,26 +4,26 @@ using System.Text;
 
 namespace AbMath.Discrete.Apportionment
 {
-    static class Extenensions
+    static class Extensions
     {
-        public static Dictionary<T, double> StandardQuota<T>(this Dictionary<T, double> dictionary, double StandardDivisor)
+        public static Dictionary<T, double> StandardQuota<T>(this Dictionary<T, double> dictionary, double standardDivisor)
         {
-            Dictionary<T, double> Quota = new Dictionary<T, double>();
+            Dictionary<T, double> quota = new Dictionary<T, double>();
             foreach (KeyValuePair<T, double> kv in dictionary)
             {
-                Quota.Add(kv.Key, kv.Value / StandardDivisor);
+                quota.Add(kv.Key, kv.Value / standardDivisor);
             }
-            return Quota;
+            return quota;
         }
 
         public static Dictionary<T, double> Round<T>(this Dictionary<T, double> dictionary)
         {
-            Dictionary<T, double> Quota = new Dictionary<T, double>();
+            Dictionary<T, double> quota = new Dictionary<T, double>();
             foreach (KeyValuePair<T, double> kv in dictionary)
             {
-                Quota.Add(kv.Key, Math.Round(kv.Value));
+                quota.Add(kv.Key, Math.Round(kv.Value));
             }
-            return Quota;
+            return quota;
         }
 
         public static double Sum<T>(this Dictionary<T, double> dictionary)
@@ -38,12 +38,12 @@ namespace AbMath.Discrete.Apportionment
 
         public static Dictionary<T, double> Floor<T>(this Dictionary<T, double> dictionary)
         {
-            Dictionary<T, double> Quota = new Dictionary<T, double>();
+            Dictionary<T, double> quota = new Dictionary<T, double>();
             foreach (KeyValuePair<T, double> kv in dictionary)
             {
-                Quota.Add(kv.Key, Math.Floor(kv.Value));
+                quota.Add(kv.Key, Math.Floor(kv.Value));
             }
-            return Quota;
+            return quota;
         }
     }
 }

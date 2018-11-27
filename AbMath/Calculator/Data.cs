@@ -4,47 +4,47 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
     public partial class RPN
     {
-        public class Data
+        public class DataStore
         {
-            private readonly Dictionary<string,Function> functions;
-            private readonly Dictionary<string,Operator> operators;
-            private readonly Dictionary<string, string> aliases;
+            private readonly Dictionary<string,Function> _functions;
+            private readonly Dictionary<string,Operator> _operators;
+            private readonly Dictionary<string, string> _aliases;
 
             private readonly Dictionary<double, string> _autoFormat;
 
-            private readonly List<string> leftbracket;
-            private readonly List<string> rightbracket;
-            private List<string> variables;
-            private readonly Dictionary<string, string> variableStore;
+            private readonly List<string> _leftbracket;
+            private readonly List<string> _rightbracket;
+            private List<string> _variables;
+            private readonly Dictionary<string, string> _variableStore;
 
-            public IReadOnlyDictionary<string,Function> Functions => functions; 
-            public IReadOnlyDictionary<string,Operator> Operators => operators; 
-            public IReadOnlyDictionary<string, string> Aliases =>  aliases; 
+            public IReadOnlyDictionary<string,Function> Functions => _functions; 
+            public IReadOnlyDictionary<string,Operator> Operators => _operators; 
+            public IReadOnlyDictionary<string, string> Aliases =>  _aliases; 
             public IReadOnlyDictionary<double,string> Format => _autoFormat; 
-            public IReadOnlyList<string> LeftBracket => leftbracket; 
-            public IReadOnlyList<string> RightBracket => rightbracket;
-            public IReadOnlyList<string> Variables => variables; 
+            public IReadOnlyList<string> LeftBracket => _leftbracket; 
+            public IReadOnlyList<string> RightBracket => _rightbracket;
+            public IReadOnlyList<string> Variables => _variables; 
 
             public string Equation;
             public Queue<Term> Polish { get; set; }
             public bool ContainsVariables { get; private set; }
 
-            public Data(string equation)
+            public DataStore(string equation)
             {
                 Equation = equation;
-                functions = new Dictionary<string, Function>();
-                operators = new Dictionary<string, Operator>();
-                aliases = new Dictionary<string, string>();
+                _functions = new Dictionary<string, Function>();
+                _operators = new Dictionary<string, Operator>();
+                _aliases = new Dictionary<string, string>();
                 _autoFormat = new Dictionary<double, string>();
 
-                leftbracket = new List<string>();
-                rightbracket = new List<string>();
-                variables = new List<string>();
-                variableStore = new Dictionary<string, string>();
+                _leftbracket = new List<string>();
+                _rightbracket = new List<string>();
+                _variables = new List<string>();
+                _variableStore = new Dictionary<string, string>();
 
                 DefaultFunctions();
                 DefaultOperators();
@@ -55,45 +55,45 @@ namespace AbMath.Utilities
 
             public void AddLeftBracket(string value)
             {
-                leftbracket.Add(value);
+                _leftbracket.Add(value);
             }
 
             public void AddRightBracket(string value)
             {
-                rightbracket.Add(value);
+                _rightbracket.Add(value);
             }
 
             public void AddAlias(string key, string value)
             {
-                aliases.Add(key, value);
+                _aliases.Add(key, value);
             }
 
             public void AddVariable(string token)
             {
                 ContainsVariables = true;
-                variables.Add(token);
-                variables = variables.Distinct().ToList();
+                _variables.Add(token);
+                _variables = _variables.Distinct().ToList();
             }
 
             public void AddStore(string variable,string value)
             {
                 AddVariable(variable);
-                if (variableStore.ContainsKey(variable))
+                if (_variableStore.ContainsKey(variable))
                 {
-                    variableStore[variable] = value;
+                    _variableStore[variable] = value;
                     return;
                 }
-                variableStore.Add(variable, value);
+                _variableStore.Add(variable, value);
             }
 
             public void AddFunction(string key, Function func)
             {
-                functions.Add(key, func);
+                _functions.Add(key, func);
             }
 
             public void AddOperator(string key, Operator ops)
             {
-                operators.Add(key, ops);
+                _operators.Add(key, ops);
             }
 
             public void AddFormat(double number, string format)
@@ -151,7 +151,7 @@ namespace AbMath.Utilities
                 return Type.Variable;
             }
 
-            void DefaultAliases()
+            private void DefaultAliases()
             {
                 AddAlias("÷", "/");
                 AddAlias("π", "pi");
@@ -166,7 +166,7 @@ namespace AbMath.Utilities
                 AddAlias("Σ","sum");
             }
 
-            void DefaultBrackets()
+            private void DefaultBrackets()
             {
                 AddLeftBracket("(");
                 AddLeftBracket("{");
@@ -178,7 +178,7 @@ namespace AbMath.Utilities
                 AddRightBracket(",");
             }
 
-            void DefaultOperators()
+            private void DefaultOperators()
             {
                 AddOperator("^", new Operator
                 {
@@ -260,13 +260,13 @@ namespace AbMath.Utilities
                     Compute = DoOperators.Subtract
                 });
 
-                //Evaluations
+                #region Evaluation
                 AddOperator(">", new Operator
                 {
                     Assoc = Assoc.Left,
                     Weight = 1,
                     Arguments = 2,
-                    Compute = DoOperators.GreateerThan
+                    Compute = DoOperators.GreaterThan
                 });
 
                 AddOperator("<", new Operator
@@ -308,8 +308,8 @@ namespace AbMath.Utilities
                     Arguments = 2,
                     Compute = DoOperators.LessThanOrEquals
                 });
-
-                //Logic
+                #endregion
+                #region Logic
                 AddOperator("!=", new Operator
                 {
                     Assoc = Assoc.Left,
@@ -333,14 +333,12 @@ namespace AbMath.Utilities
                     Arguments = 2,
                     Compute = DoOperators.Or
                 });
-
-                //Assingment Operators
-                //AddOperator(":", new Operators {Assoc = Assoc.Left,Weight = 0, Arguments = 2, Compute = new Run(DoOperators.Store));
-                //AddOperator("<-", new Operators { Assoc = Assoc.Left, Weight = 0, Arguments = 2 });
+                #endregion
             }
 
-            void DefaultFunctions()
+            private void DefaultFunctions()
             {
+                #region Trig
                 AddFunction("sin", new Function
                 {
                     MinArguments = 1,
@@ -364,6 +362,7 @@ namespace AbMath.Utilities
                     MaxArguments = 1,
                     Compute = DoFunctions.Tan
                 });
+                #endregion
 
                 AddFunction("max", new Function
                 {
@@ -429,6 +428,7 @@ namespace AbMath.Utilities
                     Compute = DoFunctions.Log
                 });
 
+                #region Constants
                 AddFunction("pi", new Function
                 {
                     Arguments = 0,
@@ -444,6 +444,7 @@ namespace AbMath.Utilities
                     MaxArguments = 1,
                     Compute = DoFunctions.EContstant
                 });
+                #endregion
 
                 AddFunction("bounded",new Function()
                 {
@@ -487,9 +488,16 @@ namespace AbMath.Utilities
                     MaxArguments = 1,
                     Compute = DoFunctions.Seed
                 });
-            }
 
-            void DefaultFormats()
+                AddFunction("abs", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.Abs,
+                    MaxArguments = 1,
+                    MinArguments = 1
+                });
+            }
+            private void DefaultFormats()
             {
                 AddFormat(Math.Sqrt(2)/2, "√2 / 2");
                 AddFormat(- Math.Sqrt(2) / 2, "-√2 / 2");

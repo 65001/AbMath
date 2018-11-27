@@ -1,24 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using static AbMath.Utilities.RPN;
+﻿using System.Collections.Generic;
 using System.Text;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
-    public static class Extenstions
+    public static class Extensions
     {
         //Todo: Implement
-        public static string Print<T>(this Queue<T> Queue)
+        public static string Print<T>(this Queue<T> queue)
         {
-            int Length = Queue.Count;
+            int length = queue.Count;
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < Length; i++)
+            for (int i = 0; i < length; i++)
             {
-                T value = Queue.Dequeue();
-                Queue.Enqueue(value);
-                sb.Append(value.ToString());
+                var value = queue.Dequeue();
+                queue.Enqueue(value);
+                sb.Append(value);
 
-                if (i < (Length - 1))
+                if (i < (length - 1))
                 {
                     sb.Append(" ");
                 }
@@ -32,7 +30,7 @@ namespace AbMath.Utilities
             {
                 return default(T);
             }
-            T value = stack.Pop();
+            var value = stack.Pop();
             stack.Push(value);
             return value;
         }
@@ -40,34 +38,39 @@ namespace AbMath.Utilities
 
     public static class TermExtensions
     {
-        public static bool IsNumber(this Term term)
+        public static bool IsNumber(this RPN.Term term)
         {
             return term.Type == RPN.Type.Number;
         }
 
-        public static bool IsNull(this Term term)
+        public static bool IsNull(this RPN.Term term)
         {
             return term.Type == RPN.Type.Null;
         }
 
-        public static bool IsFunction(this Term term)
+        public static bool IsFunction(this RPN.Term term)
         {
             return term.Type == RPN.Type.Function;
         }
 
-        public static bool IsVariable(this Term term)
+        public static bool IsVariable(this RPN.Term term)
         {
             return term.Type == RPN.Type.Variable;
         }
 
-        public static bool IsLeftBracket(this Term term)
+        public static bool IsLeftBracket(this RPN.Term term)
         {
             return term.Type == RPN.Type.LParen;
         }
 
-        public static bool IsRightBracket(this Term term)
+        public static bool IsRightBracket(this RPN.Term term)
         {
             return term.Type == RPN.Type.RParen;
+        }
+
+        public static bool IsComma(this RPN.Term term)
+        {
+            return term.Value == ",";
         }
     }
 }

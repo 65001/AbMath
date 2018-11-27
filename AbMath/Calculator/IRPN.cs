@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
     public enum Assoc { Left, Right };
     public interface IShunt<T>
     {
-        Queue<T> ShuntYard(List<T> Tokens);
+        Queue<T> ShuntYard(List<T> tokens);
         event EventHandler<string> Logger;
     }
 
@@ -21,10 +21,5 @@ namespace AbMath.Utilities
     {
         T Compute();
         event EventHandler<string> Logger;
-    }
-
-    public interface IOperator<T>
-    {
-        double Weight { get; set; }
     }
 }

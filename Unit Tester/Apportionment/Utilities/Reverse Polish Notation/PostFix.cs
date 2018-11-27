@@ -1,5 +1,5 @@
 ﻿using System;
-using AbMath.Utilities;
+using AbMath.Calculator;
 using NUnit.Framework;
 
 namespace AbMath.Tests
@@ -13,7 +13,7 @@ namespace AbMath.Tests
             RPN test = new RPN("2 + 2 + 2");
             test.Logger += Write;
             test.Compute();
-            PostFix math = new PostFix(test.data);
+            PostFix math = new PostFix(test.Data);
             Assert.AreEqual(6, math.Compute());
         }
 
@@ -23,7 +23,7 @@ namespace AbMath.Tests
             RPN test = new RPN("2++ + 2 + 2");
             test.Logger += Write;
             test.Compute();
-            PostFix math = new PostFix(test.data);
+            PostFix math = new PostFix(test.Data);
             Assert.AreEqual(7, math.Compute());
         }
 
@@ -33,7 +33,7 @@ namespace AbMath.Tests
             RPN test = new RPN("7++");
             test.Logger += Write;
             test.Compute();
-            PostFix math = new PostFix(test.data);
+            PostFix math = new PostFix(test.Data);
             Assert.AreEqual(8, math.Compute());
         }
 
@@ -104,7 +104,7 @@ namespace AbMath.Tests
             test.Logger += Write;
             test.Compute();
             PostFix math = new PostFix(test);
-            Assert.AreEqual(System.Math.Sin(3.1415), math.Compute());
+            Assert.AreEqual(Math.Sin(3.1415), math.Compute());
         }
 
         [Test]

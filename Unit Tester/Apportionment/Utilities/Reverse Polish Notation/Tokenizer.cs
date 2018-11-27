@@ -1,5 +1,5 @@
 ﻿using System;
-using AbMath.Utilities;
+using AbMath.Calculator;
 using NUnit.Framework;
 
 namespace AbMath.Tests
@@ -239,7 +239,7 @@ namespace AbMath.Tests
             RPN test = new RPN("x * 2");
             test.Logger += Write;
             test.Compute();
-            if ("x 2 *" != test.Polish.Print() || test.data.ContainsVariables == false)
+            if ("x 2 *" != test.Polish.Print() || test.Data.ContainsVariables == false)
             {
                 Assert.Fail();
             }
@@ -251,7 +251,7 @@ namespace AbMath.Tests
             RPN test = new RPN("x * 2");
             test.Logger += Write;
             test.Compute();
-            if ("x 2 *" != test.Polish.Print() || test.data.ContainsVariables == false)
+            if ("x 2 *" != test.Polish.Print() || test.Data.ContainsVariables == false)
             {
                 Assert.Fail();
             }
