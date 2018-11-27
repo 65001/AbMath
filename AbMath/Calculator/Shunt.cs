@@ -195,7 +195,16 @@ namespace AbMath.Calculator
                 _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds;
                 _dataStore.TotalSteps += sw.ElapsedTicks;
 
-                Write($"Reverse Polish Notation:\n{_output.Print()}");
+                
+                if (_dataStore.MarkdownTables)
+                {
+                    Write($"Reverse Polish Notation:\n``{_output.Print()}``");
+                }
+                else
+                {
+                    Write($"Reverse Polish Notation:\n{_output.Print()}");
+                }
+
                 Write("");
 
                 return _output;

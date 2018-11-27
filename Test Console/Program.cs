@@ -33,6 +33,13 @@ namespace Test_Console
                 }
 
                 RPN = new RPN(equation);
+
+                if (RPN.Data.MarkdownTables)
+                {
+                    Console.Clear();
+                    Console.WriteLine($"Equation>``{equation}``");
+                }
+
                 RPN.Logger += Write;
                 
                 RPN.Compute();
@@ -53,7 +60,15 @@ namespace Test_Console
                 Console.ForegroundColor = ConsoleColor.White;
                 double answer = postFix.Compute();
 
-                Console.Write($"Answer: {answer}");
+                if (RPN.Data.MarkdownTables)
+                {
+                    Console.Write($"Answer: ``{answer}``");
+                }
+                else
+                {
+                    Console.Write($"Answer: {answer}");
+                }
+
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("Press any key to continue...");

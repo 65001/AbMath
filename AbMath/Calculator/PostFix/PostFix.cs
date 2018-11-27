@@ -88,6 +88,7 @@ namespace AbMath.Calculator
             _dataStore.TotalSteps += _stopwatch.ElapsedTicks;
 
             Write($"Total Time: {_dataStore.TotalMilliseconds} (ms) {_dataStore.TotalSteps.ToString("N0")} Ticks");
+            Write($"Frequency: {Stopwatch.Frequency}");
             Write("");
             if (_stack.Count != 1) return double.NaN;
 
