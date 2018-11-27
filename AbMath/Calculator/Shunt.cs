@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Text;
 using CLI;
 
 namespace AbMath.Calculator
@@ -18,17 +15,17 @@ namespace AbMath.Calculator
         //Should be able to correctly shunt functions?
         public class Shunt : IShunt<Term>
         {
-            private DataStore _dataStore;
-            Queue<Term> Output;
-            Stack<Term> Operator;
+            private readonly DataStore _dataStore;
+            private Queue<Term> _output;
+            private Stack<Term> _operator;
 
-            Term Prev;
-            Term Token;
-            Term Ahead;
+            private Term _prev;
+            private Term _token;
+            private Term _ahead;
 
             //TODO: Implement Variadic Function
             //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
-            Stack<int> Arity;
+            private Stack<int> _arity;
 
             public event EventHandler<string> Logger;
 
@@ -37,18 +34,18 @@ namespace AbMath.Calculator
                 _dataStore = dataStore;
             }
 
-            //Todo make ShuntYard smart about uniary negative signs 
-            public Queue<Term> ShuntYard(List<Term> Tokens)
+            //Todo make ShuntYard smart about unary negative signs 
+            public Queue<Term> ShuntYard(List<Term> tokens)
             {
-                Stopwatch SW = new Stopwatch();
-                SW.Start();
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
 
-                Output = new Queue<Term>(Tokens.Count);
-                Operator = new Stack<Term>(20);
+                _output = new Queue<Term>(tokens.Count);
+                _operator = new Stack<Term>(20);
 
-                Arity = new Stack<int>();
+                _arity = new Stack<int>();
 
-                Tables<string> tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm" });
+                var tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm" });
                 tables.Add(new Schema { Column = "#", Width = 3 });
                 tables.Add(new Schema { Column = "Token", Width = 10 });
                 tables.Add(new Schema { Column = "Stack Count", Width = 15 });
@@ -60,20 +57,24 @@ namespace AbMath.Calculator
 
                 Write(tables.GenerateHeaders());
 
-                for (int i = 0; i < Tokens.Count; i++)
-                {
-                    Token = Tokens[i];
-                    Ahead = ((i + 1) < Tokens.Count)? Tokens[i + 1] : GenerateNull();
-                    Prev = (i > 0) ? Tokens[i - 1]  : GenerateNull();
+                string action = string.Empty;
+                string stack = string.Empty;
+                string type = string.Empty;
 
-                    string Action = string.Empty;
-                    string Stack = string.Empty;
-                    string Type = string.Empty;
+                for (int i = 0; i < tokens.Count; i++)
+                {
+                    _token = tokens[i];
+                    _ahead = ((i + 1) < tokens.Count)? tokens[i + 1] : GenerateNull();
+                    _prev = (i > 0) ? tokens[i - 1]  : GenerateNull();
+
+                    action = string.Empty;
+                    stack = string.Empty;
+                    type = string.Empty;
 
 
                     if (Chain())
                     {
-                        Type = "Chain Multiplication";
+                        type = "Chain Multiplication";
                         //Right
                         Implicit();
                         //Left
@@ -82,71 +83,71 @@ namespace AbMath.Calculator
                     else if (LeftImplicit())
                     {
                         //This will flip the order of the multiplication :(
-                        Type = "Implicit Left";
+                        type = "Implicit Left";
                         Implicit();
                     }
-                    else if (!Prev.IsNull()  && (Prev.IsRightBracket() && Token.IsLeftBracket()) || (Prev.IsVariable() && Token.IsNumber())) 
+                    else if (!_prev.IsNull()  && (_prev.IsRightBracket() && _token.IsLeftBracket()) || (_prev.IsVariable() && _token.IsNumber())) 
                     {
-                        Type = "Implicit Left 2";
+                        type = "Implicit Left 2";
                         OperatorRule(GenerateMultiply());
-                        Operator.Push(Token);
+                        _operator.Push(_token);
                     }
                     else if (RightImplicit())
                     {
-                        Type = "Implicit Right";
+                        type = "Implicit Right";
                         Implicit();
                     }
-                    else if (Prev.IsRightBracket() && Prev.Value != "," && Token.IsFunction())
+                    else if (_prev.IsRightBracket() && _prev.Value != "," && _token.IsFunction())
                     {
-                        Type = "Implicit Left Functional";
+                        type = "Implicit Left Functional";
                         OperatorRule(GenerateMultiply());
-                        WriteFunction(Token);
+                        WriteFunction(_token);
                     }
                     else
                     {
-                        switch (Token.Type)
+                        switch (_token.Type)
                         {
-                            case Calculator.RPN.Type.Number: 
-                                Action = "Added token to output";
-                                Type = "Number";
-                                Output.Enqueue(Token);
+                            case Type.Number: 
+                                action = "Added token to output";
+                                type = "Number";
+                                _output.Enqueue(_token);
                                 break;
-                            case Calculator.RPN.Type.Function:
-                                Action = "Added token to stack";
-                                Type = "Function";
-                                WriteFunction(Token);
+                            case Type.Function:
+                                action = "Added token to stack";
+                                type = "Function";
+                                WriteFunction(_token);
                                 break;
-                            case Calculator.RPN.Type.Operator:
-                                Type = "Operator";
-                                Action = "Operator Rules";
-                                OperatorRule(Token);
+                            case Type.Operator:
+                                type = "Operator";
+                                action = "Operator Rules";
+                                OperatorRule(_token);
                                 break;
-                            case Calculator.RPN.Type.LParen:
-                                Type = "Left Bracket";
-                                Action = "Added token to stack";
-                                Operator.Push(Token);
+                            case Type.LParen:
+                                type = "Left Bracket";
+                                action = "Added token to stack";
+                                _operator.Push(_token);
                                 break;
-                            case Calculator.RPN.Type.RParen:
-                                Type = "Right Bracket";
-                                Action = "Right Bracket Rules";
-                                if (Token.Value == ",")
+                            case Type.RParen:
+                                type = "Right Bracket";
+                                action = "Right Bracket Rules";
+                                if (_token.Value == ",")
                                 {
-                                    Type = "Comma";
+                                    type = "Comma";
                                 }
-                                RightBracketRule(Token);
+                                RightBracketRule(_token);
                                 break;
-                            case Calculator.RPN.Type.Variable:
-                                Action = "Added token to output";
-                                Type = "Variable";
-                                Output.Enqueue(Token);
-                                _dataStore.AddVariable(Token.Value);
+                            case Type.Variable:
+                                action = "Added token to output";
+                                type = "Variable";
+                                _output.Enqueue(_token);
+                                _dataStore.AddVariable(_token.Value);
                                 break;
                             default:
-                                throw new NotImplementedException(Token.Value);
+                                throw new NotImplementedException(_token.Value);
                         }
                     }
 
-                    var print = new string[] { i.ToString(), Token.Value, Operator.Count.ToString(), Operator.SafePeek().Value ?? string.Empty, Arity.SafePeek().ToString() , Type, Output.Print(), Action };
+                    var print = new[] { i.ToString(), _token.Value, _operator.Count.ToString(), _operator.SafePeek().Value ?? string.Empty, _arity.SafePeek().ToString() , type, _output.Print(), action };
                     tables.Add(print);
 
                     Write(tables.GenerateNextRow());
@@ -166,10 +167,10 @@ namespace AbMath.Calculator
                 arityTables.Add(new Schema { Column = "Arity", Width = 5 });
                 Write(arityTables.GenerateHeaders());
 
-                for (int i = 0; i < Output.Count; i++)
+                for (int i = 0; i < _output.Count; i++)
                 {
-                    Term arityTerm = Output.Dequeue();
-                    Output.Enqueue(arityTerm);
+                    Term arityTerm = _output.Dequeue();
+                    _output.Enqueue(arityTerm);
 
                     string[] message =  {i.ToString(), arityTerm.Value, arityTerm.Arguments.ToString() };
                     arityTables.Add(message);
@@ -177,175 +178,169 @@ namespace AbMath.Calculator
                 }
 
                 Write(arityTables.GenerateFooter());
-                Write($"Arity Count : {Arity.Count}");
-                Write($"Arity Peek {Arity.SafePeek()}");
+                Write($"Arity Count : {_arity.Count}");
+                Write($"Arity Peek {_arity.SafePeek()}");
                 Write("");
 
-                if (Arity.Count > 0)
+                if (_arity.Count > 0)
                 {
                     throw new InvalidOperationException("Arity not completely assigned");
                 }
 
-                SW.Stop();
-                Write($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
-                Write($"Reverse Polish Notation:\n{Output.Print()}");
+                sw.Stop();
+                Write($"Execution Time {sw.ElapsedMilliseconds}(ms). Elapsed Ticks: {sw.ElapsedTicks}");
+                Write($"Reverse Polish Notation:\n{_output.Print()}");
                 Write("");
 
-                return Output;
+                return _output;
             }
 
             void Implicit()
             {
                 OperatorRule(GenerateMultiply());
-                Output.Enqueue(Token);
-                if (Token.IsVariable())
+                _output.Enqueue(_token);
+                if (_token.IsVariable())
                 {
-                    _dataStore.AddVariable(Token.Value);
+                    _dataStore.AddVariable(_token.Value);
                 }
             }
 
-            void RightBracketRule(Term Token)
+            void RightBracketRule(Term token)
             {
-                while (!Operator.Peek().IsLeftBracket())
+                while (!_operator.Peek().IsLeftBracket())
                 {
-                    if (Operator.Count == 0)
+                    if (_operator.Count == 0)
                     {
                         throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
                     }
 
-                    Term output = Operator.Pop();
+                    Term output = _operator.Pop();
                     //This ensures that only functions 
                     //can have variable number of arguments
                     if (output.IsFunction() )
                     {
-                        int args = Arity.Pop();
+                        int args = _arity.Pop();
                         //TODO Bounds Checking
                         output.Arguments = args;
                     }
-                    Output.Enqueue(output);
+                    _output.Enqueue(output);
                 }
 
                 //For functions and composite functions the to work, we must return now.
-                if (Token.Value == ",")
+                if (token.Value == ",")
                 {
-                    Arity.Push(Arity.Pop() + 1);
+                    _arity.Push(_arity.Pop() + 1);
                     return;
                 }
 
                 //Pops the left bracket or Parentheses from the stack. 
-                Operator.Pop();
+                _operator.Pop();
             }
 
             //Sort Stack equivalent in sb
-            void OperatorRule(Term Token)
+            void OperatorRule(Term token)
             {
-                bool Go = true;
-                while (DoOperatorRule(Token) && Go)
+                bool go = true;
+                while (DoOperatorRule(token) && go)
                 {
-                    Output.Enqueue(Operator.Pop());
+                    _output.Enqueue(_operator.Pop());
 
-                    if (Operator.Count == 0)
+                    if (_operator.Count == 0)
                     {
-                        Go = false;
+                        go = false;
                     }
                 }
-                Operator.Push(Token);
+                _operator.Push(token);
             }
 
             bool DoOperatorRule(Term Token)
             {
                 try
                 {
-                    return Operator.Count > 0 &&
+                    return _operator.Count > 0 &&
                             (
-                                (_dataStore.IsFunction(Operator.Peek().Value) == true) ||
-                                (_dataStore.Operators[Operator.Peek().Value].Weight > _dataStore.Operators[Token.Value].Weight) ||
-                                (_dataStore.Operators[Operator.Peek().Value].Weight == _dataStore.Operators[Token.Value].Weight && _dataStore.Operators[Token.Value].Assoc == Assoc.Left)
+                                _dataStore.IsFunction(_operator.Peek().Value) ||
+                                (_dataStore.Operators[_operator.Peek().Value].Weight > _dataStore.Operators[Token.Value].Weight) ||
+                                (_dataStore.Operators[_operator.Peek().Value].Weight == _dataStore.Operators[Token.Value].Weight && _dataStore.Operators[Token.Value].Assoc == Assoc.Left)
 
                             )
-                            && _dataStore.IsLeftBracket(Operator.Peek().Value) == false;
+                            && _dataStore.IsLeftBracket(_operator.Peek().Value) == false;
                 }
                 catch (Exception ex) { }
                 return false;
             }
 
-            bool LeftImplicit()
+            private bool LeftImplicit()
             {
-                return !Ahead.IsNull() && (Token.IsNumber() || Token.IsVariable()) && (Ahead.IsFunction() || Ahead.IsLeftBracket() || Ahead.IsVariable());
+                return !_ahead.IsNull() && (_token.IsNumber() || _token.IsVariable()) && (_ahead.IsFunction() || _ahead.IsLeftBracket() || _ahead.IsVariable());
             }
 
-            bool RightImplicit()
+            private bool RightImplicit()
             {
-                return !Prev.IsNull() && Prev.Value != "," && Prev.IsRightBracket() && (Token.IsNumber() || Token.IsVariable());
+                return !_prev.IsNull() && _prev.Value != "," && _prev.IsRightBracket() && (_token.IsNumber() || _token.IsVariable());
             }
 
-            bool Chain()
+            private bool Chain()
             {
                 return LeftImplicit()  && RightImplicit();
             }
 
-            void WriteFunction(Term Function)
+            private void WriteFunction(Term function)
             {
-                Operator.Push(Function);
+                _operator.Push(function);
                 
-                if (_dataStore.Functions[Function.Value].Arguments > 0)
+                if (_dataStore.Functions[function.Value].Arguments > 0)
                 {
-                    Arity.Push(1);
+                    _arity.Push(1);
                 }
                 else
                 {
-                    Arity.Push(0);
+                    _arity.Push(0);
                 }
             }
 
-            Term GenerateMultiply()
-            {
-                return new Term { Value = "*", Arguments = 2, Type = Type.Operator };
-            }
+            private static Term GenerateMultiply() => new Term {
+                Value = "*", Arguments = 2, Type = Type.Operator
+            };
 
-            Term GenerateNull()
-            {
-                return new Term { Type = Type.Null };
-            }
-
-            
+            private static Term GenerateNull() => new Term { Type = Type.Null };
 
             /// <summary>
             /// Moves all remaining data from the stack onto the queue
             /// </summary>
             void Dump()
             {
-                while (Operator.Count > 0)
+                while (_operator.Count > 0)
                 {
-                    Term peek = Operator.Peek();
+                    Term peek = _operator.Peek();
 
                     if (peek.Type == Type.LParen || peek.Type == Type.RParen)
                     {
                         throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }
-                    var output = Operator.Pop();
-                    Output.Enqueue(output);
+                    var output = _operator.Pop();
+                    _output.Enqueue(output);
                 }
 
-                while ( Arity.Count > 0)
+                while ( _arity.Count > 0)
                 {
-                    for (int i = 0; i < (Output.Count - 1); i++)
+                    for (int i = 0; i < (_output.Count - 1); i++)
                     {
-                        Output.Enqueue( Output.Dequeue() );
+                        _output.Enqueue( _output.Dequeue() );
                     }
 
-                    var foo = Output.Dequeue();
+                    var foo = _output.Dequeue();
 
                     if (foo.IsFunction())
                     {
-                        foo.Arguments = Arity.Pop();
+                        foo.Arguments = _arity.Pop();
                     }
                     else
                     {
-                        Arity.Pop();
+                        _arity.Pop();
                     }
 
-                    Output.Enqueue(foo);
+                    _output.Enqueue(foo);
                 }
                 
             }

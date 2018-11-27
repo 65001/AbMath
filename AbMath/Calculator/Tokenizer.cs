@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using CLI;
 
 namespace AbMath.Calculator
@@ -11,7 +10,7 @@ namespace AbMath.Calculator
     {
         public class Tokenizer : ITokenizer<Term>
         {
-            private DataStore _dataStore;
+            private readonly DataStore _dataStore;
             private string Equation => _dataStore.Equation; 
 
             private string Token;
