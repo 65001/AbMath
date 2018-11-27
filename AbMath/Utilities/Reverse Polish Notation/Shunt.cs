@@ -218,7 +218,9 @@ namespace AbMath.Utilities
                     //can have variable number of arguments
                     if (output.IsFunction() )
                     {
-                        output.Arguments = Arity.Pop();
+                        int args = Arity.Pop();
+                        //TODO Bounds Checking
+                        output.Arguments = args;
                     }
                     Output.Enqueue(output);
                 }
@@ -237,7 +239,6 @@ namespace AbMath.Utilities
             //Sort Stack equivalent in sb
             void OperatorRule(Term Token)
             {
-                //TODO: Revisit 
                 bool Go = true;
                 while (DoOperatorRule(Token) && Go)
                 {
@@ -323,14 +324,6 @@ namespace AbMath.Utilities
                         throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }
                     var output = Operator.Pop();
-                    /*
-                    if (Data.Vardiac && Arity.Count > 0 && peek.IsFunction())
-                    {
-                        //TODO Variadic Function
-                        output.Arguments = Arity.Pop();
-                    }
-                    */
-
                     Output.Enqueue(output);
                 }
 
@@ -342,7 +335,16 @@ namespace AbMath.Utilities
                     }
 
                     var foo = Output.Dequeue();
-                    foo.Arguments = Arity.Pop();
+
+                    if (foo.IsFunction())
+                    {
+                        foo.Arguments = Arity.Pop();
+                    }
+                    else
+                    {
+                        Arity.Pop();
+                    }
+
                     Output.Enqueue(foo);
                 }
                 

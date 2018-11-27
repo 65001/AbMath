@@ -343,95 +343,150 @@ namespace AbMath.Utilities
             {
                 AddFunction("sin", new Function
                 {
+                    MinArguments = 1,
                     Arguments = 1,
+                    MaxArguments = 1,
                     Compute = DoFunctions.Sin
                 });
 
                 AddFunction("cos", new Function
                 {
+                    MinArguments = 1,
                     Arguments = 1,
+                    MaxArguments = 1,
                     Compute = DoFunctions.Cos
                 });
 
                 AddFunction("tan", new Function
                 {
+                    MinArguments = 1,
                     Arguments = 1,
+                    MaxArguments = 1,
                     Compute = DoFunctions.Tan
                 });
 
                 AddFunction("max", new Function
                 {
+                    MinArguments = 2,
                     Arguments = 2,
+                    MaxArguments = int.MaxValue,
                     Compute = DoFunctions.Max
                 });
 
                 AddFunction("min", new Function
                 {
+                    MinArguments = 2,
                     Arguments = 2,
+                    MaxArguments = int.MaxValue,
                     Compute = DoFunctions.Min
                 });
 
                 AddFunction("sqrt", new Function
                 {
+                    MinArguments = 1,
                     Arguments = 1,
+                    MaxArguments = 1,
                     Compute = DoFunctions.Sqrt
                 });
 
                 AddFunction("round", new Function
                 {
+                    MinArguments = 1,
                     Arguments = 2,
+                    MaxArguments = 2,
                     Compute = DoFunctions.Round
                 });
 
                 AddFunction("gcd", new Function
                 {
+                    MinArguments = 2,
                     Arguments = 2,
+                    MaxArguments = 2,
                     Compute = DoFunctions.Gcd
                 });
 
                 AddFunction("lcm", new Function
                 {
+                    MinArguments = 2,
                     Arguments = 2,
+                    MaxArguments = 2,
                     Compute = DoFunctions.Lcm
                 });
 
                 AddFunction("ln", new Function
                 {
                     Arguments = 1,
+                    MaxArguments = 1,
+                    MinArguments = 1,
                     Compute = DoFunctions.ln
                 });
 
                 AddFunction("log", new Function
                 {
+                    MinArguments = 2,
                     Arguments = 2,
+                    MaxArguments = 2,
                     Compute = DoFunctions.Log
                 });
 
                 AddFunction("pi", new Function
                 {
                     Arguments = 0,
+                    MinArguments = 0,
+                    MaxArguments = 1,
                     Compute = DoFunctions.Pi
                 });
 
                 AddFunction("e", new Function
                 {
                     Arguments = 0,
+                    MinArguments = 0,
+                    MaxArguments = 1,
                     Compute = DoFunctions.EContstant
                 });
 
                 AddFunction("bounded",new Function()
-                    {
-                        Arguments = 3,
-                        Compute = DoFunctions.Bounded
-                    }
+                {
+                    Arguments = 3,
+                    MinArguments = 3,
+                    MaxArguments = 3,
+                    Compute = DoFunctions.Bounded
+                }
                 );
 
                 AddFunction("sum", new Function()
-                    {
-                        Arguments = 3,
-                        Compute = DoFunctions.Sum
-                    }
+                {
+                    Arguments = 2,
+                    MinArguments = 2,
+                    MaxArguments = 2,
+                    Compute = DoFunctions.Sum
+                }
                 );
+
+                AddFunction("random", new Function()
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 2,
+                    Compute = DoFunctions.Random
+                }
+                );
+
+                AddFunction("rand", new Function()
+                {
+                    MinArguments = 0,
+                    Arguments = 0,
+                    MaxArguments = 0,
+                    Compute = DoFunctions.Random
+                });
+
+                AddFunction("seed", new Function()
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    Compute = DoFunctions.Seed
+                });
             }
 
             void DefaultFormats()

@@ -6,6 +6,7 @@ namespace AbMath.Utilities
 {
     public partial class RPN
     {
+
         public static class DoOperators
         {
             public static double AddSelf(params double[] Arguments)

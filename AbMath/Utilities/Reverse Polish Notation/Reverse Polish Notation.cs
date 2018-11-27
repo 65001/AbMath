@@ -14,17 +14,13 @@ namespace AbMath.Utilities
     //TODO
     //ABS
     //ARCSIN,ARCTAN,ARCCOS
+    //Seed
     //Random()
     //Random(Min,Max)
 
     //Generify
     //Auto Scaling from decimal to double to Big Integer
     //Complex Number Support sqrt(-1) = i
-    //Add Implement Variadic Function
-
-    //TODO
-    //Add a data class so that other classes such as
-    //the Tokenizer, Shunter, and the like don't need a copy of RPN.
 
     public partial class RPN
     {
@@ -46,9 +42,11 @@ namespace AbMath.Utilities
         public struct Function
         {
             public int Arguments;
+            public int MaxArguments;
+            public int MinArguments;
+
             public Run Compute;
             public Store Store;
-            public Stack<int> Arity;
         }
 
         public struct Term
