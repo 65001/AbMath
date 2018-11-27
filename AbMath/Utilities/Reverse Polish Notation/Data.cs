@@ -33,13 +33,6 @@ namespace AbMath.Utilities
             public Queue<Term> Polish { get; set; }
             public bool ContainsVariables { get; private set; }
 
-            /**
-             * This function enables vardiac functions,
-             * this currentley makes complex functions not work
-             */
-            public bool Vardiac = false; 
-
-
             public Data(string equation)
             {
                 Equation = equation;

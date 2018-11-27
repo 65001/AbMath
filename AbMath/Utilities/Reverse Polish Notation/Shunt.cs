@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using CLI;
@@ -95,7 +96,7 @@ namespace AbMath.Utilities
                         Type = "Implicit Right";
                         Implicit();
                     }
-                    else if (Prev.IsRightBracket() && Token.IsFunction())
+                    else if (Prev.IsRightBracket() && Prev.Value != "," && Token.IsFunction())
                     {
                         Type = "Implicit Left Functional";
                         OperatorRule(GenerateMultiply());
@@ -176,7 +177,14 @@ namespace AbMath.Utilities
                 }
 
                 Write(arityTables.GenerateFooter());
+                Write($"Arity Count : {Arity.Count}");
+                Write($"Arity Peek {Arity.SafePeek()}");
                 Write("");
+
+                if (Arity.Count > 0)
+                {
+                    throw new InvalidOperationException("Arity not completely assigned");
+                }
 
                 SW.Stop();
                 Write($"Execution Time {SW.ElapsedMilliseconds}(ms). Elapsed Ticks: {SW.ElapsedTicks}");
@@ -208,19 +216,9 @@ namespace AbMath.Utilities
                     Term output = Operator.Pop();
                     //This ensures that only functions 
                     //can have variable number of arguments
-                    if (Data.Vardiac && output.IsFunction() )
+                    if (output.IsFunction() )
                     {
-                        int args = Arity.Pop();
-                        //TODO Variadic Function
-                        output.Arguments = args;
-                        //In the case of a composite function we must pop
-
-                        if (args == 0)
-                        {
-                            args = 1;
-                        }
-                        
-                        Arity.Push(args);
+                        output.Arguments = Arity.Pop();
                     }
                     Output.Enqueue(output);
                 }
@@ -228,14 +226,7 @@ namespace AbMath.Utilities
                 //For functions and composite functions the to work, we must return now.
                 if (Token.Value == ",")
                 {
-                    if (Arity.Count == 0)
-                    {
-                        Arity.Push(1);
-                    }
-                    else
-                    {
-                        Arity.Push(Arity.Pop() + 1);
-                    }
+                    Arity.Push(Arity.Pop() + 1);
                     return;
                 }
 
@@ -295,10 +286,14 @@ namespace AbMath.Utilities
             void WriteFunction(Term Function)
             {
                 Operator.Push(Function);
-                Arity.Push(0);
+                
                 if (Data.Functions[Function.Value].Arguments > 0)
                 {
                     Arity.Push(1);
+                }
+                else
+                {
+                    Arity.Push(0);
                 }
             }
 
@@ -328,15 +323,29 @@ namespace AbMath.Utilities
                         throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                     }
                     var output = Operator.Pop();
-
+                    /*
                     if (Data.Vardiac && Arity.Count > 0 && peek.IsFunction())
                     {
                         //TODO Variadic Function
                         output.Arguments = Arity.Pop();
                     }
+                    */
 
                     Output.Enqueue(output);
                 }
+
+                while ( Arity.Count > 0)
+                {
+                    for (int i = 0; i < (Output.Count - 1); i++)
+                    {
+                        Output.Enqueue( Output.Dequeue() );
+                    }
+
+                    var foo = Output.Dequeue();
+                    foo.Arguments = Arity.Pop();
+                    Output.Enqueue(foo);
+                }
+                
             }
 
             void Write(string message)

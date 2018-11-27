@@ -78,6 +78,16 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void SinOfe()
+        {
+            RPN test = new RPN("sin(e/2)");
+            test.Logger += Write;
+            test.Compute();
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(Math.Sin(Math.E/2), math.Compute());
+        }
+
+        [Test]
         public void Cos()
         {
             RPN test = new RPN("cos(pi)");
@@ -185,6 +195,64 @@ namespace AbMath.Tests
             math.SetVariable("x", "3");
             Assert.AreEqual(6, math.Compute());
 
+        }
+
+        [Test]
+        public void VardiacMax()
+        {
+            RPN test = new RPN("max(1, 2, 3)");
+
+            test.Logger += Write;
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(3, math.Compute());
+        }
+
+        [Test]
+        public void VardiacMin()
+        {
+            RPN test = new RPN("min(1, 2, 3)");
+
+            test.Logger += Write;
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+        }
+
+        [Test]
+        public void VardiacComposite()
+        {
+            RPN test = new RPN("sin(min (0, 1) )");
+
+            test.Logger += Write;
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+        }
+
+        [Test]
+        public void Max()
+        {
+            RPN test = new RPN("max(0, 1)");
+            test.Logger += Write;
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+        }
+
+        [Test]
+        public void Min()
+        {
+            RPN test = new RPN("min(0, 1)");
+            test.Logger += Write;
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
         }
 
         public void Write(object sender,string Event)

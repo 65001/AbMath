@@ -183,6 +183,19 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void ArityConstantMax()
+        {
+            RPN test = new RPN("max(1, pi)");
+            test.Logger += Write;
+            test.Compute();
+            Console.WriteLine(test.Polish.Print());
+            if ("1 pi max" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void VariableExponents()
         {
             RPN test = new RPN("x^2");

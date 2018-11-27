@@ -37,10 +37,9 @@ namespace AbMath.Utilities
                 return Math.Round(Arguments[0] * Math.Pow(10, digits)) / Math.Pow(10, digits);
             }
 
-            //Two Arguments
             public static double Max(params double[] Arguments)
             {
-                double max = 0;
+                double max = Arguments[0];
                 for (int i = 0; i < Arguments.Length; i++)
                 {
                     if (Arguments[i] > max)
@@ -54,11 +53,16 @@ namespace AbMath.Utilities
 
             public static double Min(params double[] Arguments)
             {
-                if (Arguments[0] < Arguments[1])
+                double min = Arguments[0];
+                for (int i = 0; i < Arguments.Length; i++)
                 {
-                    return Arguments[0];
+                    if (Arguments[i] < min)
+                    {
+                        min = Arguments[i];
+                    }
                 }
-                return Arguments[1];
+
+                return min;
             }
 
             public static double Bounded(params double[] Arguments)
