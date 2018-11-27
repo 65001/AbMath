@@ -178,7 +178,11 @@ namespace AbMath.Calculator
                 }
 
                 Write(arityTables.GenerateFooter());
-                
+
+                if (arityTables.SuggestedRedraw)
+                {
+                    Write(arityTables.Redraw());
+                }
 
                 if (_arity.Count > 0)
                 {
