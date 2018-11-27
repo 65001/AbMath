@@ -45,7 +45,7 @@ namespace AbMath.Calculator
 
                 _arity = new Stack<int>();
 
-                var tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm" });
+                var tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm", Format = _dataStore.DefaultFormat});
                 tables.Add(new Schema { Column = "#", Width = 3 });
                 tables.Add(new Schema { Column = "Token", Width = 10 });
                 tables.Add(new Schema { Column = "Stack Count", Width = 15 });
@@ -161,7 +161,7 @@ namespace AbMath.Calculator
                 }
 
                 Write("");
-                Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity" });
+                Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity" , Format = _dataStore.DefaultFormat});
                 arityTables.Add(new Schema { Column = "#", Width = 3 });
                 arityTables.Add(new Schema { Column = "Token", Width = 10 });
                 arityTables.Add(new Schema { Column = "Arity", Width = 5 });
@@ -178,17 +178,23 @@ namespace AbMath.Calculator
                 }
 
                 Write(arityTables.GenerateFooter());
-                Write($"Arity Count : {_arity.Count}");
-                Write($"Arity Peek {_arity.SafePeek()}");
-                Write("");
+                
 
                 if (_arity.Count > 0)
                 {
+                    Write($"Arity Count {_arity.Count}");
+                    Write($"Arity Peek {_arity.SafePeek()}");
+
                     throw new InvalidOperationException("Arity not completely assigned");
                 }
 
+                Write("");
+
                 sw.Stop();
-                Write($"Execution Time {sw.ElapsedMilliseconds}(ms). Elapsed Ticks: {sw.ElapsedTicks}");
+                Write($"Shunting Time {sw.ElapsedMilliseconds} (ms). Elapsed Ticks: {sw.ElapsedTicks.ToString("N0")}");
+                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds;
+                _dataStore.TotalSteps += sw.ElapsedTicks;
+
                 Write($"Reverse Polish Notation:\n{_output.Print()}");
                 Write("");
 

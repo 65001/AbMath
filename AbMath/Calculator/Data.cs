@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using CLI;
 
 namespace AbMath.Calculator
 {
@@ -32,6 +33,12 @@ namespace AbMath.Calculator
             public string Equation;
             public Queue<Term> Polish { get; set; }
             public bool ContainsVariables { get; private set; }
+
+            public long TotalMilliseconds;
+            public long TotalSteps;
+
+            public bool MarkdownTables;
+            public Format DefaultFormat => (MarkdownTables) ? CLI.Format.MarkDown : CLI.Format.Default ;
 
             public DataStore(string equation)
             {

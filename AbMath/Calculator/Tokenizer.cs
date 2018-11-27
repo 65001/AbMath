@@ -35,7 +35,7 @@ namespace AbMath.Calculator
                 sw.Start();
                 _tokens = new List<Term>();
 
-                _tables = new Tables<string>(new Config { Title = "Tokenizer"});
+                _tables = new Tables<string>(new Config { Title = "Tokenizer", Format = _dataStore.DefaultFormat});
                 _tables.Add(new Schema { Column="#",Width=3 });
                 _tables.Add(new Schema { Column = "Character", Width = 10 });
                 _tables.Add(new Schema { Column = "Token", Width = 15 });
@@ -164,7 +164,9 @@ namespace AbMath.Calculator
                 }
                 sw.Stop();
 
-                Write($"Execution Time {sw.ElapsedMilliseconds}(ms) Elapsed Ticks: {sw.ElapsedTicks}");
+                Write($"Tokenize Time {sw.ElapsedMilliseconds} (ms) Elapsed Ticks: {sw.ElapsedTicks.ToString("N0")}");
+                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds;
+                _dataStore.TotalSteps += sw.ElapsedTicks;
                 Write("");
 
                 return _tokens;

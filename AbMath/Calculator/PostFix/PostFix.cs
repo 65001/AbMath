@@ -82,20 +82,20 @@ namespace AbMath.Calculator
                 }
             }
 
-            if (_stack.Count == 1)
-            {
-                _stopwatch.Stop();
-                Write($"Evaluation Time: {_stopwatch.ElapsedMilliseconds} (ms) {_stopwatch.ElapsedTicks} Ticks");
-                if (_dataStore.Format.ContainsKey(_stack.Peek()))
-                {
-                    Write($"The answer may also be written in the following manner: {_dataStore.Format[_stack.Peek()]}");
-                }
-                return _stack.Pop();
-            }
-
             _stopwatch.Stop();
-            Write($"Evaluation Time: {_stopwatch.ElapsedMilliseconds} (ms) {_stopwatch.ElapsedTicks} Ticks");
-            return double.NaN;
+            Write($"Evaluation Time: {_stopwatch.ElapsedMilliseconds} (ms) {_stopwatch.ElapsedTicks.ToString("N0")} Ticks");
+            _dataStore.TotalMilliseconds += _stopwatch.ElapsedMilliseconds;
+            _dataStore.TotalSteps += _stopwatch.ElapsedTicks;
+
+            Write($"Total Time: {_dataStore.TotalMilliseconds} (ms) {_dataStore.TotalSteps.ToString("N0")} Ticks");
+            Write("");
+            if (_stack.Count != 1) return double.NaN;
+
+            if (_dataStore.Format.ContainsKey(_stack.Peek()))
+            {
+                Write($"The answer may also be written in the following manner: {_dataStore.Format[_stack.Peek()]}");
+            }
+            return _stack.Pop();
         }
 
         private double[] GetArguments(int argCount)

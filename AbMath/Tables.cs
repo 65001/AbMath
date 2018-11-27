@@ -4,7 +4,6 @@ using System.Text;
 
 namespace CLI
 {
-
     public enum Format { Default, MarkDown };
     public struct Config
     {
@@ -147,23 +146,38 @@ namespace CLI
         public string GenerateHeaders()
         {
             var sb = new StringBuilder();
+            StringBuilder md = (config.Format == Format.MarkDown) ? new StringBuilder() : null;
+
             int sum = TableWidth();
             int floor = (int)Math.Floor((decimal)sum / 2);
             int ceiling = (int)Math.Ceiling((decimal)sum / 2);
             int Length = config.Title.Length;
 
-            sb.AppendLine($"{Sheet.TopLeft}{"".PadRight(sum, Sheet.Continue)}{Sheet.TopRight}");
-            sb.AppendLine($"{Sheet.Down}{"".PadRight(floor - Length)}{config.Title}{"".PadRight(ceiling)}{Sheet.Down}");
 
-            sb.AppendLine(Lines(new char[] { Sheet.MidLeft, Sheet.MidTerminate, Sheet.MidRight }));
+            if (config.Format == Format.Default)
+            {
+                sb.AppendLine($"{Sheet.TopLeft}{"".PadRight(sum, Sheet.Continue)}{Sheet.TopRight}");
+                sb.AppendLine(
+                    $"{Sheet.Down}{"".PadRight(floor - Length)}{config.Title}{"".PadRight(ceiling)}{Sheet.Down}");
+                sb.AppendLine(Lines(new char[] { Sheet.MidLeft, Sheet.MidTerminate, Sheet.MidRight }));
+            }
+            else
+            {
+                sb.AppendLine($"# {config.Title}");
+            }
 
             sb.Append(Sheet.Down);
+            md?.Append("\n");
             for (int i = 0; i < schemas.Count; i++)
             {
                 int dif = schemas[i].Width - schemas[i].Column.Length;
                 sb.Append(Row(schemas[i].Column, dif, i));
+                md?.Append("|-");
             }
-            return sb.ToString();
+
+            md?.Append("|");
+
+            return sb.ToString() + md?.ToString();
         }
 
         //Data
