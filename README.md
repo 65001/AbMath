@@ -16,5 +16,6 @@ AbMath's implemetation of our Tokenizer and Shunting Yard Alogrithim currentley 
 * Comparison operators such as >,<,=,and !=.
 * Logic operators such as || (or) and "&&" (and).
 * All the basic trig functions, max,min, sqrt, round, ln, and log functions.
-* Primitive Implicit multiplication support
+* Implicit multiplication support
+* Variadic function support (functions with a variable number of arguments)
 * All  of this alongside with the ability to easily add your own operators and functions at runtime!
