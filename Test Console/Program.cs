@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Diagnostics;
 using AbMath.Calculator;
 
 namespace Test_Console
@@ -20,19 +20,19 @@ namespace Test_Console
             Console.WriteLine("Variadic Function Support");            
             Console.WriteLine();
 
-            while (1 == 1)
+            while (true)
             {
                 Console.ForegroundColor = ConsoleColor.Gray;
-                string Equation = string.Empty;
-                while (string.IsNullOrWhiteSpace(Equation))
+                string equation = string.Empty;
+                while (string.IsNullOrWhiteSpace(equation))
                 {
                     Console.Write("Equation>");
-                    Equation = Console.ReadLine();
+                    equation = Console.ReadLine();
 
-                    if (Equation.Length == 0) { Console.Clear(); }
+                    if (equation.Length == 0) { Console.Clear(); }
                 }
 
-                RPN = new RPN(Equation);
+                RPN = new RPN(equation);
                 RPN.Logger += Write;
                 
                 RPN.Compute();
@@ -51,9 +51,9 @@ namespace Test_Console
                 }
 
                 Console.ForegroundColor = ConsoleColor.White;
-                double Answer = postFix.Compute();
+                double answer = postFix.Compute();
 
-                Console.Write($"Answer: {Answer}");
+                Console.Write($"Answer: {answer}");
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("Press any key to continue...");

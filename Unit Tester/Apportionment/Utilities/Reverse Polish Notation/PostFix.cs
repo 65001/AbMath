@@ -104,7 +104,7 @@ namespace AbMath.Tests
             test.Logger += Write;
             test.Compute();
             PostFix math = new PostFix(test);
-            Assert.AreEqual(System.Math.Sin(3.1415), math.Compute());
+            Assert.AreEqual(Math.Sin(3.1415), math.Compute());
         }
 
         [Test]
