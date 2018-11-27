@@ -7,9 +7,9 @@ namespace AbMath.Discrete.Apportionment
     {
         public double Divisor { get; private set; }
 
-        public Jefferson(Dictionary<T, double> dictionary, double _Allocation)
+        public Jefferson(Dictionary<T, double> dictionary, double allocation)
         {
-            Allocation = _Allocation;
+            Allocation = allocation;
             _Input = dictionary;
 
             StandardDivisor = _Input.Sum() / Allocation;

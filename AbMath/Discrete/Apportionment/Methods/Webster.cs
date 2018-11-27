@@ -8,11 +8,11 @@ namespace AbMath.Discrete.Apportionment
         public double Divisor { get; private set; }
         public double MaxIterations { get; private set; }
 
-        public Webster(Dictionary<T, double> dictionary, double _Allocation,int _MaxIterations = 1000000)
+        public Webster(Dictionary<T, double> dictionary, double allocation,int maxIterations = 1000000)
         {
-            Allocation = _Allocation;
+            Allocation = allocation;
             _Input = dictionary;
-            MaxIterations = _MaxIterations;
+            MaxIterations = maxIterations;
 
             StandardDivisor = _Input.Sum() / Allocation;
             _STDQuota = _Input.StandardQuota(StandardDivisor);
@@ -26,7 +26,7 @@ namespace AbMath.Discrete.Apportionment
                 Quota.Add(kv.Key, 0);
             }
 
-            int Iterations = 0;
+            int iterations = 0;
             Divisor = Math.Floor(StandardDivisor);
             double Tolerence = 0.1;
             while (Math.Floor(Quota.Sum()) != Allocation)
@@ -45,9 +45,9 @@ namespace AbMath.Discrete.Apportionment
                     Quota = _Input.StandardQuota(Divisor).Round();
                 }
 
-                Iterations += 1;
+                iterations += 1;
 
-                if (Iterations > MaxIterations)
+                if (iterations > MaxIterations)
                 {
                     throw new TimeoutException($"Sum({Quota.Sum()}) Divisor:{Divisor}");
                 }
