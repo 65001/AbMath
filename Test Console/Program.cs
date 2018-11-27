@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using AbMath.Utilities;
+using AbMath.Calculator;
 
 namespace Test_Console
 {

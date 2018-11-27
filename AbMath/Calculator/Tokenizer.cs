@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using CLI;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
     public partial class RPN
     {

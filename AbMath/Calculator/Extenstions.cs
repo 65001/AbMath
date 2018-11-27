@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using static AbMath.Utilities.RPN;
 using System.Text;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
     public static class Extenstions
     {
@@ -40,34 +39,34 @@ namespace AbMath.Utilities
 
     public static class TermExtensions
     {
-        public static bool IsNumber(this Term term)
+        public static bool IsNumber(this Calculator.RPN.Term term)
         {
-            return term.Type == RPN.Type.Number;
+            return term.Type == Calculator.RPN.Type.Number;
         }
 
-        public static bool IsNull(this Term term)
+        public static bool IsNull(this Calculator.RPN.Term term)
         {
-            return term.Type == RPN.Type.Null;
+            return term.Type == Calculator.RPN.Type.Null;
         }
 
-        public static bool IsFunction(this Term term)
+        public static bool IsFunction(this Calculator.RPN.Term term)
         {
-            return term.Type == RPN.Type.Function;
+            return term.Type == Calculator.RPN.Type.Function;
         }
 
-        public static bool IsVariable(this Term term)
+        public static bool IsVariable(this Calculator.RPN.Term term)
         {
-            return term.Type == RPN.Type.Variable;
+            return term.Type == Calculator.RPN.Type.Variable;
         }
 
-        public static bool IsLeftBracket(this Term term)
+        public static bool IsLeftBracket(this Calculator.RPN.Term term)
         {
-            return term.Type == RPN.Type.LParen;
+            return term.Type == Calculator.RPN.Type.LParen;
         }
 
-        public static bool IsRightBracket(this Term term)
+        public static bool IsRightBracket(this Calculator.RPN.Term term)
         {
-            return term.Type == RPN.Type.RParen;
+            return term.Type == Calculator.RPN.Type.RParen;
         }
     }
 }

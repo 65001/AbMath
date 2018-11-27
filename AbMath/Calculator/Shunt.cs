@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Text;
 using CLI;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
     public partial class RPN
     {
@@ -106,27 +106,27 @@ namespace AbMath.Utilities
                     {
                         switch (Token.Type)
                         {
-                            case RPN.Type.Number: 
+                            case Calculator.RPN.Type.Number: 
                                 Action = "Added token to output";
                                 Type = "Number";
                                 Output.Enqueue(Token);
                                 break;
-                            case RPN.Type.Function:
+                            case Calculator.RPN.Type.Function:
                                 Action = "Added token to stack";
                                 Type = "Function";
                                 WriteFunction(Token);
                                 break;
-                            case RPN.Type.Operator:
+                            case Calculator.RPN.Type.Operator:
                                 Type = "Operator";
                                 Action = "Operator Rules";
                                 OperatorRule(Token);
                                 break;
-                            case RPN.Type.LParen:
+                            case Calculator.RPN.Type.LParen:
                                 Type = "Left Bracket";
                                 Action = "Added token to stack";
                                 Operator.Push(Token);
                                 break;
-                            case RPN.Type.RParen:
+                            case Calculator.RPN.Type.RParen:
                                 Type = "Right Bracket";
                                 Action = "Right Bracket Rules";
                                 if (Token.Value == ",")
@@ -135,7 +135,7 @@ namespace AbMath.Utilities
                                 }
                                 RightBracketRule(Token);
                                 break;
-                            case RPN.Type.Variable:
+                            case Calculator.RPN.Type.Variable:
                                 Action = "Added token to output";
                                 Type = "Variable";
                                 Output.Enqueue(Token);

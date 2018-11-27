@@ -1,5 +1,5 @@
 ﻿using System;
-using AbMath.Utilities;
+using AbMath.Calculator;
 using NUnit.Framework;
 
 namespace AbMath.Tests

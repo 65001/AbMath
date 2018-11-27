@@ -4,25 +4,25 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
     public class PostFix : IEvaluator<double>
     {
-        private RPN.DataStore _dataStore;
-        private Queue<RPN.Term> Input;
+        private Calculator.RPN.DataStore _dataStore;
+        private Queue<Calculator.RPN.Term> Input;
         private Stack<double> Stack;
         private Stopwatch Stopwatch;
 
         public event EventHandler<string> Logger;
 
         //Sadly the PostFix part of the code must know of RPN..
-        public PostFix(RPN RPN) 
+        public PostFix(Calculator.RPN RPN) 
         {
             _dataStore = RPN.Data;
             Reset();
         }
 
-        public PostFix(RPN.DataStore dataStore)
+        public PostFix(Calculator.RPN.DataStore dataStore)
         {
             _dataStore = dataStore;
             Reset();
@@ -34,10 +34,10 @@ namespace AbMath.Utilities
             
             for (int i = 0; i < Length; i++)
             {
-                RPN.Term Token = Input.Dequeue();
-                if (Token.Type == RPN.Type.Variable && Token.Value == variable)
+                Calculator.RPN.Term Token = Input.Dequeue();
+                if (Token.Type == Calculator.RPN.Type.Variable && Token.Value == variable)
                 {
-                    Input.Enqueue(new RPN.Term {Arguments = 0,Type = RPN.Type.Number,Value = number });
+                    Input.Enqueue(new Calculator.RPN.Term {Arguments = 0,Type = Calculator.RPN.Type.Number,Value = number });
                 }
                 else
                 {
@@ -53,26 +53,26 @@ namespace AbMath.Utilities
 
             while (Input.Count > 0)
             {
-                RPN.Term Token = Input.Dequeue();
+                Calculator.RPN.Term Token = Input.Dequeue();
                 switch (Token.Type)
                 {
-                    case RPN.Type.Number:
+                    case Calculator.RPN.Type.Number:
                         Stack.Push(double.Parse(Token.Value));
                         break;
-                    case RPN.Type.Variable:
+                    case Calculator.RPN.Type.Variable:
                         break;
-                    case RPN.Type.Operator:
+                    case Calculator.RPN.Type.Operator:
                         {
-                            RPN.Operator Operator = _dataStore.Operators[Token.Value];
+                            Calculator.RPN.Operator Operator = _dataStore.Operators[Token.Value];
                             double[] Arguments = GetArguments(Token.Arguments);
                             double Ans = Operator.Compute(Arguments);
                             Stack.Push(Ans);
                         }
                         break;
-                    case RPN.Type.Function:
+                    case Calculator.RPN.Type.Function:
                         {
                             //Looks up the function in the Dict
-                            RPN.Function function = _dataStore.Functions[Token.Value];
+                            Calculator.RPN.Function function = _dataStore.Functions[Token.Value];
 
                             double[] Arguments = GetArguments(Token.Arguments);
                             double Ans = function.Compute(Arguments);
@@ -118,7 +118,7 @@ namespace AbMath.Utilities
 
         public void Reset()
         {
-            Input = new Queue<RPN.Term>(_dataStore.Polish);
+            Input = new Queue<Calculator.RPN.Term>(_dataStore.Polish);
             Stack = new Stack<double>();
         }
 

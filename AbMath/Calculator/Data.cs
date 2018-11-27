@@ -4,7 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 
-namespace AbMath.Utilities
+namespace AbMath.Calculator
 {
     public partial class RPN
     {
