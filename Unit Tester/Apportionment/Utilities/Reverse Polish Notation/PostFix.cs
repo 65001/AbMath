@@ -13,7 +13,7 @@ namespace AbMath.Tests
             RPN test = new RPN("2 + 2 + 2");
             test.Logger += Write;
             test.Compute();
-            PostFix math = new PostFix(test.data);
+            PostFix math = new PostFix(test.Data);
             Assert.AreEqual(6, math.Compute());
         }
 
@@ -23,7 +23,7 @@ namespace AbMath.Tests
             RPN test = new RPN("2++ + 2 + 2");
             test.Logger += Write;
             test.Compute();
-            PostFix math = new PostFix(test.data);
+            PostFix math = new PostFix(test.Data);
             Assert.AreEqual(7, math.Compute());
         }
 
@@ -33,7 +33,7 @@ namespace AbMath.Tests
             RPN test = new RPN("7++");
             test.Logger += Write;
             test.Compute();
-            PostFix math = new PostFix(test.data);
+            PostFix math = new PostFix(test.Data);
             Assert.AreEqual(8, math.Compute());
         }
 

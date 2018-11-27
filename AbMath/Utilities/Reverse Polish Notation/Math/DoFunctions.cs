@@ -136,6 +136,11 @@ namespace AbMath.Utilities
                 return sum;
             }
 
+            public static double Abs(params double[] Arguments)
+            {
+                return Math.Abs(Arguments[0]);
+            }
+
             //Constants 
             public static double Pi(params double[] Arguments)
             {

@@ -8,7 +8,7 @@ namespace AbMath.Utilities
 {
     public class PostFix : IEvaluator<double>
     {
-        private RPN.Data Data;
+        private RPN.DataStore _dataStore;
         private Queue<RPN.Term> Input;
         private Stack<double> Stack;
         private Stopwatch Stopwatch;
@@ -18,13 +18,13 @@ namespace AbMath.Utilities
         //Sadly the PostFix part of the code must know of RPN..
         public PostFix(RPN RPN) 
         {
-            Data = RPN.data;
+            _dataStore = RPN.Data;
             Reset();
         }
 
-        public PostFix(RPN.Data data)
+        public PostFix(RPN.DataStore dataStore)
         {
-            Data = data;
+            _dataStore = dataStore;
             Reset();
         }
 
@@ -63,7 +63,7 @@ namespace AbMath.Utilities
                         break;
                     case RPN.Type.Operator:
                         {
-                            RPN.Operator Operator = Data.Operators[Token.Value];
+                            RPN.Operator Operator = _dataStore.Operators[Token.Value];
                             double[] Arguments = GetArguments(Token.Arguments);
                             double Ans = Operator.Compute(Arguments);
                             Stack.Push(Ans);
@@ -72,7 +72,7 @@ namespace AbMath.Utilities
                     case RPN.Type.Function:
                         {
                             //Looks up the function in the Dict
-                            RPN.Function function = Data.Functions[Token.Value];
+                            RPN.Function function = _dataStore.Functions[Token.Value];
 
                             double[] Arguments = GetArguments(Token.Arguments);
                             double Ans = function.Compute(Arguments);
@@ -88,9 +88,9 @@ namespace AbMath.Utilities
             {
                 stopwatch.Stop();
                 Write($"Evaluation Time: {stopwatch.ElapsedMilliseconds} (ms) {stopwatch.ElapsedTicks} Ticks");
-                if (Data.Format.ContainsKey(Stack.Peek()))
+                if (_dataStore.Format.ContainsKey(Stack.Peek()))
                 {
-                    Write($"The answer may also be written in the following manner: {Data.Format[Stack.Peek()]}");
+                    Write($"The answer may also be written in the following manner: {_dataStore.Format[Stack.Peek()]}");
                 }
                 return Stack.Pop();
             }
@@ -118,7 +118,7 @@ namespace AbMath.Utilities
 
         public void Reset()
         {
-            Input = new Queue<RPN.Term>(Data.Polish);
+            Input = new Queue<RPN.Term>(_dataStore.Polish);
             Stack = new Stack<double>();
         }
 

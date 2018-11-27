@@ -147,9 +147,9 @@ namespace AbMath.Utilities
                 return Arguments[0] * Math.Pow(10, Arguments[1]);
             }
 
-            public static void Store(ref Data data,params string[] Arguments)
+            public static void Store(ref DataStore dataStore,params string[] Arguments)
             {
-                data.AddStore(Arguments[0], Arguments[1]);
+                dataStore.AddStore(Arguments[0], Arguments[1]);
             }
         }
     }

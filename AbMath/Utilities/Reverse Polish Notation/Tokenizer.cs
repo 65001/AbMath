@@ -11,8 +11,8 @@ namespace AbMath.Utilities
     {
         public class Tokenizer : ITokenizer<Term>
         {
-            private Data Data;
-            private string Equation => Data.Equation; 
+            private DataStore _dataStore;
+            private string Equation => _dataStore.Equation; 
 
             private string Token;
             private string Character;
@@ -25,9 +25,9 @@ namespace AbMath.Utilities
 
            public event EventHandler<string> Logger;
 
-            public Tokenizer(Data data)
+            public Tokenizer(DataStore dataStore)
             {
-                Data = data;
+                _dataStore = dataStore;
             }
 
             public List<Term> Tokenize()
@@ -67,79 +67,79 @@ namespace AbMath.Utilities
                         WriteToken("WhiteSpace");
                     }
                     //Unary Input at the start of the input or after another operator or left parenthesis
-                    else if ((i == 0 && Data.IsUnary(Character)) || (Tokens.Count > 0 && (Data.IsOperator(PrevToken) || Data.IsLeftBracket(PrevToken) || PrevToken ==",") && Data.IsUnary(Character) && !Data.IsNumber(Token) && 
-                        !Data.IsOperator(Character + ReadAhead)))
+                    else if ((i == 0 && _dataStore.IsUnary(Character)) || (Tokens.Count > 0 && (_dataStore.IsOperator(PrevToken) || _dataStore.IsLeftBracket(PrevToken) || PrevToken ==",") && _dataStore.IsUnary(Character) && !_dataStore.IsNumber(Token) && 
+                        !_dataStore.IsOperator(Character + ReadAhead)))
                     {
                         Rule = "Unary";
                         Token += Character;
-                        if(!string.IsNullOrWhiteSpace(ReadAhead) && (Data.IsVariable(ReadAhead) || Data.IsLeftBracket(ReadAhead) ))
+                        if(!string.IsNullOrWhiteSpace(ReadAhead) && (_dataStore.IsVariable(ReadAhead) || _dataStore.IsLeftBracket(ReadAhead) ))
                         {
                             Token += "1";
                             WriteToken("Unary");
                         }
                     }
-                    else if ( ( Data.IsNumber(Token) ) && ( Data.IsVariable(Character) || Data.IsLeftBracket(Character) || Data.IsFunction(Character)))
+                    else if ( ( _dataStore.IsNumber(Token) ) && ( _dataStore.IsVariable(Character) || _dataStore.IsLeftBracket(Character) || _dataStore.IsFunction(Character)))
                     {
                         WriteToken("Left Implicit");
                         Token = Character;
-                        if (Data.IsLeftBracket(Character) || (i == (Equation.Length - 1)))
+                        if (_dataStore.IsLeftBracket(Character) || (i == (Equation.Length - 1)))
                         {
                             WriteToken("Left Implicit");
                         }
                     }
-                    else if (Data.IsVariable(Token) && Data.IsNumber(Character))
+                    else if (_dataStore.IsVariable(Token) && _dataStore.IsNumber(Character))
                     {
                         WriteToken("Left Implicit 2");
                         Token = Character;
-                        if (Data.IsLeftBracket(Character) || (i == (Equation.Length - 1)))
+                        if (_dataStore.IsLeftBracket(Character) || (i == (Equation.Length - 1)))
                         {
                             WriteToken("Left Implicit 2");
                         }
                     }
-                    else if (Data.IsFunction(Token) && Data.IsLeftBracket(Character))
+                    else if (_dataStore.IsFunction(Token) && _dataStore.IsLeftBracket(Character))
                     {
                         WriteToken("Function Start");
                         Token = Character;
                         WriteToken("Function Start");
                     }
-                    else if (Data.IsFunction(Token) && Data.IsRightBracket(Character))
+                    else if (_dataStore.IsFunction(Token) && _dataStore.IsRightBracket(Character))
                     {
                         WriteToken("Function End");
                         Token = Character;
                         WriteToken("Function End");
                     }
-                    else if (Data.IsFunction(Token) && Data.IsOperator(Character))
+                    else if (_dataStore.IsFunction(Token) && _dataStore.IsOperator(Character))
                     {
                         WriteToken("Function End");
                         Token = Character;
                         WriteToken("Function End");
                     }
-                    else if (Data.IsOperator(Character + ReadAhead))
+                    else if (_dataStore.IsOperator(Character + ReadAhead))
                     {
                         WriteToken("Operator");
                         Token = Character + ReadAhead;
                         WriteToken("Operator");
                         i = i + 1;
                     }
-                    else if (Data.IsNumber(Token) && (Data.IsLeftBracket(Character) || Data.IsRightBracket(Character) || Data.IsOperator(Character)))
+                    else if (_dataStore.IsNumber(Token) && (_dataStore.IsLeftBracket(Character) || _dataStore.IsRightBracket(Character) || _dataStore.IsOperator(Character)))
                     {
                         WriteToken("Edge Case 1");
                         Token = Character;
                         WriteToken("Edge Case 1");
                     }
                     //Add equivalent for variables?
-                    else if (Data.IsVariable(Token) && (Data.IsLeftBracket(Character) || Data.IsRightBracket(Character) || Data.IsOperator(Character)))
+                    else if (_dataStore.IsVariable(Token) && (_dataStore.IsLeftBracket(Character) || _dataStore.IsRightBracket(Character) || _dataStore.IsOperator(Character)))
                     {
                         WriteToken("Edge Case 2");
                         Token = Character;
                         WriteToken("Edge Case 2");
                     }
-                    else if (Data.IsOperator(Character))
+                    else if (_dataStore.IsOperator(Character))
                     {
                         Token += Character;
                         WriteToken("Operator");
                     }
-                    else if (Data.IsLeftBracket(Character) || Data.IsRightBracket(Character))
+                    else if (_dataStore.IsLeftBracket(Character) || _dataStore.IsRightBracket(Character))
                     {
                         Token += Character;
                         WriteToken("Bracket");
@@ -177,13 +177,13 @@ namespace AbMath.Utilities
             /// </summary>
             void Alias()
             {
-                if (Data.Aliases.ContainsKey(Token))
+                if (_dataStore.Aliases.ContainsKey(Token))
                 {
-                    Token = Data.Aliases[Token];
+                    Token = _dataStore.Aliases[Token];
                 }
-                else if (Data.Aliases.ContainsKey(Character))
+                else if (_dataStore.Aliases.ContainsKey(Character))
                 {
-                    Character = Data.Aliases[Character];
+                    Character = _dataStore.Aliases[Character];
                 }
             }
 
@@ -199,17 +199,17 @@ namespace AbMath.Utilities
                 Term term = new Term
                 {
                     Value = Token,
-                    Type = Data.Resolve(Token),
+                    Type = _dataStore.Resolve(Token),
                     Arguments = 0
                 };
 
                 if(term.Type == Type.Function)
                 {
-                    term.Arguments = Data.Functions[Token].Arguments;
+                    term.Arguments = _dataStore.Functions[Token].Arguments;
                 }
                 else if (term.Type == Type.Operator)
                 {
-                    term.Arguments = Data.Operators[Token].Arguments;
+                    term.Arguments = _dataStore.Operators[Token].Arguments;
                 }
 
                 Tokens.Add(term);

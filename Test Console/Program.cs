@@ -17,11 +17,7 @@ namespace Test_Console
             Console.WriteLine("Unary negative is now implemented.");
             Console.WriteLine("Composite Function bug should now be fixed.");
             Console.WriteLine("Implicit multiplication.");
-
-            Console.WriteLine("");
-            Console.WriteLine("Known Bugs:");
-            Console.WriteLine("Space between terms is necessary.");
-            
+            Console.WriteLine("Variadic Function Support");            
             Console.WriteLine();
 
             while (1 == 1)
@@ -47,10 +43,10 @@ namespace Test_Console
                 if (RPN.ContainsVariables)
                 {
                     Console.WriteLine("Set the variables");
-                    for (int i = 0; i < RPN.data.Variables.Count; i++)
+                    for (int i = 0; i < RPN.Data.Variables.Count; i++)
                     {
-                        Console.Write(RPN.data.Variables[i] + "=");
-                        postFix.SetVariable(RPN.data.Variables[i], Console.ReadLine());
+                        Console.Write(RPN.Data.Variables[i] + "=");
+                        postFix.SetVariable(RPN.Data.Variables[i], Console.ReadLine());
                     }
                 }
 

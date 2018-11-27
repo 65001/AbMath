@@ -8,7 +8,7 @@ namespace AbMath.Utilities
 {
     public partial class RPN
     {
-        public class Data
+        public class DataStore
         {
             private readonly Dictionary<string,Function> functions;
             private readonly Dictionary<string,Operator> operators;
@@ -33,7 +33,7 @@ namespace AbMath.Utilities
             public Queue<Term> Polish { get; set; }
             public bool ContainsVariables { get; private set; }
 
-            public Data(string equation)
+            public DataStore(string equation)
             {
                 Equation = equation;
                 functions = new Dictionary<string, Function>();
@@ -486,6 +486,14 @@ namespace AbMath.Utilities
                     Arguments = 1,
                     MaxArguments = 1,
                     Compute = DoFunctions.Seed
+                });
+
+                AddFunction("abs", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.Abs,
+                    MaxArguments = 1,
+                    MinArguments = 1
                 });
             }
 

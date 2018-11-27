@@ -14,19 +14,17 @@ namespace AbMath.Utilities
     //TODO
     //ABS
     //ARCSIN,ARCTAN,ARCCOS
-    //Seed
-    //Random()
-    //Random(Min,Max)
 
     //Generify
     //Auto Scaling from decimal to double to Big Integer
+    //Move from using Doubles to Complex
     //Complex Number Support sqrt(-1) = i
 
     public partial class RPN
     {
         public enum Type {LParen,RParen,Number,Variable,Function,Operator,Null };
         public delegate double Run(params double[] arguments);
-        public delegate void Store(ref Data data,params string[] arguments);
+        public delegate void Store(ref DataStore dataStore,params string[] arguments);
 
         public event EventHandler<string> Logger;
 
@@ -36,7 +34,6 @@ namespace AbMath.Utilities
             public Assoc Assoc;
             public int Arguments;
             public Run Compute;
-            public Store Store;
         }
 
         public struct Function
@@ -46,15 +43,13 @@ namespace AbMath.Utilities
             public int MinArguments;
 
             public Run Compute;
-            public Store Store;
         }
 
         public struct Term
         {
-            public string Value { get; set; }
-
+            public string Value;
             public int Arguments;
-            public Type Type { get; set; }
+            public Type Type;
             public override string ToString()
             {
                 return Value;
@@ -67,11 +62,11 @@ namespace AbMath.Utilities
         public Queue<Term> Polish;
         public List<Term> Tokens;
 
-        public bool ContainsVariables  => data.ContainsVariables; 
+        public bool ContainsVariables  => Data.ContainsVariables; 
 
-        ITokenizer<Term> _tokenizer;
-        IShunt<Term> _shunt;
-        public Data data { get; private set; }
+        private ITokenizer<Term> _tokenizer;
+        private IShunt<Term> _shunt;
+        public DataStore Data { get; private set; }
 
 
         #region Constructors
@@ -79,32 +74,32 @@ namespace AbMath.Utilities
         {
             Equation = equation;
             Startup();
-            _tokenizer = new Tokenizer(data);
-            _shunt = new Shunt(data);
+            _tokenizer = new Tokenizer(Data);
+            _shunt = new Shunt(Data);
         }
 
-        public RPN(string equation, ITokenizer<Term> CustomTokenizer)
+        public RPN(string equation, ITokenizer<Term> customTokenizer)
         {
             Equation = equation;
             Startup();
-            _tokenizer = CustomTokenizer;
-            _shunt = new Shunt(data);
+            _tokenizer = customTokenizer;
+            _shunt = new Shunt(Data);
         }
 
-        public RPN(string equation, IShunt<Term> CustomShunter)
+        public RPN(string equation, IShunt<Term> customShunter)
         {
             Equation = equation;
             Startup();
-            _tokenizer = new Tokenizer(data);
-            _shunt = CustomShunter;
+            _tokenizer = new Tokenizer(Data);
+            _shunt = customShunter;
         }
 
-        public RPN(string equation, ITokenizer<Term> CustomTokenizer, IShunt<Term> CustomShunter)
+        public RPN(string equation, ITokenizer<Term> customTokenizer, IShunt<Term> customShunter)
         {
             Equation = equation;
             Startup();
-            _tokenizer = CustomTokenizer;
-            _shunt = CustomShunter;
+            _tokenizer = customTokenizer;
+            _shunt = customShunter;
         }
 
         /**
@@ -113,14 +108,14 @@ namespace AbMath.Utilities
         public void SetEquation(string equation)
         {
             Equation = equation;
-            data = new Data(Equation);
-            _tokenizer = new Tokenizer(data);
-            _shunt = new Shunt(data);
+            Data = new DataStore(Equation);
+            _tokenizer = new Tokenizer(Data);
+            _shunt = new Shunt(Data);
         }
 
         private void Startup()
         {
-            data = new Data(Equation);
+            Data = new DataStore(Equation);
         }
         #endregion
 
@@ -131,7 +126,7 @@ namespace AbMath.Utilities
 
             _shunt.Logger += Logger;
             Polish = _shunt.ShuntYard(Tokens);
-            data.Polish = Polish;
+            Data.Polish = Polish;
         }
     }
 }

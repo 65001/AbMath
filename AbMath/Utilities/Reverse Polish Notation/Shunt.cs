@@ -18,7 +18,7 @@ namespace AbMath.Utilities
         //Should be able to correctly shunt functions?
         public class Shunt : IShunt<Term>
         {
-            private Data Data;
+            private DataStore _dataStore;
             Queue<Term> Output;
             Stack<Term> Operator;
 
@@ -32,9 +32,9 @@ namespace AbMath.Utilities
 
             public event EventHandler<string> Logger;
 
-            public Shunt(Data data)
+            public Shunt(DataStore dataStore)
             {
-                Data = data;
+                _dataStore = dataStore;
             }
 
             //Todo make ShuntYard smart about uniary negative signs 
@@ -139,7 +139,7 @@ namespace AbMath.Utilities
                                 Action = "Added token to output";
                                 Type = "Variable";
                                 Output.Enqueue(Token);
-                                Data.AddVariable(Token.Value);
+                                _dataStore.AddVariable(Token.Value);
                                 break;
                             default:
                                 throw new NotImplementedException(Token.Value);
@@ -200,7 +200,7 @@ namespace AbMath.Utilities
                 Output.Enqueue(Token);
                 if (Token.IsVariable())
                 {
-                    Data.AddVariable(Token.Value);
+                    _dataStore.AddVariable(Token.Value);
                 }
             }
 
@@ -258,12 +258,12 @@ namespace AbMath.Utilities
                 {
                     return Operator.Count > 0 &&
                             (
-                                (Data.IsFunction(Operator.Peek().Value) == true) ||
-                                (Data.Operators[Operator.Peek().Value].Weight > Data.Operators[Token.Value].Weight) ||
-                                (Data.Operators[Operator.Peek().Value].Weight == Data.Operators[Token.Value].Weight && Data.Operators[Token.Value].Assoc == Assoc.Left)
+                                (_dataStore.IsFunction(Operator.Peek().Value) == true) ||
+                                (_dataStore.Operators[Operator.Peek().Value].Weight > _dataStore.Operators[Token.Value].Weight) ||
+                                (_dataStore.Operators[Operator.Peek().Value].Weight == _dataStore.Operators[Token.Value].Weight && _dataStore.Operators[Token.Value].Assoc == Assoc.Left)
 
                             )
-                            && Data.IsLeftBracket(Operator.Peek().Value) == false;
+                            && _dataStore.IsLeftBracket(Operator.Peek().Value) == false;
                 }
                 catch (Exception ex) { }
                 return false;
@@ -288,7 +288,7 @@ namespace AbMath.Utilities
             {
                 Operator.Push(Function);
                 
-                if (Data.Functions[Function.Value].Arguments > 0)
+                if (_dataStore.Functions[Function.Value].Arguments > 0)
                 {
                     Arity.Push(1);
                 }
