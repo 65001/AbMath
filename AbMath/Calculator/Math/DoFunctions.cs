@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AbMath.Calculator
 {
@@ -8,151 +6,144 @@ namespace AbMath.Calculator
     {
         public static class DoFunctions
         {
-            private static Random rand;
+            private static Random _rand;
 
-            public static double Sin(params double[] Arguments)
+            public static double Sin(params double[] arguments)
             {
                 // -1 <= sin(x) <= 1
-                return Math.Sin(Arguments[0]);
+                return Math.Sin(arguments[0]);
             }
 
-            public static double Cos(params double[] Arguments)
+            public static double Cos(params double[] arguments)
             {
-                return Math.Cos(Arguments[0]);
+                return Math.Cos(arguments[0]);
             }
 
-            public static double Tan(params double[] Arguments)
+            public static double Tan(params double[] arguments)
             {
-                return Math.Tan(Arguments[0]);
+                return Math.Tan(arguments[0]);
             }
 
-            public static double Sqrt(params double[] Arguments)
+            public static double Sqrt(params double[] arguments)
             {
-                return Math.Sqrt(Arguments[0]);
+                return Math.Sqrt(arguments[0]);
             }
 
-            public static double Round(params double[] Arguments)
+            public static double Round(params double[] arguments)
             {
                 double digits;
-                if (Arguments.Length == 2) { digits = Arguments[1]; }
+                if (arguments.Length == 2) { digits = arguments[1]; }
                 else { digits = 0; }
-                return Math.Round(Arguments[0] * Math.Pow(10, digits)) / Math.Pow(10, digits);
+                return Math.Round(arguments[0] * Math.Pow(10, digits)) / Math.Pow(10, digits);
             }
 
-            public static double Max(params double[] Arguments)
+            public static double Max(params double[] arguments)
             {
-                double max = Arguments[0];
-                for (int i = 0; i < Arguments.Length; i++)
+                double max = arguments[0];
+                for (int i = 0; i < arguments.Length; i++)
                 {
-                    if (Arguments[i] > max)
+                    if (arguments[i] > max)
                     {
-                        max = Arguments[i];
+                        max = arguments[i];
                     }
                 }
 
                 return max;
             }
 
-            public static double Min(params double[] Arguments)
+            public static double Min(params double[] arguments)
             {
-                double min = Arguments[0];
-                for (int i = 0; i < Arguments.Length; i++)
+                double min = arguments[0];
+                for (int i = 0; i < arguments.Length; i++)
                 {
-                    if (Arguments[i] < min)
+                    if (arguments[i] < min)
                     {
-                        min = Arguments[i];
+                        min = arguments[i];
                     }
                 }
 
                 return min;
             }
 
-            public static double Bounded(params double[] Arguments)
+            public static double Bounded(params double[] arguments)
             {
                 //0 - Test, 1 - Floor , 2 - Ceiling 
-                return Math.Max(Arguments[1], Math.Min(Arguments[0], Arguments[2]));
+                return Math.Max(arguments[1], Math.Min(arguments[0], arguments[2]));
             }
 
-            public static double Lcm(params double[] Arguments)
+            public static double Lcm(params double[] arguments)
             {
-                return (Arguments[0] * Arguments[1]) / Gcd(Arguments);
+                return (arguments[0] * arguments[1]) / Gcd(arguments);
             }
 
-            public static double Gcd(params double[] Arguments)
+            public static double Gcd(params double[] arguments)
             {
-                Arguments[0] = Math.Abs(Arguments[0]);
-                Arguments[1] = Math.Abs(Arguments[1]);
-                return (Arguments[1] == 0) ? Arguments[0] : Gcd(Arguments[1], Arguments[0] % Arguments[1]);
+                arguments[0] = Math.Abs(arguments[0]);
+                arguments[1] = Math.Abs(arguments[1]);
+                return (arguments[1] == 0) ? arguments[0] : Gcd(arguments[1], arguments[0] % arguments[1]);
             }
 
-            public static double ln(params double[] Arguments)
+            public static double ln(params double[] arguments)
             {
-                return Math.Log(Arguments[0]);
+                return Math.Log(arguments[0]);
             }
 
-            public static double Log (params double[] Arguments)
+            public static double Log (params double[] arguments)
             {
-                if (Arguments.Length == 1)
+                if (arguments.Length == 1)
                 {
-                    return Math.Log(Arguments[0]);
+                    return Math.Log(arguments[0]);
                 }
-                return Math.Log(Arguments[0], Arguments[1]);
+                return Math.Log(arguments[0], arguments[1]);
             }
 
-            public static double Seed(params double[] Arguments)
+            public static double Seed(params double[] arguments)
             {
-                rand = new Random((int)Arguments[0]);
+                _rand = new Random((int)arguments[0]);
                 return double.NaN;
             }
 
-            public static double Random(params double[] Arguments)
+            public static double Random(params double[] arguments)
             {
-                if (rand == null)
+                if (_rand == null)
                 {
-                    rand = new Random();
+                    _rand = new Random();
                 }
 
-                if (Arguments.Length == 0)
+                if (arguments.Length == 0)
                 {
-                    return rand.Next();
+                    return _rand.Next();
                 }
-                if (Arguments.Length == 1)
-                {
-                    return rand.Next((int)Arguments[0]);
-                }
-
-                return rand.Next((int)Arguments[0], (int)Arguments[1]);
+                return arguments.Length == 1 ? _rand.Next((int)arguments[0]) : _rand.Next((int)arguments[0], (int)arguments[1]);
             }
 
-            public static double Sum(params double[] Arguments)
+            public static double Sum(params double[] arguments)
             {
                 double sum = 0;
-                int lowerBound = (int)Arguments[1];
-                int upperBound = (int)Arguments[2];
+                int lowerBound = (int)arguments[1];
+                int upperBound = (int)arguments[2];
                 for (int i = lowerBound; i < upperBound; i++)
                 {
-                    sum += Arguments[0];
+                    sum += arguments[0];
                 }
                 return sum;
             }
 
-            public static double Abs(params double[] Arguments)
+            public static double Abs(params double[] arguments)
             {
-                return Math.Abs(Arguments[0]);
+                return Math.Abs(arguments[0]);
             }
 
             //Constants 
-            public static double Pi(params double[] Arguments)
+            public static double Pi(params double[] arguments)
             {
                 return Math.PI;
             }
 
-            public static double EContstant(params double[] Arguments)
+            public static double EContstant(params double[] arguments)
             {
                 return Math.E;
             }
-
-            
         }
     }
 }

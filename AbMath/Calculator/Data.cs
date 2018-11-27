@@ -266,7 +266,7 @@ namespace AbMath.Calculator
                     Assoc = Assoc.Left,
                     Weight = 1,
                     Arguments = 2,
-                    Compute = DoOperators.GreateerThan
+                    Compute = DoOperators.GreaterThan
                 });
 
                 AddOperator("<", new Operator
