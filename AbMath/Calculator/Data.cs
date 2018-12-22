@@ -81,9 +81,11 @@ namespace AbMath.Calculator
             /// </summary>
             public bool MarkdownTables;
 
+            public bool AllowMismatchedParentheses;
+
             /// <summary>
             /// Determines the default format of CLI Tables
-            /// based on MarkdownTables
+            /// based on the value of MarkdownTables
             /// </summary>
             public Format DefaultFormat => (MarkdownTables) ? CLI.Format.MarkDown : CLI.Format.Default ;
 
@@ -218,6 +220,10 @@ namespace AbMath.Calculator
                 AddAlias("and","&&");
                 AddAlias("or","||");
                 AddAlias("Σ","sum");
+
+                //Latex t commands
+                AddAlias("\\left","");
+                AddAlias("\\right","");
             }
 
             private void DefaultBrackets()

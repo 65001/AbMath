@@ -80,9 +80,15 @@ namespace AbMath.Calculator
                 return min;
             }
 
+            /// <summary>
+            /// Pass in a double array of three values and get the bounded value back
+            /// 0 - Test, 1 - Floor , 2 - Ceiling
+            /// </summary>
+            /// <param name="arguments"></param>
+            /// <returns>the bounded value</returns>
             public static double Bounded(params double[] arguments)
             {
-                //0 - Test, 1 - Floor , 2 - Ceiling 
+               
                 return Math.Max(arguments[1], Math.Min(arguments[0], arguments[2]));
             }
 

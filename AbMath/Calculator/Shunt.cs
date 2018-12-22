@@ -249,9 +249,7 @@ namespace AbMath.Calculator
                     //can have variable number of arguments
                     if (output.IsFunction() )
                     {
-                        int args = _arity.Pop();
-                        //TODO Bounds Checking
-                        output.Arguments = args;
+                        output.Arguments = _arity.Pop();
                     }
                     _output.Enqueue(output);
                 }
@@ -286,15 +284,14 @@ namespace AbMath.Calculator
             bool DoOperatorRule(Term Token)
             {
                 try
-                {
-                    return _operator.Count > 0 &&
+                { 
+                    return _operator.Count > 0 && !_operator.Peek().IsLeftBracket() &&
                             (
-                                _dataStore.IsFunction(_operator.Peek().Value) ||
+                                _operator.Peek().IsFunction() ||
                                 (_dataStore.Operators[_operator.Peek().Value].Weight > _dataStore.Operators[Token.Value].Weight) ||
-                                (_dataStore.Operators[_operator.Peek().Value].Weight == _dataStore.Operators[Token.Value].Weight && _dataStore.Operators[Token.Value].Assoc == Assoc.Left)
-
-                            )
-                            && _dataStore.IsLeftBracket(_operator.Peek().Value) == false;
+                                (_dataStore.Operators[_operator.Peek().Value].Weight == _dataStore.Operators[Token.Value].Weight 
+                                 && _dataStore.Operators[Token.Value].Assoc == Assoc.Left)
+                            );
                 }
                 catch (Exception ex) { }
                 return false;
@@ -312,7 +309,7 @@ namespace AbMath.Calculator
 
             private bool Chain()
             {
-                return LeftImplicit()  && RightImplicit();
+                return LeftImplicit() && RightImplicit();
             }
 
             private void WriteFunction(Term function)
@@ -346,10 +343,18 @@ namespace AbMath.Calculator
 
                     if (peek.Type == Type.LParen || peek.Type == Type.RParen)
                     {
-                        throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
+                        if (!_dataStore.AllowMismatchedParentheses)
+                        {
+                            throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
+                        }
+
+                        _operator.Pop();
                     }
-                    var output = _operator.Pop();
-                    _output.Enqueue(output);
+                    else
+                    {
+                        var output = _operator.Pop();
+                        _output.Enqueue(output);
+                    }
                 }
 
                 while ( _arity.Count > 0)
