@@ -24,6 +24,21 @@ namespace AbMath.Calculator
                 return Math.Tan(arguments[0]);
             }
 
+            public static double Arcsin(params double[] arguments)
+            {
+                return Math.Asin(arguments[0]);
+            }
+
+            public static double Arccos(params double[] arguments)
+            {
+                return Math.Acos(arguments[0]);
+            }
+
+            public static double Arctan(params double[] arguments)
+            {
+                return Math.Atan(arguments[0]);
+            }
+
             public static double Sqrt(params double[] arguments)
             {
                 return Math.Sqrt(arguments[0]);

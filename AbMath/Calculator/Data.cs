@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Numerics;
 using System.Linq;
 using System.Collections.Generic;
-using System.Text;
 using CLI;
 
 namespace AbMath.Calculator
@@ -22,22 +20,71 @@ namespace AbMath.Calculator
             private List<string> _variables;
             private readonly Dictionary<string, string> _variableStore;
 
+            /// <summary>
+            /// A list of all the functions that are supported
+            /// by this calculator.
+            /// </summary>
             public IReadOnlyDictionary<string,Function> Functions => _functions; 
+
+            /// <summary>
+            /// A list of all operators that are supported
+            /// by this calculator.
+            /// </summary>
             public IReadOnlyDictionary<string,Operator> Operators => _operators; 
+            /// <summary>
+            /// A dictionary of expressions that the calculator
+            /// treats as equivalent. 
+            /// </summary>
             public IReadOnlyDictionary<string, string> Aliases =>  _aliases; 
+
+            /// <summary>
+            /// A dictionary of numerical constants and known
+            /// representations of them
+            /// </summary>
             public IReadOnlyDictionary<double,string> Format => _autoFormat; 
+
+            /// <summary>
+            /// A list of all strings that would
+            /// start a function or work as grouping symbols 
+            /// </summary>
             public IReadOnlyList<string> LeftBracket => _leftbracket; 
+
+            /// <summary>
+            /// A list of all strings that end function calls and
+            /// terminate grouping symbols
+            /// </summary>
             public IReadOnlyList<string> RightBracket => _rightbracket;
+
+            /// <summary>
+            /// A list of variables that the calculator
+            /// has found in an expression
+            /// </summary>
             public IReadOnlyList<string> Variables => _variables; 
 
+            /// <summary>
+            /// The equation passed to the calculator 
+            /// </summary>
             public string Equation;
             public Queue<Term> Polish { get; set; }
+
+            /// <summary>
+            /// Whether an expression contains variables
+            /// </summary>
             public bool ContainsVariables { get; private set; }
 
             public long TotalMilliseconds;
             public long TotalSteps;
 
+            /// <summary>
+            /// If true, auto generated debug tables
+            /// will write data in markdown format
+            /// </summary>
             public bool MarkdownTables;
+
+            /// <summary>
+            /// Determines the default format of CLI Tables
+            /// based on MarkdownTables
+            /// </summary>
             public Format DefaultFormat => (MarkdownTables) ? CLI.Format.MarkDown : CLI.Format.Default ;
 
             public DataStore(string equation)
@@ -267,6 +314,16 @@ namespace AbMath.Calculator
                     Compute = DoOperators.Subtract
                 });
 
+                /*
+                AddOperator(":", new Operator()
+                {
+                    Assoc = Assoc.Left,
+                    Weight = 1,
+                    Arguments = 2,
+                    Compute = DoOperators.Equals
+                });
+                */
+
                 #region Evaluation
                 AddOperator(">", new Operator
                 {
@@ -368,6 +425,30 @@ namespace AbMath.Calculator
                     Arguments = 1,
                     MaxArguments = 1,
                     Compute = DoFunctions.Tan
+                });
+
+                AddFunction("arcsin", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.Arcsin,
+                    MaxArguments = 1,
+                    MinArguments = 1
+                });
+
+                AddFunction("arccos", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.Arccos,
+                    MaxArguments = 1,
+                    MinArguments = 1
+                });
+
+                AddFunction("arctan", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.Arctan,
+                    MaxArguments = 1,
+                    MinArguments = 1
                 });
                 #endregion
 
@@ -508,8 +589,15 @@ namespace AbMath.Calculator
             {
                 AddFormat(Math.Sqrt(2)/2, "√2 / 2");
                 AddFormat(- Math.Sqrt(2) / 2, "-√2 / 2");
+
                 AddFormat(Math.Sqrt(3)/2, "√3 / 2");
                 AddFormat(- Math.Sqrt(3) / 2, "-√3 / 2");
+
+                AddFormat(Math.PI / 2, "π/2");
+
+                AddFormat(Math.PI / 3, "π/3");
+
+                AddFormat(Math.PI / 4, "π/4");
             }
         }
     }

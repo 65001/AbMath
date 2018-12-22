@@ -5,7 +5,6 @@ namespace AbMath.Calculator
 {
     public static class Extensions
     {
-        //Todo: Implement
         public static string Print<T>(this Queue<T> queue)
         {
             int length = queue.Count;

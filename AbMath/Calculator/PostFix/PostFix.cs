@@ -11,6 +11,7 @@ namespace AbMath.Calculator
         private readonly RPN.DataStore _dataStore;
         private Queue<RPN.Term> _input;
         private Stack<double> _stack;
+        private Stack<RPN.Term> _variables;
         private readonly Stopwatch _stopwatch;
 
         public event EventHandler<string> Logger;
@@ -24,6 +25,7 @@ namespace AbMath.Calculator
         {
             _dataStore = dataStore;
             Reset();
+            _variables = new Stack<RPN.Term>();
             _stopwatch = new Stopwatch();
         }
 
@@ -52,12 +54,14 @@ namespace AbMath.Calculator
             while (_input.Count > 0)
             {
                 RPN.Term token = _input.Dequeue();
+
                 switch (token.Type)
                 {
                     case RPN.Type.Number:
                         _stack.Push(double.Parse(token.Value));
                         break;
                     case RPN.Type.Variable:
+                        _variables.Push(token);
                         break;
                     case RPN.Type.Operator:
                         {

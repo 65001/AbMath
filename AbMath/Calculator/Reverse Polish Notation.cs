@@ -3,24 +3,19 @@ using System.Collections.Generic;
 
 namespace AbMath.Calculator
 {
-    /// <summary>
-    /// Reverse Polish Notation
-    /// Used for math equations
-    /// </summary>
-    /// 
-
     //TODO
-    //ABS
-    //ARCSIN,ARCTAN,ARCCOS
-
     //Generify
     //Auto Scaling from decimal to double to Big Integer
     //Move from using Doubles to Complex
     //Complex Number Support sqrt(-1) = i
 
+    /// <summary>
+    /// Reverse Polish Notation
+    /// Used for math equations
+    /// </summary>
     public partial class RPN
     {
-        public enum Type {LParen,RParen,Number,Variable,Function,Operator,Null };
+        public enum Type {LParen,RParen,Number,Variable,Function,Operator,Store, Null };
         public delegate double Run(params double[] arguments);
         public delegate void Store(ref DataStore dataStore,params string[] arguments);
 

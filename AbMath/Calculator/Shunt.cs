@@ -11,8 +11,6 @@ namespace AbMath.Calculator
         /// Takes a list of tokens and returns a Queue of Tokens after Order of Operations has been 
         /// taken into consideration.
         ///</summary>
-
-        //Should be able to correctly shunt functions?
         public class Shunt : IShunt<Term>
         {
             private readonly DataStore _dataStore;
@@ -28,6 +26,7 @@ namespace AbMath.Calculator
             private Stack<int> _arity;
 
             public event EventHandler<string> Logger;
+
 
             public Shunt(DataStore dataStore)
             {
@@ -58,7 +57,6 @@ namespace AbMath.Calculator
                 Write(tables.GenerateHeaders());
 
                 string action = string.Empty;
-                string stack = string.Empty;
                 string type = string.Empty;
 
                 for (int i = 0; i < tokens.Count; i++)
@@ -68,7 +66,6 @@ namespace AbMath.Calculator
                     _prev = (i > 0) ? tokens[i - 1]  : GenerateNull();
 
                     action = string.Empty;
-                    stack = string.Empty;
                     type = string.Empty;
 
 
@@ -97,7 +94,7 @@ namespace AbMath.Calculator
                         type = "Implicit Right";
                         Implicit();
                     }
-                    else if (_prev.IsRightBracket() && _prev.Value != "," && _token.IsFunction())
+                    else if (_prev.IsRightBracket() && !_prev.IsComma() && _token.IsFunction())
                     {
                         type = "Implicit Left Functional";
                         OperatorRule(GenerateMultiply());
@@ -130,7 +127,7 @@ namespace AbMath.Calculator
                             case Type.RParen:
                                 type = "Right Bracket";
                                 action = "Right Bracket Rules";
-                                if (_token.Value == ",")
+                                if (_token.IsComma())
                                 {
                                     type = "Comma";
                                 }
@@ -246,7 +243,7 @@ namespace AbMath.Calculator
                 }
 
                 //For functions and composite functions the to work, we must return now.
-                if (token.Value == ",")
+                if (token.IsComma())
                 {
                     _arity.Push(_arity.Pop() + 1);
                     return;
@@ -296,7 +293,7 @@ namespace AbMath.Calculator
 
             private bool RightImplicit()
             {
-                return !_prev.IsNull() && _prev.Value != "," && _prev.IsRightBracket() && (_token.IsNumber() || _token.IsVariable());
+                return !_prev.IsNull() && !_prev.IsComma() && _prev.IsRightBracket() && (_token.IsNumber() || _token.IsVariable());
             }
 
             private bool Chain()
