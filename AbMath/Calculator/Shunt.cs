@@ -157,6 +157,20 @@ namespace AbMath.Calculator
                     Write(tables.Redraw());
                 }
 
+                //TODO: Eliminate
+                //Ensures that all functions are within their stated max and min arguments
+                for (int i = 0; i < _output.Count; i++)
+                {
+                    Term term = _output.Dequeue();
+                    if (term.IsFunction())
+                    {
+                        Function function = _dataStore.Functions[term.Value];
+                        term.Arguments = Math.Max(function.MinArguments, Math.Min( term.Arguments, function.MaxArguments));
+                    }
+
+                    _output.Enqueue(term);
+                }
+
                 Write("");
                 Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity" , Format = _dataStore.DefaultFormat});
                 arityTables.Add(new Schema { Column = "#", Width = 3 });

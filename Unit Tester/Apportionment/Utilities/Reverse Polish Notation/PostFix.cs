@@ -255,6 +255,17 @@ namespace AbMath.Tests
             Assert.AreEqual(0, math.Compute());
         }
 
+        [Test]
+        public void Arcsin()
+        {
+            RPN test = new RPN("arcsin( sin(pi/2) )");
+            test.Logger += Write;
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(Math.PI / 2, math.Compute());
+        }
+
         public void Write(object sender,string Event)
         {
             Console.WriteLine(Event);
