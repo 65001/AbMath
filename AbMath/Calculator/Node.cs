@@ -444,6 +444,12 @@ namespace AbMath.Calculator
                 return Token.IsNumber() || Token.IsConstant();
             }
 
+            public bool IsScalar()
+            {
+                return IsNumberOrConstant() || IsVariable() ||  (IsFunction() && !this.ToInfix().Contains("list") &&
+                                                !this.ToInfix().Contains("matrix"));
+            }
+
             public bool IsNumber()
             {
                 return Token.IsNumber();
