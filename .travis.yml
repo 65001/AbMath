@@ -10,6 +10,6 @@ install:
   - dotnet restore 
   - nuget restore "Ab Math.sln"
 script:
-  - dotnet -c Release build 
+  - dotnet build 
   - cd "Unit Tester/Apportionment/"
   - dotnet test 
