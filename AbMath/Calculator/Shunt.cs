@@ -40,7 +40,7 @@ namespace AbMath.Calculator
                 sw.Start();
 
                 _output = new Queue<Term>(tokens.Count);
-                _operator = new Stack<Term>(20);
+                _operator = new Stack<Term>(5);
 
                 _arity = new Stack<int>();
 
@@ -59,11 +59,12 @@ namespace AbMath.Calculator
                 string action = string.Empty;
                 string type = string.Empty;
 
+                Term _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
-                    _token = tokens[i];
-                    _ahead = ((i + 1) < tokens.Count)? tokens[i + 1] : GenerateNull();
-                    _prev = (i > 0) ? tokens[i - 1]  : GenerateNull();
+                    _prev = (i > 0) ? _token : _null;
+                    _token = tokens[i]; 
+                    _ahead = ((i + 1) < tokens.Count)? tokens[i + 1] : _null;
 
                     action = string.Empty;
                     type = string.Empty;

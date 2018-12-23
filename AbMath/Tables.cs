@@ -17,7 +17,7 @@ namespace CLI
         public int Width { get; set; }
     }
 
-    struct Cursor
+    internal struct Cursor
     {
         public int beginy;
         public int endy;
