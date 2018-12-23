@@ -84,27 +84,12 @@ namespace AbMath.Calculator
                 string action = string.Empty;
                 string type = string.Empty;
 
-
+                Term _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev = (i > 0) ? _token : _null;
                     _token = tokens[i]; 
-
-                    if (i < tokens.Count - 2)
-                    {
-                        _ahead = tokens[i + 1];
-                        _ahead2 = tokens[i + 2];
-                    }
-                    else if (i < tokens.Count - 1)
-                    {
-                        _ahead = tokens[i + 1];
-                        _ahead2 = _null;
-                    }
-                    else
-                    {
-                        _ahead = _null;
-                        _ahead2 = _null;
-                    }
+                    _ahead = ((i + 1) < tokens.Count)? tokens[i + 1] : _null;
 
                     action = string.Empty;
                     type = string.Empty;
