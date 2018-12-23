@@ -6,6 +6,7 @@ using NUnit.Framework;
 namespace AbMath.Tests
 {
     [TestFixture]
+    [Parallelizable]
     public class Arity
     {
         [Test]
@@ -27,7 +28,8 @@ namespace AbMath.Tests
 
         private bool validate(int[] arity, List<RPN.Term> Tokens)
         {
-            for (int i = 0; i < Tokens.Count; i++)
+            int max = Tokens.Count;
+            for (int i = 0; i < max; i++)
             {
                 if (arity[i] != Tokens[i].Arguments)
                 {

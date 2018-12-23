@@ -5,14 +5,15 @@ using NUnit.Framework;
 namespace AbMath.Tests
 {
     [TestFixture]
+    [Parallelizable]
     public class TokenizerTest
     {
 
         [Test]
+        
         public void UnaryFunction()
         {
             RPN test = new RPN("-pi");
-            test.Logger += Write;
             test.Compute();
             if ("-1 pi *" != test.Polish.Print())
             {
@@ -21,10 +22,10 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void ComplexFunction()
         {
             RPN test = new RPN("sin(16pi)");
-            test.Logger += Write;
             test.Compute();
             if ("16 pi * sin" != test.Polish.Print())
             {
@@ -33,10 +34,10 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void ConstantFunction()
         {
             RPN test = new RPN("2e");
-            test.Logger += Write;
             test.Compute();
             if ("2 e *" != test.Polish.Print())
             {
@@ -45,10 +46,10 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void MultiTermMultiply()
         {
             RPN test = new RPN("(30.1)2.5(278)");
-            test.Logger += Write;
             test.Compute();
 
             if ("30.1 2.5 * 278 *" != test.Polish.Print())
@@ -58,6 +59,7 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void VariableAdd()
         {
             RPN test = new RPN("2+x");
@@ -70,10 +72,10 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void SimpleAdd()
         {
             RPN test = new RPN("2 + 2");
-            test.Logger += Write;
             test.Compute();
 
             if ("2 2 +" != test.Polish.Print())
@@ -83,6 +85,7 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void MultiTermAdd()
         {
             RPN test = new RPN("2 + 2 + 2");
@@ -95,6 +98,7 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void MultiTermAddNoSpace()
         {
             RPN test = new RPN("2+2+2");
@@ -107,6 +111,7 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void SimpleSubtract()
         {
             RPN test = new RPN("4 - 2");
@@ -118,12 +123,11 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void Wikipedia()
         {
             RPN test = new RPN("3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("3 4 2 * 1 5 - 2 3 ^ ^ / +" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -131,12 +135,11 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void Functions()
         {
             RPN test = new RPN("sin ( max ( 2 , 3 ) / 3 * 3.1415 )");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("2 3 max 3 / 3.1415 * sin" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -144,12 +147,11 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void Variables()
         {
             RPN test = new RPN("2 * x");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("2 x *" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -157,12 +159,11 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void CompositeMax()
         {
             RPN test = new RPN("max(sqrt(16),100)");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("16 sqrt 100 max" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -170,12 +171,11 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void VariableMultiplication()
         {
             RPN test = new RPN("v + a * t");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("v a t * +" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -183,12 +183,11 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void ArityConstantMax()
         {
             RPN test = new RPN("max(1, pi)");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("1 pi max" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -196,12 +195,11 @@ namespace AbMath.Tests
         }
 
         [Test]
+        
         public void VariableExponents()
         {
             RPN test = new RPN("x^2");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("x 2 ^" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -212,9 +210,7 @@ namespace AbMath.Tests
         public void Aliasing()
         {
             RPN test = new RPN("4÷2");
-            test.Logger += Write;
             test.Compute();
-            Console.WriteLine(test.Polish.Print());
             if ("4 2 /" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -225,7 +221,6 @@ namespace AbMath.Tests
         public void UnaryStart()
         {
             RPN test = new RPN("-2 + 4");
-            test.Logger += Write;
             test.Compute();
             if ("-2 4 +" != test.Polish.Print())
             {
@@ -237,7 +232,6 @@ namespace AbMath.Tests
         public void MixedDivisionMultiplication()
         {
             RPN test = new RPN("1/2x");
-            test.Logger += Write;
             test.Compute();
             if ("1 2 x * /" != test.Polish.Print())
             {
@@ -249,7 +243,6 @@ namespace AbMath.Tests
         public void VariableContains()
         {
             RPN test = new RPN("x * 2");
-            test.Logger += Write;
             test.Compute();
             if ("x 2 *" != test.Polish.Print() || test.Data.ContainsVariables == false)
             {
@@ -261,7 +254,6 @@ namespace AbMath.Tests
         public void DoubleTokenize()
         {
             RPN test = new RPN("x * 2");
-            test.Logger += Write;
             test.Compute();
             if ("x 2 *" != test.Polish.Print() || test.Data.ContainsVariables == false)
             {
