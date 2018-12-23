@@ -234,6 +234,18 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void MixedDivisionMultiplication()
+        {
+            RPN test = new RPN("1/2x");
+            test.Logger += Write;
+            test.Compute();
+            if ("1 2 x * /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void VariableContains()
         {
             RPN test = new RPN("x * 2");

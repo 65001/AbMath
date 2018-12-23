@@ -77,6 +77,23 @@ namespace AbMath.Calculator
                         //Left
                         OperatorRule(GenerateMultiply());
                     }
+                    else if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsOperator() && _prev.Value == "/"
+                             && _token.IsNumber() && _ahead.IsVariable() )
+                    {
+                        //Case for 1/2x -> 1/(2x)
+                        //Postfix : 1 2 x * /
+                        //Prev : Operator : /
+                        //Current : Number
+                        //Ahead : Variable 
+                        type = "Mixed division and multiplication";
+                        _operator.Pop();
+                        _output.Enqueue(_token);
+
+                        _operator.Push(GenerateDivision());
+                        _operator.Push(GenerateMultiply());
+                        
+                        //OperatorRule();
+                    }
                     else if (LeftImplicit())
                     {
                         //This will flip the order of the multiplication :(
@@ -328,6 +345,11 @@ namespace AbMath.Calculator
 
             private static Term GenerateMultiply() => new Term {
                 Value = "*", Arguments = 2, Type = Type.Operator
+            };
+
+            private static Term GenerateDivision() => new Term
+            {
+                Arguments = 2, Type = Type.Operator, Value = "/"
             };
 
             private static Term GenerateNull() => new Term { Type = Type.Null };

@@ -52,6 +52,11 @@ namespace AbMath.Calculator
             return term.Type == RPN.Type.Function;
         }
 
+        public static bool IsOperator(this RPN.Term term)
+        {
+            return term.Type == RPN.Type.Operator;
+        }
+
         public static bool IsVariable(this RPN.Term term)
         {
             return term.Type == RPN.Type.Variable;
