@@ -165,15 +165,15 @@ namespace AbMath.Tests
             test.Compute();
             
             PostFix math = new PostFix(test);
-            math.SetVariable("x", "2");
+            math.SetVariable("x", 2);
             Assert.AreEqual(4, math.Compute());
 
             math.Reset();
-            math.SetVariable("x", "3");
+            math.SetVariable("x", 3);
             Assert.AreEqual(9, math.Compute());
 
             math.Reset();
-            math.SetVariable("x", "4");
+            math.SetVariable("x", 4);
             Assert.AreEqual(16, math.Compute());
         }
 
@@ -185,14 +185,14 @@ namespace AbMath.Tests
             test.Compute();
 
             PostFix math = new PostFix(test);
-            math.SetVariable("x", "2");
+            math.SetVariable("x", 2);
             Assert.AreEqual(4, math.Compute());
 
             test.SetEquation("2x");
             test.Compute();
 
             math = new PostFix(test);
-            math.SetVariable("x", "3");
+            math.SetVariable("x", 3);
             Assert.AreEqual(6, math.Compute());
 
         }

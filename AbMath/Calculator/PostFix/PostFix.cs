@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Text;
 
 namespace AbMath.Calculator
 {
@@ -27,6 +25,11 @@ namespace AbMath.Calculator
             Reset();
             _variables = new Stack<RPN.Term>();
             _stopwatch = new Stopwatch();
+        }
+
+        public void SetVariable(string variable, double number)
+        {
+            SetVariable(variable, number.ToString());
         }
 
         public void SetVariable(string variable,string number)
