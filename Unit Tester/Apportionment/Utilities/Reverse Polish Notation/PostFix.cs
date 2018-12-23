@@ -8,7 +8,6 @@ namespace AbMath.Tests
     public class PostFixTest
     {
         [Test]
-        [Parallelizable]
         public void Add()
         {
             RPN test = new RPN("2 + 2 + 2");

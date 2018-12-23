@@ -8,10 +8,20 @@ namespace AbMath.Tests
     [Parallelizable]
     public class ImplicitShunting
     {
+        private RPN test;
+
+        [SetUp]
+        public void SetUp()
+        {
+            test = new RPN("");
+        }
+
+
         [Test]
         public void Left()
         {
-            RPN test = new RPN("4sin(2)");
+            //RPN test = new RPN("4sin(2)");
+            test.SetEquation("4sin(2)");
             test.Compute();
 
             if ("2 sin 4 *" != test.Polish.Print() && "4 2 sin *" != test.Polish.Print())
@@ -23,7 +33,8 @@ namespace AbMath.Tests
         [Test]
         public void LeftBracket()
         {
-            RPN test = new RPN("4(2)");
+            //RPN test = new RPN("4(2)");
+            test.SetEquation("4(2)");
             test.Compute();
 
             if ("2 4 *" != test.Polish.Print() && "4 2 *" != test.Polish.Print())
