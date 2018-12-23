@@ -10,6 +10,6 @@ install:
   - dotnet restore 
   - nuget restore "Ab Math.sln"
 script:
+  - dotnet -c Release build 
   - cd "Unit Tester/Apportionment/"
-  - dotnet build 
-  - travis_wait 15 dotnet test "Unit Tester.csproj" --verbosity n
+  - dotnet test 
