@@ -8,6 +8,7 @@ namespace AbMath.Calculator
     //Auto Scaling from decimal to double to Big Integer
     //Move from using Doubles to Complex
     //Complex Number Support sqrt(-1) = i
+    //Remove debug data for release builds
 
     /// <summary>
     /// Reverse Polish Notation

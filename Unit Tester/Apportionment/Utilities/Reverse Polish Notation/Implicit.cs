@@ -5,12 +5,11 @@ using NUnit.Framework;
 namespace AbMath.Tests
 {
     [TestFixture]
-    [Parallelizable]
     public class ImplicitShunting
     {
         private RPN test;
 
-        [SetUp]
+        [OneTimeSetUp]
         public void SetUp()
         {
             test = new RPN("");
@@ -20,7 +19,6 @@ namespace AbMath.Tests
         [Test]
         public void Left()
         {
-            //RPN test = new RPN("4sin(2)");
             test.SetEquation("4sin(2)");
             test.Compute();
 
@@ -33,7 +31,6 @@ namespace AbMath.Tests
         [Test]
         public void LeftBracket()
         {
-            //RPN test = new RPN("4(2)");
             test.SetEquation("4(2)");
             test.Compute();
 
@@ -46,7 +43,7 @@ namespace AbMath.Tests
         [Test]
         public void LeftEOS()
         {
-            RPN test = new RPN("2x");
+            test.SetEquation("2x");
             test.Compute();
 
             if ("x 2 *" != test.Polish.Print() && "2 x *" != test.Polish.Print())
@@ -58,7 +55,7 @@ namespace AbMath.Tests
         [Test]
         public void LeftVariable()
         {
-            RPN test = new RPN("x2");
+            test.SetEquation("x2");
             test.Compute();
 
             if ("x 2 *" != test.Polish.Print())
@@ -70,7 +67,7 @@ namespace AbMath.Tests
         [Test]
         public void Mix()
         {
-            RPN test = new RPN("12(3) + 8(1.01)");
+            test.SetEquation("12(3) + 8(1.01)");
             test.Compute();
 
             if ("12 3 * 8 1.01 * +" != test.Polish.Print())
@@ -82,7 +79,7 @@ namespace AbMath.Tests
         [Test]
         public void Right()
         {
-            RPN test = new RPN("sin(2)4");
+            test.SetEquation("sin(2)4");
             test.Compute();
 
             if ("2 sin 4 *" != test.Polish.Print())
@@ -94,7 +91,7 @@ namespace AbMath.Tests
         [Test]
         public void RightBracket()
         {
-            RPN test = new RPN("(2)4");
+            test.SetEquation("(2)4");
             test.Compute();
 
             if ("2 4 *" != test.Polish.Print())
@@ -106,7 +103,7 @@ namespace AbMath.Tests
         [Test]
         public void VariableLeft()
         {
-            RPN test = new RPN("x(y)");
+            test.SetEquation("x(y)");
             test.Compute();
 
             if ("y x *" != test.Polish.Print() && "x y *" != test.Polish.Print())
@@ -118,7 +115,7 @@ namespace AbMath.Tests
         [Test]
         public void VariableRight()
         {
-            RPN test = new RPN("(x)(y)");
+            test.SetEquation("(x)(y)");
             test.Compute();
 
             if ("x y *" != test.Polish.Print())
@@ -130,7 +127,7 @@ namespace AbMath.Tests
         [Test]
         public void MultipleFunctions()
         {
-            RPN test = new RPN("sin(x)sin(x)");
+            test.SetEquation("sin(x)sin(x)");
             test.Compute();
 
             if ("x sin x sin *" != test.Polish.Print())
@@ -142,7 +139,7 @@ namespace AbMath.Tests
         [Test]
         public void Unary()
         {
-            RPN test = new RPN("-(3^2)");
+            test.SetEquation("-(3^2)");
             test.Compute();
 
             if ("-1 3 2 ^ *" != test.Polish.Print())
@@ -151,15 +148,6 @@ namespace AbMath.Tests
             }
         }
 
-        public void Write(object sender, string Event)
-        {
-            Console.WriteLine(Event);
-        }
-    }
-
-    [TestFixture]
-    public class ImplicitPostFix
-    {
         public void Write(object sender, string Event)
         {
             Console.WriteLine(Event);
