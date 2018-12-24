@@ -141,11 +141,9 @@ namespace AbMath.Calculator
             public static double Sum(params double[] arguments)
             {
                 double sum = 0;
-                int lowerBound = (int)arguments[1];
-                int upperBound = (int)arguments[2];
-                for (int i = lowerBound; i < upperBound; i++)
+                for (int i = 0; i < arguments.Length; i++)
                 {
-                    sum += arguments[0];
+                    sum += arguments[i];
                 }
                 return sum;
             }

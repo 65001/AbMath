@@ -551,9 +551,9 @@ namespace AbMath.Calculator
 
                 AddFunction("sum", new Function()
                 {
-                    Arguments = 2,
-                    MinArguments = 2,
-                    MaxArguments = 2,
+                    Arguments = 1,
+                    MinArguments = 1,
+                    MaxArguments = int.MaxValue,
                     Compute = DoFunctions.Sum
                 }
                 );

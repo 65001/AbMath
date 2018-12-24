@@ -44,19 +44,14 @@ namespace AbMath.Calculator
                 Write(_tables.GenerateHeaders());
 
                 _token = string.Empty;
-                int length = Equation.Length;
+                _prevToken = string.Empty;
 
+                int length = Equation.Length;
                 for (int i = 0; i < length; i++)
                 {
-                    _character = Equation.Substring(i, 1);
-                    _prevToken = _tokens.LastOrDefault().Value;
-                    _readAhead = string.Empty;
                     _rule = string.Empty;
-
-                    if (i < (length - 1))
-                    {
-                        _readAhead = Equation.Substring((i + 1), 1);
-                    }
+                    _character = Equation.Substring(i, 1);
+                    _readAhead = i < (length - 1) ? Equation.Substring((i + 1), 1) : string.Empty;
 
                     Alias();
 
@@ -196,7 +191,6 @@ namespace AbMath.Calculator
                 }
 
                 _rule = rule;
-                //Resolve!!
                 Term term = new Term
                 {
                     Value = _token,
@@ -214,6 +208,7 @@ namespace AbMath.Calculator
                 }
 
                 _tokens.Add(term);
+                _prevToken = _token;
                 _token = string.Empty;
             }
 
