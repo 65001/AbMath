@@ -36,12 +36,16 @@ namespace AbMath.Calculator
                 _tokens = new List<Term>();
 
                 _tables = new Tables<string>(new Config { Title = "Tokenizer", Format = _dataStore.DefaultFormat});
-                _tables.Add(new Schema { Column="#",Width=3 });
-                _tables.Add(new Schema { Column = "Character", Width = 10 });
-                _tables.Add(new Schema { Column = "Token", Width = 15 });
-                _tables.Add(new Schema { Column = "# Tokens", Width = 11 });
-                _tables.Add(new Schema { Column = "Action", Width = 16 });
-                Write(_tables.GenerateHeaders());
+
+                if (_dataStore.DebugMode)
+                {
+                    _tables.Add(new Schema {Column = "#", Width = 3});
+                    _tables.Add(new Schema {Column = "Character", Width = 10});
+                    _tables.Add(new Schema {Column = "Token", Width = 15});
+                    _tables.Add(new Schema {Column = "# Tokens", Width = 11});
+                    _tables.Add(new Schema {Column = "Action", Width = 16});
+                    Write(_tables.GenerateHeaders());
+                }
 
                 _token = string.Empty;
                 _prevToken = string.Empty;
@@ -148,12 +152,20 @@ namespace AbMath.Calculator
                         _rule = "Append";
                         _token += _character;
                     }
-                    _tables.Add(new string[] { i.ToString(), _character, _token, _tokens.Count.ToString(), _rule });
-                    Write(_tables.GenerateNextRow());
-                }
-                Write(_tables.GenerateFooter());
 
-                if (_tables.SuggestedRedraw)
+                    if (_dataStore.DebugMode)
+                    {
+                        _tables.Add(new string[] {i.ToString(), _character, _token, _tokens.Count.ToString(), _rule});
+                        Write(_tables.GenerateNextRow());
+                    }
+                }
+
+                if (_dataStore.DebugMode)
+                {
+                    Write(_tables.GenerateFooter());
+                }
+
+                if (_dataStore.DebugMode && _tables.SuggestedRedraw)
                 {
                     Write(_tables.Redraw());
                 }

@@ -84,6 +84,12 @@ namespace AbMath.Calculator
             public bool AllowMismatchedParentheses;
 
             /// <summary>
+            /// If true, the program will write tables to the
+            /// log
+            /// </summary>
+            public bool DebugMode;
+
+            /// <summary>
             /// Determines the default format of CLI Tables
             /// based on the value of MarkdownTables
             /// </summary>

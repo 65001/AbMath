@@ -27,13 +27,11 @@ namespace AbMath.Calculator
 
             public event EventHandler<string> Logger;
 
-
             public Shunt(DataStore dataStore)
             {
                 _dataStore = dataStore;
             }
 
-            //Todo make ShuntYard smart about unary negative signs 
             public Queue<Term> ShuntYard(List<Term> tokens)
             {
                 Stopwatch sw = new Stopwatch();
@@ -45,16 +43,19 @@ namespace AbMath.Calculator
                 _arity = new Stack<int>();
 
                 var tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm", Format = _dataStore.DefaultFormat});
-                tables.Add(new Schema { Column = "#", Width = 3 });
-                tables.Add(new Schema { Column = "Token", Width = 10 });
-                tables.Add(new Schema { Column = "Stack Count", Width = 15 });
-                tables.Add(new Schema { Column = "Stack Peek", Width = 12 });
-                tables.Add(new Schema { Column = "Arity", Width=5});
-                tables.Add(new Schema { Column = "Type", Width = 15 });
-                tables.Add(new Schema { Column = "RPN", Width = 20 });
-                tables.Add(new Schema { Column = "Action", Width = 30 });
+                if (_dataStore.DebugMode)
+                {
+                    tables.Add(new Schema {Column = "#", Width = 3});
+                    tables.Add(new Schema {Column = "Token", Width = 10});
+                    tables.Add(new Schema {Column = "Stack Count", Width = 15});
+                    tables.Add(new Schema {Column = "Stack Peek", Width = 12});
+                    tables.Add(new Schema {Column = "Arity", Width = 5});
+                    tables.Add(new Schema {Column = "Type", Width = 15});
+                    tables.Add(new Schema {Column = "RPN", Width = 20});
+                    tables.Add(new Schema {Column = "Action", Width = 30});
 
-                Write(tables.GenerateHeaders());
+                    Write(tables.GenerateHeaders());
+                }
 
                 string action = string.Empty;
                 string type = string.Empty;
@@ -78,8 +79,12 @@ namespace AbMath.Calculator
                         //Left
                         OperatorRule(GenerateMultiply());
                     }
-                    else if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsOperator() && _prev.Value == "/"
-                             && _token.IsNumber() && _ahead.IsVariable() )
+                    else if (!_prev.IsNull() 
+                             && !_ahead.IsNull() 
+                             && _prev.IsOperator() 
+                             && _prev.Value == "/" 
+                             && _token.IsNumber() 
+                             && _ahead.IsVariable() )
                     {
                         //Case for 1/2x -> 1/(2x)
                         //Postfix : 1 2 x * /
@@ -92,8 +97,6 @@ namespace AbMath.Calculator
 
                         _operator.Push(GenerateDivision());
                         _operator.Push(GenerateMultiply());
-                        
-                        //OperatorRule();
                     }
                     else if (LeftImplicit())
                     {
@@ -162,25 +165,45 @@ namespace AbMath.Calculator
                         }
                     }
 
-                    var print = new[] { i.ToString(), _token.Value, _operator.Count.ToString(), _operator.SafePeek().Value ?? string.Empty, _arity.SafePeek().ToString() , type, _output.Print(), action };
-                    tables.Add(print);
+                    if (_dataStore.DebugMode)
+                    {
+                        var print = new[]
+                        {
+                            i.ToString(), _token.Value, _operator.Count.ToString(),
+                            _operator.SafePeek().Value ?? string.Empty, _arity.SafePeek().ToString(), type,
+                            _output.Print(), action
+                        };
+                        tables.Add(print);
 
-                    Write(tables.GenerateNextRow());
+                        Write(tables.GenerateNextRow());
+                    }
                 }
                 Dump();
-                Write(tables.GenerateFooter());
 
-                if (tables.SuggestedRedraw)
+                if (_dataStore.DebugMode)
+                {
+                    Write(tables.GenerateFooter());
+                }
+
+                if (_dataStore.DebugMode && tables.SuggestedRedraw)
                 {
                     Write(tables.Redraw());
                 }
 
-                Write("");
+                if (_dataStore.DebugMode)
+                {
+                    Write("");
+                }
+
                 Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity", Format = _dataStore.DefaultFormat });
-                arityTables.Add(new Schema { Column = "#", Width = 3 });
-                arityTables.Add(new Schema { Column = "Token", Width = 10 });
-                arityTables.Add(new Schema { Column = "Arity", Width = 5 });
-                Write(arityTables.GenerateHeaders());
+
+                if (_dataStore.DebugMode)
+                {
+                    arityTables.Add(new Schema {Column = "#", Width = 3});
+                    arityTables.Add(new Schema {Column = "Token", Width = 10});
+                    arityTables.Add(new Schema {Column = "Arity", Width = 5});
+                    Write(arityTables.GenerateHeaders());
+                }
 
                 //TODO: Eliminate
                 //Ensures that all functions are within their stated max and min arguments
@@ -193,18 +216,24 @@ namespace AbMath.Calculator
                         term.Arguments = Math.Max(function.MinArguments, Math.Min( term.Arguments, function.MaxArguments));
                     }
 
-                    string[] message = { i.ToString(), term.Value, term.Arguments.ToString() };
-                    arityTables.Add(message);
-                    Write(arityTables.GenerateNextRow());
+                    if (_dataStore.DebugMode)
+                    {
+                        string[] message = {i.ToString(), term.Value, term.Arguments.ToString()};
+                        arityTables.Add(message);
+                        Write(arityTables.GenerateNextRow());
+                    }
 
                     _output.Enqueue(term);
                 }
 
-                Write(arityTables.GenerateFooter());
-
-                if (arityTables.SuggestedRedraw)
+                if (_dataStore.DebugMode)
                 {
-                    Write(arityTables.Redraw());
+                    Write(arityTables.GenerateFooter());
+
+                    if (arityTables.SuggestedRedraw)
+                    {
+                        Write(arityTables.Redraw());
+                    }
                 }
 
                 if (_arity.Count > 0)
