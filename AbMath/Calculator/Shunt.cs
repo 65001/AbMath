@@ -175,6 +175,13 @@ namespace AbMath.Calculator
                     Write(tables.Redraw());
                 }
 
+                Write("");
+                Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity", Format = _dataStore.DefaultFormat });
+                arityTables.Add(new Schema { Column = "#", Width = 3 });
+                arityTables.Add(new Schema { Column = "Token", Width = 10 });
+                arityTables.Add(new Schema { Column = "Arity", Width = 5 });
+                Write(arityTables.GenerateHeaders());
+
                 //TODO: Eliminate
                 //Ensures that all functions are within their stated max and min arguments
                 for (int i = 0; i < _output.Count; i++)
@@ -186,24 +193,11 @@ namespace AbMath.Calculator
                         term.Arguments = Math.Max(function.MinArguments, Math.Min( term.Arguments, function.MaxArguments));
                     }
 
-                    _output.Enqueue(term);
-                }
-
-                Write("");
-                Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity" , Format = _dataStore.DefaultFormat});
-                arityTables.Add(new Schema { Column = "#", Width = 3 });
-                arityTables.Add(new Schema { Column = "Token", Width = 10 });
-                arityTables.Add(new Schema { Column = "Arity", Width = 5 });
-                Write(arityTables.GenerateHeaders());
-
-                for (int i = 0; i < _output.Count; i++)
-                {
-                    Term arityTerm = _output.Dequeue();
-                    _output.Enqueue(arityTerm);
-
-                    string[] message =  {i.ToString(), arityTerm.Value, arityTerm.Arguments.ToString() };
+                    string[] message = { i.ToString(), term.Value, term.Arguments.ToString() };
                     arityTables.Add(message);
-                    Write( arityTables.GenerateNextRow() );
+                    Write(arityTables.GenerateNextRow());
+
+                    _output.Enqueue(term);
                 }
 
                 Write(arityTables.GenerateFooter());
