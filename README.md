@@ -19,3 +19,7 @@ AbMath's implemetation of our Tokenizer and Shunting Yard Alogrithim currentley 
 * Implicit multiplication support
 * Variadic function support (functions with a variable number of arguments)
 * All  of this alongside with the ability to easily add your own operators and functions at runtime!
+
+## Contributors 
+Thanks to [Josh Hayward](https://github.com/josh-hayward)  for his assistance in fixing the [Arity system](https://github.com/65001/AbMath/commit/81cd306a5f5344f404b9e9a1ddb2a70d2faa4c16) which is the basis of 
+variadic functions.
