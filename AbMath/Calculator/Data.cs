@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using CLI;
 
 namespace AbMath.Calculator
@@ -71,6 +72,14 @@ namespace AbMath.Calculator
             /// Whether an expression contains variables
             /// </summary>
             public bool ContainsVariables { get; private set; }
+
+            /// <summary>
+            /// Whether an expression contains a evaluator
+            /// such as =, > , > or a combination of those
+            /// operators.
+            /// </summary>
+            public bool ContainsEquation => 
+                Equation.Contains("=") || Equation.Contains(">") || Equation.Contains("<") ;
 
             public long TotalMilliseconds;
             public long TotalSteps;
@@ -249,7 +258,7 @@ namespace AbMath.Calculator
                 AddOperator("^", new Operator
                 {
                     Assoc = Assoc.Right,
-                    Weight = 4,
+                    Weight = 5,
                     Arguments = 2,
                     Compute = DoOperators.Power
                 });
@@ -257,7 +266,7 @@ namespace AbMath.Calculator
                 AddOperator("E", new Operator
                 {
                     Assoc = Assoc.Right,
-                    Weight = 4,
+                    Weight = 5,
                     Arguments = 2,
                     Compute = DoOperators.E
                 });
@@ -265,7 +274,7 @@ namespace AbMath.Calculator
                 AddOperator("!", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 4,
+                    Weight = 5,
                     Arguments = 1,
                     Compute = DoOperators.Factorial
                 });
@@ -273,7 +282,7 @@ namespace AbMath.Calculator
                 AddOperator("%", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 3,
+                    Weight = 4,
                     Arguments = 2,
                     Compute = DoOperators.Mod
                 });
@@ -281,7 +290,7 @@ namespace AbMath.Calculator
                 AddOperator("/", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 3,
+                    Weight = 4,
                     Arguments = 2,
                     Compute = DoOperators.Divide
                 });
@@ -289,7 +298,7 @@ namespace AbMath.Calculator
                 AddOperator("*", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 3,
+                    Weight = 4,
                     Arguments = 2,
                     Compute = DoOperators.Multiply
                 });
@@ -297,7 +306,7 @@ namespace AbMath.Calculator
                 AddOperator("+", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Add
                 });
@@ -305,7 +314,7 @@ namespace AbMath.Calculator
                 AddOperator("++", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 3,
                     Arguments = 1,
                     Compute = DoOperators.AddSelf
                 });
@@ -313,7 +322,7 @@ namespace AbMath.Calculator
                 AddOperator("−", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Subtract
                 });
@@ -321,7 +330,7 @@ namespace AbMath.Calculator
                 AddOperator("-", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Subtract
                 });
@@ -340,7 +349,7 @@ namespace AbMath.Calculator
                 AddOperator(">", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 1,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.GreaterThan
                 });
@@ -348,7 +357,7 @@ namespace AbMath.Calculator
                 AddOperator("<", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 1,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.LessThan
                 });
@@ -356,7 +365,7 @@ namespace AbMath.Calculator
                 AddOperator("=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 1,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Equals
                 });
@@ -364,7 +373,7 @@ namespace AbMath.Calculator
                 AddOperator("==", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 1,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Equals
                 });
@@ -372,7 +381,7 @@ namespace AbMath.Calculator
                 AddOperator(">=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 1,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.GreaterThanOrEquals
                 });
@@ -380,7 +389,7 @@ namespace AbMath.Calculator
                 AddOperator("<=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 1,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.LessThanOrEquals
                 });

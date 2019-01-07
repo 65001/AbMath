@@ -219,6 +219,18 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void ComplexExpression()
+        {
+            test.SetEquation("x >= 0 && x <= 5");
+            test.Compute();
+
+            if ("x 0 >= x 5 <= &&" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void MixedDivisionMultiplication()
         {
             test.SetEquation("1/2x");
