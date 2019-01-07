@@ -23,6 +23,22 @@ namespace AbMath.Calculator
             return sb.ToString();
         }
 
+        public static string Print<T>(this T[] array)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < array.Length; i++)
+            {
+                sb.Append(array[i]);
+                if (i < (array.Length - 1))
+                {
+                    sb.Append(" ");
+                }
+            }
+
+            return sb.ToString();
+        }
+
+
         public static T SafePeek<T>(this Stack<T> stack)
         {
             if (stack.Count == 0)

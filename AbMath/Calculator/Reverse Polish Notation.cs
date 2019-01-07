@@ -53,7 +53,7 @@ namespace AbMath.Calculator
 
         public string Equation { get; private set; }
 
-        public Queue<Term> Polish;
+        public Term[] Polish => Data.Polish;
         public List<Term> Tokens;
 
         public bool ContainsVariables  => Data.ContainsVariables; 
@@ -119,8 +119,7 @@ namespace AbMath.Calculator
             Tokens = _tokenizer.Tokenize();
 
             _shunt.Logger += Logger;
-            Polish = _shunt.ShuntYard(Tokens);
-            Data.Polish = Polish;
+            Data.Polish = _shunt.ShuntYard(Tokens);
         }
     }
 }

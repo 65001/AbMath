@@ -32,7 +32,7 @@ namespace AbMath.Calculator
                 _dataStore = dataStore;
             }
 
-            public Queue<Term> ShuntYard(List<Term> tokens)
+            public Term[] ShuntYard(List<Term> tokens)
             {
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
@@ -263,7 +263,7 @@ namespace AbMath.Calculator
 
                 Write("");
 
-                return _output;
+                return _output.ToArray();
             }
 
             void Implicit()

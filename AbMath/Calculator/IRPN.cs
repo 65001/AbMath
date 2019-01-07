@@ -6,7 +6,7 @@ namespace AbMath.Calculator
     public enum Assoc { Left, Right };
     public interface IShunt<T>
     {
-        Queue<T> ShuntYard(List<T> tokens);
+        T[] ShuntYard(List<T> tokens);
         event EventHandler<string> Logger;
     }
 

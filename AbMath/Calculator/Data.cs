@@ -65,7 +65,7 @@ namespace AbMath.Calculator
             /// The equation passed to the calculator 
             /// </summary>
             public string Equation;
-            public Queue<Term> Polish { get; set; }
+            public Term[] Polish { get; set; }
 
             /// <summary>
             /// Whether an expression contains variables

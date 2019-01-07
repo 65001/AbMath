@@ -7,7 +7,7 @@ namespace AbMath.Calculator
     public class PostFix : IEvaluator<double>
     {
         private readonly RPN.DataStore _dataStore;
-        private Queue<RPN.Term> _input;
+        private RPN.Term[] _input;
         private Stack<double> _stack;
         private Stack<RPN.Term> _variables;
         private readonly Stopwatch _stopwatch;
@@ -34,18 +34,18 @@ namespace AbMath.Calculator
 
         public void SetVariable(string variable,string number)
         {
-            int length = _input.Count;
+            int length = _input.Length;
             
             for (int i = 0; i < length; i++)
             {
-                RPN.Term token = _input.Dequeue();
+                RPN.Term token = _input[i];
                 if (token.Type == RPN.Type.Variable && token.Value == variable)
                 {
-                    _input.Enqueue(new RPN.Term {Arguments = 0,Type = RPN.Type.Number,Value = number });
+                    _input[i] = (new RPN.Term {Arguments = 0,Type = RPN.Type.Number,Value = number });
                 }
                 else
                 {
-                    _input.Enqueue(token);
+                    _input[i] = token;
                 }
             }
         }
@@ -54,9 +54,8 @@ namespace AbMath.Calculator
         {
             _stopwatch.Start();
 
-            while (_input.Count > 0)
-            {
-                RPN.Term token = _input.Dequeue();
+            for (int i = 0; i < _input.Length; i++) { 
+                RPN.Term token = _input[i];
 
                 switch (token.Type)
                 {
@@ -124,7 +123,8 @@ namespace AbMath.Calculator
 
         public void Reset()
         {
-            _input = new Queue<RPN.Term>(_dataStore.Polish);
+            _input = new RPN.Term[_dataStore.Polish.Length];
+            _dataStore.Polish.CopyTo(_input,0);
             _stack = new Stack<double>();
         }
 
