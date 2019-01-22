@@ -96,7 +96,7 @@ namespace AbMath.Calculator
             /// If true, the program will write tables to the
             /// log
             /// </summary>
-            public bool DebugMode = true;
+            public bool DebugMode;
 
             /// <summary>
             /// Determines the default format of CLI Tables
