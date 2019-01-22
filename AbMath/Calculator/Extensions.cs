@@ -68,6 +68,11 @@ namespace AbMath.Calculator
             return term.Type == RPN.Type.Function;
         }
 
+        public static bool IsConstant(this RPN.Term term)
+        {
+            return IsFunction(term) && term.Arguments == 0;
+        }
+
         public static bool IsOperator(this RPN.Term term)
         {
             return term.Type == RPN.Type.Operator;

@@ -104,7 +104,11 @@ namespace AbMath.Calculator
                         type = "Implicit Left";
                         Implicit();
                     }
-                    else if (!_prev.IsNull()  && (_prev.IsRightBracket() && _token.IsLeftBracket()) || (_prev.IsVariable() && _token.IsNumber())) 
+                    else if (!_prev.IsNull()  
+                             && (_prev.IsRightBracket() && _token.IsLeftBracket()) 
+                             || (_prev.IsVariable() && _token.IsNumber()) 
+                             || (_prev.IsConstant() && _token.IsLeftBracket() && (_ahead.IsNumber() || _ahead.IsFunction()))
+                             ) 
                     {
                         type = "Implicit Left 2";
                         OperatorRule(GenerateMultiply());

@@ -49,6 +49,17 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void ConstantFunctionRight()
+        {
+            test.SetEquation("pi(2)");
+            test.Compute();
+            if ("pi 2 *" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void MultiTermMultiply()
         {
             test.SetEquation("(30.1)2.5(278)");
