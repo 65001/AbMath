@@ -76,6 +76,11 @@ namespace AbMath.Calculator
                             WriteToken("Unary");
                         }
                     }
+                    else if (_dataStore.IsNumber( _character ) && _token == "-.")
+                    {
+                        _rule = "Decimal Append";
+                        _token += _character;
+                    }
                     else if ( ( _dataStore.IsNumber(_token) ) && ( _dataStore.IsVariable(_character) || _dataStore.IsLeftBracket(_character) || _dataStore.IsFunction(_character)))
                     {
                         WriteToken("Left Implicit");

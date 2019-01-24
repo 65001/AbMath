@@ -76,6 +76,16 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void UnaryDecimal()
+        {
+            test.SetEquation("-.5 + .5");
+
+            test.Compute();
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+        }
+
+        [Test]
         public void Sin()
         {
             test.SetEquation("sin(pi/2)");
