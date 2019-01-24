@@ -9,7 +9,7 @@ namespace Test_Console
         private static RPN RPN;
         static void Main(string[] args)
         {
-            Console.Title = "Math Solver 1.0.3";
+            Console.Title = "AbMath v1.0.4";
             Console.WindowWidth = Console.BufferWidth;
             Console.WriteLine("(C) 2018. Abhishek Sathiabalan");
 

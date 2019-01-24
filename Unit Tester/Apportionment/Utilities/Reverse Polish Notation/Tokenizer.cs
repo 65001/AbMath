@@ -16,6 +16,12 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void DebugMode()
+        {
+            Assert.IsFalse(test.Data.DebugMode);
+        }
+
+        [Test]
         public void UnaryFunction()
         {
             test.SetEquation("-pi");

@@ -86,6 +86,21 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void UnaryEOS()
+        {
+            test.SetEquation("-.5 + -.5");
+
+            test.Compute();
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(-1, math.Compute());
+
+            test.SetEquation("-.5 + -.5 ");
+            test.Compute();
+            math = new PostFix(test);
+            Assert.AreEqual(-1, math.Compute());
+        }
+
+        [Test]
         public void Sin()
         {
             test.SetEquation("sin(pi/2)");

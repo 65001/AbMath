@@ -158,6 +158,11 @@ namespace AbMath.Calculator
                         _token += _character;
                     }
 
+                    if (i == (Equation.Length - 1) && _token.Length > 0)
+                    {
+                        WriteToken("End of String");
+                    }
+
                     if (_dataStore.DebugMode)
                     {
                         _tables.Add(new string[] {i.ToString(), _character, _token, _tokens.Count.ToString(), _rule});
@@ -200,6 +205,12 @@ namespace AbMath.Calculator
                 }
             }
 
+            /// <summary>
+            /// Creates a token from a string.
+            /// This clears the token to an empty string
+            /// and sets the previous token.
+            /// </summary>
+            /// <param name="rule"></param>
             private void WriteToken(string rule)
             {
                 if (string.IsNullOrWhiteSpace(_token) && _token != ",")
