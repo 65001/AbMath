@@ -38,6 +38,11 @@ namespace AbMath.Calculator
             return sb.ToString();
         }
 
+        public static string Print<T>(this Stack<T> stack)
+        {
+            return stack.ToArray().Print();
+        }
+
 
         public static T SafePeek<T>(this Stack<T> stack)
         {

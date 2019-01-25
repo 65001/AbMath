@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using CLI;
 
 namespace AbMath.Calculator
@@ -48,7 +49,7 @@ namespace AbMath.Calculator
                     tables.Add(new Schema {Column = "#", Width = 3});
                     tables.Add(new Schema {Column = "Token", Width = 10});
                     tables.Add(new Schema {Column = "Stack Count", Width = 15});
-                    tables.Add(new Schema {Column = "Stack Peek", Width = 12});
+                    tables.Add(new Schema {Column = "Stack ", Width = 12});
                     tables.Add(new Schema {Column = "Arity", Width = 5});
                     tables.Add(new Schema {Column = "Type", Width = 15});
                     tables.Add(new Schema {Column = "RPN", Width = 20});
@@ -174,7 +175,7 @@ namespace AbMath.Calculator
                         var print = new[]
                         {
                             i.ToString(), _token.Value, _operator.Count.ToString(),
-                            _operator.SafePeek().Value ?? string.Empty, _arity.SafePeek().ToString(), type,
+                            _operator.Print() ?? string.Empty, _arity.Print(), type,
                             _output.Print(), action
                         };
                         tables.Add(print);
@@ -407,6 +408,7 @@ namespace AbMath.Calculator
                     }
                 }
 
+                //This in effect suppresses any Arity Exceptions!!
                 while ( _arity.Count > 0)
                 {
                     for (int i = 0; i < (_output.Count - 1); i++)
@@ -427,7 +429,6 @@ namespace AbMath.Calculator
 
                     _output.Enqueue(foo);
                 }
-                
             }
 
             void Write(string message)
