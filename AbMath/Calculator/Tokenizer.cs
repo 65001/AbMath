@@ -65,16 +65,17 @@ namespace AbMath.Calculator
                         WriteToken("WhiteSpace");
                     }
                     //Unary Input at the start of the input or after another operator or left parenthesis
-                    else if ((i == 0 && _dataStore.IsUnary(_character)) || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken ==",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(_token) && 
+                    else if ((i == 0 && _dataStore.IsUnary(_character)) 
+                             || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken ==",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(_token) && 
                         !_dataStore.IsOperator(_character + _readAhead)))
                     {
                         _rule = "Unary";
                         _token += _character;
                         if(!string.IsNullOrWhiteSpace(_readAhead) && (_dataStore.IsVariable(_readAhead) || _dataStore.IsLeftBracket(_readAhead) ))
-                        {
+                         {
                             _token += "1";
                             WriteToken("Unary");
-                        }
+                         }
                     }
                     else if (_dataStore.IsNumber( _character ) && _token == "-.")
                     {
@@ -199,7 +200,8 @@ namespace AbMath.Calculator
                 {
                     _token = _dataStore.Aliases[_token];
                 }
-                else if (_dataStore.Aliases.ContainsKey(_character))
+
+                if (_dataStore.Aliases.ContainsKey(_character))
                 {
                     _character = _dataStore.Aliases[_character];
                 }
@@ -226,13 +228,14 @@ namespace AbMath.Calculator
                     Arguments = 0
                 };
 
-                if(term.Type == Type.Function)
+                switch (term.Type)
                 {
-                    term.Arguments = _dataStore.Functions[_token].Arguments;
-                }
-                else if (term.Type == Type.Operator)
-                {
-                    term.Arguments = _dataStore.Operators[_token].Arguments;
+                    case Type.Function:
+                        term.Arguments = _dataStore.Functions[_token].Arguments;
+                        break;
+                    case Type.Operator:
+                        term.Arguments = _dataStore.Operators[_token].Arguments;
+                        break;
                 }
 
                 _tokens.Add(term);

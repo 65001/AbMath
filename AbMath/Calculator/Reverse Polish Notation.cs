@@ -22,9 +22,10 @@ namespace AbMath.Calculator
 
         public event EventHandler<string> Logger;
 
+        //TODO Add Inequalities : >, ==, <
         public struct Operator
         {
-            public double Weight;
+            public int Weight;
             public Assoc Assoc;
             public int Arguments;
             public Run Compute;
