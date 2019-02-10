@@ -43,10 +43,6 @@ namespace AbMath.Calculator
                 {
                     _input[i] = (new RPN.Term {Arguments = 0,Type = RPN.Type.Number,Value = number });
                 }
-                else
-                {
-                    _input[i] = token;
-                }
             }
         }
 
