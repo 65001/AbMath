@@ -153,6 +153,16 @@ namespace AbMath.Calculator
                 return Math.Abs(arguments[0]);
             }
 
+            public static double rad(params double[] arguments)
+            {
+                return arguments[0] * Math.PI/180;
+            }
+
+            public static double deg(params double[] arguments)
+            {
+                return arguments[0] * 180/Math.PI;
+            }
+
             //Constants 
             public static double Pi(params double[] arguments)
             {

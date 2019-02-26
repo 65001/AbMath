@@ -106,13 +106,8 @@ namespace AbMath.Calculator
                         _token = _character;
                         WriteToken("Function Start");
                     }
-                    else if (_dataStore.IsFunction(_token) && _dataStore.IsRightBracket(_character))
-                    {
-                        WriteToken("Function End");
-                        _token = _character;
-                        WriteToken("Function End");
-                    }
-                    else if (_dataStore.IsFunction(_token) && _dataStore.IsOperator(_character))
+                    else if (_dataStore.IsFunction(_token) && ( _dataStore.IsRightBracket(_character) 
+                             || _dataStore.IsOperator(_character) ))
                     {
                         WriteToken("Function End");
                         _token = _character;

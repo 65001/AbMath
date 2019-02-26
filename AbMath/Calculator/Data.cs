@@ -471,6 +471,22 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     MinArguments = 1
                 });
+
+                AddFunction("rad", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.rad,
+                    MaxArguments = 1,
+                    MinArguments = 1
+                });
+
+                AddFunction("deg", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.deg,
+                    MaxArguments = 1,
+                    MinArguments = 1
+                });
                 #endregion
 
                 AddFunction("max", new Function
