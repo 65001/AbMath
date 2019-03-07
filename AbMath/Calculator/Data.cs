@@ -235,6 +235,7 @@ namespace AbMath.Calculator
                 AddAlias("and","&&");
                 AddAlias("or","||");
                 AddAlias("Σ","sum");
+                AddAlias("infinity","∞");
 
                 //Latex t commands
                 AddAlias("\\left","");
