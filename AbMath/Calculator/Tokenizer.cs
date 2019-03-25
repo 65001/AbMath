@@ -51,13 +51,23 @@ namespace AbMath.Calculator
                 _prevToken = string.Empty;
 
                 int length = Equation.Length;
+                ReadOnlySpan<char> equation = Equation.AsSpan();
+
                 for (int i = 0; i < length; i++)
                 {
-                    _rule = string.Empty;
-                    _character = Equation.Substring(i, 1);
-                    _readAhead = i < (length - 1) ? Equation.Substring((i + 1), 1) : string.Empty;
+                    _character = equation[i].ToString();
+                    _readAhead = i < (length - 1) ? equation[i + 1].ToString() : string.Empty;
 
-                    Alias();
+                    //Alias code
+                    if (_dataStore.Aliases.ContainsKey(_token))
+                    {
+                        _token = _dataStore.Aliases[_token];
+                    }
+
+                    if (_dataStore.Aliases.ContainsKey(_character))
+                    {
+                        _character = _dataStore.Aliases[_character];
+                    }
 
                     //WhiteSpace Rule
                     if (string.IsNullOrWhiteSpace(_character) && _character != ",")
@@ -183,23 +193,6 @@ namespace AbMath.Calculator
                 Write("");
 
                 return _tokens;
-            }
-
-            /// <summary>
-            /// Transforms characters and tokens from mathematical notation into notation
-            /// that AbMath understands.
-            /// </summary>
-            private void Alias()
-            {
-                if (_dataStore.Aliases.ContainsKey(_token))
-                {
-                    _token = _dataStore.Aliases[_token];
-                }
-
-                if (_dataStore.Aliases.ContainsKey(_character))
-                {
-                    _character = _dataStore.Aliases[_character];
-                }
             }
 
             /// <summary>
