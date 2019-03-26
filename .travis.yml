@@ -4,7 +4,6 @@ dotnet: 2.0.0
 
 install:
   - dotnet restore 
-  - nuget restore "Ab Math.sln"
 script:
   - cd "Unit Tester/Apportionment/"
   - dotnet build 

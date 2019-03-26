@@ -50,7 +50,7 @@ namespace AbMath.Calculator
                 _prevToken = string.Empty;
 
                 int length = Equation.Length;
-                ReadOnlySpan<char> equation = Equation.AsSpan();
+                char[] equation = Equation.ToCharArray();
 
                 for (int i = 0; i < length; i++)
                 {
