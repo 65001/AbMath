@@ -119,11 +119,8 @@ namespace AbMath.Calculator
             _tokenizer.Logger += Logger;
             Tokens = _tokenizer.Tokenize();
 
-            Simplify Simplify = new Simplify(this.Data);
-
-
             _shunt.Logger += Logger;
-            Data.Polish = _shunt.ShuntYard( Simplify.Apply( Tokens ) );
+            Data.Polish = _shunt.ShuntYard( this.Tokens  );
         }
     }
 }

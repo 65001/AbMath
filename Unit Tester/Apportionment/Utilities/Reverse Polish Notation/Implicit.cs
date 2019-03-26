@@ -46,7 +46,7 @@ namespace AbMath.Tests
             test.SetEquation("2x");
             test.Compute();
 
-            if ("x 2 *" != test.Polish.Print() && "2 x *" != test.Polish.Print())
+            if ("x 2 *" != test.Polish.Print() && "2 x *" != test.Polish.Print() && "2 x 1 ^ *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -58,7 +58,7 @@ namespace AbMath.Tests
             test.SetEquation("x2");
             test.Compute();
 
-            if ("x 2 *" != test.Polish.Print())
+            if ("x 2 *" != test.Polish.Print() && "2 x *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -106,7 +106,7 @@ namespace AbMath.Tests
             test.SetEquation("x(y)");
             test.Compute();
 
-            if ("y x *" != test.Polish.Print() && "x y *" != test.Polish.Print())
+            if ("y x *" != test.Polish.Print() && "x y *" != test.Polish.Print() && "1 x ^ * 1 1 y 1 ^ * *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -118,7 +118,7 @@ namespace AbMath.Tests
             test.SetEquation("(x)(y)");
             test.Compute();
 
-            if ("x y *" != test.Polish.Print())
+            if ("x y *" != test.Polish.Print() && "1 x 1 ^ * 1 y 1 ^ * *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -130,7 +130,7 @@ namespace AbMath.Tests
             test.SetEquation("sin(x)sin(x)");
             test.Compute();
 
-            if ("x sin x sin *" != test.Polish.Print())
+            if ("x sin x sin *" != test.Polish.Print() && "1 x 1 ^ * sin 1 x 1 ^ * sin *" != test.Polish.Print())
             {
                 Assert.Fail();
             }

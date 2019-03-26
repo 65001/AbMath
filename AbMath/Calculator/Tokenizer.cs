@@ -35,10 +35,9 @@ namespace AbMath.Calculator
                 sw.Start();
                 _tokens = new List<Term>();
 
-                _tables = new Tables<string>(new Config { Title = "Tokenizer", Format = _dataStore.DefaultFormat});
-
                 if (_dataStore.DebugMode)
                 {
+                    _tables = new Tables<string>(new Config {Title = "Tokenizer", Format = _dataStore.DefaultFormat});
                     _tables.Add(new Schema {Column = "#", Width = 3});
                     _tables.Add(new Schema {Column = "Character", Width = 10});
                     _tables.Add(new Schema {Column = "Token", Width = 15});
@@ -171,7 +170,8 @@ namespace AbMath.Calculator
 
                     if (_dataStore.DebugMode)
                     {
-                        _tables.Add(new string[] {i.ToString(), _character, _token, _tokens.Count.ToString(), _rule});
+                        _tables.Add(new string[]
+                            {i.ToString(), _character, _token, _tokens.Count.ToString(), _rule ?? string.Empty});
                         Write(_tables.GenerateNextRow());
                     }
                 }
@@ -187,9 +187,25 @@ namespace AbMath.Calculator
                 }
                 sw.Stop();
 
-                Write($"Tokenize Time {sw.ElapsedMilliseconds} (ms) Elapsed Ticks: {sw.ElapsedTicks.ToString("N0")}");
-                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds;
-                _dataStore.TotalSteps += sw.ElapsedTicks;
+                Stopwatch si = new Stopwatch();
+                si.Start();
+
+                PreSimplify preSimplify = new PreSimplify(_dataStore);
+                if (_dataStore.DebugMode)
+                {
+                    preSimplify.Logger += Logger;
+                }
+
+                _tokens = preSimplify.Apply(_tokens);
+
+                si.Stop();
+
+                
+
+                Log($"Tokenize Time {sw.ElapsedMilliseconds} (ms) Elapsed Ticks: {sw.ElapsedTicks.ToString("N0")}");
+                Log($"Simplification Time {si.ElapsedMilliseconds} (ms) Elapsed Ticks: {si.ElapsedTicks.ToString("N0")}");
+                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds + si.ElapsedMilliseconds ;
+                _dataStore.TotalSteps += sw.ElapsedTicks + si.ElapsedTicks;
                 Write("");
 
                 return _tokens;
@@ -225,13 +241,21 @@ namespace AbMath.Calculator
                         term.Arguments = _dataStore.Operators[_token].Arguments;
                         break;
                 }
-
                 _tokens.Add(term);
+
                 _prevToken = _token;
                 _token = string.Empty;
             }
 
             private void Write(string message)
+            {
+                if (_dataStore.DebugMode)
+                {
+                    Logger?.Invoke(this, message);
+                }
+            }
+
+            private void Log(string message)
             {
                 Logger?.Invoke(this, message);
             }

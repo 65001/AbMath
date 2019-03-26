@@ -133,7 +133,7 @@ namespace CLI
             {
                 if (row[i] == null)
                 {
-                    throw new ArgumentNullException();
+                    throw new ArgumentNullException($"null at {i}. Table {config.Title}");
                 }
             }
             data.Add(row);

@@ -83,7 +83,7 @@ namespace AbMath.Tests
             test.SetEquation("2+x");
             test.Compute();
 
-            if ("2 x +" != test.Polish.Print())
+            if ("2 x +" != test.Polish.Print() && "2 1 x 1 ^ * +" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -207,7 +207,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("x^2");
             test.Compute();
-            if ("x 2 ^" != test.Polish.Print())
+            if ("x 2 ^" != test.Polish.Print() && "1 x 2 ^ *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -239,8 +239,9 @@ namespace AbMath.Tests
         public void ComplexExpression()
         {
             test.SetEquation("x >= 0 && x <= 5");
+            test.Logger += Write;
             test.Compute();
-
+            
             if ("x 0 >= x 5 <= &&" != test.Polish.Print())
             {
                 Assert.Fail();
@@ -263,7 +264,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("x * 2");
             test.Compute();
-            if ("x 2 *" != test.Polish.Print() || test.Data.ContainsVariables == false)
+            if ("x 2 *" != test.Polish.Print() && "1 x 1 ^ * 2 *" != test.Polish.Print() || test.Data.ContainsVariables == false)
             {
                 Assert.Fail();
             }
