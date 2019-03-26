@@ -3,6 +3,7 @@ mono: none
 dotnet: 2.0.0
 
 install:
+  - nuget restore 
   - dotnet restore
 script:
   - cd "Unit Tester/Apportionment/"
