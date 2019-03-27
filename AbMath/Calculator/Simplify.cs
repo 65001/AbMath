@@ -72,16 +72,16 @@ namespace AbMath.Calculator
                     //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
                     //2     x   ^   1   -   3   x   ^   1 -> (p_4 - a_1)p_3 p_2 p _1
                     //p_3 = a_2
-                    if ( ( _prev5.IsNull() || !_prev5.IsNull() && _prev5.Value == "+") &&
+                    if ( ( _prev5.IsNull() || !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.Value == "(")) &&
                          !_prev4.IsNull() && _prev4.IsNumber() &&
                          !_prev3.IsNull() && _prev3.IsVariable() &&
                          !_prev2.IsNull() && _prev2.IsOperator() && _prev2.Value == "^" &&
-                         !_prev.IsNull() && _prev.IsNumber() && 
+                         !_prev.IsNull() &&  ( _prev.IsNumber() || _prev.IsVariable() ) && 
                          _token.IsOperator() && (_token.Value == "+" || _token.Value == "-") &&
                          !_ahead.IsNull() && _ahead.IsNumber() &&
                          !_ahead2.IsNull() && _ahead2.IsVariable() &&
                          !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" &&
-                         !_ahead4.IsNull() && _ahead4.IsNumber() &&
+                         !_ahead4.IsNull() && ( _ahead4.IsNumber() || _ahead4.IsVariable() ) &&
                          _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
                          _prev.Value == _ahead4.Value //ensures that the degree is the same
                          )
@@ -133,10 +133,13 @@ namespace AbMath.Calculator
                     _prev = (i > 0) ? _token : _null;
                     _token = tokens[i];
                     _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
 
+                    // p t a a_2
+                    // c x ^ p
                     if (_token.IsVariable())
                     {
-                        if ( (_prev.IsNull() || !_prev.IsNull() && !_prev.IsNumber()) &&
+                        if ( (_prev.IsNull() || !_prev.IsNull() && !_prev.IsNumber() && _prev.Value != "^") &&
                              (_ahead.IsNull() || !_ahead.IsNull() && !_ahead.IsNumber()))
                         {
                             results.Add(new Term() {Arguments = 0,Type = Type.Number, Value = "1"});
@@ -150,10 +153,18 @@ namespace AbMath.Calculator
 
                         results.Add(_token);
 
-                        if (_ahead.IsNull() || !_ahead.IsNull() && _ahead.Value != "^")
+                        //t a   a_2
+                        //x ^   c or x
+                        if ( (_prev.IsNull() || !_prev.IsNull() && _prev.Value != "^") &&
+                            (_ahead.IsNull() || !_ahead.IsNull() && _ahead.Value != "^") &&
+                            ( _ahead2.IsNull() || !_ahead2.IsNull() && ( !_ahead2.IsNumber() || !_ahead2.IsVariable() ) ) )
                         {
                             results.Add(new Term() {Arguments = 2,Type = Type.Operator, Value = "^"});
                             results.Add(new Term() { Arguments = 0, Type = Type.Number, Value = "1" });
+                            //Log($"Adding exponent");
+                            //Log($"Token is a {_token.Type} with a value of {_token.Value}");
+                            //Log($"Ahead is a {_ahead.Type} with a value of {_ahead.Value}");
+                            //Log($"Ahead 2 is a {_ahead2.Type} with a value of {_ahead2.Value}");
                         }
 
                     }
@@ -193,7 +204,7 @@ namespace AbMath.Calculator
                     else if (_token.IsNumber() && _token.Value == "0" &&
                              !_ahead.IsNull() && _ahead.IsVariable() &&
                              !_ahead2.IsNull() && _ahead2.IsOperator() && _ahead2.Value == "^" &&
-                             !_ahead3.IsNull() && _ahead3.IsNumber()
+                             !_ahead3.IsNull() &&  ( _ahead3.IsNumber() || _ahead3.IsVariable() )
                     )
                     {
                         i += 3;
