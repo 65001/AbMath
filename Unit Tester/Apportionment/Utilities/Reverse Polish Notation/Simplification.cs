@@ -94,5 +94,33 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void VariableParanthesisReduction()
+        {
+            RPN rpn = new RPN("3(x^2 - x^2)");
+            rpn.Compute();
+            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
+            Console.WriteLine(SI.Apply(rpn.Tokens).ToArray().Print());
+
+            if ("3 ( 0 )" != SI.Apply(rpn.Tokens).ToArray().Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void VariableExponentVariable()
+        {
+            RPN rpn = new RPN("x^@ - x^@");
+            rpn.Compute();
+            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
+            Console.WriteLine(SI.Apply(rpn.Tokens).ToArray().Print());
+
+            if ("0" != SI.Apply(rpn.Tokens).ToArray().Print())
+            {
+                Assert.Fail();
+            }
+        }
     }
 }
