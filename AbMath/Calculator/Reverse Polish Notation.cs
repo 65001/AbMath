@@ -40,7 +40,7 @@ namespace AbMath.Calculator
             public Run Compute;
         }
 
-        public struct Term
+        public struct Token
         {
             public string Value;
             public int Arguments;
@@ -54,13 +54,13 @@ namespace AbMath.Calculator
 
         public string Equation { get; private set; }
 
-        public Term[] Polish => Data.Polish;
-        public List<Term> Tokens;
+        public Token[] Polish => Data.Polish;
+        public List<Token> Tokens;
 
         public bool ContainsVariables  => Data.ContainsVariables; 
 
-        private ITokenizer<Term> _tokenizer;
-        private IShunt<Term> _shunt;
+        private ITokenizer<Token> _tokenizer;
+        private IShunt<Token> _shunt;
         public DataStore Data { get; private set; }
 
 
@@ -73,7 +73,7 @@ namespace AbMath.Calculator
             _shunt = new Shunt(Data);
         }
 
-        public RPN(string equation, ITokenizer<Term> customTokenizer)
+        public RPN(string equation, ITokenizer<Token> customTokenizer)
         {
             Equation = equation;
             Startup();
@@ -81,7 +81,7 @@ namespace AbMath.Calculator
             _shunt = new Shunt(Data);
         }
 
-        public RPN(string equation, IShunt<Term> customShunter)
+        public RPN(string equation, IShunt<Token> customShunter)
         {
             Equation = equation;
             Startup();
@@ -89,7 +89,7 @@ namespace AbMath.Calculator
             _shunt = customShunter;
         }
 
-        public RPN(string equation, ITokenizer<Term> customTokenizer, IShunt<Term> customShunter)
+        public RPN(string equation, ITokenizer<Token> customTokenizer, IShunt<Token> customShunter)
         {
             Equation = equation;
             Startup();

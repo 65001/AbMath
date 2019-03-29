@@ -58,49 +58,49 @@ namespace AbMath.Calculator
 
     public static class TermExtensions
     {
-        public static bool IsNumber(this RPN.Term term)
+        public static bool IsNumber(this RPN.Token token)
         {
-            return term.Type == RPN.Type.Number;
+            return token.Type == RPN.Type.Number;
         }
 
-        public static bool IsNull(this RPN.Term term)
+        public static bool IsNull(this RPN.Token token)
         {
-            return term.Type == RPN.Type.Null;
+            return token.Type == RPN.Type.Null;
         }
 
-        public static bool IsFunction(this RPN.Term term)
+        public static bool IsFunction(this RPN.Token token)
         {
-            return term.Type == RPN.Type.Function;
+            return token.Type == RPN.Type.Function;
         }
 
-        public static bool IsConstant(this RPN.Term term)
+        public static bool IsConstant(this RPN.Token token)
         {
-            return IsFunction(term) && term.Arguments == 0;
+            return IsFunction(token) && token.Arguments == 0;
         }
 
-        public static bool IsOperator(this RPN.Term term)
+        public static bool IsOperator(this RPN.Token token)
         {
-            return term.Type == RPN.Type.Operator;
+            return token.Type == RPN.Type.Operator;
         }
 
-        public static bool IsVariable(this RPN.Term term)
+        public static bool IsVariable(this RPN.Token token)
         {
-            return term.Type == RPN.Type.Variable;
+            return token.Type == RPN.Type.Variable;
         }
 
-        public static bool IsLeftBracket(this RPN.Term term)
+        public static bool IsLeftBracket(this RPN.Token token)
         {
-            return term.Type == RPN.Type.LParen;
+            return token.Type == RPN.Type.LParen;
         }
 
-        public static bool IsRightBracket(this RPN.Term term)
+        public static bool IsRightBracket(this RPN.Token token)
         {
-            return term.Type == RPN.Type.RParen;
+            return token.Type == RPN.Type.RParen;
         }
 
-        public static bool IsComma(this RPN.Term term)
+        public static bool IsComma(this RPN.Token token)
         {
-            return term.Value == ",";
+            return token.Value == ",";
         }
     }
 }

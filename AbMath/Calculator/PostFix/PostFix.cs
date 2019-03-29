@@ -7,9 +7,9 @@ namespace AbMath.Calculator
     public class PostFix : IEvaluator<double>
     {
         private readonly RPN.DataStore _dataStore;
-        private RPN.Term[] _input;
+        private RPN.Token[] _input;
         private Stack<double> _stack;
-        private Stack<RPN.Term> _variables;
+        private Stack<RPN.Token> _variables;
         private readonly Stopwatch _stopwatch;
 
         public event EventHandler<string> Logger;
@@ -23,7 +23,7 @@ namespace AbMath.Calculator
         {
             _dataStore = dataStore;
             Reset();
-            _variables = new Stack<RPN.Term>();
+            _variables = new Stack<RPN.Token>();
             _stopwatch = new Stopwatch();
         }
 
@@ -38,10 +38,10 @@ namespace AbMath.Calculator
             
             for (int i = 0; i < length; i++)
             {
-                RPN.Term token = _input[i];
+                RPN.Token token = _input[i];
                 if (token.Type == RPN.Type.Variable && token.Value == variable)
                 {
-                    _input[i] = (new RPN.Term {Arguments = 0,Type = RPN.Type.Number,Value = number });
+                    _input[i] = (new RPN.Token {Arguments = 0,Type = RPN.Type.Number,Value = number });
                 }
             }
         }
@@ -51,7 +51,7 @@ namespace AbMath.Calculator
             _stopwatch.Start();
 
             for (int i = 0; i < _input.Length; i++) { 
-                RPN.Term token = _input[i];
+                RPN.Token token = _input[i];
 
                 switch (token.Type)
                 {
@@ -119,7 +119,7 @@ namespace AbMath.Calculator
 
         public void Reset()
         {
-            _input = new RPN.Term[_dataStore.Polish.Length];
+            _input = new RPN.Token[_dataStore.Polish.Length];
             _dataStore.Polish.CopyTo(_input,0);
             _stack = new Stack<double>();
         }

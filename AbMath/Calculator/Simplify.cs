@@ -8,21 +8,20 @@ namespace AbMath.Calculator
 {
     public partial class RPN
     {
-
         public class PreSimplify
         {
             private readonly DataStore _dataStore;
 
-            private Term _prev5;
-            private Term _prev4;
-            private Term _prev3;
-            private Term _prev2;
-            private Term _prev;
-            private Term _token;
-            private Term _ahead;
-            private Term _ahead2;
-            private Term _ahead3;
-            private Term _ahead4;
+            private Token _prev5;
+            private Token _prev4;
+            private Token _prev3;
+            private Token _prev2;
+            private Token _prev;
+            private Token _token;
+            private Token _ahead;
+            private Token _ahead2;
+            private Token _ahead3;
+            private Token _ahead4;
 
             private static int itteration;
             public event EventHandler<string> Logger;
@@ -33,26 +32,25 @@ namespace AbMath.Calculator
                 itteration = 0;
             }
 
-            public List<Term> Apply(List<Term> tokens)
+            public List<Token> Apply(List<Token> tokens)
             {
-                List<Term> expanded = expand(tokens);
-                List<Term> simplified = simplify(expanded);
-                List<Term> compressed = compress(simplified);
-
+                List<Token> expanded = expand(tokens);
+                List<Token> swapped = swap(expanded);
+                List<Token> simplified = simplify(swapped);
+                List<Token> compressed = compress(simplified);
                 
                 Log($"Original Tokens: {tokens.ToArray().Print()}");
                 Log($"Expanded Tokens: {expanded.ToArray().Print()}");
+                Log($"Swapped  Tokens: {swapped.ToArray().Print()}");
                 Log($"Simplified Tokens: {simplified.ToArray().Print()}");
                 Log($"Compressed Tokens: {compressed.ToArray().Print()}");
-                
-
                 return compressed;
             }
 
-            public List<Term> simplify(List<Term> tokens)
+            public List<Token> simplify(List<Token> tokens)
             {
-                List<Term> results = new List<Term>(tokens.Count);
-                Term _null = GenerateNull();
+                List<Token> results = new List<Token>(tokens.Count);
+                Token _null = GenerateNull();
 
                 for (int i = 0; i < tokens.Count; i++)
                 {
@@ -86,10 +84,7 @@ namespace AbMath.Calculator
                          _prev.Value == _ahead4.Value //ensures that the degree is the same
                          )
                     {
-                        for (int j = 0; j < 4; j++)
-                        {
-                            results.RemoveAt(results.Count - 1);
-                        }
+                        pop(ref results, 4);
 
                         double data1 = double.Parse(_prev4.Value);
                         double data2 = double.Parse(_ahead.Value);
@@ -104,11 +99,19 @@ namespace AbMath.Calculator
                             result = data1 - data2;
                         }
                         
-                        results.Add(new Term() {Arguments = 0, Type = Type.Number, Value = result.ToString()} );
+                        results.Add(new Token() {Arguments = 0, Type = Type.Number, Value = result.ToString()} );
                         results.Add(_prev3);
                         results.Add(_prev2);
                         results.Add(_prev);
                         i += 4;
+                    }
+                    //p t   a
+                    //x ^   0
+                    else if (!_prev.IsNull() && !_ahead.IsNull() &&  _token.Value == "^" && _prev.IsVariable() && _ahead.Value == "0")
+                    {
+                        i += 1;
+                        pop(ref results, 2);
+                        results.Add(new Token() { Arguments = 0, Type = Type.Number, Value = "1" });
                     }
                     else
                     {
@@ -123,11 +126,18 @@ namespace AbMath.Calculator
                 return results;
             }
 
-            public List<Term> expand(List<Term> tokens)
+            /// <summary>
+            /// Expands all variables so that a variable
+            /// will have a coefficient and explicit degree
+            /// in the token stream.
+            /// </summary>
+            /// <param name="tokens"></param>
+            /// <returns></returns>
+            public List<Token> expand(List<Token> tokens)
             {
-                List<Term> results = new List<Term>(tokens.Count);
+                List<Token> results = new List<Token>(tokens.Count);
 
-                Term _null = GenerateNull();
+                Token _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev = (i > 0) ? _token : _null;
@@ -142,7 +152,7 @@ namespace AbMath.Calculator
                         if ( (_prev.IsNull() || !_prev.IsNull() && !_prev.IsNumber() && _prev.Value != "^") &&
                              (_ahead.IsNull() || !_ahead.IsNull() && !_ahead.IsNumber()))
                         {
-                            results.Add(new Term() {Arguments = 0,Type = Type.Number, Value = "1"});
+                            results.Add(new Token() {Arguments = 0,Type = Type.Number, Value = "1"});
                         }
 
                         if (!_ahead.IsNull() && _ahead.IsNumber())
@@ -159,8 +169,8 @@ namespace AbMath.Calculator
                             (_ahead.IsNull() || !_ahead.IsNull() && _ahead.Value != "^") &&
                             ( _ahead2.IsNull() || !_ahead2.IsNull() && ( !_ahead2.IsNumber() || !_ahead2.IsVariable() ) ) )
                         {
-                            results.Add(new Term() {Arguments = 2,Type = Type.Operator, Value = "^"});
-                            results.Add(new Term() { Arguments = 0, Type = Type.Number, Value = "1" });
+                            results.Add(new Token() {Arguments = 2,Type = Type.Operator, Value = "^"});
+                            results.Add(new Token() { Arguments = 0, Type = Type.Number, Value = "1" });
                             //Log($"Adding exponent");
                             //Log($"Token is a {_token.Type} with a value of {_token.Value}");
                             //Log($"Ahead is a {_ahead.Type} with a value of {_ahead.Value}");
@@ -175,11 +185,16 @@ namespace AbMath.Calculator
                 }
                 return results;
             }
-
-            public List<Term> compress(List<Term> tokens)
+            
+            /// <summary>
+            /// Removes unnecessary tokens from the token stream.
+            /// </summary>
+            /// <param name="tokens"></param>
+            /// <returns></returns>
+            public List<Token> compress(List<Token> tokens)
             {
-                List<Term> results = new List<Term>(tokens.Count);
-                Term _null = GenerateNull();
+                List<Token> results = new List<Token>(tokens.Count);
+                Token _null = GenerateNull();
 
                 for (int i = 0; i < tokens.Count; i++)
                 {
@@ -217,6 +232,13 @@ namespace AbMath.Calculator
                         i += 2;
                         results.Add(_token);
                     }
+                    //t a_1
+                    //1 x
+                    else if (_token.Value == "1" && !_ahead.IsNull() && _ahead.IsVariable())
+                    {
+                        i += 1;
+                        results.Add(_ahead);
+                    }
                     else
                     {
                         results.Add(_token);
@@ -226,7 +248,114 @@ namespace AbMath.Calculator
                 return results;
             }
 
-            private static Term GenerateNull() => new Term { Type = Type.Null };
+            public List<Token> swap(List<Token> tokens)
+            {
+                List<Token> results = new List<Token>(tokens.Count);
+                Token _null = GenerateNull();
+                Log($"Swap Input: {tokens.ToArray().Print()}");
+
+                for (int i = 0; i < tokens.Count; i++)
+                {
+                    _prev5 = (i > 4) ? _prev4 : _null;
+                    _prev4 = (i > 3) ? _prev3 : _null;
+                    _prev3 = (i > 2) ? _prev2 : _null;
+                    _prev2 = (i > 1) ? _prev : _null;
+                    _prev = (i > 0) ? _token : _null;
+                    _token = tokens[i];
+                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                    _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                    _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+
+                    //p_5 must be a positive addition operator
+                    //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
+                    //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
+                    //2     x   ^   1   -   3   x   ^   1 -> (p_4 - a_1)p_3 p_2 p _1
+                    //p_3 = a_2
+                    //either both a4 and p must be numbers while a4 > p
+                    //or p can be a variable where p = a4
+                    //or p can be a variable while a4 is a number
+                    if ((_prev5.IsNull() || !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.Value == "-")) &&
+                        !_prev4.IsNull() && _prev4.IsNumber() &&
+                        !_prev3.IsNull() && _prev3.IsVariable() &&
+                        !_prev2.IsNull() && _prev2.IsOperator() && _prev2.Value == "^" &&
+                        !_prev.IsNull() && (_prev.IsNumber() || _prev.IsVariable()) &&
+                        _token.IsOperator() && (_token.Value == "+" || _token.Value == "-") &&
+                        !_ahead.IsNull() && _ahead.IsNumber() &&
+                        !_ahead2.IsNull() && _ahead2.IsVariable() &&
+                        !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" &&
+                        !_ahead4.IsNull() && (_ahead4.IsNumber() || _ahead4.IsVariable()) &&
+                        _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
+                        //degree rules 
+                        ( (_ahead4.Value == _prev.Value && _prev.IsVariable() && double.Parse(_ahead.Value) > double.Parse(_prev4.Value)) || 
+                          //p is a variable and a4 is a number
+                          _prev.IsVariable() && _ahead4.IsNumber() ||
+                          //a4 and p are numbers where a4 > p
+                        _ahead4.IsNumber() && _prev.IsNumber() && double.Parse(_ahead4.Value) > double.Parse(_prev.Value) )) 
+                        
+                    {
+
+                        //Log($"{_prev5.Value} {_prev4.Value}    {_prev3.Value}  {_prev2.Value}  {_prev.Value}   {_token.Value}  {_ahead.Value}  {_ahead2.Value} {_ahead3.Value} {_ahead4.Value}");
+                        //Log($"Swapping {_token.Value}{_ahead.Value}{_ahead2.Value}^{_ahead4.Value} with {_prev5.Value}{_prev4.Value}{_prev3.Value}^{_prev.Value}");
+
+                        i += 4;
+                        if (!_prev5.IsNull())
+                        {
+                            pop(ref results, 5);
+                        }
+                        else
+                        {
+                            pop(ref results, 4);
+                        }
+
+                        if (results.Count > 0 || _token.Value != "+")
+                        {
+                            results.Add(_token);
+                        }
+
+                        results.Add(_ahead);
+                        results.Add(_ahead2);
+                        results.Add(_ahead3);
+                        results.Add(_ahead4);
+
+                        if (_prev5.IsNull())
+                        {
+                            results.Add(new Token {Arguments = 2,Type = Type.Operator,Value = "+"});
+                        }
+                        else
+                        {
+                            results.Add(_prev5);
+                        }
+
+                        results.Add(_prev4);
+                        results.Add(_prev3);
+                        results.Add(_prev2);
+                        results.Add(_prev);
+
+                        //Log(results.ToArray().Print());
+                    }
+                    else
+                    {
+                        results.Add(_token);
+                    }
+                }
+
+                if (!tokens.SequenceEqual(results))
+                {
+                    return swap( results );
+                }
+                return results;
+            }
+
+            private static void pop(ref List<Token> tokens, int count)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    tokens.RemoveAt(tokens.Count - 1);
+                }
+            }
+
+            private static Token GenerateNull() => new Token { Type = Type.Null };
 
             private void Log(string message)
             {

@@ -12,15 +12,15 @@ namespace AbMath.Calculator
         /// Takes a list of tokens and returns a Queue of Tokens after Order of Operations has been 
         /// taken into consideration.
         ///</summary>
-        public class Shunt : IShunt<Term>
+        public class Shunt : IShunt<Token>
         {
             private readonly DataStore _dataStore;
-            private Queue<Term> _output;
-            private Stack<Term> _operator;
+            private Queue<Token> _output;
+            private Stack<Token> _operator;
 
-            private Term _prev;
-            private Term _token;
-            private Term _ahead;
+            private Token _prev;
+            private Token _token;
+            private Token _ahead;
 
             //TODO: Implement Variadic Function
             //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
@@ -33,13 +33,13 @@ namespace AbMath.Calculator
                 _dataStore = dataStore;
             }
 
-            public Term[] ShuntYard(List<Term> tokens)
+            public Token[] ShuntYard(List<Token> tokens)
             {
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                _output = new Queue<Term>(tokens.Count);
-                _operator = new Stack<Term>(5);
+                _output = new Queue<Token>(tokens.Count);
+                _operator = new Stack<Token>(5);
 
                 _arity = new Stack<int>();
 
@@ -61,7 +61,7 @@ namespace AbMath.Calculator
                 string action = string.Empty;
                 string type = string.Empty;
 
-                Term _null = GenerateNull();
+                Token _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev = (i > 0) ? _token : _null;
@@ -99,7 +99,13 @@ namespace AbMath.Calculator
                         _operator.Push(GenerateDivision());
                         _operator.Push(GenerateMultiply());
                     }
-                    else if (LeftImplicit())
+                    else if (!_prev.IsNull() && !_ahead.IsNull() &&
+                             _prev.IsNumber() && _token.IsVariable() && _ahead.IsLeftBracket())
+                    {
+                        type = "Variable Chain Multiplication";
+                        Chain();
+                    }
+                        else if (LeftImplicit())
                     {
                         //This will flip the order of the multiplication :(
                         type = "Implicit Left";
@@ -214,21 +220,21 @@ namespace AbMath.Calculator
                 //Ensures that all functions are within their stated max and min arguments
                 for (int i = 0; i < _output.Count; i++)
                 {
-                    Term term = _output.Dequeue();
-                    if (term.IsFunction())
+                    Token token = _output.Dequeue();
+                    if (token.IsFunction())
                     {
-                        Function function = _dataStore.Functions[term.Value];
-                        term.Arguments = Math.Max(function.MinArguments, Math.Min( term.Arguments, function.MaxArguments));
+                        Function function = _dataStore.Functions[token.Value];
+                        token.Arguments = Math.Max(function.MinArguments, Math.Min( token.Arguments, function.MaxArguments));
                     }
 
                     if (_dataStore.DebugMode)
                     {
-                        string[] message = {i.ToString(), term.Value, term.Arguments.ToString()};
+                        string[] message = {i.ToString(), token.Value, token.Arguments.ToString()};
                         arityTables.Add(message);
                         Write(arityTables.GenerateNextRow());
                     }
 
-                    _output.Enqueue(term);
+                    _output.Enqueue(token);
                 }
 
                 if (_dataStore.DebugMode)
@@ -281,7 +287,7 @@ namespace AbMath.Calculator
                 }
             }
 
-            void RightBracketRule(Term token)
+            void RightBracketRule(Token token)
             {
                 while (!_operator.Peek().IsLeftBracket())
                 {
@@ -290,7 +296,7 @@ namespace AbMath.Calculator
                         throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
                     }
 
-                    Term output = _operator.Pop();
+                    Token output = _operator.Pop();
                     //This ensures that only functions 
                     //can have variable number of arguments
                     if (output.IsFunction() )
@@ -312,7 +318,7 @@ namespace AbMath.Calculator
             }
 
             //Sort Stack equivalent in sb
-            void OperatorRule(Term token)
+            void OperatorRule(Token token)
             {
                 bool go = true;
                 while (DoOperatorRule(token) && go)
@@ -327,7 +333,7 @@ namespace AbMath.Calculator
                 _operator.Push(token);
             }
 
-            bool DoOperatorRule(Term Token)
+            bool DoOperatorRule(Token Token)
             {
                 try
                 { 
@@ -345,11 +351,15 @@ namespace AbMath.Calculator
 
             private bool LeftImplicit()
             {
+                //p t a
+                //3 x (
                 return !_ahead.IsNull() && (_token.IsNumber() || _token.IsVariable()) && (_ahead.IsFunction() || _ahead.IsLeftBracket() || _ahead.IsVariable());
             }
 
             private bool RightImplicit()
             {
+                //p t a
+                //3 x (
                 return !_prev.IsNull() && !_prev.IsComma() && _prev.IsRightBracket() && (_token.IsNumber() || _token.IsVariable());
             }
 
@@ -358,7 +368,7 @@ namespace AbMath.Calculator
                 return LeftImplicit() && RightImplicit();
             }
 
-            private void WriteFunction(Term function)
+            private void WriteFunction(Token function)
             {
                 _operator.Push(function);
                 
@@ -372,16 +382,16 @@ namespace AbMath.Calculator
                 }
             }
 
-            private static Term GenerateMultiply() => new Term {
+            private static Token GenerateMultiply() => new Token {
                 Value = "*", Arguments = 2, Type = Type.Operator
             };
 
-            private static Term GenerateDivision() => new Term
+            private static Token GenerateDivision() => new Token
             {
                 Arguments = 2, Type = Type.Operator, Value = "/"
             };
 
-            private static Term GenerateNull() => new Term { Type = Type.Null };
+            private static Token GenerateNull() => new Token { Type = Type.Null };
 
             /// <summary>
             /// Moves all remaining data from the stack onto the queue
@@ -390,7 +400,7 @@ namespace AbMath.Calculator
             {
                 while (_operator.Count > 0)
                 {
-                    Term peek = _operator.Peek();
+                    Token peek = _operator.Peek();
 
                     if (peek.Type == Type.LParen || peek.Type == Type.RParen)
                     {

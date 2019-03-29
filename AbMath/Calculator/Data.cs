@@ -66,7 +66,7 @@ namespace AbMath.Calculator
             /// The equation passed to the calculator 
             /// </summary>
             public string Equation;
-            public Term[] Polish { get; set; }
+            public Token[] Polish { get; set; }
 
             /// <summary>
             /// Whether an expression contains variables
@@ -177,9 +177,9 @@ namespace AbMath.Calculator
                 return Operators.ContainsKey(value);
             }
 
-            public bool IsOperator(Term term)
+            public bool IsOperator(Token token)
             {
-                return term.Type == Type.Operator;
+                return token.Type == Type.Operator;
             }
 
             public bool IsUnary(string value)

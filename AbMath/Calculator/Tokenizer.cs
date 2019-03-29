@@ -8,7 +8,7 @@ namespace AbMath.Calculator
 {
     public partial class RPN
     {
-        public class Tokenizer : ITokenizer<Term>
+        public class Tokenizer : ITokenizer<Token>
         {
             private readonly DataStore _dataStore;
             private string Equation => _dataStore.Equation; 
@@ -19,7 +19,7 @@ namespace AbMath.Calculator
             private string _readAhead;
             private Tables<string> _tables;
 
-            private List<Term> _tokens;
+            private List<Token> _tokens;
             private string _rule;
 
            public event EventHandler<string> Logger;
@@ -29,11 +29,11 @@ namespace AbMath.Calculator
                 _dataStore = dataStore;
             }
 
-            public List<Term> Tokenize()
+            public List<Token> Tokenize()
             {
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                _tokens = new List<Term>();
+                _tokens = new List<Token>();
 
                 if (_dataStore.DebugMode)
                 {
@@ -225,23 +225,23 @@ namespace AbMath.Calculator
                 }
 
                 _rule = rule;
-                Term term = new Term
+                Token token = new Token
                 {
                     Value = _token,
                     Type = _dataStore.Resolve(_token),
                     Arguments = 0
                 };
 
-                switch (term.Type)
+                switch (token.Type)
                 {
                     case Type.Function:
-                        term.Arguments = _dataStore.Functions[_token].Arguments;
+                        token.Arguments = _dataStore.Functions[_token].Arguments;
                         break;
                     case Type.Operator:
-                        term.Arguments = _dataStore.Operators[_token].Arguments;
+                        token.Arguments = _dataStore.Operators[_token].Arguments;
                         break;
                 }
-                _tokens.Add(term);
+                _tokens.Add(token);
 
                 _prevToken = _token;
                 _token = string.Empty;
