@@ -48,10 +48,10 @@ namespace AbMath.Calculator
                 {
                     tables.Add(new Schema {Column = "#", Width = 3});
                     tables.Add(new Schema {Column = "Token", Width = 10});
-                    tables.Add(new Schema {Column = "Stack Count", Width = 15});
+                    tables.Add(new Schema {Column = "Stack Count", Width = 12});
                     tables.Add(new Schema {Column = "Stack ", Width = 12});
                     tables.Add(new Schema {Column = "Arity", Width = 5});
-                    tables.Add(new Schema {Column = "Type", Width = 15});
+                    tables.Add(new Schema {Column = "Type", Width = 12});
                     tables.Add(new Schema {Column = "RPN", Width = 20});
                     tables.Add(new Schema {Column = "Action", Width = 30});
 
@@ -103,9 +103,10 @@ namespace AbMath.Calculator
                              _prev.IsNumber() && _token.IsVariable() && _ahead.IsLeftBracket())
                     {
                         type = "Variable Chain Multiplication";
-                        Chain();
+                        _output.Enqueue(_token);
+                        _output.Enqueue(GenerateMultiply());
                     }
-                        else if (LeftImplicit())
+                    else if (LeftImplicit())
                     {
                         //This will flip the order of the multiplication :(
                         type = "Implicit Left";
@@ -169,7 +170,6 @@ namespace AbMath.Calculator
                                 action = "Added token to output";
                                 type = "Variable";
                                 _output.Enqueue(_token);
-                                _dataStore.AddVariable(_token.Value);
                                 break;
                             default:
                                 throw new NotImplementedException(_token.Value);
@@ -258,11 +258,33 @@ namespace AbMath.Calculator
                 Write("");
 
                 sw.Stop();
-                Write($"Shunting Time {sw.ElapsedMilliseconds} (ms). Elapsed Ticks: {sw.ElapsedTicks.ToString("N0")}");
-                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds;
-                _dataStore.TotalSteps += sw.ElapsedTicks;
-
                 
+
+                Stopwatch SI = new Stopwatch();
+
+                PostSimplify PS = new PostSimplify(_dataStore);
+                PS.Logger += Logger;
+                Write($"Alt RPN : {PS.simplify(_output.ToList()).ToArray().Print()}");
+
+                SI.Stop();
+
+                _dataStore.AddTimeRecord(new TimeRecord()
+                {
+                    Type = "Shunting",
+                    ElapsedMilliseconds = sw.ElapsedMilliseconds,
+                    ElapsedTicks = sw.ElapsedTicks
+                });
+
+                _dataStore.AddTimeRecord(new TimeRecord()
+                {
+                    Type = "PostSimplify",
+                    ElapsedMilliseconds = SI.ElapsedMilliseconds,
+                    ElapsedTicks = SI.ElapsedTicks
+                });
+
+                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds + SI.ElapsedMilliseconds;
+                _dataStore.TotalSteps += sw.ElapsedTicks + SI.ElapsedTicks;
+
                 if (_dataStore.MarkdownTables)
                 {
                     Write($"Reverse Polish Notation:\n``{_output.Print()}``");
@@ -274,17 +296,13 @@ namespace AbMath.Calculator
 
                 Write("");
 
-                return _output.ToArray();
+                return PS.simplify(_output.ToList()).ToArray();
             }
 
             void Implicit()
             {
                 OperatorRule(GenerateMultiply());
                 _output.Enqueue(_token);
-                if (_token.IsVariable())
-                {
-                    _dataStore.AddVariable(_token.Value);
-                }
             }
 
             void RightBracketRule(Token token)

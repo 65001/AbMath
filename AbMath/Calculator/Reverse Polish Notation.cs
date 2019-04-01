@@ -49,7 +49,13 @@ namespace AbMath.Calculator
             {
                 return Value;
             }
+        }
 
+        public struct TimeRecord
+        {
+            public string Type;
+            public double ElapsedMilliseconds;
+            public double ElapsedTicks;
         }
 
         public string Equation { get; private set; }

@@ -18,7 +18,7 @@ namespace AbMath.Calculator
 
             private readonly List<string> _leftbracket;
             private readonly List<string> _rightbracket;
-            private List<string> _variables;
+            private List<TimeRecord> _time;
             private readonly Dictionary<string, string> _variableStore;
 
             /// <summary>
@@ -60,7 +60,9 @@ namespace AbMath.Calculator
             /// A list of variables that the calculator
             /// has found in an expression
             /// </summary>
-            public IReadOnlyList<string> Variables => _variables; 
+            public IReadOnlyList<string> Variables => Polish.Where(t => t.Type == Type.Variable).Select(t => t.Value).Distinct().ToList();
+
+            public IReadOnlyList<TimeRecord> Time => _time;
 
             /// <summary>
             /// The equation passed to the calculator 
@@ -71,7 +73,7 @@ namespace AbMath.Calculator
             /// <summary>
             /// Whether an expression contains variables
             /// </summary>
-            public bool ContainsVariables { get; private set; }
+            public bool ContainsVariables => Polish.Any(t => t.Type == Type.Variable);
 
             /// <summary>
             /// Whether an expression contains a evaluator
@@ -114,7 +116,7 @@ namespace AbMath.Calculator
 
                 _leftbracket = new List<string>();
                 _rightbracket = new List<string>();
-                _variables = new List<string>();
+                _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
 
                 DefaultFunctions();
@@ -122,6 +124,11 @@ namespace AbMath.Calculator
                 DefaultAliases();
                 DefaultBrackets();
                 DefaultFormats();
+            }
+
+            public void AddTimeRecord(TimeRecord time)
+            {
+                _time.Add(time);
             }
 
             public void AddLeftBracket(string value)
@@ -139,16 +146,8 @@ namespace AbMath.Calculator
                 _aliases.Add(key, value);
             }
 
-            public void AddVariable(string token)
-            {
-                ContainsVariables = true;
-                _variables.Add(token);
-                _variables = _variables.Distinct().ToList();
-            }
-
             public void AddStore(string variable,string value)
             {
-                AddVariable(variable);
                 if (_variableStore.ContainsKey(variable))
                 {
                     _variableStore[variable] = value;
@@ -589,6 +588,14 @@ namespace AbMath.Calculator
                     Compute = DoFunctions.Sum
                 }
                 );
+
+                AddFunction("avg", new Function()
+                {
+                    Arguments = 1,
+                    MinArguments = 1,
+                    MaxArguments = int.MaxValue,
+                    Compute = DoFunctions.Avg
+                });
 
                 AddFunction("random", new Function()
                 {

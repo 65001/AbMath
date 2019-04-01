@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
 using System.Text;
+using CLI;
 
 namespace AbMath.Calculator
 {
@@ -22,14 +23,13 @@ namespace AbMath.Calculator
             private Token _ahead2;
             private Token _ahead3;
             private Token _ahead4;
+            private Token _ahead5;
 
-            private static int itteration;
             public event EventHandler<string> Logger;
 
             public PreSimplify(DataStore dataStore)
             {
                 _dataStore = dataStore;
-                itteration = 0;
             }
 
             public List<Token> Apply(List<Token> tokens)
@@ -38,12 +38,28 @@ namespace AbMath.Calculator
                 List<Token> swapped = swap(expanded);
                 List<Token> simplified = simplify(swapped);
                 List<Token> compressed = compress(simplified);
-                
-                Log($"Original Tokens: {tokens.ToArray().Print()}");
-                Log($"Expanded Tokens: {expanded.ToArray().Print()}");
-                Log($"Swapped  Tokens: {swapped.ToArray().Print()}");
-                Log($"Simplified Tokens: {simplified.ToArray().Print()}");
-                Log($"Compressed Tokens: {compressed.ToArray().Print()}");
+
+                if (_dataStore.DebugMode)
+                {
+                    Tables<string> table = new Tables<string>(new Config()
+                        {Title = "Pre Simplification", Format = _dataStore.DefaultFormat}
+                    );
+
+
+                    table.Add(new Schema() {Column = "Type", Width = 12});
+                    table.Add(new Schema() {Column = "Tokens", Width = 100});
+                    //Log(table.GenerateHeaders());
+                    table.Add(new string[] {"Original", tokens.ToArray().Print()});
+                    table.Add(new string[] {"Expanded", expanded.ToArray().Print()});
+                    table.Add(new string[] {"Swapped", swapped.ToArray().Print()});
+                    table.Add(new string[] {"Simplified", simplified.ToArray().Print()});
+                    table.Add(new string[] {"Compressed", compressed.ToArray().Print()});
+                    //Log(table.GenerateBody());
+                    //Log(table.GenerateFooter());
+
+                    Log(table.ToString());
+                }
+
                 return compressed;
             }
 
@@ -64,13 +80,15 @@ namespace AbMath.Calculator
                     _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
                     _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
                     _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                    
+                    _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+
                     //p_5 must be a positive addition operator
+                    //a_5 must be an addition or subtraction operator or be null
                     //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
                     //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
                     //2     x   ^   1   -   3   x   ^   1 -> (p_4 - a_1)p_3 p_2 p _1
                     //p_3 = a_2
-                    if ( ( _prev5.IsNull() || !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.Value == "(")) &&
+                    if ( ( _prev5.IsNull() || !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.IsLeftBracket())) &&
                          !_prev4.IsNull() && _prev4.IsNumber() &&
                          !_prev3.IsNull() && _prev3.IsVariable() &&
                          !_prev2.IsNull() && _prev2.IsOperator() && _prev2.Value == "^" &&
@@ -80,11 +98,12 @@ namespace AbMath.Calculator
                          !_ahead2.IsNull() && _ahead2.IsVariable() &&
                          !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" &&
                          !_ahead4.IsNull() && ( _ahead4.IsNumber() || _ahead4.IsVariable() ) &&
+                         (_ahead5.IsNull() || !_ahead5.IsNull() && (_ahead5.IsRightBracket() || _ahead5.Value == "+" || _ahead5.Value == "-")) &&
                          _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
                          _prev.Value == _ahead4.Value //ensures that the degree is the same
                          )
                     {
-                        pop(ref results, 4);
+                        results.Pop(4);
 
                         double data1 = double.Parse(_prev4.Value);
                         double data2 = double.Parse(_ahead.Value);
@@ -110,7 +129,7 @@ namespace AbMath.Calculator
                     else if (!_prev.IsNull() && !_ahead.IsNull() &&  _token.Value == "^" && _prev.IsVariable() && _ahead.Value == "0")
                     {
                         i += 1;
-                        pop(ref results, 2);
+                        results.Pop(2);
                         results.Add(new Token() { Arguments = 0, Type = Type.Number, Value = "1" });
                     }
                     else
@@ -155,7 +174,7 @@ namespace AbMath.Calculator
                             results.Add(new Token() {Arguments = 0,Type = Type.Number, Value = "1"});
                         }
 
-                        if (!_ahead.IsNull() && _ahead.IsNumber())
+                        if (!_prev.IsNull() && !_prev.IsNumber() && !_ahead.IsNull() && _ahead.IsNumber())
                         {
                             i++;
                             results.Add(_ahead);
@@ -252,7 +271,7 @@ namespace AbMath.Calculator
             {
                 List<Token> results = new List<Token>(tokens.Count);
                 Token _null = GenerateNull();
-                Log($"Swap Input: {tokens.ToArray().Print()}");
+                //Log($"Swap Input: {tokens.ToArray().Print()}");
 
                 for (int i = 0; i < tokens.Count; i++)
                 {
@@ -266,7 +285,7 @@ namespace AbMath.Calculator
                     _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
                     _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
                     _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-
+                    _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
                     //p_5 must be a positive addition operator
                     //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
                     //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
@@ -285,6 +304,7 @@ namespace AbMath.Calculator
                         !_ahead2.IsNull() && _ahead2.IsVariable() &&
                         !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" &&
                         !_ahead4.IsNull() && (_ahead4.IsNumber() || _ahead4.IsVariable()) &&
+                        (_ahead5.IsNull() || !_ahead5.IsNull() && (_ahead5.Value == "+" || _ahead5.Value == "-")) &&
                         _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
                         //degree rules 
                         ( (_ahead4.Value == _prev.Value && _prev.IsVariable() && double.Parse(_ahead.Value) > double.Parse(_prev4.Value)) || 
@@ -301,11 +321,11 @@ namespace AbMath.Calculator
                         i += 4;
                         if (!_prev5.IsNull())
                         {
-                            pop(ref results, 5);
+                            results.Pop(5);
                         }
                         else
                         {
-                            pop(ref results, 4);
+                            results.Pop(4);
                         }
 
                         if (results.Count > 0 || _token.Value != "+")
@@ -347,20 +367,114 @@ namespace AbMath.Calculator
                 return results;
             }
 
-            private static void pop(ref List<Token> tokens, int count)
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    tokens.RemoveAt(tokens.Count - 1);
-                }
-            }
-
             private static Token GenerateNull() => new Token { Type = Type.Null };
 
             private void Log(string message)
             {
                 Logger?.Invoke(this, message);
             }
+        }
+
+        public class PostSimplify
+        {
+            private DataStore _data;
+
+            private Token _prev5;
+            private Token _prev4;
+            private Token _prev3;
+            private Token _prev2;
+            private Token _prev;
+            private Token _token;
+            private Token _ahead;
+            private Token _ahead2;
+            private Token _ahead3;
+            private Token _ahead4;
+            private Token _ahead5;
+
+            public event EventHandler<string> Logger;
+
+            public PostSimplify(DataStore dataStore)
+            {
+                _data = dataStore;
+            }
+
+            public List<Token> simplify(List<Token> tokens)
+            {
+                List<Token> results = new List<Token>(tokens.Count);
+                Token _null = GenerateNull();
+
+                for (int i = 0; i < tokens.Count; i++)
+                {
+                    _prev5 = (i > 4) ? _prev4 : _null;
+                    _prev4 = (i > 3) ? _prev3 : _null;
+                    _prev3 = (i > 2) ? _prev2 : _null;
+                    _prev2 = (i > 1) ? _prev : _null;
+                    _prev = (i > 0) ? _token : _null;
+                    _token = tokens[i];
+                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                    _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                    _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+                    _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+
+                    //p  t   a
+                    //x  x   - -> 0
+                    if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsVariable() && _prev.Value == _token.Value && (_ahead.Value == "-" || _ahead.Value == "+"))
+                    {
+                        if (_ahead.Value == "-")
+                        {
+                            i += 1;
+                            results.Pop(1);
+                            results.Add(new Token { Arguments = 0, Type = Type.Number, Value = "0" });
+                        }
+                        else
+                        {
+                            i += 1;
+                            results.Add(new Token {Arguments = 0, Type = Type.Number, Value = "2"});
+                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "*" });
+                        }
+                    }
+                    //p  t   a
+                    //0  x   *
+                    //x  0   *
+                    else if (!_prev.IsNull() && !_ahead.IsNull() && _ahead.Value == "*" &&
+                             ((_prev.Value == "0" &&  (_token.IsVariable() || _token.IsNumber() ) || 
+                             (_prev.IsVariable() || _prev.IsNumber()) && _token.Value == "0"))
+                             )
+                    {
+                        i += 1;
+                        results.Pop(1);
+                        results.Add(new Token {Arguments = 0,Type = Type.Number, Value = "0"});
+                    }
+                    //p3    p2  p1  t   a1  a2  a3
+                    //3     x   *   3   x   *   -
+
+                    //p2    p1  t   a   a2
+                    //3     x   *   0   *
+                    else
+                    {
+                        results.Add(_token);
+                    }
+
+
+                    //p4    p3  p2  p   t   a   a2  a3  a4  a5  a6 
+                    //3     x   2   ^   *   3   x   2   ^   *   -
+                }
+
+                if (!results.SequenceEqual(tokens))
+                {
+                    return simplify(results);
+                }
+
+                return results;
+            }
+
+            private void Log(string message)
+            {
+                Logger?.Invoke(this, message);
+            }
+
+            private static Token GenerateNull() => new Token { Type = Type.Null };
         }
     }
 }

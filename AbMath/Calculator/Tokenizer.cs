@@ -200,10 +200,20 @@ namespace AbMath.Calculator
 
                 si.Stop();
 
-                
+                _dataStore.AddTimeRecord(new TimeRecord()
+                {
+                    Type = "Tokenize",
+                    ElapsedMilliseconds = sw.ElapsedMilliseconds,
+                    ElapsedTicks = sw.ElapsedTicks
+                });
 
-                Log($"Tokenize Time {sw.ElapsedMilliseconds} (ms) Elapsed Ticks: {sw.ElapsedTicks.ToString("N0")}");
-                Log($"Simplification Time {si.ElapsedMilliseconds} (ms) Elapsed Ticks: {si.ElapsedTicks.ToString("N0")}");
+                _dataStore.AddTimeRecord(new TimeRecord()
+                {
+                    Type = "Simplification",
+                    ElapsedMilliseconds = si.ElapsedMilliseconds,
+                    ElapsedTicks = si.ElapsedTicks
+                });
+
                 _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds + si.ElapsedMilliseconds ;
                 _dataStore.TotalSteps += sw.ElapsedTicks + si.ElapsedTicks;
                 Write("");

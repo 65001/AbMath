@@ -153,5 +153,19 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void IllegalSwap()
+        {
+            RPN rpn = new RPN("x^2 + x^3/x");
+            rpn.Compute();
+            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
+            Console.WriteLine(SI.Apply(rpn.Tokens).ToArray().Print());
+
+            if ("x ^ 2 + x ^ 3 / x" != SI.Apply(rpn.Tokens).ToArray().Print())
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

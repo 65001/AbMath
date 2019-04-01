@@ -148,6 +148,11 @@ namespace AbMath.Calculator
                 return sum;
             }
 
+            public static double Avg(params double[] args)
+            {
+                return Sum(args) / args.Length;
+            }
+
             public static double Abs(params double[] arguments)
             {
                 return Math.Abs(arguments[0]);

@@ -300,16 +300,6 @@ namespace AbMath.Tests
         }
 
         [Test]
-        public void VariableChain()
-        {
-            test.SetEquation("3x(x - x)");
-            test.Compute();
-
-            PostFix math = new PostFix(test);
-            Assert.AreEqual(0, math.Compute());
-        }
-
-        [Test]
         public void SwapStackOverflow()
         {
             test.SetEquation("x^p + x - x^p - x + x^2 + x - x^2 - x");
