@@ -345,7 +345,7 @@ namespace AbMath.Calculator
                 });
                 */
 
-                #region Evaluation
+#region Evaluation
                 AddOperator(">", new Operator
                 {
                     Assoc = Assoc.Left,
@@ -393,8 +393,8 @@ namespace AbMath.Calculator
                     Arguments = 2,
                     Compute = DoOperators.LessThanOrEquals
                 });
-                #endregion
-                #region Logic
+#endregion
+#region Logic
                 AddOperator("!=", new Operator
                 {
                     Assoc = Assoc.Left,
@@ -418,12 +418,12 @@ namespace AbMath.Calculator
                     Arguments = 2,
                     Compute = DoOperators.Or
                 });
-                #endregion
+#endregion
             }
 
             private void DefaultFunctions()
             {
-                #region Trig
+#region Trig
                 AddFunction("sin", new Function
                 {
                     MinArguments = 1,
@@ -487,7 +487,7 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     MinArguments = 1
                 });
-                #endregion
+#endregion
 
                 AddFunction("max", new Function
                 {
@@ -553,7 +553,7 @@ namespace AbMath.Calculator
                     Compute = DoFunctions.Log
                 });
 
-                #region Constants
+#region Constants
                 AddFunction("pi", new Function
                 {
                     Arguments = 0,
@@ -569,7 +569,7 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     Compute = DoFunctions.EContstant
                 });
-                #endregion
+#endregion
 
                 AddFunction("bounded",new Function()
                 {

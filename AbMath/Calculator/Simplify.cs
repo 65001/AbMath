@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
-using System.Text;
 using CLI;
 
 namespace AbMath.Calculator
@@ -48,14 +46,14 @@ namespace AbMath.Calculator
 
                     table.Add(new Schema() {Column = "Type", Width = 12});
                     table.Add(new Schema() {Column = "Tokens", Width = 100});
-                    //Log(table.GenerateHeaders());
+                    Log(table.GenerateHeaders());
                     table.Add(new string[] {"Original", tokens.ToArray().Print()});
                     table.Add(new string[] {"Expanded", expanded.ToArray().Print()});
                     table.Add(new string[] {"Swapped", swapped.ToArray().Print()});
                     table.Add(new string[] {"Simplified", simplified.ToArray().Print()});
                     table.Add(new string[] {"Compressed", compressed.ToArray().Print()});
-                    //Log(table.GenerateBody());
-                    //Log(table.GenerateFooter());
+                    Log(table.GenerateBody());
+                    Log(table.GenerateFooter());
 
                     Log(table.ToString());
                 }
@@ -65,84 +63,85 @@ namespace AbMath.Calculator
 
             public List<Token> simplify(List<Token> tokens)
             {
-                List<Token> results = new List<Token>(tokens.Count);
-                Token _null = GenerateNull();
-
-                for (int i = 0; i < tokens.Count; i++)
+                while (true)
                 {
-                    _prev5 = (i > 4) ? _prev4 : _null;
-                    _prev4 = (i > 3) ? _prev3 : _null;
-                    _prev3 = (i > 2) ? _prev2 : _null;
-                    _prev2 = (i > 1) ? _prev : _null;
-                    _prev = (i > 0) ? _token : _null;
-                    _token = tokens[i];
-                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                    _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
-                    _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                    _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+                    List<Token> results = new List<Token>(tokens.Count);
+                    Token _null = GenerateNull();
 
-                    //p_5 must be a positive addition operator
-                    //a_5 must be an addition or subtraction operator or be null
-                    //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
-                    //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
-                    //2     x   ^   1   -   3   x   ^   1 -> (p_4 - a_1)p_3 p_2 p _1
-                    //p_3 = a_2
-                    if ( ( _prev5.IsNull() || !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.IsLeftBracket())) &&
-                         !_prev4.IsNull() && _prev4.IsNumber() &&
-                         !_prev3.IsNull() && _prev3.IsVariable() &&
-                         !_prev2.IsNull() && _prev2.IsOperator() && _prev2.Value == "^" &&
-                         !_prev.IsNull() &&  ( _prev.IsNumber() || _prev.IsVariable() ) && 
-                         _token.IsOperator() && (_token.Value == "+" || _token.Value == "-") &&
-                         !_ahead.IsNull() && _ahead.IsNumber() &&
-                         !_ahead2.IsNull() && _ahead2.IsVariable() &&
-                         !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" &&
-                         !_ahead4.IsNull() && ( _ahead4.IsNumber() || _ahead4.IsVariable() ) &&
-                         (_ahead5.IsNull() || !_ahead5.IsNull() && (_ahead5.IsRightBracket() || _ahead5.Value == "+" || _ahead5.Value == "-")) &&
-                         _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
-                         _prev.Value == _ahead4.Value //ensures that the degree is the same
-                         )
+                    for (int i = 0; i < tokens.Count; i++)
                     {
-                        results.Pop(4);
+                        _prev5 = (i > 4) ? _prev4 : _null;
+                        _prev4 = (i > 3) ? _prev3 : _null;
+                        _prev3 = (i > 2) ? _prev2 : _null;
+                        _prev2 = (i > 1) ? _prev : _null;
+                        _prev = (i > 0) ? _token : _null;
+                        _token = tokens[i];
+                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
 
-                        double data1 = double.Parse(_prev4.Value);
-                        double data2 = double.Parse(_ahead.Value);
-                        double result = 0;
-
-                        if (_token.Value == "+")
+                        //p_5 must be a positive addition operator
+                        //a_5 must be an addition or subtraction operator or be null
+                        //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
+                        //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
+                        //2     x   ^   1   -   3   x   ^   1 -> (p_4 - a_1)p_3 p_2 p _1
+                        //p_3 = a_2
+                        if ((_prev5.IsNull() || !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.IsLeftBracket())) && !_prev4.IsNull() && _prev4.IsNumber() && !_prev3.IsNull() && _prev3.IsVariable() && !_prev2.IsNull() && _prev2.IsOperator() && _prev2.Value == "^" && !_prev.IsNull() && (_prev.IsNumber() || _prev.IsVariable()) && _token.IsOperator() && (_token.Value == "+" || _token.Value == "-") && !_ahead.IsNull() && _ahead.IsNumber() && !_ahead2.IsNull() && _ahead2.IsVariable() && !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" && !_ahead4.IsNull() && (_ahead4.IsNumber() || _ahead4.IsVariable()) && (_ahead5.IsNull() || !_ahead5.IsNull() && (_ahead5.IsRightBracket() || _ahead5.Value == "+" || _ahead5.Value == "-")) && _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
+                            _prev.Value == _ahead4.Value //ensures that the degree is the same
+                        )
                         {
-                            result = data1 + data2;
+                            results.Pop(4);
+
+                            double data1 = double.Parse(_prev4.Value);
+                            double data2 = double.Parse(_ahead.Value);
+                            double result = 0;
+
+                            if (_token.Value == "+")
+                            {
+                                result = data1 + data2;
+                            }
+                            else
+                            {
+                                result = data1 - data2;
+                            }
+
+                            results.Add(new Token() {Arguments = 0, Type = Type.Number, Value = result.ToString()});
+                            results.Add(_prev3);
+                            results.Add(_prev2);
+                            results.Add(_prev);
+                            i += 4;
+                        }
+                        //p t   a
+                        //x ^   0
+                        else if (!_prev.IsNull() && !_ahead.IsNull() && _token.Value == "^" && _prev.IsVariable() && _ahead.Value == "0")
+                        {
+                            i += 1;
+                            results.Pop(2);
+                            results.Add(new Token() {Arguments = 0, Type = Type.Number, Value = "1"});
+                        }
+                        //t a_1 a_2 a_3
+                        //0 x   ^   c -> 0
+                        else if (_token.IsNumber() && _token.Value == "0" && !_ahead.IsNull() && _ahead.IsVariable() && !_ahead2.IsNull() && _ahead2.IsOperator() && _ahead2.Value == "^" && !_ahead3.IsNull() && (_ahead3.IsNumber() || _ahead3.IsVariable()))
+                        {
+                            i += 3;
+                            results.Add(_token);
                         }
                         else
                         {
-                            result = data1 - data2;
+                            results.Add(_token);
                         }
-                        
-                        results.Add(new Token() {Arguments = 0, Type = Type.Number, Value = result.ToString()} );
-                        results.Add(_prev3);
-                        results.Add(_prev2);
-                        results.Add(_prev);
-                        i += 4;
                     }
-                    //p t   a
-                    //x ^   0
-                    else if (!_prev.IsNull() && !_ahead.IsNull() &&  _token.Value == "^" && _prev.IsVariable() && _ahead.Value == "0")
-                    {
-                        i += 1;
-                        results.Pop(2);
-                        results.Add(new Token() { Arguments = 0, Type = Type.Number, Value = "1" });
-                    }
-                    else
-                    {
-                        results.Add(_token);
-                    }
-                }
 
-                if (!tokens.SequenceEqual(results))
-                {
-                    return simplify(results);
+                    if (!tokens.SequenceEqual(results))
+                    {
+                        tokens = results;
+                        continue;
+                    }
+
+                    return results;
                 }
-                return results;
             }
 
             /// <summary>
@@ -228,21 +227,10 @@ namespace AbMath.Calculator
                         !_ahead.IsNull() && _ahead.IsVariable() &&
                         !_ahead2.IsNull() && _ahead2.IsOperator() && _ahead2.Value == "^" &&
                         !_ahead3.IsNull() && _ahead3.IsNumber() && _ahead3.Value == "1"
-                        )
-                    {
-                        i += 3;
-                        results.Add(_ahead);
-                    }
-                    //t a_1 a_2 a_3
-                    //0 x   ^   c -> 0
-                    else if (_token.IsNumber() && _token.Value == "0" &&
-                             !_ahead.IsNull() && _ahead.IsVariable() &&
-                             !_ahead2.IsNull() && _ahead2.IsOperator() && _ahead2.Value == "^" &&
-                             !_ahead3.IsNull() &&  ( _ahead3.IsNumber() || _ahead3.IsVariable() )
                     )
                     {
                         i += 3;
-                        results.Add(_token);
+                        results.Add(_ahead);
                     }
                     // t a_1 a_2
                     // x   ^   1 -> x
@@ -269,102 +257,100 @@ namespace AbMath.Calculator
 
             public List<Token> swap(List<Token> tokens)
             {
-                List<Token> results = new List<Token>(tokens.Count);
-                Token _null = GenerateNull();
-                //Log($"Swap Input: {tokens.ToArray().Print()}");
-
-                for (int i = 0; i < tokens.Count; i++)
+                while (true)
                 {
-                    _prev5 = (i > 4) ? _prev4 : _null;
-                    _prev4 = (i > 3) ? _prev3 : _null;
-                    _prev3 = (i > 2) ? _prev2 : _null;
-                    _prev2 = (i > 1) ? _prev : _null;
-                    _prev = (i > 0) ? _token : _null;
-                    _token = tokens[i];
-                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                    _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
-                    _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                    _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
-                    //p_5 must be a positive addition operator
-                    //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
-                    //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
-                    //2     x   ^   1   -   3   x   ^   1 -> (p_4 - a_1)p_3 p_2 p _1
-                    //p_3 = a_2
-                    //either both a4 and p must be numbers while a4 > p
-                    //or p can be a variable where p = a4
-                    //or p can be a variable while a4 is a number
-                    if ((_prev5.IsNull() || !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.Value == "-")) &&
-                        !_prev4.IsNull() && _prev4.IsNumber() &&
-                        !_prev3.IsNull() && _prev3.IsVariable() &&
-                        !_prev2.IsNull() && _prev2.IsOperator() && _prev2.Value == "^" &&
-                        !_prev.IsNull() && (_prev.IsNumber() || _prev.IsVariable()) &&
-                        _token.IsOperator() && (_token.Value == "+" || _token.Value == "-") &&
-                        !_ahead.IsNull() && _ahead.IsNumber() &&
-                        !_ahead2.IsNull() && _ahead2.IsVariable() &&
-                        !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" &&
-                        !_ahead4.IsNull() && (_ahead4.IsNumber() || _ahead4.IsVariable()) &&
-                        (_ahead5.IsNull() || !_ahead5.IsNull() && (_ahead5.Value == "+" || _ahead5.Value == "-")) &&
-                        _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
-                        //degree rules 
-                        ( (_ahead4.Value == _prev.Value && _prev.IsVariable() && double.Parse(_ahead.Value) > double.Parse(_prev4.Value)) || 
-                          //p is a variable and a4 is a number
-                          _prev.IsVariable() && _ahead4.IsNumber() ||
-                          //a4 and p are numbers where a4 > p
-                        _ahead4.IsNumber() && _prev.IsNumber() && double.Parse(_ahead4.Value) > double.Parse(_prev.Value) )) 
-                        
+                    List<Token> results = new List<Token>(tokens.Count);
+                    Token _null = GenerateNull();
+                    //Log($"Swap Input: {tokens.ToArray().Print()}");
+
+                    for (int i = 0; i < tokens.Count; i++)
                     {
+                        _prev5 = (i > 4) ? _prev4 : _null;
+                        _prev4 = (i > 3) ? _prev3 : _null;
+                        _prev3 = (i > 2) ? _prev2 : _null;
+                        _prev2 = (i > 1) ? _prev : _null;
+                        _prev = (i > 0) ? _token : _null;
+                        _token = tokens[i];
+                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+                        //p_5 must be a [null|+,-,)]
+                        //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
+                        //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
+                        //2     x   ^   1   -   3   x   ^   1 -> (p_4 - a_1)p_3 p_2 p _1
+                        //p_3 = a_2
+                        //either both a4 and p must be numbers while a4 > p
+                        //or p can be a variable where p = a4
+                        //or p can be a variable while a4 is a number
+                        if ((_prev5.IsNull() ||  !_prev5.IsNull() && (_prev5.Value == "+" || _prev5.Value == "-")) && !_prev4.IsNull() && _prev4.IsNumber() && !_prev3.IsNull() && _prev3.IsVariable() && !_prev2.IsNull() && _prev2.IsOperator() && _prev2.Value == "^" && !_prev.IsNull() && (_prev.IsNumber() || _prev.IsVariable()) && _token.IsOperator() && (_token.Value == "+" || _token.Value == "-") && !_ahead.IsNull() && _ahead.IsNumber() && !_ahead2.IsNull() && _ahead2.IsVariable() && !_ahead3.IsNull() && _ahead3.IsOperator() && _ahead3.Value == "^" && !_ahead4.IsNull() && (_ahead4.IsNumber() || _ahead4.IsVariable()) && (_ahead5.IsNull() || !_ahead5.IsNull() && (_ahead5.Value == "+" || _ahead5.Value == "-")) && _prev3.Value == _ahead2.Value && //ensures that the variables are equal to each other
+                            //degree rules 
+                            ((_ahead4.Value == _prev.Value && _prev.IsVariable() && double.Parse(_ahead.Value) > double.Parse(_prev4.Value)) ||
+                             //p is a variable and a4 is a number
+                             _prev.IsVariable() && _ahead4.IsNumber() ||
+                             //a4 and p are numbers where a4 > p
+                             _ahead4.IsNumber() && _prev.IsNumber() && double.Parse(_ahead4.Value) > double.Parse(_prev.Value)))
 
-                        //Log($"{_prev5.Value} {_prev4.Value}    {_prev3.Value}  {_prev2.Value}  {_prev.Value}   {_token.Value}  {_ahead.Value}  {_ahead2.Value} {_ahead3.Value} {_ahead4.Value}");
-                        //Log($"Swapping {_token.Value}{_ahead.Value}{_ahead2.Value}^{_ahead4.Value} with {_prev5.Value}{_prev4.Value}{_prev3.Value}^{_prev.Value}");
-
-                        i += 4;
-                        if (!_prev5.IsNull())
                         {
-                            results.Pop(5);
+                            Log($"{_prev5.Value} {_prev4.Value}    {_prev3.Value}  {_prev2.Value}  {_prev.Value}   {_token.Value}  {_ahead.Value}  {_ahead2.Value} {_ahead3.Value} {_ahead4.Value}");
+                            Log($"Swapping {_token.Value}{_ahead.Value}{_ahead2.Value}^{_ahead4.Value} with {_prev5.Value}{_prev4.Value}{_prev3.Value}^{_prev.Value}");
+
+                            i += 4;
+                            if (!_prev5.IsNull())
+                            {
+                                results.Pop(5);
+                            }
+                            else
+                            {
+                                results.Pop(4);
+                            }
+
+                            if (_prev5.IsLeftBracket())
+                            {
+                                results.Add(_prev5);
+                            }
+
+                            if (results.Count > 0 || _token.Value != "+")
+                            {
+                                results.Add(_token);
+                            }
+
+                            results.Add(_ahead);
+                            results.Add(_ahead2);
+                            results.Add(_ahead3);
+                            results.Add(_ahead4);
+
+                            if (_prev5.IsNull())
+                            {
+                                results.Add(new Token {Arguments = 2, Type = Type.Operator, Value = "+"});
+                            }
+                            else if (!_prev5.IsLeftBracket())
+                            {
+                                results.Add(_prev5);
+                            }
+
+                            results.Add(_prev4);
+                            results.Add(_prev3);
+                            results.Add(_prev2);
+                            results.Add(_prev);
+
+                            //Log(results.ToArray().Print());
                         }
                         else
-                        {
-                            results.Pop(4);
-                        }
-
-                        if (results.Count > 0 || _token.Value != "+")
                         {
                             results.Add(_token);
                         }
-
-                        results.Add(_ahead);
-                        results.Add(_ahead2);
-                        results.Add(_ahead3);
-                        results.Add(_ahead4);
-
-                        if (_prev5.IsNull())
-                        {
-                            results.Add(new Token {Arguments = 2,Type = Type.Operator,Value = "+"});
-                        }
-                        else
-                        {
-                            results.Add(_prev5);
-                        }
-
-                        results.Add(_prev4);
-                        results.Add(_prev3);
-                        results.Add(_prev2);
-                        results.Add(_prev);
-
-                        //Log(results.ToArray().Print());
                     }
-                    else
+
+                    if (!tokens.SequenceEqual(results))
                     {
-                        results.Add(_token);
+                        tokens = results;
+                        continue;
                     }
-                }
 
-                if (!tokens.SequenceEqual(results))
-                {
-                    return swap( results );
+                    return results;
                 }
-                return results;
             }
 
             private static Token GenerateNull() => new Token { Type = Type.Null };
@@ -398,11 +384,13 @@ namespace AbMath.Calculator
                 _data = dataStore;
             }
 
-            public List<Token> simplify(List<Token> tokens)
+            public List<Token> expand(List<Token> tokens)
             {
                 List<Token> results = new List<Token>(tokens.Count);
-                Token _null = GenerateNull();
 
+                //p t
+                //c x
+                Token _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev5 = (i > 4) ? _prev4 : _null;
@@ -417,56 +405,246 @@ namespace AbMath.Calculator
                     _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
                     _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
 
-                    //p  t   a
-                    //x  x   - -> 0
-                    if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsVariable() && _prev.Value == _token.Value && (_ahead.Value == "-" || _ahead.Value == "+"))
+                    
+                    //p t a a2   a3
+                    //2 x 2 ^    * 
+                    //2 x * c|v  op
+                    //2 x ) NOP
+                    if (_token.IsVariable() && (_ahead2.IsNull() || _ahead.Value == "*" || _ahead2.IsNumber() || _ahead2.IsVariable()|| _ahead2.Value == "^" || _ahead2.Value == "*"))
                     {
-                        if (_ahead.Value == "-")
-                        {
-                            i += 1;
-                            results.Pop(1);
-                            results.Add(new Token { Arguments = 0, Type = Type.Number, Value = "0" });
-                        }
-                        else
-                        {
-                            i += 1;
-                            results.Add(new Token {Arguments = 0, Type = Type.Number, Value = "2"});
-                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "*" });
-                        }
-                    }
-                    //p  t   a
-                    //0  x   *
-                    //x  0   *
-                    else if (!_prev.IsNull() && !_ahead.IsNull() && _ahead.Value == "*" &&
-                             ((_prev.Value == "0" &&  (_token.IsVariable() || _token.IsNumber() ) || 
-                             (_prev.IsVariable() || _prev.IsNumber()) && _token.Value == "0"))
-                             )
-                    {
-                        i += 1;
-                        results.Pop(1);
-                        results.Add(new Token {Arguments = 0,Type = Type.Number, Value = "0"});
-                    }
-                    //p3    p2  p1  t   a1  a2  a3
-                    //3     x   *   3   x   *   -
+                        bool addedCoefficient = false;
+                        //Log("Expanding Term");
 
-                    //p2    p1  t   a   a2
-                    //3     x   *   0   *
+                        //There is no coefficient
+                        if ((_prev.IsNull() || !_prev.IsNumber() ) && (_ahead2.Value != "*") && (_ahead3.IsNull() || _ahead3.Value != "*"))
+                        {
+                            addedCoefficient = true;
+                            //Log("Adding Term");
+                            results.Add(new Token {Arguments = 0, Type = Type.Number, Value = "1"});
+                        }
+
+                        results.Add(_token);
+
+                        //There is no exponent
+                        if (_ahead2.IsNull() || _ahead2.Value != "^")
+                        {
+                            //Add exponent stuff
+                            //Log("Adding Exponent");
+                            results.Add(new Token {Arguments = 0, Type = Type.Number, Value = "1"});
+                            results.Add(new Token {Arguments = 2, Type = Type.Operator, Value = "^"});
+                        }
+
+                        if (addedCoefficient)
+                        {
+                            results.Add(new Token {Arguments = 2, Type = Type.Operator, Value = "*"});
+                        }
+                    }
                     else
                     {
                         results.Add(_token);
                     }
-
-
-                    //p4    p3  p2  p   t   a   a2  a3  a4  a5  a6 
-                    //3     x   2   ^   *   3   x   2   ^   *   -
-                }
-
-                if (!results.SequenceEqual(tokens))
-                {
-                    return simplify(results);
                 }
 
                 return results;
+            }
+
+            public List<Token> compress(List<Token> tokens)
+            {
+                while (true)
+                {
+                    List<Token> results = new List<Token>(tokens.Count);
+
+                    Token _null = GenerateNull();
+                    for (int i = 0; i < tokens.Count; i++)
+                    {
+                        _prev5 = (i > 4) ? _prev4 : _null;
+                        _prev4 = (i > 3) ? _prev3 : _null;
+                        _prev3 = (i > 2) ? _prev2 : _null;
+                        _prev2 = (i > 1) ? _prev : _null;
+                        _prev = (i > 0) ? _token : _null;
+                        _token = tokens[i];
+                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+
+                        //1 ^ -> ""
+                        if (_token.Value == "^" && !_prev.IsNull() && _prev.Value == "1")
+                        {
+                            results.Pop(1);
+                        }
+                        //t a   a2
+                        //1 c|x *-> c|x
+                        else if (_token.Value == "1" && (!_ahead.IsNull() && !_ahead2.IsNull()) && (_ahead.IsVariable() || _ahead.IsNumber()) && (_ahead2.Value == "*"))
+                        {
+                            results.Add(_ahead);
+                            i += 2;
+                        }
+                        //c|x 1 *-> c|x
+                        else if ((_token.IsVariable() || _token.IsNumber()) &&
+                                 (!_ahead.IsNull() && _ahead.Value == "1") &&
+                                 (!_ahead2.IsNull() && _ahead2.Value == "*"))
+                        {
+                            results.Add(_token);
+                            i += 2;
+                        }
+                        //c|x 0   * -> 0
+                        else if ((_token.IsVariable() || _token.IsNumber()) &&
+                                 !_ahead.IsNull() && _ahead.Value == "0" &&
+                                 !_ahead2.IsNull() && _ahead2.Value == "*"
+                        )
+                        {
+                             results.Add(_ahead);
+                            i += 2;
+                        }
+                        //0   c|x * -> 0
+                        else if (_token.Value == "0" &&
+                                 !_ahead.IsNull() && (_ahead.IsVariable() || _ahead.IsNumber()) &&
+                                 !_ahead2.IsNull() && _ahead2.Value == "*")
+                        {
+                            results.Add(_token);
+                            i += 2;
+                        }
+                        else
+                        {
+                            results.Add(_token);
+                        }
+                    }
+
+                    if (!tokens.SequenceEqual(results))
+                    {
+                        tokens = results;
+                        continue;
+                    }
+
+                    return results;
+                }
+            }
+
+            public List<Token> simplify(List<Token> tokens)
+            {
+                tokens = expand(tokens);
+                Log($"Post Simplify Expand : {tokens.ToArray().Print()}");
+                Token _null = GenerateNull();
+
+                while (true)
+                {
+                    List<Token> results = new List<Token>(tokens.Count);
+
+                    for (int i = 0; i < tokens.Count; i++)
+                    {
+                        _prev5 = (i > 4) ? _prev4 : _null;
+                        _prev4 = (i > 3) ? _prev3 : _null;
+                        _prev3 = (i > 2) ? _prev2 : _null;
+                        _prev2 = (i > 1) ? _prev : _null;
+                        _prev = (i > 0) ? _token : _null;
+                        _token = tokens[i];
+                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+
+                        //t     a   a2
+                        //sqrt  2   ^ -> null
+                        if (_token.Value == "sqrt" && !_ahead.IsNull() && _ahead.Value == "2" && !_ahead2.IsNull() && _ahead2.Value == "^")
+                        {
+                            i += 2;
+                            Log("Sqrt Simplification");
+                        }
+                        //t a a2
+                        //2 ^ sqrt -> abs
+                        else if (!_ahead.IsNull() && !_ahead2.IsNull() && _token.Value == "2" && _ahead.Value == "^" && _ahead2.Value == "sqrt")
+                        {
+                            i += 2;
+                            results.Add(new Token {Arguments = 1, Type = Type.Function, Value = "abs"});
+                            Log("Sqrt -> abs Simplification");
+                        }
+
+                        //p5    p4  p3   p2   p     t   a   a2      a3     a4   a5
+                        //c     x   c|x   ^   *     c   x   c|x     ^      *    (+|-) ->
+                        //NC x pow ^ *
+                        //NC p5 \pm t
+                        //p3 and a2 must be the same constant or variable (Powers must be constant) or a5 must be *
+                        //p4 and a  must be the same variable
+                        else if (!_prev5.IsNull() && !_prev4.IsNull() && !_prev3.IsNull() && !_prev2.IsNull() &&
+                                 !_prev.IsNull() &&
+                                 !_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() &&
+                                 _prev5.IsNumber() && _prev4.IsVariable() &&
+                                 (_prev3.IsVariable() || _prev3.IsNumber()) &&
+                                 _prev2.Value == "^" && _prev.Value == "*" &&
+                                 _token.IsNumber() && _ahead.IsVariable() &&
+                                 (_ahead2.IsVariable() || _ahead2.IsNumber()) &&
+                                 _ahead3.Value == "^" && _ahead4.Value == "*" &&
+                                 (_ahead5.Value == "+" || _ahead5.Value == "-" || _ahead5.Value == "*") &&
+                                 (_prev3.Value == _ahead2.Value || _ahead5.Value == "*") &&
+                                 (_prev4.Value == _ahead.Value)
+                        )
+                        {
+                            results.Pop(5);
+                            i += 5;
+
+                            Log($"Ahead 5: {_ahead5.Value}");
+
+                            double coefficient = 0;
+                            if (_ahead5.Value == "+")
+                            {
+                                coefficient = double.Parse(_prev5.Value) + double.Parse(_token.Value);
+                            }
+                            else if (_ahead5.Value == "-")
+                            {
+                                coefficient = double.Parse(_prev5.Value) - double.Parse(_token.Value);
+                            }
+                            else if (_ahead5.Value == "*")
+                            {
+                                coefficient = double.Parse(_prev5.Value) * double.Parse(_token.Value);
+                            }
+
+
+                            results.Add(new Token { Arguments = 0, Type = Type.Number, Value = coefficient.ToString() });
+                            results.Add(_ahead);
+
+                            if (_ahead5.Value == "*")
+                            {
+                                if (_ahead2.IsVariable() || _prev3.IsVariable())
+                                {
+                                    results.Add(_ahead2);
+                                    results.Add(_prev3);
+                                    results.Add(new Token {Arguments = 2, Type = Type.Operator, Value = "+"});
+                                }
+                                else
+                                {
+                                    double power = double.Parse(_ahead2.Value) + double.Parse(_prev3.Value);
+                                    results.Add(new Token {Arguments = 0, Type = Type.Number, Value = power.ToString()});
+                                }
+                            }
+                            else
+                            {
+                                results.Add(_ahead2);
+                            }
+
+                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "^" });
+                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "*" });
+                        }
+                        else
+                        {
+                            results.Add(_token);
+                        }
+
+
+                        //p5    p4  p3  p2  p   t   a  a2  a3  a4  a5 
+                        //3     x   2   ^   *   3   x   2   ^   *   -
+                    }
+
+                    if (!results.SequenceEqual(tokens))
+                    {
+                        tokens = results;
+                        continue;
+                    }
+
+                    return compress(results);
+                }
             }
 
             private void Log(string message)

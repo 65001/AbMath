@@ -167,5 +167,17 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void Power()
+        {
+            RPN rpn = new RPN("2x(3x^2)");
+            rpn.Compute();
+
+            if ("6 x 3 ^ *" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

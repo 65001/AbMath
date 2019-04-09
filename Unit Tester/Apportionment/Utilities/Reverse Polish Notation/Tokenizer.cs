@@ -207,7 +207,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("x^2");
             test.Compute();
-            if ("x 2 ^" != test.Polish.Print() && "1 x 2 ^ *" != test.Polish.Print())
+            if ("x 2 ^" != test.Polish.Print() && "1 x 2 ^ *" != test.Polish.Print() && "1 x * 2 ^" != test.Polish.Print())
             {
                 Assert.Fail();
             }

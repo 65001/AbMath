@@ -264,7 +264,8 @@ namespace AbMath.Calculator
 
                 PostSimplify PS = new PostSimplify(_dataStore);
                 PS.Logger += Logger;
-                Write($"Alt RPN : {PS.simplify(_output.ToList()).ToArray().Print()}");
+                Token[] complex = PS.simplify(_output.ToList()).ToArray();
+                Write($"Complex RPN : {complex.Print()}");
 
                 SI.Stop();
 
@@ -287,16 +288,16 @@ namespace AbMath.Calculator
 
                 if (_dataStore.MarkdownTables)
                 {
-                    Write($"Reverse Polish Notation:\n``{_output.Print()}``");
+                    Write($"Raw Reverse Polish Notation:\n``{_output.Print()}``");
                 }
                 else
                 {
-                    Write($"Reverse Polish Notation:\n{_output.Print()}");
+                    Write($"Raw Reverse Polish Notation:\n{_output.Print()}");
                 }
 
                 Write("");
 
-                return PS.simplify(_output.ToList()).ToArray();
+                return complex;
             }
 
             void Implicit()

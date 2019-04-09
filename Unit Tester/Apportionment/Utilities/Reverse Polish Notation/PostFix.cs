@@ -309,6 +309,16 @@ namespace AbMath.Tests
             Assert.AreEqual(0, math.Compute());
         }
 
+        [Test]
+        public void SqrtReduction()
+        {
+            test.SetEquation("sqrt(-1)^2");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(-1, math.Compute());
+        }
+
         public void Write(object sender,string Event)
         {
             Console.WriteLine(Event);
