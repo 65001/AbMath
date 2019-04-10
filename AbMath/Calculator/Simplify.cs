@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using CLI;
 
 namespace AbMath.Calculator
@@ -22,6 +23,7 @@ namespace AbMath.Calculator
             private Token _ahead3;
             private Token _ahead4;
             private Token _ahead5;
+            private Token _null => GenerateNull();
 
             public event EventHandler<string> Logger;
 
@@ -70,17 +72,7 @@ namespace AbMath.Calculator
 
                     for (int i = 0; i < tokens.Count; i++)
                     {
-                        _prev5 = (i > 4) ? _prev4 : _null;
-                        _prev4 = (i > 3) ? _prev3 : _null;
-                        _prev3 = (i > 2) ? _prev2 : _null;
-                        _prev2 = (i > 1) ? _prev : _null;
-                        _prev = (i > 0) ? _token : _null;
-                        _token = tokens[i];
-                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
-                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+                        GenerateState(ref tokens, i);
 
                         //p_5 must be a positive addition operator
                         //a_5 must be an addition or subtraction operator or be null
@@ -155,14 +147,9 @@ namespace AbMath.Calculator
             {
                 List<Token> results = new List<Token>(tokens.Count);
 
-                Token _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
-                    _prev = (i > 0) ? _token : _null;
-                    _token = tokens[i];
-                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-
+                    GenerateState(ref tokens, i);
                     // p t a a_2
                     // c x ^ p
                     if (_token.IsVariable())
@@ -212,14 +199,10 @@ namespace AbMath.Calculator
             public List<Token> compress(List<Token> tokens)
             {
                 List<Token> results = new List<Token>(tokens.Count);
-                Token _null = GenerateNull();
 
                 for (int i = 0; i < tokens.Count; i++)
                 {
-                    _token = tokens[i];
-                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                    _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                    GenerateState(ref tokens, i);
 
                     //t a_1 a_2 a_3
                     //1 x   ^   1 -> x
@@ -260,22 +243,12 @@ namespace AbMath.Calculator
                 while (true)
                 {
                     List<Token> results = new List<Token>(tokens.Count);
-                    Token _null = GenerateNull();
                     //Log($"Swap Input: {tokens.ToArray().Print()}");
 
                     for (int i = 0; i < tokens.Count; i++)
                     {
-                        _prev5 = (i > 4) ? _prev4 : _null;
-                        _prev4 = (i > 3) ? _prev3 : _null;
-                        _prev3 = (i > 2) ? _prev2 : _null;
-                        _prev2 = (i > 1) ? _prev : _null;
-                        _prev = (i > 0) ? _token : _null;
-                        _token = tokens[i];
-                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
-                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+                        GenerateState(ref tokens, i);
+
                         //p_5 must be a [null|+,-,)]
                         //p_4   p_3 p_2 p_1 t   a_1 a_2 a_3 a_4
                         //2     x   ^   1   +   3   x   ^   1 -> (p_4 + a_1)p_3 p_2 p _1
@@ -353,6 +326,22 @@ namespace AbMath.Calculator
                 }
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void GenerateState(ref List<Token> tokens, int i)
+            {
+                _prev5 = (i > 4) ? _prev4 : _null;
+                _prev4 = (i > 3) ? _prev3 : _null;
+                _prev3 = (i > 2) ? _prev2 : _null;
+                _prev2 = (i > 1) ? _prev : _null;
+                _prev = (i > 0) ? _token : _null;
+                _token = tokens[i];
+                _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+                _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+            }
+
             private static Token GenerateNull() => new Token { Type = Type.Null };
 
             private void Log(string message)
@@ -376,6 +365,7 @@ namespace AbMath.Calculator
             private Token _ahead3;
             private Token _ahead4;
             private Token _ahead5;
+            private Token _null => GenerateNull();
 
             public event EventHandler<string> Logger;
 
@@ -390,22 +380,10 @@ namespace AbMath.Calculator
 
                 //p t
                 //c x
-                Token _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
-                    _prev5 = (i > 4) ? _prev4 : _null;
-                    _prev4 = (i > 3) ? _prev3 : _null;
-                    _prev3 = (i > 2) ? _prev2 : _null;
-                    _prev2 = (i > 1) ? _prev : _null;
-                    _prev = (i > 0) ? _token : _null;
-                    _token = tokens[i];
-                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                    _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
-                    _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                    _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
-
                     
+                    GenerateState(ref tokens, i);
                     //p t a a2   a3
                     //2 x 2 ^    * 
                     //2 x * c|v  op
@@ -454,20 +432,9 @@ namespace AbMath.Calculator
                 {
                     List<Token> results = new List<Token>(tokens.Count);
 
-                    Token _null = GenerateNull();
                     for (int i = 0; i < tokens.Count; i++)
                     {
-                        _prev5 = (i > 4) ? _prev4 : _null;
-                        _prev4 = (i > 3) ? _prev3 : _null;
-                        _prev3 = (i > 2) ? _prev2 : _null;
-                        _prev2 = (i > 1) ? _prev : _null;
-                        _prev = (i > 0) ? _token : _null;
-                        _token = tokens[i];
-                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
-                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+                        GenerateState(ref tokens, i);
 
                         //1 ^ -> ""
                         if (_token.Value == "^" && !_prev.IsNull() && _prev.Value == "1")
@@ -526,7 +493,8 @@ namespace AbMath.Calculator
             {
                 tokens = expand(tokens);
                 Log($"Post Simplify Expand : {tokens.ToArray().Print()}");
-                Token _null = GenerateNull();
+
+                int pass = 0;
 
                 while (true)
                 {
@@ -534,18 +502,7 @@ namespace AbMath.Calculator
 
                     for (int i = 0; i < tokens.Count; i++)
                     {
-                        _prev5 = (i > 4) ? _prev4 : _null;
-                        _prev4 = (i > 3) ? _prev3 : _null;
-                        _prev3 = (i > 2) ? _prev2 : _null;
-                        _prev2 = (i > 1) ? _prev : _null;
-                        _prev = (i > 0) ? _token : _null;
-                        _token = tokens[i];
-                        _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                        _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
-                        _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
-                        _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
-                        _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
-
+                        GenerateState(ref tokens, i);
                         //t     a   a2
                         //sqrt  2   ^ -> null
                         if (_token.Value == "sqrt" && !_ahead.IsNull() && _ahead.Value == "2" && !_ahead2.IsNull() && _ahead2.Value == "^")
@@ -563,14 +520,13 @@ namespace AbMath.Calculator
                         }
 
                         //p5    p4  p3   p2   p     t   a   a2      a3     a4   a5
-                        //c     x   c|x   ^   *     c   x   c|x     ^      *    (+|-) ->
+                        //c     x   c|x   ^   *     c   x   c|x     ^      *    (+|-|*) ->
                         //NC x pow ^ *
                         //NC p5 \pm t
                         //p3 and a2 must be the same constant or variable (Powers must be constant) or a5 must be *
                         //p4 and a  must be the same variable
-                        else if (!_prev5.IsNull() && !_prev4.IsNull() && !_prev3.IsNull() && !_prev2.IsNull() &&
-                                 !_prev.IsNull() &&
-                                 !_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() &&
+                        else if (!_prev5.IsNull() && !_prev4.IsNull() && !_prev3.IsNull() && !_prev2.IsNull() && !_prev.IsNull() &&
+                                 !_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() && !_ahead5.IsNull() &&
                                  _prev5.IsNumber() && _prev4.IsVariable() &&
                                  (_prev3.IsVariable() || _prev3.IsNumber()) &&
                                  _prev2.Value == "^" && _prev.Value == "*" &&
@@ -627,24 +583,68 @@ namespace AbMath.Calculator
                             results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "^" });
                             results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "*" });
                         }
+                        //c  x  c  ^  *  0  * -> 0
+                        //p  t  a1 a2 a3 a4 a5
+                        //a1 >= 0
+                        else if (!_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() &&
+                                 !_ahead4.IsNull() && !_prev.IsNull() && 
+                                 _prev.IsNumber() && _token.IsVariable() && 
+                                  ( _ahead.IsNumber() && double.Parse(_ahead.Value) >= 0) &&
+                                  _ahead2.Value == "^" && _ahead3.Value == "*" &&
+                                 _ahead4.Value == "0" && _ahead5.Value == "*"
+                                 )
+                        {
+                            results.Pop(1);
+                            i += 5;
+                            results.Add(_ahead4);
+                        }
                         else
                         {
                             results.Add(_token);
                         }
-
-
-                        //p5    p4  p3  p2  p   t   a  a2  a3  a4  a5 
-                        //3     x   2   ^   *   3   x   2   ^   *   -
                     }
 
                     if (!results.SequenceEqual(tokens))
                     {
                         tokens = results;
+                        pass++;
+                        Log($"Simplify Pass {pass}: {tokens.ToArray().Print()}");
                         continue;
                     }
 
                     return compress(results);
                 }
+            }
+
+            public List<Token> swap(List<Token> tokens)
+            {
+                List<Token> results = new List<Token>(tokens.Count);
+                //2 x 1 ^ * 3 x 2 ^ * (+|-)
+                //5 4 3 2 1 t 1 2 3 4   5
+
+            return results;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void GenerateState(ref List<Token> tokens, int i)
+            {
+                _prev5 = (i > 4) ? _prev4 : _null;
+                _prev4 = (i > 3) ? _prev3 : _null;
+                _prev3 = (i > 2) ? _prev2 : _null;
+                _prev2 = (i > 1) ? _prev : _null;
+                _prev = (i > 0) ? _token : _null;
+                _token = tokens[i];
+                _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+                _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
+                _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
+                _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+            }
+
+            public bool StateIsNotNull(int i,int prev,int ahead,int max)
+            {
+                prev = prev - 1;
+                return (i > prev) && (i + ahead) < max; 
             }
 
             private void Log(string message)
