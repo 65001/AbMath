@@ -264,7 +264,8 @@ namespace AbMath.Calculator
 
                 PostSimplify PS = new PostSimplify(_dataStore);
                 PS.Logger += Logger;
-                Token[] complex = PS.simplify(_output.ToList()).ToArray();
+                Token[] complex = PS.Apply(_output.ToList()).ToArray();
+
                 Write($"Complex RPN : {complex.Print()}");
 
                 SI.Stop();

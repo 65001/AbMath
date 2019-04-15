@@ -165,7 +165,7 @@ namespace AbMath.Tests
             }
         }
 
-        
+        [Test]
         public void Power()
         {
             RPN rpn = new RPN("2x(3x^2)");
@@ -181,7 +181,7 @@ namespace AbMath.Tests
     [TestFixture]
     public class PostSimplification
     {
-        
+        [Test]
         public void Swap()
         {
             RPN rpn = new RPN("(x^4) + (x^6) + (x^2) + (x^5) + x + (x^3)");
