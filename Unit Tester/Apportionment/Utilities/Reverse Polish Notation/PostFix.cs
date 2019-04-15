@@ -319,6 +319,15 @@ namespace AbMath.Tests
             Assert.AreEqual(-1, math.Compute());
         }
 
+        public void VardiacImplicitMultiplication()
+        {
+            test.SetEquation("3sum(1,4,5)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(30, math.Compute());
+        }
+
         public void Write(object sender,string Event)
         {
             Console.WriteLine(Event);

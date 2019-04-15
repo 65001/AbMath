@@ -63,23 +63,23 @@ namespace AbMath.Calculator
                         _variables.Push(token);
                         break;
                     case RPN.Type.Operator:
-                        {
-                            RPN.Operator Operator = _dataStore.Operators[token.Value];
-                            double[] arguments = GetArguments(token.Arguments);
-                            double ans = Operator.Compute(arguments);
-                            _stack.Push(ans);
-                        }
+                    {
+                        RPN.Operator Operator = _dataStore.Operators[token.Value];
+                        double[] arguments = GetArguments(token.Arguments);
+                        double ans = Operator.Compute(arguments);
+                        _stack.Push(ans);
                         break;
+                    }
                     case RPN.Type.Function:
-                        {
-                            //Looks up the function in the Dict
-                            RPN.Function function = _dataStore.Functions[token.Value];
+                    {
+                        //Looks up the function in the Dict
+                        RPN.Function function = _dataStore.Functions[token.Value];
 
-                            double[] arguments = GetArguments(token.Arguments);
-                            double ans = function.Compute(arguments);
-                            _stack.Push(ans);
-                        }
+                        double[] arguments = GetArguments(token.Arguments);
+                        double ans = function.Compute(arguments);
+                        _stack.Push(ans);
                         break;
+                    }
                     default:
                         throw new NotImplementedException(token + " " + token.ToString().Length);
                 }
@@ -156,6 +156,24 @@ namespace AbMath.Calculator
                 arguments[i - 1] = _stack.Pop();
             }
             return arguments;
+        }
+
+
+        private int SeekNextFunction(int start)
+        {
+            for (int i = start; i < _input.Length; i++)
+            {
+                if (_input[i].IsFunction())
+                {
+                    RPN.Function func = _dataStore.Functions[_input[i].Value];
+                    if (func.MaxArguments != func.MinArguments)
+                    {
+                        return i - start;
+                    }
+                }
+            }
+
+            return -1;
         }
 
         public void Reset()

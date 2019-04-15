@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AbMath.Calculator;
 using NUnit.Framework;
 
@@ -168,13 +165,29 @@ namespace AbMath.Tests
             }
         }
 
-        [Test]
+        
         public void Power()
         {
             RPN rpn = new RPN("2x(3x^2)");
             rpn.Compute();
 
             if ("6 x 3 ^ *" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+    }
+
+    [TestFixture]
+    public class PostSimplification
+    {
+        
+        public void Swap()
+        {
+            RPN rpn = new RPN("(x^4) + (x^6) + (x^2) + (x^5) + x + (x^3)");
+            rpn.Compute();
+
+            if ("x 6 ^ x 5 ^ + x 4 ^ + x 3 ^ + x 2 ^ + x +" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }

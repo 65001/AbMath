@@ -16,7 +16,7 @@ namespace AbMath.Calculator
     /// </summary>
     public partial class RPN
     {
-        public enum Type {LParen,RParen,Number,Variable,Function,Operator,Store, Null };
+        public enum Type {LParen,RParen,Number,Variable,Function,Operator,Store, Null,Arity };
         public delegate double Run(params double[] arguments);
         public delegate void Store(ref DataStore dataStore,params string[] arguments);
 
