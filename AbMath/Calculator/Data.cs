@@ -558,7 +558,7 @@ namespace AbMath.Calculator
                 {
                     Arguments = 0,
                     MinArguments = 0,
-                    MaxArguments = 1,
+                    MaxArguments = 0,
                     Compute = DoFunctions.Pi
                 });
 
@@ -566,7 +566,7 @@ namespace AbMath.Calculator
                 {
                     Arguments = 0,
                     MinArguments = 0,
-                    MaxArguments = 1,
+                    MaxArguments = 0,
                     Compute = DoFunctions.EContstant
                 });
 #endregion

@@ -434,11 +434,35 @@ namespace AbMath.Calculator
                     else
                     {
                         var output = _operator.Pop();
+
+                        if (output.IsFunction() && _arity.Count > 0)
+                        {
+                            output.Arguments = _arity.Pop();
+                        }
+
                         _output.Enqueue(output);
                     }
                 }
 
-                //This in effect suppresses any Arity Exceptions!!
+                //This assigns arity values to the output stream
+                for (int i = 0; i < _output.Count; i++)
+                {
+                    Token token = _output.Dequeue();
+
+                    if (token.IsFunction() && _arity.Count > 0)
+                    {
+                        Function func = _dataStore.Functions[token.Value];
+                        //Constants cannot have an arity assigned to them.
+                        if (func.MaxArguments != 0)
+                        {
+                            token.Arguments = _arity.Pop();
+                        }
+                    }
+
+                    _output.Enqueue( token );
+                }
+
+                //This in effect suppresses any Arity Exceptions!!     
                 while ( _arity.Count > 0)
                 {
                     for (int i = 0; i < (_output.Count - 1); i++)
@@ -459,6 +483,7 @@ namespace AbMath.Calculator
 
                     _output.Enqueue(foo);
                 }
+                
             }
 
             void Write(string message)

@@ -148,7 +148,7 @@ namespace AbMath.Calculator
             
            if (_stack.Count < argCount )
             {
-                throw new InvalidOperationException($"Syntax Error! Asked for {argCount} but only had {_stack.Count} in Stack");
+                throw new InvalidOperationException($"Syntax Error! Asked for {argCount} but only had {_stack.Count} in Stack.");
             }
             
             for (int i = argCount; i > 0; i--)
