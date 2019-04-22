@@ -198,7 +198,7 @@ namespace CLI
             return sb.ToString();
         }
 
-        private string GenerateNextRow()
+        public string GenerateNextRow()
         {
             return GenerateRow(data.Count - 1);
         }
