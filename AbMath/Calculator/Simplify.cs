@@ -53,9 +53,6 @@ namespace AbMath.Calculator
                     table.Add(new string[] {"Swapped", swapped.ToArray().Print()});
                     table.Add(new string[] {"Simplified", simplified.ToArray().Print()});
                     table.Add(new string[] {"Compressed", compressed.ToArray().Print()});
-                    table.GenerateHeaders();
-                    table.GenerateBody();
-                    table.GenerateFooter();
 
                     Log(table.ToString());
                 }
@@ -394,9 +391,6 @@ namespace AbMath.Calculator
                     table.Add(new string[] { "Swapped", swapped.ToArray().Print() });
                     table.Add(new string[] { "Simplified", simplified.ToArray().Print() });
                     table.Add(new string[] { "Compressed", compressed.ToArray().Print() });
-                    table.GenerateHeaders();
-                    table.GenerateBody();
-                    table.GenerateFooter();
 
                     Log(table.ToString());
                 }
@@ -504,7 +498,7 @@ namespace AbMath.Calculator
                     }
                 }
 
-                Log($"{data.ToArray().Print()}");
+                //Log($"{data.ToArray().Print()}");
                 return data;
             }
 
@@ -715,6 +709,7 @@ namespace AbMath.Calculator
                     {
                         GenerateState(ref tokens, i);
 
+
                         //2 x 1 ^ *  3  x 2 ^ *   (+)
                         //5 4 3 2 1  t  1 2 3 4    5
                         if (!_prev5.IsNull() && !_prev4.IsNull() && !_prev3.IsNull() && !_prev2.IsNull() && !_prev.IsNull() && 
@@ -777,10 +772,6 @@ namespace AbMath.Calculator
 
                             results.Add(_ahead6);
                         }
-                        //5 4  3  2 1 t  1  2 3 4  5 6          
-                        //1 x  2  ^ * 1  x  4 ^ *  + + 
-                        //c x c|x ^ * c c|x c ^ *  + + ->
-
                         //p(5-1) a6 t a(1-5)
                         //1 x 2 ^ * + 1 x 4 ^ * +
                         else if (!_prev5.IsNull() && !_prev4.IsNull() && !_prev3.IsNull() && !_prev2.IsNull() &&
@@ -814,6 +805,13 @@ namespace AbMath.Calculator
                             results.Add(_ahead4);
                             results.Add(_ahead5);
                         }
+
+                        //2 + 1 x 1 ^ * +
+
+                        //5 4  3  2 1 t  1  2 3 4  5 6          
+                        //1 x  2  ^ * 1  x  4 ^ *  + + 
+                        //c x c|x ^ * c c|x c ^ *  + + ->
+
                         else
                         {
                             results.Add(_token);

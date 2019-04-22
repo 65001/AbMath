@@ -43,7 +43,6 @@ namespace AbMath.Calculator
                     _tables.Add(new Schema {Column = "Token", Width = 15});
                     _tables.Add(new Schema {Column = "# Tokens", Width = 11});
                     _tables.Add(new Schema {Column = "Action", Width = 16});
-                    Write(_tables.GenerateHeaders());
                 }
 
                 _token = string.Empty;
@@ -172,13 +171,12 @@ namespace AbMath.Calculator
                     {
                         _tables.Add(new string[]
                             {i.ToString(), _character, _token, _tokens.Count.ToString(), _rule ?? string.Empty});
-                        Write(_tables.GenerateNextRow());
                     }
                 }
 
                 if (_dataStore.DebugMode)
                 {
-                    Write(_tables.GenerateFooter());
+                    Write(_tables.ToString());
                 }
 
                 if (_dataStore.DebugMode && _tables.SuggestedRedraw)

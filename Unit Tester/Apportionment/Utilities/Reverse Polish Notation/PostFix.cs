@@ -267,6 +267,16 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void VardiacStressTest()
+        {
+            test.SetEquation("sum( sqrt(16), min(0,1), max(1,2,3), avg(10,5,7,9) )");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(14.75, math.Compute());
+        }
+
+        [Test]
         public void Max()
         {
             test.SetEquation("max(0, 1)");

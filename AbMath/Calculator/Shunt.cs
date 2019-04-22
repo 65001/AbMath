@@ -54,8 +54,6 @@ namespace AbMath.Calculator
                     tables.Add(new Schema {Column = "Type", Width = 12});
                     tables.Add(new Schema {Column = "RPN", Width = 20});
                     tables.Add(new Schema {Column = "Action", Width = 30});
-
-                    Write(tables.GenerateHeaders());
                 }
 
                 string action = string.Empty;
@@ -185,15 +183,13 @@ namespace AbMath.Calculator
                             _output.Print(), action
                         };
                         tables.Add(print);
-
-                        Write(tables.GenerateNextRow());
                     }
                 }
                 Dump();
 
                 if (_dataStore.DebugMode)
                 {
-                    Write(tables.GenerateFooter());
+                    Write(tables.ToString());
                 }
 
                 if (_dataStore.DebugMode && tables.SuggestedRedraw)
@@ -213,7 +209,6 @@ namespace AbMath.Calculator
                     arityTables.Add(new Schema {Column = "#", Width = 3});
                     arityTables.Add(new Schema {Column = "Token", Width = 10});
                     arityTables.Add(new Schema {Column = "Arity", Width = 5});
-                    Write(arityTables.GenerateHeaders());
                 }
 
                 //TODO: Eliminate
@@ -231,7 +226,6 @@ namespace AbMath.Calculator
                     {
                         string[] message = {i.ToString(), token.Value, token.Arguments.ToString()};
                         arityTables.Add(message);
-                        Write(arityTables.GenerateNextRow());
                     }
 
                     _output.Enqueue(token);
@@ -239,7 +233,7 @@ namespace AbMath.Calculator
 
                 if (_dataStore.DebugMode)
                 {
-                    Write(arityTables.GenerateFooter());
+                    Write(arityTables.ToString());
 
                     if (arityTables.SuggestedRedraw)
                     {

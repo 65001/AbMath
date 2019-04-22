@@ -135,6 +135,13 @@ namespace CLI
                 {
                     throw new ArgumentNullException($"null at {i}. Table {config.Title}");
                 }
+
+                if (row[i].ToString().Length > schemas[i].Width)
+                {
+                    Schema schema = schemas[i];
+                    schema.Width = row[i].ToString().Length;
+                    schemas[i] = schema;
+                }
             }
             data.Add(row);
             return this;
@@ -149,8 +156,8 @@ namespace CLI
             StringBuilder md = (config.Format == Format.MarkDown) ? new StringBuilder() : null;
 
             int sum = TableWidth();
-            int floor = (int)Math.Floor((decimal)sum / 2);
-            int ceiling = (int)Math.Ceiling((decimal)sum / 2);
+            int floor = (int)Math.Floor((decimal)(sum + config.Title.Length)/ 2);
+            int ceiling = (int)Math.Ceiling((decimal)(sum - config.Title.Length) / 2);
             int Length = config.Title.Length;
 
 
@@ -191,7 +198,7 @@ namespace CLI
             return sb.ToString();
         }
 
-        public string GenerateNextRow()
+        private string GenerateNextRow()
         {
             return GenerateRow(data.Count - 1);
         }

@@ -47,6 +47,8 @@ namespace AbMath.Calculator
 
             public static double Factorial(params double[] arguments)
             {
+                //If arguments[0] is an decimal then 
+                //approximate using the int_0^1 of \ln(\frac{1}{x})^arg[0] dx with 10000 sub intervals
                 double max = arguments[0];
                 if (max < 0)
                 {
