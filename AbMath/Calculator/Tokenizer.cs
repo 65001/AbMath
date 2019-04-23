@@ -40,6 +40,7 @@ namespace AbMath.Calculator
                     _tables = new Tables<string>(new Config {Title = "Tokenizer", Format = _dataStore.DefaultFormat});
                     _tables.Add(new Schema {Column = "#", Width = 3});
                     _tables.Add(new Schema {Column = "Character", Width = 10});
+                    _tables.Add(new Schema {Column = "Code", Width = 5});
                     _tables.Add(new Schema {Column = "Token", Width = 15});
                     _tables.Add(new Schema {Column = "# Tokens", Width = 11});
                     _tables.Add(new Schema {Column = "Action", Width = 16});
@@ -170,7 +171,7 @@ namespace AbMath.Calculator
                     if (_dataStore.DebugMode)
                     {
                         _tables.Add(new string[]
-                            {i.ToString(), _character, _token, _tokens.Count.ToString(), _rule ?? string.Empty});
+                            {i.ToString(), _character, ((int)_character[0]).ToString() , _token, _tokens.Count.ToString(), _rule ?? string.Empty});
                     }
                 }
 

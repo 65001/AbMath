@@ -629,6 +629,14 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     MinArguments = 1
                 });
+
+                AddFunction("gamma", new Function()
+                {
+                    Arguments = 1,
+                    Compute = DoFunctions.Gamma,
+                    MaxArguments = 1,
+                    MinArguments = 1
+                });
             }
             private void DefaultFormats()
             {

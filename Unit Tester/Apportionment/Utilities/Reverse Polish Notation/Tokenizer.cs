@@ -282,7 +282,7 @@ namespace AbMath.Tests
 
             test.SetEquation("2x + 2");
             test.Compute();
-            if ("2 x * 2 +" != test.Polish.Print())
+            if ("2 x * 2 +" != test.Polish.Print() && "2 2 x * +" != test.Polish.Print())
             {
                 Assert.Fail();
             }

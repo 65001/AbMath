@@ -109,5 +109,20 @@ namespace AbMath.Calculator
         {
             return token.Value == ",";
         }
+
+        public static bool IsAddition(this RPN.Token token)
+        {
+            return token.Value == "+";
+        }
+
+        public static bool IsSubtraction(this RPN.Token token)
+        {
+            return token.Value == "-";
+        }
+
+        public static bool IsExponent(this RPN.Token token)
+        {
+            return token.Value == "^";
+        }
     }
 }

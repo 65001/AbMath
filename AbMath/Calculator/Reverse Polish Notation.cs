@@ -45,6 +45,7 @@ namespace AbMath.Calculator
             public string Value;
             public int Arguments;
             public Type Type;
+
             public override string ToString()
             {
                 return Value;

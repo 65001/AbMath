@@ -8,6 +8,20 @@ namespace AbMath.Calculator
         {
             private static Random _rand;
 
+            public static double Gamma(params double[] arguments)
+            {
+                //If args[0] is an integer use factorials
+                if ((int) arguments[0] == arguments[0])
+                {
+                    return DoOperators.Factorial(arguments[0] - 1);
+                }
+
+                //Gergő Nemes Approximation
+                //https://en.wikipedia.org/wiki/Stirling%27s_approximation
+                double z = arguments[0];
+                return Math.Sqrt((2 * Math.PI) / z) * Math.Pow( (1 / Math.E) * (z + 1 / (12 * z - 1 / (10 * z))) , z);
+            }
+
             public static double Sin(params double[] arguments)
             {
                 // -1 <= sin(x) <= 1

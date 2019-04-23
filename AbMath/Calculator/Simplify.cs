@@ -682,6 +682,8 @@ namespace AbMath.Calculator
                             i += 5;
                             results.Add(_ahead4);
                         }
+                        //6 5 4 3 2 1 t 1 2 4 5 6
+                        //1 x 1 ^ * + 1 x 1 ^ * +
                         else
                         {
                             results.Add(_token);
@@ -804,6 +806,29 @@ namespace AbMath.Calculator
                             results.Add(_ahead3);
                             results.Add(_ahead4);
                             results.Add(_ahead5);
+                        }
+                        //5 4 3 2 1 t a
+                        //1 x 1 ^ * 2 + 
+                        //t p(1-5) a
+                        else if (_prev5.IsNumber() && _prev4.IsVariable() && _prev3.IsNumber() && 
+                                 (!_prev2.IsNull() && _prev2.Value == "^") &&
+                                 (!_prev.IsNull() && _prev.Value == "*") &&
+                                 (!_ahead.IsNull() && _ahead.Value == "+") &&
+                                 _token.IsNumber()
+                                )
+                        {
+                            results.Pop(5);
+                            i += 1;
+
+                            results.Add(_token);
+                            results.Add(_prev5);
+                            results.Add(_prev4);
+                            results.Add(_prev3);
+                            results.Add(_prev2);
+                            results.Add(_prev);
+
+                            results.Add(_ahead);
+
                         }
 
                         //2 + 1 x 1 ^ * +
