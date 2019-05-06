@@ -25,6 +25,11 @@ namespace AbMath.Calculator
             public static double Sin(params double[] arguments)
             {
                 // -1 <= sin(x) <= 1
+                if (arguments[0] == Math.PI || arguments[0] == -Math.PI)
+                {
+                    return 0;
+                }
+
                 return Math.Sin(arguments[0]);
             }
 

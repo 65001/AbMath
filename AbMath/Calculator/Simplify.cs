@@ -48,11 +48,11 @@ namespace AbMath.Calculator
 
                     table.Add(new Schema() {Column = "Type", Width = 12});
                     table.Add(new Schema() {Column = "Tokens", Width = 100});
-                    table.Add(new string[] {"Original", tokens.ToArray().Print()});
-                    table.Add(new string[] {"Expanded", expanded.ToArray().Print()});
-                    table.Add(new string[] {"Swapped", swapped.ToArray().Print()});
-                    table.Add(new string[] {"Simplified", simplified.ToArray().Print()});
-                    table.Add(new string[] {"Compressed", compressed.ToArray().Print()});
+                    table.Add(new string[] {"Original", tokens.Print()});
+                    table.Add(new string[] {"Expanded", expanded.Print()});
+                    table.Add(new string[] {"Swapped", swapped.Print()});
+                    table.Add(new string[] {"Simplified", simplified.Print()});
+                    table.Add(new string[] {"Compressed", compressed.Print()});
 
                     Log(table.ToString());
                 }
@@ -348,6 +348,7 @@ namespace AbMath.Calculator
         {
             private DataStore _data;
 
+            private Token _prev6;
             private Token _prev5;
             private Token _prev4;
             private Token _prev3;
@@ -386,11 +387,11 @@ namespace AbMath.Calculator
                     table.Add(new Schema() { Column = "Type", Width = 12 });
                     table.Add(new Schema() { Column = "Tokens", Width = 100 });
                     
-                    table.Add(new string[] { "Original", tokens.ToArray().Print() });
-                    table.Add(new string[] { "Expanded", expanded.ToArray().Print() });
-                    table.Add(new string[] { "Swapped", swapped.ToArray().Print() });
-                    table.Add(new string[] { "Simplified", simplified.ToArray().Print() });
-                    table.Add(new string[] { "Compressed", compressed.ToArray().Print() });
+                    table.Add(new string[] { "Original", tokens.Print() });
+                    table.Add(new string[] { "Expanded", expanded.Print() });
+                    table.Add(new string[] { "Swapped", swapped.Print() });
+                    table.Add(new string[] { "Simplified", simplified.Print() });
+                    table.Add(new string[] { "Compressed", compressed.Print() });
 
                     Log(table.ToString());
                 }
@@ -497,8 +498,6 @@ namespace AbMath.Calculator
                         data.Add(_token);
                     }
                 }
-
-                //Log($"{data.ToArray().Print()}");
                 return data;
             }
 
@@ -682,8 +681,9 @@ namespace AbMath.Calculator
                             i += 5;
                             results.Add(_ahead4);
                         }
-                        //6 5 4 3 2 1 t 1 2 4 5 6
-                        //1 x 1 ^ * + 1 x 1 ^ * +
+                        //6 5 4 3 2 1 t 1 2 3 4 5 6
+                        //c 1 x 1 ^ * + 1 x 1 ^ * +
+
                         else
                         {
                             results.Add(_token);
@@ -694,7 +694,7 @@ namespace AbMath.Calculator
                     {
                         tokens = results;
                         pass++;
-                        Log($"Simplify Pass {pass}: {tokens.ToArray().Print()}");
+                        Log($"Simplify Pass {pass}: {tokens.Print()}");
                         continue;
                     }
 
@@ -856,6 +856,7 @@ namespace AbMath.Calculator
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void GenerateState(ref List<Token> tokens, int i)
             {
+                _prev6 = (i > 5) ? _prev5 : _null;
                 _prev5 = (i > 4) ? _prev4 : _null;
                 _prev4 = (i > 3) ? _prev3 : _null;
                 _prev3 = (i > 2) ? _prev2 : _null;

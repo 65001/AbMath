@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Numerics;
 using System.Linq;
 using System.Collections.Generic;
-using CLI;
+using System.Text;
 
-namespace AbMath.Calculator
+namespace AbMath.Utilities
 {
     public partial class RPN
     {
@@ -17,96 +18,20 @@ namespace AbMath.Calculator
 
             private readonly List<string> _leftbracket;
             private readonly List<string> _rightbracket;
-            private List<TimeRecord> _time;
+            private List<string> _variables;
             private readonly Dictionary<string, string> _variableStore;
 
-            /// <summary>
-            /// A list of all the functions that are supported
-            /// by this calculator.
-            /// </summary>
             public IReadOnlyDictionary<string,Function> Functions => _functions; 
-
-            /// <summary>
-            /// A list of all operators that are supported
-            /// by this calculator.
-            /// </summary>
             public IReadOnlyDictionary<string,Operator> Operators => _operators; 
-            /// <summary>
-            /// A dictionary of expressions that the calculator
-            /// treats as equivalent. 
-            /// </summary>
             public IReadOnlyDictionary<string, string> Aliases =>  _aliases; 
-
-            /// <summary>
-            /// A dictionary of numerical constants and known
-            /// representations of them
-            /// </summary>
             public IReadOnlyDictionary<double,string> Format => _autoFormat; 
-
-            /// <summary>
-            /// A list of all strings that would
-            /// start a function or work as grouping symbols 
-            /// </summary>
             public IReadOnlyList<string> LeftBracket => _leftbracket; 
-
-            /// <summary>
-            /// A list of all strings that end function calls and
-            /// terminate grouping symbols
-            /// </summary>
             public IReadOnlyList<string> RightBracket => _rightbracket;
+            public IReadOnlyList<string> Variables => _variables; 
 
-            /// <summary>
-            /// A list of variables that the calculator
-            /// has found in an expression
-            /// </summary>
-            public IReadOnlyList<string> Variables => Polish.Where(t => t.Type == Type.Variable).Select(t => t.Value).Distinct().ToList();
-
-            public IReadOnlyList<TimeRecord> Time => _time;
-
-            /// <summary>
-            /// The equation passed to the calculator 
-            /// </summary>
             public string Equation;
-            public Token[] Polish { get; set; }
-
-            /// <summary>
-            /// Whether an expression contains variables
-            /// </summary>
-            public bool ContainsVariables => Polish.Any(t => t.Type == Type.Variable);
-
-            /// <summary>
-            /// Whether an expression contains a evaluator
-            /// such as =, > , > or a combination of those
-            /// operators.
-            /// </summary>
-            public bool ContainsEquation => 
-                Equation.Contains("=") || Equation.Contains(">") || Equation.Contains("<") ;
-
-            public long TotalMilliseconds;
-            public long TotalSteps;
-
-            #region Config
-            /// <summary>
-            /// If true, auto generated debug tables
-            /// will write data in markdown format
-            /// </summary>
-            public bool MarkdownTables;
-
-            public bool AllowMismatchedParentheses;
-
-            /// <summary>
-            /// If true, the program will write tables to the
-            /// log
-            /// </summary>
-            public bool DebugMode;
-            #endregion
-
-
-            /// <summary>
-            /// Determines the default format of CLI Tables
-            /// based on the value of MarkdownTables
-            /// </summary>
-            public Format DefaultFormat => (MarkdownTables) ? CLI.Format.MarkDown : CLI.Format.Default ;
+            public Queue<Term> Polish { get; set; }
+            public bool ContainsVariables { get; private set; }
 
             public DataStore(string equation)
             {
@@ -118,7 +43,7 @@ namespace AbMath.Calculator
 
                 _leftbracket = new List<string>();
                 _rightbracket = new List<string>();
-                _time = new List<TimeRecord>(4);
+                _variables = new List<string>();
                 _variableStore = new Dictionary<string, string>();
 
                 DefaultFunctions();
@@ -126,11 +51,6 @@ namespace AbMath.Calculator
                 DefaultAliases();
                 DefaultBrackets();
                 DefaultFormats();
-            }
-
-            public void AddTimeRecord(TimeRecord time)
-            {
-                _time.Add(time);
             }
 
             public void AddLeftBracket(string value)
@@ -148,8 +68,16 @@ namespace AbMath.Calculator
                 _aliases.Add(key, value);
             }
 
+            public void AddVariable(string token)
+            {
+                ContainsVariables = true;
+                _variables.Add(token);
+                _variables = _variables.Distinct().ToList();
+            }
+
             public void AddStore(string variable,string value)
             {
+                AddVariable(variable);
                 if (_variableStore.ContainsKey(variable))
                 {
                     _variableStore[variable] = value;
@@ -178,9 +106,9 @@ namespace AbMath.Calculator
                 return Operators.ContainsKey(value);
             }
 
-            public bool IsOperator(Token token)
+            public bool IsOperator(Term term)
             {
-                return token.Type == Type.Operator;
+                return term.Type == Type.Operator;
             }
 
             public bool IsUnary(string value)
@@ -226,7 +154,6 @@ namespace AbMath.Calculator
             private void DefaultAliases()
             {
                 AddAlias("÷", "/");
-                AddAlias("Γ","gamma");
                 AddAlias("π", "pi");
                 AddAlias("≠", "!=");
                 AddAlias("≥", ">=");
@@ -237,8 +164,6 @@ namespace AbMath.Calculator
                 AddAlias("and","&&");
                 AddAlias("or","||");
                 AddAlias("Σ","sum");
-                AddAlias("infinity","∞");
-                AddAlias("-infinity", "-∞");
             }
 
             private void DefaultBrackets()
@@ -258,7 +183,7 @@ namespace AbMath.Calculator
                 AddOperator("^", new Operator
                 {
                     Assoc = Assoc.Right,
-                    Weight = 5,
+                    Weight = 4,
                     Arguments = 2,
                     Compute = DoOperators.Power
                 });
@@ -266,7 +191,7 @@ namespace AbMath.Calculator
                 AddOperator("E", new Operator
                 {
                     Assoc = Assoc.Right,
-                    Weight = 5,
+                    Weight = 4,
                     Arguments = 2,
                     Compute = DoOperators.E
                 });
@@ -274,7 +199,7 @@ namespace AbMath.Calculator
                 AddOperator("!", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 5,
+                    Weight = 4,
                     Arguments = 1,
                     Compute = DoOperators.Factorial
                 });
@@ -282,7 +207,7 @@ namespace AbMath.Calculator
                 AddOperator("%", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 4,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Mod
                 });
@@ -290,7 +215,7 @@ namespace AbMath.Calculator
                 AddOperator("/", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 4,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Divide
                 });
@@ -298,7 +223,7 @@ namespace AbMath.Calculator
                 AddOperator("*", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 4,
+                    Weight = 3,
                     Arguments = 2,
                     Compute = DoOperators.Multiply
                 });
@@ -306,7 +231,7 @@ namespace AbMath.Calculator
                 AddOperator("+", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 3,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Add
                 });
@@ -314,7 +239,7 @@ namespace AbMath.Calculator
                 AddOperator("++", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 3,
+                    Weight = 2,
                     Arguments = 1,
                     Compute = DoOperators.AddSelf
                 });
@@ -322,7 +247,7 @@ namespace AbMath.Calculator
                 AddOperator("−", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 3,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Subtract
                 });
@@ -330,24 +255,24 @@ namespace AbMath.Calculator
                 AddOperator("-", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 3,
+                    Weight = 2,
                     Arguments = 2,
                     Compute = DoOperators.Subtract
                 });
 
-#region Evaluation
+                #region Evaluation
                 AddOperator(">", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 1,
                     Arguments = 2,
-                    Compute = DoOperators.GreaterThan
+                    Compute = DoOperators.GreateerThan
                 });
 
                 AddOperator("<", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.LessThan
                 });
@@ -355,7 +280,7 @@ namespace AbMath.Calculator
                 AddOperator("=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.Equals
                 });
@@ -363,7 +288,7 @@ namespace AbMath.Calculator
                 AddOperator("==", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.Equals
                 });
@@ -371,7 +296,7 @@ namespace AbMath.Calculator
                 AddOperator(">=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.GreaterThanOrEquals
                 });
@@ -379,12 +304,12 @@ namespace AbMath.Calculator
                 AddOperator("<=", new Operator
                 {
                     Assoc = Assoc.Left,
-                    Weight = 2,
+                    Weight = 1,
                     Arguments = 2,
                     Compute = DoOperators.LessThanOrEquals
                 });
-#endregion
-#region Logic
+                #endregion
+                #region Logic
                 AddOperator("!=", new Operator
                 {
                     Assoc = Assoc.Left,
@@ -408,12 +333,12 @@ namespace AbMath.Calculator
                     Arguments = 2,
                     Compute = DoOperators.Or
                 });
-#endregion
+                #endregion
             }
 
             private void DefaultFunctions()
             {
-#region Trig
+                #region Trig
                 AddFunction("sin", new Function
                 {
                     MinArguments = 1,
@@ -437,47 +362,7 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     Compute = DoFunctions.Tan
                 });
-
-                AddFunction("arcsin", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Arcsin,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
-
-                AddFunction("arccos", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Arccos,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
-
-                AddFunction("arctan", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Arctan,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
-
-                AddFunction("rad", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.rad,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
-
-                AddFunction("deg", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.deg,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
-#endregion
+                #endregion
 
                 AddFunction("max", new Function
                 {
@@ -543,12 +428,12 @@ namespace AbMath.Calculator
                     Compute = DoFunctions.Log
                 });
 
-#region Constants
+                #region Constants
                 AddFunction("pi", new Function
                 {
                     Arguments = 0,
                     MinArguments = 0,
-                    MaxArguments = 0,
+                    MaxArguments = 1,
                     Compute = DoFunctions.Pi
                 });
 
@@ -556,10 +441,10 @@ namespace AbMath.Calculator
                 {
                     Arguments = 0,
                     MinArguments = 0,
-                    MaxArguments = 0,
+                    MaxArguments = 1,
                     Compute = DoFunctions.EContstant
                 });
-#endregion
+                #endregion
 
                 AddFunction("bounded",new Function()
                 {
@@ -572,20 +457,12 @@ namespace AbMath.Calculator
 
                 AddFunction("sum", new Function()
                 {
-                    Arguments = 1,
-                    MinArguments = 1,
-                    MaxArguments = int.MaxValue,
+                    Arguments = 2,
+                    MinArguments = 2,
+                    MaxArguments = 2,
                     Compute = DoFunctions.Sum
                 }
                 );
-
-                AddFunction("avg", new Function()
-                {
-                    Arguments = 1,
-                    MinArguments = 1,
-                    MaxArguments = int.MaxValue,
-                    Compute = DoFunctions.Avg
-                });
 
                 AddFunction("random", new Function()
                 {
@@ -619,28 +496,13 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     MinArguments = 1
                 });
-
-                AddFunction("gamma", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Gamma,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
             }
             private void DefaultFormats()
             {
                 AddFormat(Math.Sqrt(2)/2, "√2 / 2");
                 AddFormat(- Math.Sqrt(2) / 2, "-√2 / 2");
-
                 AddFormat(Math.Sqrt(3)/2, "√3 / 2");
                 AddFormat(- Math.Sqrt(3) / 2, "-√3 / 2");
-
-                AddFormat(Math.PI / 2, "π/2");
-
-                AddFormat(Math.PI / 3, "π/3");
-
-                AddFormat(Math.PI / 4, "π/4");
             }
         }
     }

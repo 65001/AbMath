@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace AbMath.Calculator
@@ -33,6 +34,33 @@ namespace AbMath.Calculator
                 {
                     sb.Append(" ");
                 }
+            }
+
+            return sb.ToString();
+        }
+
+        public static string Print<T>(this List<T> list)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < list.Count; i++)
+            {
+                sb.Append(list[i]);
+                if (i < (list.Count - 1))
+                {
+                    sb.Append(" ");
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        public static string Print<T>(this IEnumerable<T> enumerable)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var data in enumerable)
+            {
+                sb.Append(data);
+                sb.Append(" ");
             }
 
             return sb.ToString();

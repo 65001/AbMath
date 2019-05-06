@@ -139,7 +139,121 @@ namespace AbMath.Calculator
             {
                 Write($"The answer may also be written in the following manner: {_dataStore.Format[_stack.Peek()]}");
             }
+
             return _stack.Pop();
+        }
+
+        public static string GetDecimalFormat(double n)
+        {
+            
+            string format = getDecimalFormat(n * Math.PI);
+            if (format != null)
+            {
+                return "1/pi *" + format;
+            }
+
+            format = getDecimalFormat(n / Math.PI);
+            if (format != null)
+            {
+                return "pi *" + format;
+            }
+
+            format = getDecimalFormat(n);
+            if (format != null)
+            {
+                return format;
+            }
+
+            return null;
+        }
+
+        private static string getDecimalFormat(double value, double accuracy = 1E-4, int maxIteration = 10000)
+        {
+            //Algorithm from stack overflow. 
+            try
+            {
+                if (accuracy <= 0.0 || accuracy >= 1.0)
+                {
+                    throw new ArgumentOutOfRangeException("accuracy", "Must be > 0 and < 1.");
+                }
+
+                int sign = Math.Sign(value);
+
+                if (sign == -1)
+                {
+                    value = Math.Abs(value);
+                }
+
+                // Accuracy is the maximum relative error; convert to absolute maxError
+                double maxError = sign == 0 ? accuracy : value * accuracy;
+
+                int n = (int)Math.Floor(value);
+                value -= n;
+
+                if (value < maxError)
+                {
+                    return null;
+                }
+
+                if (1 - maxError < value)
+                {
+                    return null;
+                }
+
+                // The lower fraction is 0/1
+                int lower_n = 0;
+                int lower_d = 1;
+
+                // The upper fraction is 1/1
+                int upper_n = 1;
+                int upper_d = 1;
+
+                int i = 0;
+
+                while (true)
+                {
+                    // The middle fraction is (lower_n + upper_n) / (lower_d + upper_d)
+                    int middle_n = lower_n + upper_n;
+                    int middle_d = lower_d + upper_d;
+
+                    if (middle_d * (value + maxError) < middle_n)
+                    {
+                        // real + error < middle : middle is our new upper
+                        upper_n = middle_n;
+                        upper_d = middle_d;
+                    }
+                    else if (middle_n < (value - maxError) * middle_d)
+                    {
+                        // middle < real - error : middle is our new lower
+                        lower_n = middle_n;
+                        lower_d = middle_d;
+                    }
+                    else
+                    {
+                        int numerator = (n * middle_d + middle_n);
+                        int denominator = middle_d;
+
+                        if (numerator > 10000 || denominator > 10000)
+                        {
+                            return null;
+                        }
+
+                        // Middle is our best fraction
+                        return $"{numerator * sign}/{denominator}";
+                    }
+
+                    i++;
+
+                    if (i > maxIteration)
+                    {
+                        return null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         private double[] GetArguments(int argCount)
