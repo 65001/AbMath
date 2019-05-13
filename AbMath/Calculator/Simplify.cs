@@ -377,6 +377,7 @@ namespace AbMath.Calculator
                 List<Token> swapped = swap(expanded);
                 List<Token> simplified = simplify(swapped);
                 List<Token> compressed = compress(simplified);
+                List<Token> second_round_simplified = simplify(compressed);
 
                 if (_data.DebugMode)
                 {
@@ -392,11 +393,12 @@ namespace AbMath.Calculator
                     table.Add(new string[] { "Swapped", swapped.Print() });
                     table.Add(new string[] { "Simplified", simplified.Print() });
                     table.Add(new string[] { "Compressed", compressed.Print() });
+                    table.Add(new string[] { "Simplified", second_round_simplified.Print()});
 
                     Log(table.ToString());
                 }
 
-                return compressed;
+                return second_round_simplified;
             }
 
             public List<Token> expand(List<Token> tokens)
@@ -603,6 +605,38 @@ namespace AbMath.Calculator
                             results.Add(new Token {Arguments = 1, Type = Type.Function, Value = "abs"});
                             Log("Sqrt -> abs Simplification");
                         }
+                        //TODO: Implement Log Rules
+                        // t a1 a2
+                        // b b  log -> 1 by log rule
+                        else if (!_ahead.IsNull() && !_ahead2.IsNull() &&
+                                 _token.Value == _ahead.Value &&
+                                 _ahead2.Value == "log"
+                        )
+                        {
+                            i += 2;
+                            results.Add(new Token {Arguments = 1, Type = Type.Number, Value = "1"});
+                        }
+                        // t a1 a2
+                        // b 1 log -> 0
+                        else if (!_ahead.IsNull() && !_ahead2.IsNull() &&
+                                 (_token.IsVariable() || _token.IsNumber()) &&
+                                 _ahead.Value == "1" &&
+                                 _ahead2.Value == "log"
+                        )
+                        {
+                            i += 2;
+                            results.Add(new Token { Arguments = 1, Type = Type.Number, Value = "0" });
+                        }
+                        // t a1 a2 a3  a4
+                        // b b  x  log ^ -> x
+                        else if (!_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() &&
+                                 _token.Value == _ahead.Value && (_ahead2.IsNumber() || _ahead2.IsVariable()) &&
+                                 _ahead3.Value == "log" && _ahead4.Value == "^"
+                        )
+                        {
+                            i += 4;
+                            results.Add(_ahead2);
+                        }
 
                         //p5    p4  p3   p2   p     t   a   a2      a3     a4   a5
                         //c     x   c|x   ^   *     c   x   c|x     ^      *    (+|-|*) ->
@@ -683,7 +717,6 @@ namespace AbMath.Calculator
                         }
                         //6 5 4 3 2 1 t 1 2 3 4 5 6
                         //c 1 x 1 ^ * + 1 x 1 ^ * +
-
                         else
                         {
                             results.Add(_token);

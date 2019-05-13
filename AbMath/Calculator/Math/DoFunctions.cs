@@ -25,7 +25,10 @@ namespace AbMath.Calculator
             public static double Sin(params double[] arguments)
             {
                 // -1 <= sin(x) <= 1
-                if (arguments[0] == Math.PI || arguments[0] == -Math.PI)
+                //The sin function is always zero when | n * pi | and n is an integer number.
+                double coefficient = Math.Abs(arguments[0] / Math.PI ); //finds the value of n
+
+                if (coefficient == ((int)coefficient) ) //ensures that n is an integer number
                 {
                     return 0;
                 }
@@ -134,7 +137,7 @@ namespace AbMath.Calculator
                 {
                     return Math.Log(arguments[0]);
                 }
-                return Math.Log(arguments[0], arguments[1]);
+                return Math.Log(arguments[1], arguments[0]);
             }
 
             public static double Seed(params double[] arguments)

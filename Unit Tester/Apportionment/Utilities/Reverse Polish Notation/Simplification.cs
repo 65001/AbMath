@@ -201,5 +201,42 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void Log_Base_Power()
+        {
+            RPN rpn = new RPN("log(b,b)");
+            rpn.Compute();
+
+            if ("1" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+
+        [Test]
+        public void Log_Power()
+        {
+            RPN rpn = new RPN("log(b,1)");
+            rpn.Compute();
+
+            if ("0" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Exponent_Log_Power()
+        {
+            RPN rpn = new RPN("b^log(b,x)");
+            rpn.Compute();
+            if ("x" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
     }
 }

@@ -187,7 +187,7 @@ namespace AbMath.Tests
             
             test.Compute();
             PostFix math = new PostFix(test);
-            Assert.AreEqual(4, math.Compute());
+            Assert.AreEqual(0.25, math.Compute());
         }
 
         [Test]
