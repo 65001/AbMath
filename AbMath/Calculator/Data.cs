@@ -82,8 +82,8 @@ namespace AbMath.Calculator
             public bool ContainsEquation => 
                 Equation.Contains("=") || Equation.Contains(">") || Equation.Contains("<") ;
 
-            public long TotalMilliseconds;
-            public long TotalSteps;
+            public double TotalMilliseconds => this.Time.Sum(t => t.ElapsedMilliseconds);
+            public double TotalSteps => this.Time.Sum(t => t.ElapsedTicks);
 
             #region Config
             /// <summary>
@@ -99,6 +99,25 @@ namespace AbMath.Calculator
             /// log
             /// </summary>
             public bool DebugMode;
+
+            /// <summary>
+            /// This type of optimization can remove some
+            /// variables entirely or combine them to optimize
+            /// the calculation over many iterations.
+            /// These optimizations cannot optimize across a grouping symbols.
+            /// </summary>
+            public bool PreOptimization = true;
+
+            /// <summary>
+            /// This type of optimizations can remove
+            /// variables entirely or combine them to
+            /// optimize the calculations over many iterations.
+            /// Log simplification rules and other similar rules are implemented
+            /// here.
+            /// These optimizations happen on the Reverse Polish Notation and
+            /// hence can optimize across a traditional grouping symbol. 
+            /// </summary>
+            public bool PostOptimization = true;
             #endregion
 
 

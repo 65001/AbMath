@@ -94,9 +94,6 @@ namespace AbMath.Calculator
                 ElapsedTicks = _stopwatch.ElapsedTicks
             });
 
-            _dataStore.TotalMilliseconds += _stopwatch.ElapsedMilliseconds;
-            _dataStore.TotalSteps += _stopwatch.ElapsedTicks;
-
             if (_dataStore.DebugMode)
             {
                 Tables<string> times = new Tables<string>(new Config()

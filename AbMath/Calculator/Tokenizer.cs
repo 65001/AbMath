@@ -186,19 +186,6 @@ namespace AbMath.Calculator
                 }
                 sw.Stop();
 
-                Stopwatch si = new Stopwatch();
-                si.Start();
-
-                PreSimplify preSimplify = new PreSimplify(_dataStore);
-                if (_dataStore.DebugMode)
-                {
-                    preSimplify.Logger += Logger;
-                }
-
-                _tokens = preSimplify.Apply(_tokens);
-
-                si.Stop();
-
                 _dataStore.AddTimeRecord(new TimeRecord()
                 {
                     Type = "Tokenize",
@@ -206,15 +193,29 @@ namespace AbMath.Calculator
                     ElapsedTicks = sw.ElapsedTicks
                 });
 
-                _dataStore.AddTimeRecord(new TimeRecord()
+                if (_dataStore.PreOptimization)
                 {
-                    Type = "Simplification",
-                    ElapsedMilliseconds = si.ElapsedMilliseconds,
-                    ElapsedTicks = si.ElapsedTicks
-                });
+                    Stopwatch si = new Stopwatch();
+                    si.Start();
 
-                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds + si.ElapsedMilliseconds ;
-                _dataStore.TotalSteps += sw.ElapsedTicks + si.ElapsedTicks;
+                    PreSimplify preSimplify = new PreSimplify(_dataStore);
+                    if (_dataStore.DebugMode)
+                    {
+                        preSimplify.Logger += Logger;
+                    }
+
+                    _tokens = preSimplify.Apply(_tokens);
+
+                    si.Stop();
+
+                    _dataStore.AddTimeRecord(new TimeRecord()
+                    {
+                        Type = "Simplification",
+                        ElapsedMilliseconds = si.ElapsedMilliseconds,
+                        ElapsedTicks = si.ElapsedTicks
+                    });
+                }
+
                 Write("");
 
                 return _tokens;

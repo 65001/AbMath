@@ -252,7 +252,18 @@ namespace AbMath.Calculator
                 Write("");
 
                 sw.Stop();
-                
+
+                _dataStore.AddTimeRecord(new TimeRecord()
+                {
+                    Type = "Shunting",
+                    ElapsedMilliseconds = sw.ElapsedMilliseconds,
+                    ElapsedTicks = sw.ElapsedTicks
+                });
+
+                if (!_dataStore.PostOptimization)
+                {
+                    return _output.ToArray();
+                }
 
                 Stopwatch SI = new Stopwatch();
 
@@ -266,20 +277,11 @@ namespace AbMath.Calculator
 
                 _dataStore.AddTimeRecord(new TimeRecord()
                 {
-                    Type = "Shunting",
-                    ElapsedMilliseconds = sw.ElapsedMilliseconds,
-                    ElapsedTicks = sw.ElapsedTicks
-                });
-
-                _dataStore.AddTimeRecord(new TimeRecord()
-                {
                     Type = "PostSimplify",
                     ElapsedMilliseconds = SI.ElapsedMilliseconds,
                     ElapsedTicks = SI.ElapsedTicks
                 });
-
-                _dataStore.TotalMilliseconds += sw.ElapsedMilliseconds + SI.ElapsedMilliseconds;
-                _dataStore.TotalSteps += sw.ElapsedTicks + SI.ElapsedTicks;
+                
 
                 if (_dataStore.MarkdownTables)
                 {
