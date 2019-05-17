@@ -108,6 +108,12 @@ namespace AbMath.Tests
             test.Compute();
             PostFix math = new PostFix(test);
             Assert.AreEqual(1, math.Compute());
+
+            test.SetEquation("sin(pi)");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
         }
 
         [Test]
@@ -188,6 +194,13 @@ namespace AbMath.Tests
             test.Compute();
             PostFix math = new PostFix(test);
             Assert.AreEqual(0.25, math.Compute());
+
+            test.SetEquation("log(1)");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+
         }
 
         [Test]
@@ -310,6 +323,112 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void Arccos()
+        {
+            test.SetEquation("arccos( cos(pi/2) )");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(Math.PI / 2, math.Compute());
+        }
+
+        [Test]
+        public void Arctan()
+        {
+            test.SetEquation("arctan( tan(pi/4) )");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(Math.PI / 4, math.Compute());
+        }
+
+        [Test]
+        public void Gamma()
+        {
+            test.SetEquation("gamma(3.7)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(4.1706, math.Compute(), .001 );
+
+            test.SetEquation("gamma(4)");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(6, math.Compute());
+        }
+
+        [Test]
+        public void DivideByZero()
+        {
+            test.SetEquation("1/0");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(double.NaN, math.Compute());
+        }
+
+        [Test]
+        public void ExponentianOperator()
+        {
+            test.SetEquation("1E3");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1000, math.Compute());
+        }
+
+        [Test]
+        public void Substract()
+        {
+            test.SetEquation("5 - 2");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(3, math.Compute());
+        }
+
+        [Test]
+        public void GCD()
+        {
+            test.SetEquation("gcd(123,277)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+        }
+
+        [Test]
+        public void LCM()
+        {
+            test.SetEquation("lcm(1000,625)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(5000, math.Compute());
+        }
+
+        [Test]
+        public void Abs()
+        {
+            test.SetEquation("abs(-1)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+        }
+
+        [Test]
+        public void LN()
+        {
+            test.SetEquation("ln(e)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+        }
+
+        [Test]
         public void SwapStackOverflow()
         {
             test.SetEquation("x^p + x - x^p - x + x^2 + x - x^2 - x");
@@ -348,6 +467,77 @@ namespace AbMath.Tests
             PostFix math = new PostFix(test);
             Assert.AreEqual(30, math.Compute());
         }
+
+        #region Logic 
+
+        [Test]
+        public void Equals()
+        {
+            test.SetEquation("30 = 30");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+
+            test.SetEquation("30 = 29");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+        }
+
+        [Test]
+        public void GreaterThan()
+        {
+            test.SetEquation("5 > 2");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+
+            test.SetEquation("5 > 10");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+
+            test.SetEquation("5 >= 5");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+
+            test.SetEquation("15 >= 5");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+
+            test.SetEquation("5 >= 15");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+        }
+
+        [Test]
+        public void LessThan()
+        {
+            test.SetEquation("1 < 2");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute() );
+
+            test.SetEquation("5 < 2");
+            test.Compute();
+
+            math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+        }
+
+        #endregion
+
 
         public void Write(object sender,string Event)
         {

@@ -556,7 +556,7 @@ namespace AbMath.Calculator
 
                 AddFunction("log", new Function
                 {
-                    MinArguments = 2,
+                    MinArguments = 1,
                     Arguments = 2,
                     MaxArguments = 2,
                     Compute = DoFunctions.Log

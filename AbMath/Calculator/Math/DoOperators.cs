@@ -74,11 +74,7 @@ namespace AbMath.Calculator
 
             public static double GreaterThan(params double[] arguments)
             {
-                if (arguments[0] > arguments[1])
-                {
-                    return 1;
-                }
-                return 0;
+                return arguments[0] > arguments[1] ? 1 : 0;
             }
 
             public static double LessThan(params double[] arguments)
@@ -110,20 +106,12 @@ namespace AbMath.Calculator
 
             public static double Equals(params double[] arguments)
             {
-                if (arguments[0] == arguments[1])
-                {
-                    return 1;
-                }
-                return 0;
+                return arguments[0] == arguments[1] ? 1 : 0;
             }
 
             public static double NotEquals(params double[] arguments)
             {
-                if (arguments[0] != arguments[1])
-                {
-                    return 1;
-                }
-                return 0;
+                return arguments[0] != arguments[1] ? 1 : 0;
             }
 
             public static double And(params double[] arguments)
@@ -147,11 +135,6 @@ namespace AbMath.Calculator
             public static double E(params double[] arguments)
             {
                 return arguments[0] * Math.Pow(10, arguments[1]);
-            }
-
-            public static void Store(ref DataStore dataStore,params string[] arguments)
-            {
-                dataStore.AddStore(arguments[0], arguments[1]);
             }
         }
     }

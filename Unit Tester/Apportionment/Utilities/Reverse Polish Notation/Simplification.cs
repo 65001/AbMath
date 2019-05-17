@@ -238,5 +238,27 @@ namespace AbMath.Tests
             }
         }
 
+        [Test]
+        public void ZeroSimplification()
+        {
+            RPN rpn = new RPN("0(x)");
+            rpn.Compute();
+            if ("0" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Sqrt_to_abs()
+        {
+            RPN rpn = new RPN("sqrt(x^2)");
+            rpn.Compute();
+            if ("x abs" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
     }
 }
