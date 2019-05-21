@@ -221,7 +221,8 @@ namespace AbMath.Calculator
                     }
                     //t a_1
                     //1 x
-                    else if (_token.Value == "1" && !_ahead.IsNull() && _ahead.IsVariable())
+                    //the previous value cannot be -
+                    else if (_token.Value == "1" && !_ahead.IsNull() && _ahead.IsVariable() && (_prev.IsNull() || _prev.Value != "-"))
                     {
                         i += 1;
                         results.Add(_ahead);

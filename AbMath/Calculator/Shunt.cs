@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using CLI;
 
 namespace AbMath.Calculator
@@ -15,12 +16,23 @@ namespace AbMath.Calculator
         public class Shunt : IShunt<Token>
         {
             private readonly DataStore _dataStore;
+
+            //TODO: The _output queue and the _operator stack must be redone to add AST support
             private Queue<Token> _output;
+
             private Stack<Token> _operator;
 
+            private Stack<Node> AST;
+            //An AST node only gets created when we have a function or operator present
+
+            private int _count = 0;
             private Token _prev;
             private Token _token;
             private Token _ahead;
+
+            private Token _multiply;
+            private Token _division;
+            private Token _null; 
 
             //TODO: Implement Variadic Function
             //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
@@ -31,6 +43,10 @@ namespace AbMath.Calculator
             public Shunt(DataStore dataStore)
             {
                 _dataStore = dataStore;
+
+                _multiply = GenerateMultiply();
+                _division = GenerateDivision();
+                _null = GenerateNull();
             }
 
             public Token[] ShuntYard(List<Token> tokens)
@@ -59,7 +75,6 @@ namespace AbMath.Calculator
                 string action = string.Empty;
                 string type = string.Empty;
 
-                Token _null = GenerateNull();
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev = (i > 0) ? _token : _null;
@@ -76,7 +91,7 @@ namespace AbMath.Calculator
                         //Right
                         Implicit();
                         //Left
-                        OperatorRule(GenerateMultiply());
+                        OperatorRule(_multiply);
                     }
                     else if (!_prev.IsNull() 
                              && !_ahead.IsNull() 
@@ -91,18 +106,18 @@ namespace AbMath.Calculator
                         //Current : Number
                         //Ahead : Variable 
                         type = "Mixed division and multiplication";
-                        _operator.Pop();
+                        OperatorPop();
                         _output.Enqueue(_token);
 
-                        _operator.Push(GenerateDivision());
-                        _operator.Push(GenerateMultiply());
+                        _operator.Push(_division);
+                        _operator.Push(_multiply);
                     }
                     else if (!_prev.IsNull() && !_ahead.IsNull() &&
                              _prev.IsNumber() && _token.IsVariable() && _ahead.IsLeftBracket())
                     {
                         type = "Variable Chain Multiplication";
                         _output.Enqueue(_token);
-                        _output.Enqueue(GenerateMultiply());
+                        _output.Enqueue(_multiply);
                     }
                     else if (LeftImplicit())
                     {
@@ -117,7 +132,7 @@ namespace AbMath.Calculator
                              ) 
                     {
                         type = "Implicit Left 2";
-                        OperatorRule(GenerateMultiply());
+                        OperatorRule(_multiply);
                         _operator.Push(_token);
                     }
                     else if (RightImplicit())
@@ -128,7 +143,7 @@ namespace AbMath.Calculator
                     else if (_prev.IsRightBracket() && !_prev.IsComma() && _token.IsFunction())
                     {
                         type = "Implicit Left Functional";
-                        OperatorRule(GenerateMultiply());
+                        OperatorRule(_multiply);
                         WriteFunction(_token);
                     }
                     else
@@ -299,7 +314,7 @@ namespace AbMath.Calculator
 
             void Implicit()
             {
-                OperatorRule(GenerateMultiply());
+                OperatorRule(_multiply);
                 _output.Enqueue(_token);
             }
 
@@ -312,7 +327,7 @@ namespace AbMath.Calculator
                         throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
                     }
 
-                    Token output = _operator.Pop();
+                    Token output = OperatorPop();
                     //This ensures that only functions 
                     //can have variable number of arguments
                     if (output.IsFunction() )
@@ -330,38 +345,39 @@ namespace AbMath.Calculator
                 }
 
                 //Pops the left bracket or Parentheses from the stack. 
-                _operator.Pop();
+                OperatorPop();
             }
 
             //Sort Stack equivalent in sb
-            void OperatorRule(Token token)
+            private void OperatorRule(Token token)
             {
-                bool go = true;
-                while (DoOperatorRule(token) && go)
+                while (DoOperatorRule(token))
                 {
-                    _output.Enqueue(_operator.Pop());
-
-                    if (_operator.Count == 0)
-                    {
-                        go = false;
-                    }
+                    _output.Enqueue(OperatorPop());
                 }
                 _operator.Push(token);
             }
 
-            bool DoOperatorRule(Token Token)
+            private bool DoOperatorRule(Token token)
             {
-                try
-                { 
-                    return _operator.Count > 0 && !_operator.Peek().IsLeftBracket() &&
-                            (
-                                _operator.Peek().IsFunction() ||
-                                (_dataStore.Operators[_operator.Peek().Value].Weight > _dataStore.Operators[Token.Value].Weight) ||
-                                (_dataStore.Operators[_operator.Peek().Value].Weight == _dataStore.Operators[Token.Value].Weight 
-                                 && _dataStore.Operators[Token.Value].Assoc == Assoc.Left)
-                            );
+                if (_operator.Count == 0 || _operator.Peek().IsLeftBracket())
+                {
+                    return false;
                 }
-                catch (Exception ex) { }
+
+                if (_operator.Peek().IsFunction())
+                {
+                    return true;
+                }
+
+                Operator peek = _dataStore.Operators[_operator.Peek().Value];
+                Operator op = _dataStore.Operators[token.Value];
+
+                if (peek.Weight > op.Weight || (peek.Weight == op.Weight && op.Assoc == Assoc.Left) )
+                {
+                    return true;
+                }
+
                 return false;
             }
 
@@ -382,6 +398,11 @@ namespace AbMath.Calculator
             private bool Chain()
             {
                 return LeftImplicit() && RightImplicit();
+            }
+
+            private Token OperatorPop()
+            {
+                return _operator.Pop();
             }
 
             private void WriteFunction(Token function)
@@ -412,24 +433,24 @@ namespace AbMath.Calculator
             /// <summary>
             /// Moves all remaining data from the stack onto the queue
             /// </summary>
-            void Dump()
+            private void Dump()
             {
                 while (_operator.Count > 0)
                 {
                     Token peek = _operator.Peek();
 
-                    if (peek.Type == Type.LParen || peek.Type == Type.RParen)
+                    if (peek.IsLeftBracket() || peek.IsRightBracket() )
                     {
                         if (!_dataStore.AllowMismatchedParentheses)
                         {
                             throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                         }
 
-                        _operator.Pop();
+                        OperatorPop();
                     }
                     else
                     {
-                        var output = _operator.Pop();
+                        var output = OperatorPop();
 
                         if (output.IsFunction() && _arity.Count > 0)
                         {

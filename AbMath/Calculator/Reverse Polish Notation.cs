@@ -24,6 +24,14 @@ namespace AbMath.Calculator
 
         //TODO Add Inequalities : >, ==, <
 
+        public class Node
+        {
+            public int ID;
+            public Node Parent;
+            public List<Node> Children;
+            public RPN.Token Token;
+        }
+
         public struct DivisionRepresentation
         {
             public int Numerator;
@@ -135,6 +143,10 @@ namespace AbMath.Calculator
 
             _shunt.Logger += Logger;
             Data.Polish = _shunt.ShuntYard( this.Tokens  );
+
+            AST ast = new AST(this);
+            ast.Logger += Logger;
+            ast.Generate();
         }
     }
 }
