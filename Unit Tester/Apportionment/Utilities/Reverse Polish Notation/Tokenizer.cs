@@ -59,7 +59,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("pi(2)");
             test.Compute();
-            if ("pi 2 *" != test.Polish.Print())
+            if ("pi 2 *" != test.Polish.Print() && "2 pi *" != test.Polish.Print())
             {
                 Assert.Fail();
             }

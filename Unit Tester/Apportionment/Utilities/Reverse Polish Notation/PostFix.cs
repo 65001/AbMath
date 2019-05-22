@@ -290,6 +290,16 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void VardiacConstantAdd()
+        {
+            var foo = new RPN("pi(2) + e(2)");
+            foo.Compute();
+
+            PostFix math = new PostFix(foo);
+            Assert.AreEqual(11.7197489640976, math.Compute(), 0.00001);
+        }
+
+        [Test]
         public void VardiacStressTest()
         {
             test.SetEquation("sum( sqrt(16), min(0,1), max(1,2,3), avg(10,5,7,9) )");

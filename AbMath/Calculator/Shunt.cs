@@ -209,7 +209,6 @@ namespace AbMath.Calculator
                         tables.Add(print);
                     }
                 }
-                Dump();
 
                 if (_dataStore.DebugMode)
                 {
@@ -220,6 +219,8 @@ namespace AbMath.Calculator
                 {
                     Write(tables.Redraw());
                 }
+
+                Dump();
 
                 if (_dataStore.DebugMode)
                 {
@@ -343,6 +344,7 @@ namespace AbMath.Calculator
                     //can have variable number of arguments
                     if (output.IsFunction() )
                     {
+                        Write($"RBR: Assigning an arity of {_arity.Peek()} to {output}");
                         output.Arguments = _arity.Pop();
                     }
                     _output.Enqueue(output);
@@ -446,6 +448,8 @@ namespace AbMath.Calculator
             /// </summary>
             private void Dump()
             {
+                var arity_list = _arity.ToArray().ToList();
+
                 while (_operator.Count > 0)
                 {
                     Token peek = _operator.Peek();
@@ -463,9 +467,14 @@ namespace AbMath.Calculator
                     {
                         var output = OperatorPop();
 
-                        if (output.IsFunction() && _arity.Count > 0)
+                        if (output.IsFunction() && arity_list.Count > 0)
                         {
-                            output.Arguments = _arity.Pop();
+                            Write($"DUMP: Assigning an arity of {arity_list.Last()} to {output}");
+
+                            output.Arguments = arity_list.Last();
+                            arity_list.RemoveAt( arity_list.Count - 1 );
+                            _arity.Pop();
+
                         }
 
                         _output.Enqueue(output);
@@ -477,21 +486,32 @@ namespace AbMath.Calculator
                 {
                     Token token = _output.Dequeue();
 
-                    if (token.IsFunction() && _arity.Count > 0)
+                    if (token.IsFunction() && arity_list.Count > 0)
                     {
                         Function func = _dataStore.Functions[token.Value];
                         //Constants cannot have an arity assigned to them.
                         if (func.MaxArguments != 0)
                         {
-                            token.Arguments = _arity.Pop();
+                            Write($"DUMP: Assigning an arity of {arity_list.Last()} to {token}");
+                            token.Arguments = arity_list.Last();
+                            arity_list.RemoveAt(arity_list.Count - 1);
+                            _arity.Pop();
                         }
                     }
 
                     _output.Enqueue( token );
                 }
 
-                //This in effect suppresses any Arity Exceptions!!     
-                while ( _arity.Count > 0)
+                if (_arity.Count == 1 && _arity.Peek() == 0)
+                {
+                    _arity.Pop();
+                }
+
+                bool deadfall = true;
+
+                //TODO: Eliminiate 
+                //This in effect suppresses any Arity Exceptions!!              
+                while (deadfall && _arity.Count > 0)
                 {
                     for (int i = 0; i < (_output.Count - 1); i++)
                     {
@@ -511,6 +531,7 @@ namespace AbMath.Calculator
 
                     _output.Enqueue(foo);
                 }
+                
                 
             }
 
