@@ -27,7 +27,7 @@ namespace AbMath.Calculator
             {
                 nodes[i] = new RPN.Node()
                 {
-                    Children = null,
+                    Children = new List<RPN.Node>(),
                     ID = i,
                     Parent = null,
                     Token = input[i]
@@ -45,7 +45,9 @@ namespace AbMath.Calculator
                         List<RPN.Node> children = new List<RPN.Node>(nodes[i].Token.Arguments);
                         for (int j = 0; j < nodes[i].Token.Arguments; j++)
                         {
-                            children.Add( _stack.Pop() );
+                            RPN.Node temp = _stack.Pop();
+                            temp.Parent = nodes[i];
+                            children.Add( temp );
                         }
 
                         nodes[i].Children = children;

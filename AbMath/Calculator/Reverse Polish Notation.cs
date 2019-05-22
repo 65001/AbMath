@@ -29,7 +29,12 @@ namespace AbMath.Calculator
             public int ID;
             public Node Parent;
             public List<Node> Children;
-            public RPN.Token Token;
+            public Token Token;
+
+            public override string ToString()
+            {
+                return Token.Value;
+            }
         }
 
         public struct DivisionRepresentation
@@ -146,7 +151,9 @@ namespace AbMath.Calculator
 
             AST ast = new AST(this);
             ast.Logger += Logger;
-            ast.Generate();
+            Node tree = ast.Generate();
+
+            Logger?.Invoke(this, tree.Print() );
         }
     }
 }

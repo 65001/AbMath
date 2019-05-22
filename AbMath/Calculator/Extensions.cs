@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -71,6 +72,48 @@ namespace AbMath.Calculator
             return stack.ToArray().Print();
         }
 
+        //Code from https://stackoverflow.com/questions/1649027/how-do-i-print-out-a-tree-structure
+        public static string Print(this RPN.Node tree)
+        {
+            List<RPN.Node> firstStack = new List<RPN.Node>();
+            firstStack.Add(tree);
+
+            List<List<RPN.Node>> childListStack = new List<List<RPN.Node>>();
+            childListStack.Add(firstStack);
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("root");
+
+            while (childListStack.Count > 0)
+            {
+                List<RPN.Node> childStack = childListStack[childListStack.Count - 1];
+
+                if (childStack.Count == 0)
+                {
+                    childListStack.RemoveAt(childListStack.Count - 1);
+                }
+                else
+                {
+                    tree = childStack[0];
+                    childStack.RemoveAt(0);
+
+                    string indent = "";
+                    for (int i = 0; i < childListStack.Count - 1; i++)
+                    {
+                        indent += (childListStack[i].Count > 0) ? "│ " : "  ";
+                    }
+
+                    sb.AppendLine(indent + "└ " + tree.ToString());
+
+                    if (tree.Children.Count > 0)
+                    {
+                        childListStack.Add(new List<RPN.Node>(tree.Children));
+                    }
+                }
+            }
+
+            return sb.ToString();
+        }
 
         public static T SafePeek<T>(this Stack<T> stack)
         {
