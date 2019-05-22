@@ -73,12 +73,11 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("x - x^2");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
 
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("x - x ^ 2" != tokens && "- x ^ 2 + x" != tokens)
+            if ("-1 x 2 ^ * x +" != tokens)
             {
                 Assert.Fail();
             }

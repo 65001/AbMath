@@ -84,8 +84,16 @@ namespace AbMath.Calculator
                     action = string.Empty;
                     type = string.Empty;
 
+                    //Unary Input at the start of the input or 
+                    if ( i == 0 && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
+                    {
+                        type = "Start of Sequence Unary";
+                        _ahead.Value = (double.Parse(tokens[i + 1].Value) * -1).ToString();
+                        tokens[i + 1] = _ahead;
+                    }
+                    //TODO: Unary Input after another operator or left parenthesis
 
-                    if (Chain())
+                    else if (Chain())
                     {
                         type = "Chain Multiplication";
                         //Right
