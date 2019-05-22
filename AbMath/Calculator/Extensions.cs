@@ -7,6 +7,11 @@ namespace AbMath.Calculator
 {
     public static class Extensions
     {
+        const string _cross = " ├─";
+        const string _corner = " └─";
+        const string _vertical = " │ ";
+        const string _space = "   ";
+
         public static string Print<T>(this Queue<T> queue)
         {
             int length = queue.Count;
@@ -72,47 +77,49 @@ namespace AbMath.Calculator
             return stack.ToArray().Print();
         }
 
-        //Code from https://stackoverflow.com/questions/1649027/how-do-i-print-out-a-tree-structure
+        //Code from https://andrewlock.net/creating-an-ascii-art-tree-in-csharp/
         public static string Print(this RPN.Node tree)
         {
-            List<RPN.Node> firstStack = new List<RPN.Node>();
-            firstStack.Add(tree);
-
-            List<List<RPN.Node>> childListStack = new List<List<RPN.Node>>();
-            childListStack.Add(firstStack);
-
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("root");
+            PrintNode(tree, "", ref sb);
+            return sb.ToString();
+        }
 
-            while (childListStack.Count > 0)
+        static void PrintNode(RPN.Node node, string indent, ref StringBuilder sb)
+        {
+            sb.AppendLine(node.ToString());
+
+            // Loop through the children recursively, passing in the
+            // indent, and the isLast parameter
+            var numberOfChildren = node.Children.Count;
+            for (var i = 0; i < numberOfChildren; i++)
             {
-                List<RPN.Node> childStack = childListStack[childListStack.Count - 1];
+                var child = node.Children[i];
+                var isLast = (i == (numberOfChildren - 1));
+                PrintChildNode(child, indent, isLast, ref sb);
+            }
+        }
 
-                if (childStack.Count == 0)
-                {
-                    childListStack.RemoveAt(childListStack.Count - 1);
-                }
-                else
-                {
-                    tree = childStack[0];
-                    childStack.RemoveAt(0);
+        static void PrintChildNode(RPN.Node node, string indent, bool isLast, ref StringBuilder sb)
+        {
+            // Print the provided pipes/spaces indent
+            sb.Append(indent);
 
-                    string indent = "";
-                    for (int i = 0; i < childListStack.Count - 1; i++)
-                    {
-                        indent += (childListStack[i].Count > 0) ? "│ " : "  ";
-                    }
-
-                    sb.AppendLine(indent + "└ " + tree.ToString());
-
-                    if (tree.Children.Count > 0)
-                    {
-                        childListStack.Add(new List<RPN.Node>(tree.Children));
-                    }
-                }
+            // Depending if this node is a last child, print the
+            // corner or cross, and calculate the indent that will
+            // be passed to its children
+            if (isLast)
+            {
+                sb.Append(_corner);
+                indent += _space;
+            }
+            else
+            {
+                sb.Append(_cross);
+                indent += _vertical;
             }
 
-            return sb.ToString();
+            PrintNode(node, indent, ref sb);
         }
 
         public static T SafePeek<T>(this Stack<T> stack)
