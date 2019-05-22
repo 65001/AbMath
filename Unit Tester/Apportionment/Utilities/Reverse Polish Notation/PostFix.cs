@@ -480,6 +480,16 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void VardiacUltimateStressTest()
+        {
+            test.SetEquation("sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) ) - sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) )");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+        }
+
+        [Test]
         public void VardiacImplicitMultiplication2()
         {
             test.SetEquation("sum(1,4,5)3");

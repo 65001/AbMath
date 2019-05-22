@@ -32,10 +32,11 @@ namespace AbMath.Calculator
 
             private Token _multiply;
             private Token _division;
-            private Token _null; 
+            private Token _null;
 
-            //TODO: Implement Variadic Function
+            //Variadic Function
             //See http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
+            //See https://web.archive.org/web/20181008151605/http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
             private Stack<int> _arity;
 
             public event EventHandler<string> Logger;
@@ -70,7 +71,7 @@ namespace AbMath.Calculator
                     tables.Add(new Schema {Column = "Arity Peek", Width = 11});
                     tables.Add(new Schema {Column = "Type", Width = 12});
                     tables.Add(new Schema {Column = "RPN", Width = 20});
-                    tables.Add(new Schema {Column = "Action", Width = 30});
+                    tables.Add(new Schema {Column = "Action", Width = 7});
                 }
 
                 string action = string.Empty;
@@ -93,7 +94,6 @@ namespace AbMath.Calculator
                         tokens[i + 1] = _ahead;
                     }
                     //TODO: Unary Input after another operator or left parenthesis
-
                     else if (Chain())
                     {
                         type = "Chain Multiplication";
@@ -236,16 +236,10 @@ namespace AbMath.Calculator
                     arityTables.Add(new Schema {Column = "Arity", Width = 5});
                 }
 
-                //TODO: Eliminate
-                //Ensures that all functions are within their stated max and min arguments
+                
                 for (int i = 0; i < _output.Count; i++)
                 {
                     Token token = _output.Dequeue();
-                    if (token.IsFunction())
-                    {
-                        Function function = _dataStore.Functions[token.Value];
-                        token.Arguments = Math.Max(function.MinArguments, Math.Min( token.Arguments, function.MaxArguments));
-                    }
 
                     if (_dataStore.DebugMode)
                     {
@@ -255,6 +249,7 @@ namespace AbMath.Calculator
 
                     _output.Enqueue(token);
                 }
+                
 
                 if (_dataStore.DebugMode)
                 {
@@ -344,7 +339,7 @@ namespace AbMath.Calculator
                     //can have variable number of arguments
                     if (output.IsFunction() )
                     {
-                        Write($"RBR: Assigning an arity of {_arity.Peek()} to {output}");
+                        //Write($"RBR: Assigning an arity of {_arity.Peek()} to {output}");
                         output.Arguments = _arity.Pop();
                     }
                     _output.Enqueue(output);
@@ -366,7 +361,13 @@ namespace AbMath.Calculator
             {
                 while (DoOperatorRule(token))
                 {
-                    _output.Enqueue(OperatorPop());
+                    Token temp =  OperatorPop();
+                    if (temp.IsFunction())
+                    {
+                        temp.Arguments = _arity.Pop();
+                    }
+
+                    _output.Enqueue(temp);
                 }
                 _operator.Push(token);
             }
@@ -414,7 +415,7 @@ namespace AbMath.Calculator
             }
 
             private Token OperatorPop()
-            {
+            { 
                 return _operator.Pop();
             }
 
@@ -480,59 +481,6 @@ namespace AbMath.Calculator
                         _output.Enqueue(output);
                     }
                 }
-
-                //This assigns arity values to the output stream
-                for (int i = 0; i < _output.Count; i++)
-                {
-                    Token token = _output.Dequeue();
-
-                    if (token.IsFunction() && arity_list.Count > 0)
-                    {
-                        Function func = _dataStore.Functions[token.Value];
-                        //Constants cannot have an arity assigned to them.
-                        if (func.MaxArguments != 0)
-                        {
-                            Write($"DUMP: Assigning an arity of {arity_list.Last()} to {token}");
-                            token.Arguments = arity_list.Last();
-                            arity_list.RemoveAt(arity_list.Count - 1);
-                            _arity.Pop();
-                        }
-                    }
-
-                    _output.Enqueue( token );
-                }
-
-                if (_arity.Count == 1 && _arity.Peek() == 0)
-                {
-                    _arity.Pop();
-                }
-
-                bool deadfall = true;
-
-                //TODO: Eliminiate 
-                //This in effect suppresses any Arity Exceptions!!              
-                while (deadfall && _arity.Count > 0)
-                {
-                    for (int i = 0; i < (_output.Count - 1); i++)
-                    {
-                        _output.Enqueue( _output.Dequeue() );
-                    }
-
-                    var foo = _output.Dequeue();
-
-                    if (foo.IsFunction())
-                    {
-                        foo.Arguments = _arity.Pop();
-                    }
-                    else
-                    {
-                        _arity.Pop();
-                    }
-
-                    _output.Enqueue(foo);
-                }
-                
-                
             }
 
             void Write(string message)
