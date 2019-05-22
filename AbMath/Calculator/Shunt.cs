@@ -67,6 +67,7 @@ namespace AbMath.Calculator
                     tables.Add(new Schema {Column = "Stack Count", Width = 12});
                     tables.Add(new Schema {Column = "Stack ", Width = 12});
                     tables.Add(new Schema {Column = "Arity", Width = 5});
+                    tables.Add(new Schema {Column = "Arity Peek", Width = 11});
                     tables.Add(new Schema {Column = "Type", Width = 12});
                     tables.Add(new Schema {Column = "RPN", Width = 20});
                     tables.Add(new Schema {Column = "Action", Width = 30});
@@ -202,8 +203,8 @@ namespace AbMath.Calculator
                         var print = new[]
                         {
                             i.ToString(), _token.Value, _operator.Count.ToString(),
-                            _operator.Print() ?? string.Empty, _arity.Print(), type,
-                            _output.Print(), action
+                            _operator.Print() ?? string.Empty, _arity.Print(), _arity.SafePeek().ToString(),
+                            type, _output.Print(), action
                         };
                         tables.Add(print);
                     }
@@ -304,15 +305,17 @@ namespace AbMath.Calculator
                     ElapsedMilliseconds = SI.ElapsedMilliseconds,
                     ElapsedTicks = SI.ElapsedTicks
                 });
-                
 
-                if (_dataStore.MarkdownTables)
+                if (_output.Print() != complex.Print())
                 {
-                    Write($"Raw Reverse Polish Notation:\n``{_output.Print()}``");
-                }
-                else
-                {
-                    Write($"Raw Reverse Polish Notation:\n{_output.Print()}");
+                    if (_dataStore.MarkdownTables)
+                    {
+                        Write($"Raw Reverse Polish Notation:\n``{_output.Print()}``");
+                    }
+                    else
+                    {
+                        Write($"Raw Reverse Polish Notation:\n{_output.Print()}");
+                    }
                 }
 
                 Write("");
