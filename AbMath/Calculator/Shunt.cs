@@ -333,16 +333,7 @@ namespace AbMath.Calculator
                     {
                         throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
                     }
-
-                    Token output = OperatorPop();
-                    //This ensures that only functions 
-                    //can have variable number of arguments
-                    if (output.IsFunction() )
-                    {
-                        //Write($"RBR: Assigning an arity of {_arity.Peek()} to {output}");
-                        output.Arguments = _arity.Pop();
-                    }
-                    _output.Enqueue(output);
+                    _output.Enqueue(OperatorPop());
                 }
 
                 //For functions and composite functions the to work, we must return now.
@@ -361,13 +352,7 @@ namespace AbMath.Calculator
             {
                 while (DoOperatorRule(token))
                 {
-                    Token temp =  OperatorPop();
-                    if (temp.IsFunction())
-                    {
-                        temp.Arguments = _arity.Pop();
-                    }
-
-                    _output.Enqueue(temp);
+                    _output.Enqueue(OperatorPop());
                 }
                 _operator.Push(token);
             }
@@ -415,8 +400,14 @@ namespace AbMath.Calculator
             }
 
             private Token OperatorPop()
-            { 
-                return _operator.Pop();
+            {
+                //TODO: We can use this to generate an AST directly. 
+                Token temp = _operator.Pop();
+                if (temp.IsFunction())
+                {
+                    temp.Arguments = _arity.Pop();
+                }
+                return temp;
             }
 
             private void WriteFunction(Token function)
@@ -449,8 +440,6 @@ namespace AbMath.Calculator
             /// </summary>
             private void Dump()
             {
-                var arity_list = _arity.ToArray().ToList();
-
                 while (_operator.Count > 0)
                 {
                     Token peek = _operator.Peek();
@@ -466,19 +455,7 @@ namespace AbMath.Calculator
                     }
                     else
                     {
-                        var output = OperatorPop();
-
-                        if (output.IsFunction() && arity_list.Count > 0)
-                        {
-                            Write($"DUMP: Assigning an arity of {arity_list.Last()} to {output}");
-
-                            output.Arguments = arity_list.Last();
-                            arity_list.RemoveAt( arity_list.Count - 1 );
-                            _arity.Pop();
-
-                        }
-
-                        _output.Enqueue(output);
+                        _output.Enqueue(OperatorPop());
                     }
                 }
             }
