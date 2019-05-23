@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
 
 namespace AbMath.Calculator
 {
@@ -23,6 +25,19 @@ namespace AbMath.Calculator
         public event EventHandler<string> Logger;
 
         //TODO Add Inequalities : >, ==, <
+
+        public class Node
+        {
+            public int ID;
+            public Node Parent;
+            public List<Node> Children;
+            public Token Token;
+
+            public override string ToString()
+            {
+                return Token.Value;
+            }
+        }
 
         public struct DivisionRepresentation
         {
@@ -135,6 +150,26 @@ namespace AbMath.Calculator
 
             _shunt.Logger += Logger;
             Data.Polish = _shunt.ShuntYard( this.Tokens  );
+
+            Stopwatch SAST = new Stopwatch();
+            SAST.Start();
+
+            AST ast = new AST(this);
+            ast.Logger += Logger;
+            Node tree = ast.Generate(this.Data.Polish);
+           
+            Logger?.Invoke(this, tree.Print() );
+            Logger?.Invoke(this, "AST RPN : " + ast.ToPostFix().Print());
+
+            SAST.Stop();
+
+            this.Data.AddTimeRecord(new TimeRecord
+            {
+                ElapsedMilliseconds = SAST.ElapsedMilliseconds,
+                ElapsedTicks = SAST.ElapsedTicks,
+                Type = "AST"
+            } );
+
         }
     }
 }

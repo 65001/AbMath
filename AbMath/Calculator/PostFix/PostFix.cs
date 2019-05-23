@@ -269,24 +269,6 @@ namespace AbMath.Calculator
             return arguments;
         }
 
-
-        private int SeekNextFunction(int start)
-        {
-            for (int i = start; i < _input.Length; i++)
-            {
-                if (_input[i].IsFunction())
-                {
-                    RPN.Function func = _dataStore.Functions[_input[i].Value];
-                    if (func.MaxArguments != func.MinArguments)
-                    {
-                        return i - start;
-                    }
-                }
-            }
-
-            return -1;
-        }
-
         public void Reset()
         {
             _input = new RPN.Token[_dataStore.Polish.Length];

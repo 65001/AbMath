@@ -280,6 +280,26 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void VardiacCompositeConstants()
+        {
+            test.SetEquation("sin( max(2,3,4) * pi )");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
+        }
+
+        [Test]
+        public void VardiacConstantAdd()
+        {
+            var foo = new RPN("pi(2) + e(2)");
+            foo.Compute();
+
+            PostFix math = new PostFix(foo);
+            Assert.AreEqual(11.7197489640976, math.Compute(), 0.00001);
+        }
+
+        [Test]
         public void VardiacStressTest()
         {
             test.SetEquation("sum( sqrt(16), min(0,1), max(1,2,3), avg(10,5,7,9) )");
@@ -388,6 +408,7 @@ namespace AbMath.Tests
             Assert.AreEqual(3, math.Compute());
         }
 
+
         [Test]
         public void GCD()
         {
@@ -456,6 +477,16 @@ namespace AbMath.Tests
 
             PostFix math = new PostFix(test);
             Assert.AreEqual(30, math.Compute());
+        }
+
+        [Test]
+        public void VardiacUltimateStressTest()
+        {
+            test.SetEquation("sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) ) - sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) )");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(0, math.Compute());
         }
 
         [Test]

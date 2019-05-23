@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -6,6 +7,11 @@ namespace AbMath.Calculator
 {
     public static class Extensions
     {
+        const string _cross = " ├─";
+        const string _corner = " └─";
+        const string _vertical = " │ ";
+        const string _space = "   ";
+
         public static string Print<T>(this Queue<T> queue)
         {
             int length = queue.Count;
@@ -71,6 +77,50 @@ namespace AbMath.Calculator
             return stack.ToArray().Print();
         }
 
+        //Code from https://andrewlock.net/creating-an-ascii-art-tree-in-csharp/
+        public static string Print(this RPN.Node tree)
+        {
+            StringBuilder sb = new StringBuilder();
+            PrintNode(tree, "", ref sb);
+            return sb.ToString();
+        }
+
+        static void PrintNode(RPN.Node node, string indent, ref StringBuilder sb)
+        {
+            sb.AppendLine(node.ToString());
+
+            // Loop through the children recursively, passing in the
+            // indent, and the isLast parameter
+            var numberOfChildren = node.Children.Count;
+            for (var i = 0; i < numberOfChildren; i++)
+            {
+                var child = node.Children[i];
+                var isLast = (i == (numberOfChildren - 1));
+                PrintChildNode(child, indent, isLast, ref sb);
+            }
+        }
+
+        static void PrintChildNode(RPN.Node node, string indent, bool isLast, ref StringBuilder sb)
+        {
+            // Print the provided pipes/spaces indent
+            sb.Append(indent);
+
+            // Depending if this node is a last child, print the
+            // corner or cross, and calculate the indent that will
+            // be passed to its children
+            if (isLast)
+            {
+                sb.Append(_corner);
+                indent += _space;
+            }
+            else
+            {
+                sb.Append(_cross);
+                indent += _vertical;
+            }
+
+            PrintNode(node, indent, ref sb);
+        }
 
         public static T SafePeek<T>(this Stack<T> stack)
         {

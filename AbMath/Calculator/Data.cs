@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using CLI;
@@ -646,6 +647,37 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     MinArguments = 1
                 });
+
+                #region MetaCommands
+                AddFunction("derive", new Function()
+                {
+                    Arguments = 2,
+                    MinArguments = 2,
+                    MaxArguments = 2,
+                });
+
+                AddFunction("integrate", new Function()
+                {
+                    Arguments = 4,
+                    MinArguments = 4,
+                    MaxArguments = 4
+                }
+                );
+
+                AddFunction("table", new Function()
+                {
+                    Arguments = 4,
+                    MinArguments = 4,
+                    MaxArguments = 4
+                });
+
+                AddFunction("plot", new Function()
+                {
+                    Arguments = 4,
+                    MinArguments = 4,
+                    MaxArguments = 4
+                });
+                #endregion
             }
             private void DefaultFormats()
             {
