@@ -92,10 +92,10 @@ namespace AbMath.Tests
         [Test]
         public void SimpleAdd()
         {
-            test.SetEquation("2 + 2");
+            test.SetEquation("3 + 2");
             test.Compute();
 
-            if ("2 2 +" != test.Polish.Print())
+            if ("3 2 +" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -104,10 +104,10 @@ namespace AbMath.Tests
         [Test]
         public void MultiTermAdd()
         {
-            test.SetEquation("2 + 2 + 2");
+            test.SetEquation("2 + 3 + 2");
             test.Compute();
 
-            if ("2 2 + 2 +" != test.Polish.Print())
+            if ("2 3 + 2 +" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -116,10 +116,10 @@ namespace AbMath.Tests
         [Test]
         public void MultiTermAddNoSpace()
         {
-            test.SetEquation("2+2+2");
+            test.SetEquation("2+3+2");
             test.Compute();
 
-            if ("2 2 + 2 +" != test.Polish.Print())
+            if ("2 3 + 2 +" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -216,9 +216,9 @@ namespace AbMath.Tests
         [Test]
         public void Aliasing()
         {
-            test.SetEquation("4÷2");
+            test.SetEquation("7÷2");
             test.Compute();
-            if ("4 2 /" != test.Polish.Print())
+            if ("7 2 /" != test.Polish.Print())
             {
                 Assert.Fail();
             }

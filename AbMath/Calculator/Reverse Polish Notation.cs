@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace AbMath.Calculator
@@ -23,21 +24,6 @@ namespace AbMath.Calculator
         public delegate void Store(ref DataStore dataStore,params string[] arguments);
 
         public event EventHandler<string> Logger;
-
-        //TODO Add Inequalities : >, ==, <
-
-        public class Node
-        {
-            public int ID;
-            public Node Parent;
-            public List<Node> Children;
-            public Token Token;
-
-            public override string ToString()
-            {
-                return Token.Value;
-            }
-        }
 
         public struct DivisionRepresentation
         {
@@ -160,8 +146,16 @@ namespace AbMath.Calculator
            
             Logger?.Invoke(this, tree.Print() );
             Logger?.Invoke(this, "AST RPN : " + ast.ToPostFix().Print());
-
             SAST.Stop();
+
+            Stopwatch AST_Simplify = new Stopwatch();
+            AST_Simplify.Start();
+            this.Data.Polish = ast.Simplify().ToPostFix().ToArray();
+            Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
+            Logger?.Invoke(this, "AST Simplified Infix : " + ast.ToInfix());
+            Logger?.Invoke(this, ast.Root.Print());
+            AST_Simplify.Stop();
+
 
             this.Data.AddTimeRecord(new TimeRecord
             {
@@ -170,6 +164,12 @@ namespace AbMath.Calculator
                 Type = "AST"
             } );
 
+            this.Data.AddTimeRecord(new TimeRecord
+            {
+                ElapsedMilliseconds = AST_Simplify.ElapsedMilliseconds,
+                ElapsedTicks = AST_Simplify.ElapsedTicks,
+                Type = "AST Simplification"
+            });
         }
     }
 }

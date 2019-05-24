@@ -408,6 +408,16 @@ namespace AbMath.Tests
             Assert.AreEqual(3, math.Compute());
         }
 
+        [Test]
+        public void SqrtSubtraction()
+        {
+            test.SetEquation("sqrt(-1) - sqrt(-1)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(double.NaN, math.Compute());
+        }
+
 
         [Test]
         public void GCD()

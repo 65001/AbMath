@@ -127,10 +127,10 @@ namespace AbMath.Tests
         [Test]
         public void MultipleFunctions()
         {
-            test.SetEquation("sin(x)sin(x)");
+            test.SetEquation("sin(x)cos(x)");
             test.Compute();
 
-            if ("x sin x sin *" != test.Polish.Print() && "1 x 1 ^ * sin 1 x 1 ^ * sin *" != test.Polish.Print())
+            if ("x sin x cos *" != test.Polish.Print() && "1 x 1 ^ * sin 1 x 1 ^ * sin *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
