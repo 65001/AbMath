@@ -85,14 +85,27 @@ namespace AbMath.Calculator
         public AST Simplify()
         {
             CanSimplify = true;
-            Swap(Root);
-            string hash = Root.GetHash();
-            Simplify(Root, SimplificationMode.Imaginary);
-            Simplify(Root, SimplificationMode.Division);
-            Simplify(Root, SimplificationMode.Subtraction);
-            Simplify(Root, SimplificationMode.Addition);
-            Simplify(Root, SimplificationMode.Multiplication);
+            int pass = 0;
+            string hash = string.Empty;
 
+            Write("");
+
+            while (hash != Root.GetHash())
+            {
+                Write($"Pass: {pass}\n\tHash: {hash}");
+                hash = Root.GetHash();
+                Swap();
+                Simplify(Root, SimplificationMode.Imaginary);
+                Simplify(Root, SimplificationMode.Division);
+                Simplify(Root, SimplificationMode.Subtraction);
+                Simplify(Root, SimplificationMode.Addition);
+                Simplify(Root, SimplificationMode.Multiplication);
+                pass++;
+                Write($"{this.Root.Print()}");
+                Write($"{this.Root.ToInfix()}");
+                Write($"");
+            }
+            Write("");
             return this;
         }
 
@@ -178,6 +191,7 @@ namespace AbMath.Calculator
                             Value = "0"
                         }
                     };
+                    Write("\tSimplification: Subtraction");
                 }
                 //otherwise we need to replace the current 
                 //token in the leaf with another node.
@@ -195,6 +209,7 @@ namespace AbMath.Calculator
                             Value = "0"
                         }
                     } );
+                    Write("\tSimplification: Subtraction");
                 }
             }
             //Addition
@@ -207,6 +222,7 @@ namespace AbMath.Calculator
                     node.Children[0].Token.Value = "2";
                     node.Children[0].Token.Type = RPN.Type.Number;
                     node.Token.Value = "*";
+                    Write("\tSimplification: Addition");
                 }
             }
             //Multiplication
@@ -220,6 +236,23 @@ namespace AbMath.Calculator
                     node.Children[0].Token.Value = "2";
                     node.Children[0].Token.Type = RPN.Type.Number;
                     node.Token.Value = "^";
+                    Write("\tSimplification: Multiplication");
+                }
+                else if (node.Children[1].Token.IsNumber() && node.Children[0].Token.Value == "*" ) 
+                {
+                    if (node.Children[0].Children[1].Token.IsNumber() && !node.Children[0].Children[0].Token.IsNumber())
+                    {
+                        double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
+                        double num2 = double.Parse(node.Children[1].Token.Value);
+                        double result = num1 * num2;
+                        node.Children[0].Children[1].Token.Value = "1";
+                        node.Children[1].Token.Value = result.ToString();
+                    }
+                }
+                else if (node.Children[1].Token.IsNumber() && node.Children[1].Token.Value == "1")
+                {
+                    RPN.Node temp = node.Children[0];
+                    node.Parent.Replace( node.ID, temp );
                 }
             }
 
@@ -237,7 +270,6 @@ namespace AbMath.Calculator
             }
         }
 
-
         private void Swap()
         {
             Swap(Root);
@@ -254,8 +286,7 @@ namespace AbMath.Calculator
             //Multiplication operator
             else if (node.Token.IsMultiplication())
             {
-                //Two numbers
-                //Number and expression
+
             }
 
             //Propagate down the tree
@@ -274,8 +305,6 @@ namespace AbMath.Calculator
         {
 
         }
-
-
 
         private void Write(string message)
         {

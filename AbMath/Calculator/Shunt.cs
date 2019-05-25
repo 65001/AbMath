@@ -29,6 +29,7 @@ namespace AbMath.Calculator
             private Token _prev;
             private Token _token;
             private Token _ahead;
+            private Token _ahead2;
 
             private Token _multiply;
             private Token _division;
@@ -81,7 +82,8 @@ namespace AbMath.Calculator
                 {
                     _prev = (i > 0) ? _token : _null;
                     _token = tokens[i]; 
-                    _ahead = ((i + 1) < tokens.Count)? tokens[i + 1] : _null;
+                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
+                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
 
                     action = string.Empty;
                     type = string.Empty;
@@ -121,8 +123,11 @@ namespace AbMath.Calculator
                         _operator.Push(_division);
                         _operator.Push(_multiply);
                     }
+                    //2 x (
+                    //2 x sin
                     else if (!_prev.IsNull() && !_ahead.IsNull() &&
-                             _prev.IsNumber() && _token.IsVariable() && _ahead.IsLeftBracket())
+                             _prev.IsNumber() && _token.IsVariable() && 
+                             ( _ahead.IsLeftBracket() || _ahead.IsFunction() ))
                     {
                         type = "Variable Chain Multiplication";
                         _output.Enqueue(_token);
@@ -391,7 +396,9 @@ namespace AbMath.Calculator
             {
                 //p t a
                 //3 x (
-                return !_prev.IsNull() && !_prev.IsComma() && _prev.IsRightBracket() && (_token.IsNumber() || _token.IsVariable());
+                return !_prev.IsNull() && !_prev.IsComma() &&
+                       ( _prev.IsRightBracket() || _prev.IsVariable() )
+                       && (_token.IsNumber() || _token.IsVariable());
             }
 
             private bool Chain()

@@ -13,11 +13,11 @@ namespace AbMath.Calculator
         const string _space = "   ";
 
         //Code: https://stackoverflow.com/questions/2094239/swap-two-items-in-listt
-        public static IList<T> Swap<T>(this IList<T> list, int id1, int id2)
+        public static IList<T> Swap<T>(this IList<T> list, int index, int index2)
         {
-            T temp = list[id1];
-            list[id1] = list[id2];
-            list[id2] = temp;
+            T temp = list[index];
+            list[index] = list[index2];
+            list[index2] = temp;
             return list;
         }
 

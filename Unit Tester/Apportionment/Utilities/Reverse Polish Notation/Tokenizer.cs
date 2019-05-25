@@ -26,7 +26,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("-pi");
             test.Compute();
-            if ("-1 pi *" != test.Polish.Print())
+            if ("-1 pi *" != test.Polish.Print() && "pi -1 *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -37,7 +37,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("sin(16pi)");
             test.Compute();
-            if ("16 pi * sin" != test.Polish.Print())
+            if ("16 pi * sin" != test.Polish.Print() && "pi 16 * sin" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -48,7 +48,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("2e");
             test.Compute();
-            if ("2 e *" != test.Polish.Print())
+            if ("2 e *" != test.Polish.Print() && "e 2 *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -71,7 +71,7 @@ namespace AbMath.Tests
             test.SetEquation("(30.1)2.5(278)");
             test.Compute();
 
-            if ("30.1 2.5 * 278 *" != test.Polish.Print())
+            if ("30.1 2.5 * 278 *" != test.Polish.Print() && "278 30.1 2.5 * *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -152,7 +152,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("sin ( max ( 2 , 3 ) / 3 * 3.1415 )");
             test.Compute();
-            if ("2 3 max 3 / 3.1415 * sin" != test.Polish.Print())
+            if ("2 3 max 3 / 3.1415 * sin" != test.Polish.Print() && "3.1415 2 3 max 3 / * sin" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -208,6 +208,17 @@ namespace AbMath.Tests
             test.SetEquation("x^2");
             test.Compute();
             if ("x 2 ^" != test.Polish.Print() && "1 x 2 ^ *" != test.Polish.Print() && "1 x * 2 ^" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void VariableChainMultiplication()
+        {
+            test.SetEquation("x2sin(x) + x3sin(x)");
+            test.Compute();
+            if ("x 2 * x sin * 3 x * x sin * +" != test.Polish.Print())
             {
                 Assert.Fail();
             }

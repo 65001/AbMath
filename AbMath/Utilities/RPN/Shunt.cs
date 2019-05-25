@@ -276,7 +276,7 @@ namespace AbMath.Utilities
 
             bool RightImplicit()
             {
-                return !Prev.IsNull() && Prev.Value != "," && Prev.IsRightBracket() && (Token.IsNumber() || Token.IsVariable());
+                return !Prev.IsNull() && Prev.Value != "," && (Prev.IsRightBracket() || Prev.IsNumber()) && (Token.IsNumber() || Token.IsVariable());
             }
 
             bool Chain()

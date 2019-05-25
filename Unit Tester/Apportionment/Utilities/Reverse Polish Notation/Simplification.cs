@@ -77,7 +77,7 @@ namespace AbMath.Tests
             string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("-1 x 2 ^ * x +" != tokens)
+            if ("-1 x 2 ^ * x +" != tokens && "x 2 ^ -1 * x +" != tokens)
             {
                 Assert.Fail();
             }
@@ -179,7 +179,7 @@ namespace AbMath.Tests
             RPN rpn = new RPN("2x(3x^2)");
             rpn.Compute();
 
-            if ("6 x 3 ^ *" != rpn.Polish.Print())
+            if ("6 x 3 ^ *" != rpn.Polish.Print() && "x 3 ^ 6 *" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }

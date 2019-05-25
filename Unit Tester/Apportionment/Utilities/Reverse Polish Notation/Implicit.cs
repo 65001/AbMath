@@ -82,7 +82,7 @@ namespace AbMath.Tests
             test.SetEquation("sin(2)4");
             test.Compute();
 
-            if ("2 sin 4 *" != test.Polish.Print())
+            if ("2 sin 4 *" != test.Polish.Print() && "4 2 sin *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -142,7 +142,7 @@ namespace AbMath.Tests
             test.SetEquation("-(3^2)");
             test.Compute();
 
-            if ("-1 3 2 ^ *" != test.Polish.Print())
+            if ("-1 3 2 ^ *" != test.Polish.Print() && "3 2 ^ -1 *" != test.Polish.Print())
             {
                 Assert.Fail();
             }
