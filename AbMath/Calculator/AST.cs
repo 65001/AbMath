@@ -33,7 +33,7 @@ namespace AbMath.Calculator
             {
                 nodes[i] = new RPN.Node()
                 {
-                    Children = new List<RPN.Node>(),
+                    Children = new RPN.Node[0],
                     ID = i,
                     Parent = null,
                     Token = input[i]
@@ -48,17 +48,17 @@ namespace AbMath.Calculator
                     case RPN.Type.Function:
                     case RPN.Type.Operator:
                         //Pop the operator or function and the number or arguments needed from the stack
-                        List<RPN.Node> children = new List<RPN.Node>(nodes[i].Token.Arguments);
+
+                        //List<RPN.Node> children = new List<RPN.Node>(nodes[i].Token.Arguments);
+                        nodes[i].Children = new RPN.Node[nodes[i].Token.Arguments];
                         for (int j = 0; j < nodes[i].Token.Arguments; j++)
                         {
                             RPN.Node temp = _stack.Pop();
                             temp.Parent = nodes[i];
-                            children.Add( temp );
+                            nodes[i].Children[j] =(temp);
                         }
 
-                        nodes[i].Children = children;
                         _stack.Push(nodes[i]); //Push new tree into the stack 
-
                         break;
                     //When an operand is encountered push into stack
                     default:
@@ -137,7 +137,7 @@ namespace AbMath.Calculator
                 {
                     Root = new RPN.Node
                     {
-                        Children = new List<RPN.Node>(0),
+                        Children = new RPN.Node[0],
                         ID = -1,
                         Parent = null,
                         Token = new RPN.Token
@@ -159,7 +159,7 @@ namespace AbMath.Calculator
                 {
                     Root = new RPN.Node
                     {
-                        Children = new List<RPN.Node>(0),
+                        Children = new RPN.Node[0],
                         ID = -1,
                         Parent = null,
                         Token = new RPN.Token
@@ -192,7 +192,7 @@ namespace AbMath.Calculator
                 {
                     Root = new RPN.Node
                     {
-                        Children = new List<RPN.Node>(0),
+                        Children = new RPN.Node[0],
                         ID = -1,
                         Parent = null,
                         Token = new RPN.Token
@@ -210,7 +210,7 @@ namespace AbMath.Calculator
                 {
                     node.Parent.Replace( node.ID, new RPN.Node
                     {
-                        Children = new List<RPN.Node>(),
+                        Children = new RPN.Node[0],
                         ID = Root.ID + 1,
                         Parent = node.Parent,
                         Token = new RPN.Token
@@ -229,7 +229,7 @@ namespace AbMath.Calculator
                 //Is root and leafs have the same hash
                 if (node.ChildrenAreIdentical())
                 {
-                    node.Children[0].Children.Clear();
+                    node.Children[0].Children = new RPN.Node[0];
                     node.Children[0].Token.Value = "2";
                     node.Children[0].Token.Type = RPN.Type.Number;
                     node.Token.Value = "*";
@@ -283,7 +283,7 @@ namespace AbMath.Calculator
                 //else
                 if (node.ChildrenAreIdentical())
                 {
-                    node.Children[0].Children.Clear();
+                    node.Children[0].Children = new RPN.Node[0];
                     node.Children[0].Token.Value = "2";
                     node.Children[0].Token.Type = RPN.Type.Number;
                     node.Token.Value = "^";
@@ -343,7 +343,7 @@ namespace AbMath.Calculator
             }
 
             //Propagate down the tree
-            for (int i = (node.Children.Count - 1); i >= 0; i--)
+            for (int i = (node.Children.Length - 1); i >= 0; i--)
             {
                 Simplify(node.Children[i], mode);
             }
@@ -384,7 +384,7 @@ namespace AbMath.Calculator
             }
 
             //Propagate down the tree
-            for (int i = (node.Children.Count - 1); i >= 0; i--)
+            for (int i = (node.Children.Length - 1); i >= 0; i--)
             {
                 Swap(node.Children[i]);
             }

@@ -12,16 +12,15 @@ namespace AbMath.Calculator
             public int ID;
             public Token Token;
             public Node Parent;
-            public List<Node> Children;
+            public Node[] Children;
 
             public void Replace(int identification, Node node)
             {
-                for (int i = 0; i < Children.Count; i++)
+                for (int i = 0; i < Children.Length; i++)
                 {
                     if (Children[i].ID == identification)
                     {
-                        Children.RemoveAt(i);
-                        Children.Insert(i, node);
+                        Children[i] = node;
                         return;
                     }
                 }
@@ -37,17 +36,17 @@ namespace AbMath.Calculator
                 return MD5(this.ToPostFix().Print());
             }
 
-            public bool isLeaf => Children.Count == 0;
+            public bool isLeaf => Children.Length == 0;
             public bool isRoot => Parent is null;
 
             public bool ChildrenAreIdentical()
             {
-                if (Children.Count <= 1)
+                if (Children.Length <= 1)
                 {
                     return true;
                 }
 
-                for (int i = 1; i < Children.Count; i++)
+                for (int i = 1; i < Children.Length; i++)
                 {
                     if (Children[i - 1].GetHash() != Children[i].GetHash())
                     {
@@ -118,7 +117,7 @@ namespace AbMath.Calculator
                 }
 
                 //Operators with left and right
-                if (node.Children.Count == 2 && node.Token.IsOperator())
+                if (node.Children.Length == 2 && node.Token.IsOperator())
                 {
                     PostFix(node.Children[1], polish);
                     PostFix(node.Children[0], polish);
@@ -127,7 +126,7 @@ namespace AbMath.Calculator
                 }
 
                 //Operators that only have one child
-                if (node.Children.Count == 1 && node.Token.IsOperator())
+                if (node.Children.Length == 1 && node.Token.IsOperator())
                 {
                     PostFix(node.Children[0], polish);
                     polish.Add(node.Token);
@@ -135,9 +134,9 @@ namespace AbMath.Calculator
                 }
 
                 //Functions
-                if (node.Children.Count > 0 && node.Token.IsFunction())
+                if (node.Children.Length > 0 && node.Token.IsFunction())
                 {
-                    for (int i = (node.Children.Count - 1); i >= 0; i--)
+                    for (int i = (node.Children.Length - 1); i >= 0; i--)
                     {
                         PostFix(node.Children[i], polish);
                     }
@@ -157,7 +156,7 @@ namespace AbMath.Calculator
                 }
 
                 //Operators with left and right
-                if (node.Children.Count == 2 && node.Token.IsOperator())
+                if (node.Children.Length == 2 && node.Token.IsOperator())
                 {
                     Infix(node.Children[1], infix);
                     infix.Append(node.Token);
@@ -166,7 +165,7 @@ namespace AbMath.Calculator
                 }
 
                 //Operators that only have one child
-                if (node.Children.Count == 1 && node.Token.IsOperator())
+                if (node.Children.Length == 1 && node.Token.IsOperator())
                 {
                     infix.Append(node.Token);
                     Infix(node.Children[0], infix);
@@ -175,11 +174,11 @@ namespace AbMath.Calculator
 
                 //Functions
                 //Functions
-                if (node.Children.Count > 0 && node.Token.IsFunction())
+                if (node.Children.Length > 0 && node.Token.IsFunction())
                 {
                     infix.Append(node.Token.Value);
                     infix.Append("(");
-                    for (int i = (node.Children.Count - 1); i >= 0; i--)
+                    for (int i = (node.Children.Length - 1); i >= 0; i--)
                     {
                         Infix(node.Children[i], infix);
                         if (i > 0)

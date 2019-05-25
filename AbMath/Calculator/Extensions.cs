@@ -13,12 +13,12 @@ namespace AbMath.Calculator
         const string _space = "   ";
 
         //Code: https://stackoverflow.com/questions/2094239/swap-two-items-in-listt
-        public static IList<T> Swap<T>(this IList<T> list, int index, int index2)
+        public static T[] Swap<T>(this T[] array, int index, int index2)
         {
-            T temp = list[index];
-            list[index] = list[index2];
-            list[index2] = temp;
-            return list;
+            T temp = array[index];
+            array[index] = array[index2];
+            array[index2] = temp;
+            return array;
         }
 
         public static string Print<T>(this Queue<T> queue)
@@ -97,11 +97,11 @@ namespace AbMath.Calculator
         static void PrintNode(RPN.Node node, string indent, ref StringBuilder sb)
         {
             //node [Hash] ID:[$ID] Children:[$#]
-            sb.AppendLine($"{node} [{node.ID}: {node.GetHash()}:{node.Children.Count}]");
+            sb.AppendLine($"{node} [{node.ID}: {node.GetHash()}:{node.Children.Length}]");
 
             // Loop through the children recursively, passing in the
             // indent, and the isLast parameter
-            var numberOfChildren = node.Children.Count;
+            var numberOfChildren = node.Children.Length;
             for (var i = 0; i < numberOfChildren; i++)
             {
                 var child = node.Children[i];
