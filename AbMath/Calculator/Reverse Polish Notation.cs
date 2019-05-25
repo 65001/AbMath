@@ -145,14 +145,14 @@ namespace AbMath.Calculator
             Node tree = ast.Generate(this.Data.Polish);
            
             Logger?.Invoke(this, tree.Print() );
-            Logger?.Invoke(this, "AST RPN : " + ast.ToPostFix().Print());
+            Logger?.Invoke(this, "AST RPN : " + ast.Root.ToPostFix().Print());
             SAST.Stop();
 
             Stopwatch AST_Simplify = new Stopwatch();
             AST_Simplify.Start();
-            this.Data.Polish = ast.Simplify().ToPostFix().ToArray();
+            this.Data.Polish = ast.Simplify().Root.ToPostFix().ToArray();
             Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
-            Logger?.Invoke(this, "AST Simplified Infix : " + ast.ToInfix());
+            Logger?.Invoke(this, "AST Simplified Infix : " + ast.Root.ToInfix());
             Logger?.Invoke(this, ast.Root.Print());
             AST_Simplify.Stop();
 
@@ -168,7 +168,7 @@ namespace AbMath.Calculator
             {
                 ElapsedMilliseconds = AST_Simplify.ElapsedMilliseconds,
                 ElapsedTicks = AST_Simplify.ElapsedTicks,
-                Type = "AST Simplification"
+                Type = "AST Simplify"
             });
         }
     }

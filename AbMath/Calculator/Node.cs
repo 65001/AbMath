@@ -34,16 +34,7 @@ namespace AbMath.Calculator
 
             public string GetHash()
             {
-                StringBuilder md5 = new StringBuilder();
-                md5.Append(Token.Value);
-
-                //Recursively find the trees values
-                for (int i = (Children.Count - 1); i >= 0; i--)
-                {
-                    md5.Append(Children[i].GetHash());
-                }
-
-                return MD5(md5.ToString());
+                return MD5(this.ToPostFix().Print());
             }
 
             public bool isLeaf => Children.Count == 0;
@@ -82,6 +73,128 @@ namespace AbMath.Calculator
                 }
 
                 return sb.ToString();
+            }
+
+            /// <summary>
+            /// Returns the postfix representation
+            /// of the entire abstract syntax tree.
+            /// </summary>
+            /// <returns></returns>
+            public List<RPN.Token> ToPostFix()
+            {
+                return ToPostFix(this);
+            }
+
+            /// <summary>
+            /// Returns the postfix representation of
+            /// the initial node and its descendents.
+            /// </summary>
+            /// <param name="node">The initial node</param>
+            /// <returns></returns>
+            public List<RPN.Token> ToPostFix(RPN.Node node)
+            {
+                List<RPN.Token> tokens = new List<RPN.Token>();
+                PostFix(node, tokens);
+                return tokens;
+            }
+
+            public string ToInfix()
+            {
+                return ToInfix(this);
+            }
+
+            public string ToInfix(RPN.Node node)
+            {
+                StringBuilder infix = new StringBuilder();
+                Infix(node, infix);
+                return infix.ToString();
+            }
+
+            private void PostFix(RPN.Node node, List<RPN.Token> polish)
+            {
+                if (node is null)
+                {
+                    return;
+                }
+
+                //Operators with left and right
+                if (node.Children.Count == 2 && node.Token.IsOperator())
+                {
+                    PostFix(node.Children[1], polish);
+                    PostFix(node.Children[0], polish);
+                    polish.Add(node.Token);
+                    return;
+                }
+
+                //Operators that only have one child
+                if (node.Children.Count == 1 && node.Token.IsOperator())
+                {
+                    PostFix(node.Children[0], polish);
+                    polish.Add(node.Token);
+                    return;
+                }
+
+                //Functions
+                if (node.Children.Count > 0 && node.Token.IsFunction())
+                {
+                    for (int i = (node.Children.Count - 1); i >= 0; i--)
+                    {
+                        PostFix(node.Children[i], polish);
+                    }
+                    polish.Add(node.Token);
+                    return;
+                }
+
+                //Number, Variable, or constant function
+                polish.Add(node.Token);
+            }
+
+            private void Infix(RPN.Node node, StringBuilder infix)
+            {
+                if (node is null)
+                {
+                    return;
+                }
+
+                //Operators with left and right
+                if (node.Children.Count == 2 && node.Token.IsOperator())
+                {
+                    Infix(node.Children[1], infix);
+                    infix.Append(node.Token);
+                    Infix(node.Children[0], infix);
+                    return;
+                }
+
+                //Operators that only have one child
+                if (node.Children.Count == 1 && node.Token.IsOperator())
+                {
+                    infix.Append(node.Token);
+                    Infix(node.Children[0], infix);
+                    return;
+                }
+
+                //Functions
+                //Functions
+                if (node.Children.Count > 0 && node.Token.IsFunction())
+                {
+                    infix.Append(node.Token.Value);
+                    infix.Append("(");
+                    for (int i = (node.Children.Count - 1); i >= 0; i--)
+                    {
+                        Infix(node.Children[i], infix);
+                        if (i > 0)
+                        {
+                            infix.Append(",");
+                        }
+                    }
+
+                    infix.Append(")");
+
+                    return;
+                }
+
+                //Number, Variable, or constant function
+                infix.Append(node.Token.Value);
             }
         }
     }

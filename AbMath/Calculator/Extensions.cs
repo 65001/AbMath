@@ -12,6 +12,15 @@ namespace AbMath.Calculator
         const string _vertical = " │ ";
         const string _space = "   ";
 
+        //Code: https://stackoverflow.com/questions/2094239/swap-two-items-in-listt
+        public static IList<T> Swap<T>(this IList<T> list, int id1, int id2)
+        {
+            T temp = list[id1];
+            list[id1] = list[id2];
+            list[id2] = temp;
+            return list;
+        }
+
         public static string Print<T>(this Queue<T> queue)
         {
             int length = queue.Count;
@@ -197,6 +206,16 @@ namespace AbMath.Calculator
         public static bool IsSubtraction(this RPN.Token token)
         {
             return token.Value == "-";
+        }
+
+        public static bool IsDivision(this RPN.Token token)
+        {
+            return token.Value == "/";
+        }
+
+        public static bool IsMultiplication(this RPN.Token token)
+        {
+            return token.Value == "*";
         }
 
         public static bool IsExponent(this RPN.Token token)

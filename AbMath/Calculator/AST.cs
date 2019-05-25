@@ -85,11 +85,14 @@ namespace AbMath.Calculator
         public AST Simplify()
         {
             CanSimplify = true;
+            Swap(Root);
+            string hash = Root.GetHash();
             Simplify(Root, SimplificationMode.Imaginary);
             Simplify(Root, SimplificationMode.Division);
             Simplify(Root, SimplificationMode.Subtraction);
             Simplify(Root, SimplificationMode.Addition);
             Simplify(Root, SimplificationMode.Multiplication);
+
             return this;
         }
 
@@ -143,10 +146,8 @@ namespace AbMath.Calculator
                         }
                     };
                 }
-                //gcd if the leafs are both numbers
-                //since the values of the leafs themselves are changed
-                //we don't have to worry about if the node is 
-                //the root or not
+                //gcd if the leafs are both numbers since the values of the leafs themselves are changed
+                //we don't have to worry about if the node is the root or not
                 else if (node.Children[0].Token.IsNumber() && node.Children[1].Token.IsNumber())
                 {
                     double num1 = double.Parse(node.Children[0].Token.Value);
@@ -211,6 +212,8 @@ namespace AbMath.Calculator
             //Multiplication
             else if (mode == SimplificationMode.Multiplication && node.Token.Value == "*")
             {
+                //TODO: If one of the leafs is a division and the other a number or variable
+                //else
                 if (node.ChildrenAreIdentical())
                 {
                     node.Children[0].Children.Clear();
@@ -242,130 +245,37 @@ namespace AbMath.Calculator
 
         private void Swap(RPN.Node node)
         {
+            //Addition operator
+            if (node.Token.IsAddition())
+            {
+                //Two numbers
+                //Number and expression
+            }
+            //Multiplication operator
+            else if (node.Token.IsMultiplication())
+            {
+                //Two numbers
+                //Number and expression
+            }
 
+            //Propagate down the tree
+            for (int i = (node.Children.Count - 1); i >= 0; i--)
+            {
+                Swap(node.Children[i]);
+            }
         }
 
-        /// <summary>
-        /// Returns the postfix representation
-        /// of the entire abstract syntax tree.
-        /// </summary>
-        /// <returns></returns>
-        public List<RPN.Token> ToPostFix()
+        private void Explode()
         {
-            return ToPostFix(Root);
+
         }
 
-        /// <summary>
-        /// Returns the postfix representation of
-        /// the initial node and its descendents.
-        /// </summary>
-        /// <param name="node">The initial node</param>
-        /// <returns></returns>
-        public List<RPN.Token> ToPostFix(RPN.Node node)
+        private void Explode(RPN.Node node)
         {
-            List<RPN.Token> tokens = new List<RPN.Token>();
-            PostFix(node, tokens);
-            return tokens;
+
         }
 
-        public string ToInfix()
-        {
-            return ToInfix(Root);
-        }
 
-        public string ToInfix(RPN.Node node)
-        {
-            StringBuilder infix = new StringBuilder();
-            Infix(node, infix);
-            return infix.ToString();
-        }
-
-        private void PostFix(RPN.Node node, List<RPN.Token> polish)
-        {
-            if (node is null)
-            {
-                return;
-            }
-
-            //Operators with left and right
-            if (node.Children.Count == 2 && node.Token.IsOperator())
-            {
-                PostFix(node.Children[1],  polish);
-                PostFix(node.Children[0],  polish);
-                polish.Add(node.Token);
-                return;
-            }
-
-            //Operators that only have one child
-            if (node.Children.Count == 1 && node.Token.IsOperator())
-            {
-                PostFix(node.Children[0],  polish);
-                polish.Add(node.Token);
-                return;
-            }
-
-            //Functions
-            if (node.Children.Count > 0 && node.Token.IsFunction())
-            {
-                for (int i = (node.Children.Count - 1); i >= 0; i--)
-                {
-                    PostFix(node.Children[i],  polish);
-                }
-                polish.Add(node.Token);
-                return;
-            }
-
-            //Number, Variable, or constant function
-            polish.Add(node.Token);
-        }
-
-        private void Infix(RPN.Node node, StringBuilder infix)
-        {
-            if (node is null)
-            {
-                return;
-            }
-
-            //Operators with left and right
-            if (node.Children.Count == 2 && node.Token.IsOperator())
-            {
-                Infix(node.Children[1], infix);
-                infix.Append(node.Token);
-                Infix(node.Children[0], infix);
-                return;
-            }
-
-            //Operators that only have one child
-            if (node.Children.Count == 1 && node.Token.IsOperator())
-            {
-                infix.Append(node.Token);
-                Infix(node.Children[0], infix);
-                return;
-            }
-
-            //Functions
-            //Functions
-            if (node.Children.Count > 0 && node.Token.IsFunction())
-            {
-                infix.Append(node.Token.Value);
-                infix.Append("(");
-                for (int i = (node.Children.Count - 1); i >= 0; i--)
-                {
-                    Infix(node.Children[i], infix);
-                    if (i > 0)
-                    {
-                        infix.Append(",");
-                    }
-                }
-
-                infix.Append(")");
-                
-                return;
-            }
-
-            //Number, Variable, or constant function
-            infix.Append(node.Token.Value);
-        }
 
         private void Write(string message)
         {
