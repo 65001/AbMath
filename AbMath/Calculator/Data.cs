@@ -461,7 +461,31 @@ namespace AbMath.Calculator
                     Compute = DoFunctions.Tan
                 });
 
-                AddFunction("arcsin", new Function()
+                AddFunction("sec", new Function
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    Compute = DoFunctions.Sec
+                });
+
+                AddFunction("csc", new Function
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    Compute = DoFunctions.Csc
+                });
+
+                AddFunction("cot", new Function
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    Compute = DoFunctions.Cot
+                });
+
+                AddFunction("arcsin", new Function
                 {
                     Arguments = 1,
                     Compute = DoFunctions.Arcsin,
@@ -469,7 +493,7 @@ namespace AbMath.Calculator
                     MinArguments = 1
                 });
 
-                AddFunction("arccos", new Function()
+                AddFunction("arccos", new Function
                 {
                     Arguments = 1,
                     Compute = DoFunctions.Arccos,
@@ -477,12 +501,36 @@ namespace AbMath.Calculator
                     MinArguments = 1
                 });
 
-                AddFunction("arctan", new Function()
+                AddFunction("arctan", new Function
                 {
                     Arguments = 1,
                     Compute = DoFunctions.Arctan,
                     MaxArguments = 1,
                     MinArguments = 1
+                });
+
+                AddFunction("arcsec", new Function
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    Compute = DoFunctions.Arcsec
+                });
+
+                AddFunction("arccsc", new Function
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    Compute = DoFunctions.Arccsc
+                });
+
+                AddFunction("arccot", new Function
+                {
+                    MinArguments = 1,
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    Compute = DoFunctions.Arccot
                 });
 
                 AddFunction("rad", new Function()

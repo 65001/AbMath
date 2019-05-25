@@ -46,6 +46,21 @@ namespace AbMath.Calculator
                 return Math.Tan(arguments[0]);
             }
 
+            public static double Sec(params double[] arguments)
+            {
+                return 1 / Cos(arguments);
+            }
+
+            public static double Csc(params double[] arguments)
+            {
+                return 1 / Sin(arguments);
+            }
+
+            public static double Cot(params double[] arguments)
+            {
+                return 1 / Tan(arguments);
+            }
+
             public static double Arcsin(params double[] arguments)
             {
                 return Math.Asin(arguments[0]);
@@ -59,6 +74,21 @@ namespace AbMath.Calculator
             public static double Arctan(params double[] arguments)
             {
                 return Math.Atan(arguments[0]);
+            }
+
+            public static double Arcsec(params double[] arguments)
+            {
+                return Arccos(1 / arguments[0]);
+            }
+
+            public static double Arccsc(params double[] arguments)
+            {
+                return Arcsin(1 / arguments[0]);
+            }
+
+            public static double Arccot(params double[] arguments)
+            {
+                return Math.PI / 2 - Arctan(arguments[0]);
             }
 
             public static double Sqrt(params double[] arguments)

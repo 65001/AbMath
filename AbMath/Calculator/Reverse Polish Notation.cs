@@ -137,6 +137,7 @@ namespace AbMath.Calculator
             _shunt.Logger += Logger;
             Data.Polish = _shunt.ShuntYard( this.Tokens  );
 
+            //Generate an Abstract Syntax Tree
             Stopwatch SAST = new Stopwatch();
             SAST.Start();
 
@@ -148,22 +149,25 @@ namespace AbMath.Calculator
             Logger?.Invoke(this, "AST RPN : " + ast.Root.ToPostFix().Print());
             SAST.Stop();
 
-            Stopwatch AST_Simplify = new Stopwatch();
-            AST_Simplify.Start();
-            this.Data.Polish = ast.Simplify().Root.ToPostFix().ToArray();
-            Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
-            this.Data.SimplifiedEquation = ast.Root.ToInfix();
-            Logger?.Invoke(this, "AST Simplified Infix : " + this.Data.SimplifiedEquation);
-            Logger?.Invoke(this, ast.Root.Print());
-            AST_Simplify.Stop();
-
-
             this.Data.AddTimeRecord(new TimeRecord
             {
                 ElapsedMilliseconds = SAST.ElapsedMilliseconds,
                 ElapsedTicks = SAST.ElapsedTicks,
                 Type = "AST"
-            } );
+            });
+
+            //Simplify the Abstract Syntax Tree
+            //This can take quite a lot of time
+            Stopwatch AST_Simplify = new Stopwatch();
+            AST_Simplify.Start();
+
+            this.Data.Polish = ast.Simplify().Root.ToPostFix().ToArray();
+            this.Data.SimplifiedEquation = ast.Root.ToInfix();
+
+            Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
+            Logger?.Invoke(this, "AST Simplified Infix : " + this.Data.SimplifiedEquation);
+            Logger?.Invoke(this, ast.Root.Print());
+            AST_Simplify.Stop();
 
             this.Data.AddTimeRecord(new TimeRecord
             {

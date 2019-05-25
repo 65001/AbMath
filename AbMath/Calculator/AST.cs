@@ -9,9 +9,7 @@ namespace AbMath.Calculator
         public RPN.Node Root { get; private set; }
         private enum SimplificationMode
         {
-            Imaginary, Division, Subtraction, Addition, Multiplication,
-            Exponent, Functions, VariableFunctions, 
-            Trig
+            Imaginary, Division, Subtraction, Addition, Multiplication, Trig
         }
 
         private bool CanSimplify;
@@ -105,6 +103,7 @@ namespace AbMath.Calculator
                 Simplify(Root, SimplificationMode.Addition);
                 Simplify(Root, SimplificationMode.Multiplication);
                 pass++;
+
                 if (_data.DebugMode)
                 {
                     Write($"{this.Root.Print()}");
@@ -152,7 +151,7 @@ namespace AbMath.Calculator
                 //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
             }
             //Division
-            if (mode == SimplificationMode.Division && node.Token.Value == "/")
+            else if (mode == SimplificationMode.Division && node.Token.Value == "/")
             {
                 //if there are any divide by zero exceptions -> NaN to the root node
                 //NaN propagate anyways
@@ -236,7 +235,8 @@ namespace AbMath.Calculator
                     node.Token.Value = "*";
                     Write("\tSimplification: Addition -> Multiplication");
                 }
-                //Both nodes are multiplications
+                //Both nodes are multiplications with 
+                //the parent node being addition
                 //Case: 2sin(x) + 3sin(x)
                 else if (node.Children[0].Token.Value == node.Children[1].Token.Value && node.Children[0].Token.Value == "*")
                 {
@@ -245,7 +245,7 @@ namespace AbMath.Calculator
                         )
                     {
                         Write("\tSimplification: Addition");
-                        double coef1 = double.Parse( node.Children[0].Children[1].Token.Value );
+                        double coef1 = double.Parse( node.Children[0].Children[1].Token.Value);
                         double coef2 = double.Parse( node.Children[1].Children[1].Token.Value);
                         string sum = (coef1 + coef2).ToString();
 
@@ -253,8 +253,22 @@ namespace AbMath.Calculator
                         node.Children[0].Children[1].Token.Value = "0";
                     }
                 }
+                else if (node.Children[0].Token.IsNumber() && node.Children[0].Token.Value == "0")
+                {
+                    //Child 1 is the expression in this case.
+                    if (!node.isRoot)
+                    {
+                        Write("\tZero Addition.");
+                        node.Parent.Replace(node.ID, node.Children[1]);
+                    }
+                    else if (node.isRoot)
+                    {
+                        Write("\tZero Addition. Root case.");
+                        Root = node.Children[1];
+                    }
+                }
             }
-            //Multiplication
+             
             else if (mode == SimplificationMode.Multiplication && node.Token.Value == "*")
             {
                 //TODO: If one of the leafs is a division and the other a number or variable
@@ -308,10 +322,14 @@ namespace AbMath.Calculator
                     }
                 }
             }
+            else if (mode == SimplificationMode.Trig)
+            {
+                //sin^2(x) + cos^2(x)
+            }
 
             //Propagate down the tree IF there is a root 
             //which value is not NaN or a number
-            if (Root is null || Root.Token.Value == "NaN" || Root.Token.IsNumber() )
+            if (Root == null || Root.Token.Value == "NaN" || Root.Token.IsNumber() )
             {
                 return;
             }
@@ -354,12 +372,6 @@ namespace AbMath.Calculator
             //Multiplication operator
             else if (node.Token.IsMultiplication())
             {
-                /*
-                Write($"Node infix: {node.ToInfix()}");
-                Write($"Child 0: {node.Children[0].Token.Type}");
-                Write($"Child 1: {node.Children[1].Token.Type}");
-                */
-
                 //a number and a expression
                 if (node.Children[0].Token.IsNumber() && !(node.Children[1].Token.IsNumber() || node.Children[1].Token.IsVariable()))
                 {
