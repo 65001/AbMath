@@ -7,7 +7,7 @@ namespace AbMath.Calculator
 {
     public partial class RPN
     {
-        public class Node
+        public class  Node
         {
             public int ID;
             public Token Token;
@@ -196,6 +196,8 @@ namespace AbMath.Calculator
                 //Number, Variable, or constant function
                 infix.Append(node.Token.Value);
             }
+
+
         }
     }
 }

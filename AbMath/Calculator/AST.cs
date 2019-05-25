@@ -253,6 +253,7 @@ namespace AbMath.Calculator
                         node.Children[0].Children[1].Token.Value = "0";
                     }
                 }
+                //Zero addition
                 else if (node.Children[0].Token.IsNumber() && node.Children[0].Token.Value == "0")
                 {
                     //Child 1 is the expression in this case.
@@ -267,6 +268,13 @@ namespace AbMath.Calculator
                         Root = node.Children[1];
                     }
                 }
+                //7sin(x) + sin(x)
+                //C0: Anything
+                //C1:C0: Compare hash to C0.
+                //C1:C1: It is a number
+                //C1: must be a *
+
+
             }
              
             else if (mode == SimplificationMode.Multiplication && node.Token.Value == "*")
@@ -354,18 +362,13 @@ namespace AbMath.Calculator
                 //Two numbers
 
                 //Number and expression
-                
-                Write($"Node infix: {node.ToInfix()}");
-                Write($"Child 0: {node.Children[0].Token.Type}");
-                Write($"Child 1: {node.Children[1].Token.Type}");
-
                 if (node.Children[1].Token.IsNumber() &&
                     !(node.Children[0].Token.IsNumber() ||
                       node.Children[0].Token.IsVariable()
                      )
                     )
                 {
-                    Write("Node flip possible: Add");
+                    Write("\tNode flip possible: Add");
                 }
                 
             }
