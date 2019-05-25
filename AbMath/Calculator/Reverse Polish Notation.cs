@@ -152,7 +152,8 @@ namespace AbMath.Calculator
             AST_Simplify.Start();
             this.Data.Polish = ast.Simplify().Root.ToPostFix().ToArray();
             Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
-            Logger?.Invoke(this, "AST Simplified Infix : " + ast.Root.ToInfix());
+            this.Data.SimplifiedEquation = ast.Root.ToInfix();
+            Logger?.Invoke(this, "AST Simplified Infix : " + this.Data.SimplifiedEquation);
             Logger?.Invoke(this, ast.Root.Print());
             AST_Simplify.Stop();
 

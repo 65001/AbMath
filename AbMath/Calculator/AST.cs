@@ -92,7 +92,11 @@ namespace AbMath.Calculator
 
             while (hash != Root.GetHash())
             {
-                Write($"Pass: {pass}\n\tHash: {hash}");
+                if (_data.DebugMode)
+                {
+                    Write($"Pass: {pass}\n\tHash: {hash}");
+                }
+
                 hash = Root.GetHash();
                 Swap();
                 Simplify(Root, SimplificationMode.Imaginary);
@@ -101,11 +105,19 @@ namespace AbMath.Calculator
                 Simplify(Root, SimplificationMode.Addition);
                 Simplify(Root, SimplificationMode.Multiplication);
                 pass++;
-                Write($"{this.Root.Print()}");
-                Write($"{this.Root.ToInfix()}");
-                Write($"");
+                if (_data.DebugMode)
+                {
+                    Write($"{this.Root.Print()}");
+                    Write($"{this.Root.ToInfix()}");
+                    Write($"");
+                }
             }
-            Write("");
+
+            if (_data.DebugMode)
+            {
+                Write("");
+            }
+
             return this;
         }
 
@@ -222,7 +234,24 @@ namespace AbMath.Calculator
                     node.Children[0].Token.Value = "2";
                     node.Children[0].Token.Type = RPN.Type.Number;
                     node.Token.Value = "*";
-                    Write("\tSimplification: Addition");
+                    Write("\tSimplification: Addition -> Multiplication");
+                }
+                //Both nodes are multiplications
+                //Case: 2sin(x) + 3sin(x)
+                else if (node.Children[0].Token.Value == node.Children[1].Token.Value && node.Children[0].Token.Value == "*")
+                {
+                    if (node.Children[0].Children[0].GetHash() == node.Children[1].Children[0].GetHash() &&
+                        (node.Children[0].Children[1].Token.IsNumber() && node.Children[1].Children[1].Token.IsNumber() )
+                        )
+                    {
+                        Write("\tSimplification: Addition");
+                        double coef1 = double.Parse( node.Children[0].Children[1].Token.Value );
+                        double coef2 = double.Parse( node.Children[1].Children[1].Token.Value);
+                        string sum = (coef1 + coef2).ToString();
+
+                        node.Children[1].Children[1].Token.Value = sum;
+                        node.Children[0].Children[1].Token.Value = "0";
+                    }
                 }
             }
             //Multiplication
@@ -247,12 +276,36 @@ namespace AbMath.Calculator
                         double result = num1 * num2;
                         node.Children[0].Children[1].Token.Value = "1";
                         node.Children[1].Token.Value = result.ToString();
+                        Write("\tDual Node Multiplication.");
                     }
                 }
                 else if (node.Children[1].Token.IsNumber() && node.Children[1].Token.Value == "1")
                 {
                     RPN.Node temp = node.Children[0];
-                    node.Parent.Replace( node.ID, temp );
+                    if (!node.isRoot)
+                    {
+                        Write("\tMultiplication by one simplification.");
+                        node.Parent.Replace(node.ID, temp);
+                    }
+                    else if (node.isRoot)
+                    {
+                        Write("\tMultiplication by one simplification. Root type.");
+                        Root = temp;
+                    }
+                }
+                else if (node.Children[1].Token.IsNumber() && node.Children[1].Token.Value == "0")
+                {
+                    RPN.Node temp = node.Children[1];
+                    if (!node.isRoot)
+                    {
+                        Write("\tMultiplication by zero simplification.");
+                        node.Parent.Replace(node.ID, temp);
+                    }
+                    else if (node.isRoot)
+                    {
+                        Write("\tMultiplication by zero simplification. Root type.");
+                        Root = temp;
+                    }
                 }
             }
 
@@ -281,12 +334,38 @@ namespace AbMath.Calculator
             if (node.Token.IsAddition())
             {
                 //Two numbers
+
                 //Number and expression
+                
+                Write($"Node infix: {node.ToInfix()}");
+                Write($"Child 0: {node.Children[0].Token.Type}");
+                Write($"Child 1: {node.Children[1].Token.Type}");
+
+                if (node.Children[1].Token.IsNumber() &&
+                    !(node.Children[0].Token.IsNumber() ||
+                      node.Children[0].Token.IsVariable()
+                     )
+                    )
+                {
+                    Write("Node flip possible: Add");
+                }
+                
             }
             //Multiplication operator
             else if (node.Token.IsMultiplication())
             {
+                /*
+                Write($"Node infix: {node.ToInfix()}");
+                Write($"Child 0: {node.Children[0].Token.Type}");
+                Write($"Child 1: {node.Children[1].Token.Type}");
+                */
 
+                //a number and a expression
+                if (node.Children[0].Token.IsNumber() && !(node.Children[1].Token.IsNumber() || node.Children[1].Token.IsVariable()))
+                {
+                    Write($"\tMultiplication Swap");
+                    node.Children.Swap(1, 0);
+                }
             }
 
             //Propagate down the tree

@@ -68,6 +68,9 @@ namespace AbMath.Calculator
             /// The equation passed to the calculator 
             /// </summary>
             public string Equation;
+
+            public string SimplifiedEquation;
+
             public Token[] Polish { get; set; }
 
             /// <summary>
