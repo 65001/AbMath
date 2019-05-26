@@ -48,18 +48,6 @@ namespace AbMath.Calculator
             public Run Compute;
         }
 
-        public class Token
-        {
-            public string Value;
-            public int Arguments;
-            public Type Type;
-
-            public override string ToString()
-            {
-                return Value;
-            }
-        }
-
         public struct TimeRecord
         {
             public string Type;

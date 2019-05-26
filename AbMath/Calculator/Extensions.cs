@@ -160,7 +160,7 @@ namespace AbMath.Calculator
 
         public static bool IsNull(this RPN.Token token)
         {
-            return token.Type == RPN.Type.Null;
+            return token == null || token.Type == RPN.Type.Null;
         }
 
         public static bool IsFunction(this RPN.Token token)
