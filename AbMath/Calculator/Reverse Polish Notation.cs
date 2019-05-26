@@ -48,7 +48,7 @@ namespace AbMath.Calculator
             public Run Compute;
         }
 
-        public struct Token
+        public class Token
         {
             public string Value;
             public int Arguments;

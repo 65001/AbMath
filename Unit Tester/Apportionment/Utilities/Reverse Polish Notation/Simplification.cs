@@ -152,7 +152,7 @@ namespace AbMath.Tests
             string tokens = SI.Apply(rpn.Tokens).Print();
             Console.WriteLine(tokens);
 
-            if ("0 + 0" != tokens)
+            if ("0 + 0" != tokens && "0 * 2" != tokens)
             {
                 Assert.Fail();
             }

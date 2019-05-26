@@ -12,8 +12,6 @@ namespace AbMath.Calculator
             Imaginary, Division, Subtraction, Addition, Multiplication, Trig
         }
 
-        private bool CanSimplify;
-
         private RPN.DataStore _data;
         private Stack<RPN.Node> _stack;
 
@@ -82,7 +80,6 @@ namespace AbMath.Calculator
         /// <returns></returns>
         public AST Simplify()
         {
-            CanSimplify = true;
             int pass = 0;
             string hash = string.Empty;
 
@@ -122,12 +119,6 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node, SimplificationMode mode)
         {
-            //If we cannot simplify we must abort early.
-            if (!CanSimplify)
-            {
-                return;
-            }
-
             //Imaginary
             if (mode == SimplificationMode.Imaginary && node.Token.Value == "sqrt")
             {
@@ -271,9 +262,23 @@ namespace AbMath.Calculator
                 //7sin(x) + sin(x)
                 //C0: Anything
                 //C1:C0: Compare hash to C0.
-                //C1:C1: It is a number
-                //C1: must be a *
+                else if (node.Children[1].Token.IsMultiplication() &&
+                         node.Children[1].Children[1].Token.IsNumber() &&
+                         node.Children[1].Children[0].GetHash() == node.Children[0].GetHash()
+                         )
+                {
+                      Write("\tSimplification Addition Dual Node.");
 
+                     //Clears Children
+                      node.Children[0].Children = new RPN.Node[0];
+                     //Changes child node C0 to a zero number
+                      node.Children[0].Token.Value = "0";
+                      node.Children[0].Token.Type = RPN.Type.Number;
+
+                      //Changes child node c1:c1 by incrementing it by one.
+                      node.Children[1].Children[1].Token.Value =
+                        (double.Parse(node.Children[1].Children[1].Token.Value) + 1).ToString();
+                }
 
             }
              
