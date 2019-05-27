@@ -14,6 +14,7 @@ namespace AbMath.Calculator
 
         private RPN.DataStore _data;
         private Stack<RPN.Node> _stack;
+        private int count = -1;
 
         public event EventHandler<string> Logger;
 
@@ -38,6 +39,9 @@ namespace AbMath.Calculator
                 };
             }
 
+            count = input.Length - 1;
+            Write($"Count:{count}");
+
             for (int i = 0; i < nodes.Length; i++)
             {
                 switch (nodes[i].Token.Type)
@@ -45,9 +49,6 @@ namespace AbMath.Calculator
                     //When an operator or function is encountered 
                     case RPN.Type.Function:
                     case RPN.Type.Operator:
-                        //Pop the operator or function and the number or arguments needed from the stack
-
-                        //List<RPN.Node> children = new List<RPN.Node>(nodes[i].Token.Arguments);
                         nodes[i].Children = new RPN.Node[nodes[i].Token.Arguments];
                         for (int j = 0; j < nodes[i].Token.Arguments; j++)
                         {
@@ -87,11 +88,8 @@ namespace AbMath.Calculator
 
             while (hash != Root.GetHash())
             {
-                if (_data.DebugMode)
-                {
                     Write($"Pass: {pass}\n\tHash: {hash}");
-                }
-
+                
                 hash = Root.GetHash();
                 Swap();
                 Simplify(Root, SimplificationMode.Imaginary);
@@ -99,14 +97,12 @@ namespace AbMath.Calculator
                 Simplify(Root, SimplificationMode.Subtraction);
                 Simplify(Root, SimplificationMode.Addition);
                 Simplify(Root, SimplificationMode.Multiplication);
+                Simplify(Root, SimplificationMode.Trig);
                 pass++;
 
-                if (_data.DebugMode)
-                {
                     Write($"{this.Root.Print()}");
                     Write($"{this.Root.ToInfix()}");
                     Write($"");
-                }
             }
 
             if (_data.DebugMode)
@@ -129,7 +125,7 @@ namespace AbMath.Calculator
                     Root = new RPN.Node
                     {
                         Children = new RPN.Node[0],
-                        ID = -1,
+                        ID = GenerateNextID(),
                         Parent = null,
                         Token = new RPN.Token
                         {
@@ -138,6 +134,7 @@ namespace AbMath.Calculator
                             Value = "NaN"
                         }
                     };
+                    Write("\tSqrt Imaginary Number -> Root.");
                 }
                 //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
             }
@@ -151,7 +148,7 @@ namespace AbMath.Calculator
                     Root = new RPN.Node
                     {
                         Children = new RPN.Node[0],
-                        ID = -1,
+                        ID = GenerateNextID(),
                         Parent = null,
                         Token = new RPN.Token
                         {
@@ -160,6 +157,7 @@ namespace AbMath.Calculator
                             Value = "NaN"
                         }
                     };
+                    Write("\tDivision by zero -> Root");
                 }
                 //gcd if the leafs are both numbers since the values of the leafs themselves are changed
                 //we don't have to worry about if the node is the root or not
@@ -171,6 +169,7 @@ namespace AbMath.Calculator
 
                     node.Children[0].Token.Value = (num1 / gcd).ToString();
                     node.Children[1].Token.Value = (num2 / gcd).ToString();
+                    Write("\tDivision GCD.");
                 }
             }
             //Subtraction
@@ -184,7 +183,7 @@ namespace AbMath.Calculator
                     Root = new RPN.Node
                     {
                         Children = new RPN.Node[0],
-                        ID = -1,
+                        ID = GenerateNextID(),
                         Parent = null,
                         Token = new RPN.Token
                         {
@@ -193,7 +192,7 @@ namespace AbMath.Calculator
                             Value = "0"
                         }
                     };
-                    Write("\tSimplification: Subtraction");
+                    Write("\tSimplification: Subtraction. Children are identical. Root.");
                 }
                 //otherwise we need to replace the current 
                 //token in the leaf with another node.
@@ -202,7 +201,7 @@ namespace AbMath.Calculator
                     node.Parent.Replace( node.ID, new RPN.Node
                     {
                         Children = new RPN.Node[0],
-                        ID = Root.ID + 1,
+                        ID = GenerateNextID(),
                         Parent = node.Parent,
                         Token = new RPN.Token
                         {
@@ -285,14 +284,48 @@ namespace AbMath.Calculator
             else if (mode == SimplificationMode.Multiplication && node.Token.Value == "*")
             {
                 //TODO: If one of the leafs is a division and the other a number or variable
-                //else
                 if (node.ChildrenAreIdentical())
                 {
-                    node.Children[0].Children = new RPN.Node[0];
-                    node.Children[0].Token.Value = "2";
-                    node.Children[0].Token.Type = RPN.Type.Number;
-                    node.Token.Value = "^";
-                    Write("\tSimplification: Multiplication");
+                    Write($"\tThe current node is {node.GetHash()}");
+                    RPN.Node temp = node.Children[0];
+
+                    RPN.Node two = new RPN.Node()
+                    {
+                        Children = new RPN.Node[0],
+                        ID = GenerateNextID(),
+                        Parent = node,
+                        Token = new RPN.Token
+                        {
+                            Arguments = 0,
+                            Type = RPN.Type.Number,
+                            Value = "2"
+                        }
+                    };
+
+                    RPN.Node head = new RPN.Node()
+                    {
+                        Children = new RPN.Node[2] {two, temp},
+                        ID = GenerateNextID(),
+                        Parent = node.Parent,
+                        Token = new RPN.Token()
+                        {
+                            Arguments = 2,
+                            Type = RPN.Type.Operator,
+                            Value = "^"
+                        }
+                    };
+
+                    //Is not the root
+                    if (!node.isRoot)
+                    {
+                        node.Parent.Replace( node.ID, head );
+                    }
+                    else
+                    {
+                        Root = head;
+                    }
+
+                    Write("\tSimplification: Multiplication -> Exponent\n");
                 }
                 else if (node.Children[1].Token.IsNumber() && node.Children[0].Token.Value == "*" ) 
                 {
@@ -334,10 +367,78 @@ namespace AbMath.Calculator
                         Root = temp;
                     }
                 }
+                //sin(x)sin(x)sin(x) -> sin(x)^3
+                else if (node.Children[1].Token.Value == "^" && node.Children[1].Children[0].Token.IsNumber() &&
+                         node.Children[0].GetHash() == node.Children[1].Children[1].GetHash())
+                {
+                     Write($"\tIncrease Exponent");
+                    node.Children[0].Children = new RPN.Node[0];
+                    node.Children[0].Token.Value = "1";
+                    node.Children[0].Token.Type = RPN.Type.Number;
+
+                     node.Children[1].Children[0].Token.Value =
+                        (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
+
+                }
             }
             else if (mode == SimplificationMode.Trig)
             {
                 //sin^2(x) + cos^2(x)
+                if (node.Token.IsAddition() &&
+                    node.Children[0].Token.IsExponent() &&
+                    node.Children[1].Token.IsExponent() &&
+                    node.Children[0].Children[0].Token.IsNumber() &&
+                    node.Children[1].Children[0].Token.IsNumber() &&
+
+                    node.Children[0].Children[0].Token.Value == "2" &&
+                    node.Children[1].Children[0].Token.Value == "2" &&
+                    node.Children[0].Children[1].Children[0].GetHash() ==
+                    node.Children[1].Children[1].Children[0].GetHash() &&
+                    (
+                        (node.Children[0].Children[1].Token.Value == "cos" && node.Children[1].Children[1].Token.Value == "sin") || 
+                        (node.Children[0].Children[1].Token.Value == "sin" && node.Children[1].Children[1].Token.Value == "cos") 
+                    )
+                )
+                {
+                    
+                    RPN.Token one = new RPN.Token
+                    {
+                        Arguments = 0,
+                        Type = RPN.Type.Number,
+                        Value = "1"
+                    };
+
+                    RPN.Node head = new RPN.Node()
+                    {
+                        Children = new RPN.Node[0],
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = one
+                    };
+
+                    if (node.isRoot)
+                    {
+                        Root = head;
+                        Write("\tsin²(x) + cos²(x) -> 1. Root case.");
+                    }
+                    else
+                    {
+                        head.Parent = node.Parent;
+                        node.Parent.Replace(node.ID, head);
+                        Write("\tsin²(x) + cos²(x) -> 1");
+                    }
+                }
+                /*
+                 * + [10: bc036401aa0ff2d9c7cf30d8699c2295:2]
+                   ├─^ [14: 311d333b0c00c30f7b3386eaafcefc18:2] - Y
+                   │  ├─2 [13: c81e728d9d4c2f636f067f89cc14862c:0] - Y
+                   │  └─cos [8: ec3c3157b2c02e355b18cb95ff7434aa:1]
+                   │     └─x [7: 9dd4e461268c8034f5c8564e155c67a6:0]
+                   └─^ [12: 5f4ae9897c0b3167a1328e853f71afb3:2] - Y
+                     ├─2 [11: c81e728d9d4c2f636f067f89cc14862c:0] - Y
+                     └─sin [3: 96e8dfa5386fa00a9ea20f0daea9b0dd:1]
+                        └─x [2: 9dd4e461268c8034f5c8564e155c67a6:0]
+                 */
             }
 
             //Propagate down the tree IF there is a root 
@@ -395,14 +496,10 @@ namespace AbMath.Calculator
             }
         }
 
-        private void Explode()
+        private int GenerateNextID()
         {
-
-        }
-
-        private void Explode(RPN.Node node)
-        {
-
+            count++;
+            return count;
         }
 
         private void Write(string message)
