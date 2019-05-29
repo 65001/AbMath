@@ -20,9 +20,16 @@ namespace AbMath.Calculator
                 {
                     if (Children[i].ID == identification)
                     {
+                        node.Parent = this;
                         Children[i] = node;
                         return;
                     }
+                }
+
+                //Propagate down the tree
+                for (int i = 0; i < Children.Length; i++)
+                {
+                    Children[i].Replace(identification, node);
                 }
             }
 
@@ -46,9 +53,13 @@ namespace AbMath.Calculator
                     return true;
                 }
 
-                for (int i = 1; i < Children.Length; i++)
+                for (int i = 0; i < (Children.Length - 1); i++)
                 {
-                    if (Children[i - 1].GetHash() != Children[i].GetHash())
+                    if (Children[i + 1].GetHash() == Children[i].GetHash())
+                    {
+                        
+                    }
+                    else
                     {
                         return false;
                     }
@@ -158,9 +169,11 @@ namespace AbMath.Calculator
                 //Operators with left and right
                 if (node.Children.Length == 2 && node.Token.IsOperator())
                 {
+                    infix.Append("(");
                     Infix(node.Children[1], infix);
                     infix.Append(node.Token);
                     Infix(node.Children[0], infix);
+                    infix.Append(")");
                     return;
                 }
 
