@@ -7,12 +7,30 @@ namespace AbMath.Calculator
 {
     public partial class RPN
     {
-        public class  Node
+        public class Node
         {
             public int ID;
             public Token Token;
             public Node Parent;
             public Node[] Children;
+
+            public Node()
+            {
+            }
+
+            public Node(int ID, double number)
+            {
+                Children = new RPN.Node[0];
+                this.ID = ID;
+                Parent = null;
+                Token = new RPN.Token
+                {
+                    Arguments = 0,
+                    Type = RPN.Type.Number,
+                    Value = number.ToString()
+                };
+            }
+
 
             public void Replace(int identification, Node node)
             {
@@ -57,7 +75,7 @@ namespace AbMath.Calculator
                 {
                     if (Children[i + 1].GetHash() == Children[i].GetHash())
                     {
-                        
+
                     }
                     else
                     {
@@ -151,6 +169,7 @@ namespace AbMath.Calculator
                     {
                         PostFix(node.Children[i], polish);
                     }
+
                     polish.Add(node.Token);
                     return;
                 }

@@ -17,6 +17,8 @@ namespace AbMath.Calculator
             double end = math.Compute(b.ToPostFix().ToArray());
             double freq = math.Compute(frequencey.ToPostFix().ToArray());
 
+            math.SetPolish(Polish);
+
             double Rsum = 0;
             double Lsum = 0;
             double MidSum = 0;
@@ -63,7 +65,30 @@ namespace AbMath.Calculator
                 count++;
             }
 
-            return 0;
+            double LApprox = (2 * Rsum * DeltaX / n);
+            double RApprox = (2 * Lsum * DeltaX / n);
+            double MApprox = (2 * MidSum * DeltaX / n);
+            double TApprox = (LApprox + RApprox) / 2;
+
+            double Lerror = 2 * DeltaX / n * Math.Abs(PrevAnswer - f_a);
+            double error_const = (DeltaX) * Math.Abs(PrevAnswer - f_a);
+
+            freq = freq * 2;
+            n = DeltaX / freq;
+            double Simpson = double.NaN;
+
+            if (n % 2 == 0)
+            {
+                Simpson = (TApprox + 2 * MApprox) / 3;
+            }
+
+            //Simpsons Rule
+            if (!double.IsNaN(Simpson))
+            {
+                return Simpson;
+            }
+
+            return MApprox;
         }
     }
 }

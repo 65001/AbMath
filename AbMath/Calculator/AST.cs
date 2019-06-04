@@ -599,9 +599,10 @@ namespace AbMath.Calculator
         /// Simplifies or evaluates meta functions that
         /// cannot be easily represented or understood by PostFix.
         /// </summary>
-        public void MetaFunctions()
+        public AST MetaFunctions()
         {
             MetaFunctions(Root);
+            return this;
         }
 
         private void MetaFunctions(RPN.Node node)
@@ -610,13 +611,44 @@ namespace AbMath.Calculator
             {
                 if (node.Token.Value == "integrate")
                 {
-                    double answer = MetaCommands.Integrate(_rpn,
-                        node.Children[0],
-                        node.Children[1],
-                        node.Children[2],
-                        node.Children[3],
-                        node.Children[4]);
+                    double answer = double.NaN;
+                    Write($"{node.Children.Length}");
+                    if (node.Children.Length == 5)
+                    {
+                        answer = MetaCommands.Integrate(_rpn,
+                            node.Children[4],
+                            node.Children[3],
+                            node.Children[2],
+                            node.Children[1],
+                            node.Children[0]);
+                    }
+                    else if (node.Children.Length == 4)
+                    {
+                        answer = MetaCommands.Integrate(_rpn,
+                            node.Children[3],
+                            node.Children[2],
+                            node.Children[1],
+                            node.Children[0],
+                            new RPN.Node(GenerateNextID(), 0.001));
+                    }
+
+                    RPN.Node temp = new RPN.Node(GenerateNextID(), answer);
+
+                    if (node.isRoot)
+                    {
+                        SetRoot(temp);
+                    }
+                    else
+                    {
+                        node.Parent.Replace(node.ID, temp);
+                    }
                 }
+            }
+
+            //Propagate down the tree
+            for (int i = 0; i < node.Children.Length; i++)
+            {
+                MetaFunctions(node.Children[i]);
             }
         }
 

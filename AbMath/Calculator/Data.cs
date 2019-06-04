@@ -713,8 +713,8 @@ namespace AbMath.Calculator
 
                 AddFunction("integrate", new Function()
                 {
-                    Arguments = 5,
-                    MinArguments = 5,
+                    Arguments = 4,
+                    MinArguments = 4,
                     MaxArguments = 5
                 }
                 );

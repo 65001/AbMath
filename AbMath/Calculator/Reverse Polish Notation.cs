@@ -149,7 +149,7 @@ namespace AbMath.Calculator
             Stopwatch AST_Simplify = new Stopwatch();
             AST_Simplify.Start();
 
-            this.Data.Polish = ast.Simplify().Root.ToPostFix().ToArray();
+            this.Data.Polish = ast.Simplify().MetaFunctions().Root.ToPostFix().ToArray();
             this.Data.SimplifiedEquation = ast.Root.ToInfix();
 
             Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
