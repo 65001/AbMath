@@ -7,7 +7,18 @@ namespace AbMath.Calculator
 {
     public static class MetaCommands
     {
-        public static double Integrate(RPN rpn, RPN.Node expression, RPN.Node variable, RPN.Node a, RPN.Node b, RPN.Node frequencey)
+
+        public enum ApproximationModes
+        {
+            Left,Right,Midpoint,Trapezoidal,Simpson
+        }
+
+        public static double Integrate(RPN rpn, RPN.Node expression, RPN.Node variable, RPN.Node a, RPN.Node b,RPN.Node frequencey)
+        {
+            return Approximate(rpn, expression, variable, a,b, frequencey, new List<ApproximationModes>() {ApproximationModes.Simpson, ApproximationModes.Midpoint});
+        }
+
+        public static double Approximate(RPN rpn, RPN.Node expression, RPN.Node variable, RPN.Node a, RPN.Node b, RPN.Node frequencey, List<ApproximationModes> modes )
         {
             PostFix math = new PostFix(rpn);
 
@@ -15,6 +26,16 @@ namespace AbMath.Calculator
 
             double start = math.Compute(a.ToPostFix().ToArray());
             double end = math.Compute(b.ToPostFix().ToArray());
+
+            bool multiplyByNegativeOne = end < start;
+
+            if (multiplyByNegativeOne)
+            {
+                double temp = start;
+                start = end;
+                end = temp;
+            }
+
             double freq = math.Compute(frequencey.ToPostFix().ToArray());
 
             math.SetPolish(Polish);
@@ -70,9 +91,6 @@ namespace AbMath.Calculator
             double MApprox = (2 * MidSum * DeltaX / n);
             double TApprox = (LApprox + RApprox) / 2;
 
-            double Lerror = 2 * DeltaX / n * Math.Abs(PrevAnswer - f_a);
-            double error_const = (DeltaX) * Math.Abs(PrevAnswer - f_a);
-
             freq = freq * 2;
             n = DeltaX / freq;
             double Simpson = double.NaN;
@@ -82,13 +100,26 @@ namespace AbMath.Calculator
                 Simpson = (TApprox + 2 * MApprox) / 3;
             }
 
-            //Simpsons Rule
-            if (!double.IsNaN(Simpson))
+            Dictionary<ApproximationModes, double> approximations = new Dictionary<ApproximationModes, double>()
             {
-                return Simpson;
+                { ApproximationModes.Simpson, Simpson } ,
+                { ApproximationModes.Midpoint, MApprox },
+                { ApproximationModes.Trapezoidal, TApprox },
+                { ApproximationModes.Left, LApprox },
+                { ApproximationModes.Right, RApprox }
+            };
+
+            //Return based on mode requested
+            for (int i = 0; i < modes.Count; i++)
+            {
+                double approximation = approximations[modes[i]];
+                if (!double.IsNaN(approximation) )
+                {
+                    return multiplyByNegativeOne ? approximation * -1 : approximation;
+                }
             }
 
-            return MApprox;
+            return multiplyByNegativeOne ? approximations[modes[0]] * -1 : approximations[modes[0]];
         }
     }
 }

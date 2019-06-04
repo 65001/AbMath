@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -252,6 +253,16 @@ namespace AbMath.Calculator
                         arityTables.Add(message);
                     }
 
+                    if (token.IsFunction() && !token.IsConstant())
+                    {
+                        Function function = _dataStore.Functions[token.Value];
+                        //The function has an incorrect number of arguments!
+                        if (function.MinArguments > token.Arguments || token.Arguments > function.MaxArguments)
+                        {
+                            throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.");
+                        }
+
+                    }
                     _output.Enqueue(token);
                 }
                 

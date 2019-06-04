@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace AbMath.Calculator
 {
@@ -23,7 +21,19 @@ namespace AbMath.Calculator
         public delegate double Run(params double[] arguments);
         public delegate void Store(ref DataStore dataStore,params string[] arguments);
 
+        /// <summary>
+        /// This event handler contains debug information that
+        /// is created when DebugMode is on.
+        /// </summary>
         public event EventHandler<string> Logger;
+
+        /// <summary>
+        /// This event handler contains output from the program
+        /// in scenarios when certain meta-commands are invoked.
+        /// You do not need to hook into this unless you are using a
+        /// certain subset of meta-commands that create output.
+        /// </summary>
+        public event EventHandler<string> Output; 
 
         public struct DivisionRepresentation
         {
@@ -130,6 +140,7 @@ namespace AbMath.Calculator
             SAST.Start();
 
             AST ast = new AST(this);
+            ast.Output += Output;
             ast.Logger += Logger;
             Node tree = ast.Generate(this.Data.Polish);
            
