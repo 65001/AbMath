@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace AbMath.Calculator
@@ -13,14 +14,17 @@ namespace AbMath.Calculator
             Imaginary, Division, Subtraction, Addition, Multiplication, Trig
         }
 
+        private RPN _rpn;
         private RPN.DataStore _data;
         private Stack<RPN.Node> _stack;
         private int count = -1;
 
         public event EventHandler<string> Logger;
+        public event EventHandler<string> Output;
 
         public AST(RPN rpn)
         {
+            _rpn = rpn;
             _data = rpn.Data;
             _stack = new Stack<RPN.Node>(5);
         }
@@ -591,6 +595,31 @@ namespace AbMath.Calculator
             }
         }
 
+        /// <summary>
+        /// Simplifies or evaluates meta functions that
+        /// cannot be easily represented or understood by PostFix.
+        /// </summary>
+        public void MetaFunctions()
+        {
+            MetaFunctions(Root);
+        }
+
+        private void MetaFunctions(RPN.Node node)
+        {
+            if (node.Token.IsFunction() && _data.MetaFunctions.Contains(node.Token.Value))
+            {
+                if (node.Token.Value == "integrate")
+                {
+                    double answer = MetaCommands.Integrate(_rpn,
+                        node.Children[0],
+                        node.Children[1],
+                        node.Children[2],
+                        node.Children[3],
+                        node.Children[4]);
+                }
+            }
+        }
+
         private int GenerateNextID()
         {
             count++;
@@ -611,6 +640,11 @@ namespace AbMath.Calculator
         private void Write(string message)
         {
             Logger?.Invoke(this, message);
+        }
+
+        private void stdout(string message)
+        {
+            Output?.Invoke(this, message);
         }
     }
 }

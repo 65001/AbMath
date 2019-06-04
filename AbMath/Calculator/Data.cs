@@ -10,6 +10,7 @@ namespace AbMath.Calculator
     {
         public class DataStore
         {
+            private readonly List<string> _meta_functions;
             private readonly Dictionary<string,Function> _functions;
             private readonly Dictionary<string,Operator> _operators;
             private readonly Dictionary<string, string> _aliases;
@@ -25,7 +26,9 @@ namespace AbMath.Calculator
             /// A list of all the functions that are supported
             /// by this calculator.
             /// </summary>
-            public IReadOnlyDictionary<string,Function> Functions => _functions; 
+            public IReadOnlyDictionary<string,Function> Functions => _functions;
+
+            public IReadOnlyList<string> MetaFunctions => _meta_functions;
 
             /// <summary>
             /// A list of all operators that are supported
@@ -135,6 +138,7 @@ namespace AbMath.Calculator
             {
                 Equation = equation;
                 _functions = new Dictionary<string, Function>();
+                _meta_functions = new List<string>(5);
                 _operators = new Dictionary<string, Operator>();
                 _aliases = new Dictionary<string, string>();
                 _autoFormat = new Dictionary<double, string>();
@@ -709,9 +713,9 @@ namespace AbMath.Calculator
 
                 AddFunction("integrate", new Function()
                 {
-                    Arguments = 4,
-                    MinArguments = 4,
-                    MaxArguments = 4
+                    Arguments = 5,
+                    MinArguments = 5,
+                    MaxArguments = 5
                 }
                 );
 
@@ -728,6 +732,11 @@ namespace AbMath.Calculator
                     MinArguments = 4,
                     MaxArguments = 4
                 });
+
+                _meta_functions.Add("derive");
+                _meta_functions.Add("integrate");
+                _meta_functions.Add("table");
+                _meta_functions.Add("plot");
                 #endregion
             }
             private void DefaultFormats()

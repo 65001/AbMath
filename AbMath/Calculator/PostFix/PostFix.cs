@@ -49,10 +49,15 @@ namespace AbMath.Calculator
 
         public double Compute()
         {
+            return Compute(_input);
+        }
+
+        public double Compute(RPN.Token[] input)
+        {
             _stopwatch.Start();
 
-            for (int i = 0; i < _input.Length; i++) { 
-                RPN.Token token = _input[i];
+            for (int i = 0; i < input.Length; i++) { 
+                RPN.Token token = input[i];
 
                 switch (token.Type)
                 {
