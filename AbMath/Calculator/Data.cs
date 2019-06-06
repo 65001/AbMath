@@ -737,14 +737,22 @@ namespace AbMath.Calculator
                 });
 
                 #region MetaCommands
-                /*
-                AddFunction("derive", new Function()
+                
+                AddFunction("derivative", new Function()
                 {
                     Arguments = 2,
                     MinArguments = 2,
                     MaxArguments = 2,
                 });
-                */
+
+                //
+                AddFunction("derive", new Function
+                {
+                    Arguments = 1,
+                    MaxArguments = 1,
+                    MinArguments = 1
+                });
+                
 
                 AddFunction("integrate", new Function()
                 {
@@ -769,7 +777,7 @@ namespace AbMath.Calculator
                     MaxArguments = 4
                 });
                 */
-
+                _meta_functions.Add("derivative");
                 _meta_functions.Add("derive");
                 _meta_functions.Add("integrate");
                 _meta_functions.Add("table");

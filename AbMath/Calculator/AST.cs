@@ -41,13 +41,12 @@ namespace AbMath.Calculator
                 nodes[i] = new RPN.Node()
                 {
                     Children = new RPN.Node[0],
-                    ID = i,
+                    ID = GenerateNextID(),
                     Parent = null,
                     Token = input[i]
                 };
             }
 
-            count = input.Length - 1;
             Write($"Count:{count}");
 
             for (int i = 0; i < nodes.Length; i++)
@@ -600,15 +599,158 @@ namespace AbMath.Calculator
                     stdout(table);
                     SetRoot(new RPN.Node(GenerateNextID(), double.NaN));
                 }
+                else if (node.Token.Value == "derivative")
+                {
+                    GenerateDerivativeAndReplace(node.Children[1]);
+                    Derive(node.Children[0]); 
+                    if (node.isRoot)
+                    {
+                        SetRoot(node.Children[1]);
+                    }
+                    else if (!node.isRoot)
+                    {
+                        node.Parent.Replace(node.ID, node.Children[1]);
+                    }
+                    Delete(node);
+                    Simplify();
+                }
             }
 
 
+        }
+
+        private AST Derive(RPN.Node variable)
+        {
+            Derive(Root, variable);
+
+            return this;
+        }
+
+        private void Derive(RPN.Node node, RPN.Node variable)
+        {
+            if (node.Token.Value == "derive")
+            {
+                if (node.Children[0].Token.IsAddition() || node.Children[0].Token.IsSubtraction())
+                {
+                    GenerateDerivativeAndReplace(node.Children[0].Children[0]);
+                    GenerateDerivativeAndReplace(node.Children[0].Children[1]);
+                    //Recurse explicitly down these branches
+                    Derive(node.Children[0].Children[0], variable);
+                    Derive(node.Children[0].Children[1], variable);
+                    //Delete myself from the tree
+                    node.Parent.Replace(node.ID, node.Children[0]);
+                    Delete(node);
+                }
+                //Constant Rule -> 0
+                else if (node.Children[0].Token.IsNumber() || node.Children[0].Token.IsConstant())
+                {
+                    node.Children[0].Parent = null;
+                    RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
+                    //Remove myself from the tree
+                    node.Parent.Replace(node.ID, temp);
+                    Delete(node);
+                }
+                //Variable -> 1
+                else if (node.Children[0].Token.IsVariable() && node.Children[0].Token.Value == variable.Token.Value)
+                {
+                    node.Children[0].Parent = null;
+                    RPN.Node temp = new RPN.Node(GenerateNextID(), 1);
+                    //Remove myself from the tree
+                    node.Parent.Replace(node.ID, temp);
+                    Delete(node);
+                }
+                else if (node.Children[0].Token.IsMultiplication())
+                {
+                    //Both numbers
+                    if ((node.Children[0].Children[0].Token.IsNumber() || node.Children[0].Children[0].Token.IsConstant()) && (node.Children[0].Children[1].Token.IsNumber() || node.Children[0].Children[1].Token.IsConstant()))
+                    {
+                        RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
+                        //Remove myself from the tree
+                        node.Parent.Replace(node.ID, temp);
+                        Delete(node);
+                    }
+                    //Constant multiplication - 0
+                    else if ( (node.Children[0].Children[0].Token.IsNumber() || node.Children[0].Children[0].Token.IsConstant()) && IsExpression(node.Children[1]))
+                    {
+                        Write("DERIVE: Constant multiplication - 0");
+                        GenerateDerivativeAndReplace(node.Children[0].Children[1]);
+                        //Recurse explicitly down these branches
+                        Derive(node.Children[0].Children[1], variable);
+                        //Remove myself from the tree
+                        node.Parent.Replace(node.ID, node.Children[0]);
+                        Delete(node);
+                    }
+                    //Constant multiplication - 1
+                    else if ((node.Children[0].Children[1].Token.IsNumber() || node.Children[0].Children[1].Token.IsConstant()) && IsExpression(node.Children[0]))
+                    {
+                        Write("DERIVE: Constant multiplication - 1");
+                        GenerateDerivativeAndReplace(node.Children[0].Children[0]);
+                        //Recurse explicitly down these branches
+                        Derive(node.Children[0].Children[0], variable);
+                        //Remove myself from the tree
+                        node.Parent.Replace(node.ID, node.Children[0]);
+                        Delete(node);
+                    }
+                    //Product Rule [Two expressions] 
+                    else
+                    {
+                        
+                    }
+                }
+                //Quotient Rule
+
+
+                //Trig
+                //Power 
+                //Regular Case
+                //e^x
+                //b^x
+                //x^x
+                //Log
+                //Trig
+                //Inverse Trig
+            }
+
+            //Propagate down the tree
+            for (int i = 0; i < node.Children.Length; i++)
+            {
+                Derive(node.Children[i], variable);
+            }
+        }
+
+        private void Delete(RPN.Node node)
+        {
+            node.Parent = null;
+            node.Children = new RPN.Node[0];
         }
 
         private int GenerateNextID()
         {
             count++;
             return count;
+        }
+
+        private void GenerateDerivativeAndReplace(RPN.Node child)
+        {
+            RPN.Node temp = new RPN.Node()
+            {
+                Children = new RPN.Node[] {child},
+                ID = GenerateNextID(),
+                Parent = child.Parent,
+                Token = new RPN.Token
+                {
+                    Arguments = 1,
+                    Type = RPN.Type.Function,
+                    Value = "derive"
+                }
+            };
+            child.Parent.Replace(child.ID, temp);
+            child.Parent = temp;
+        }
+
+        public bool IsExpression(RPN.Node node)
+        {
+            return !(node.Token.IsNumber() || node.Token.IsVariable() || node.Token.IsConstant());
         }
 
         /// <summary>
