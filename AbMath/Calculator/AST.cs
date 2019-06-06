@@ -790,7 +790,7 @@ namespace AbMath.Calculator
                 }
                 //Quotient Rule
 
-
+                //All of this stuff requires chain rule! 
                 //Trig
                 //Power 
                 //Regular Case
