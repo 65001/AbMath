@@ -97,7 +97,7 @@ namespace AbMath.Calculator
         static void PrintNode(RPN.Node node, string indent, ref StringBuilder sb)
         {
             //node [Hash] ID:[$ID] Children:[$#]
-            sb.AppendLine($"{node} [{node.ID}: {node.GetHash()}:{node.Children.Length}]");
+            sb.AppendLine($"{node} [{node.ID}: {node.GetHash()}:{node.Children.Length}:{node.isRoot}]");
 
             // Loop through the children recursively, passing in the
             // indent, and the isLast parameter

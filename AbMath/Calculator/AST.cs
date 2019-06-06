@@ -47,8 +47,6 @@ namespace AbMath.Calculator
                 };
             }
 
-            Write($"Count:{count}");
-
             for (int i = 0; i < nodes.Length; i++)
             {
                 switch (nodes[i].Token.Type)
@@ -612,7 +610,6 @@ namespace AbMath.Calculator
                         node.Parent.Replace(node.ID, node.Children[1]);
                     }
                     Delete(node);
-                    Simplify();
                 }
             }
 
@@ -687,6 +684,7 @@ namespace AbMath.Calculator
                         GenerateDerivativeAndReplace(node.Children[0].Children[0]);
                         //Recurse explicitly down these branches
                         Derive(node.Children[0].Children[0], variable);
+
                         //Remove myself from the tree
                         node.Parent.Replace(node.ID, node.Children[0]);
                         Delete(node);
@@ -694,8 +692,101 @@ namespace AbMath.Calculator
                     //Product Rule [Two expressions] 
                     else
                     {
-                        
+                        Write($"DERIVE: Product Rule");
+
+                        RPN.Node f_Node = node.Children[0].Children[0];
+                        RPN.Node g_Node = node.Children[0].Children[1];
+
+                        RPN.Node f_derivative = new RPN.Node()
+                        {
+                            Children = new RPN.Node[] { Clone(f_Node) },
+                            ID = GenerateNextID(),
+                            Parent = null,
+                            Token = new RPN.Token
+                            {
+                                Arguments = 1,
+                                Type = RPN.Type.Function,
+                                Value = "derive"
+                            }
+                        }; ;
+
+                        f_derivative.Children[0].Parent = f_derivative;
+
+                        RPN.Node g_derivative = new RPN.Node()
+                        {
+                            Children = new RPN.Node[] { Clone(g_Node) },
+                            ID = GenerateNextID(),
+                            Parent = null,
+                            Token = new RPN.Token
+                            {
+                                Arguments = 1,
+                                Type = RPN.Type.Function,
+                                Value = "derive"
+                            }
+                        }; ;
+
+                        g_derivative.Children[0].Parent = g_derivative;
+
+                        RPN.Node multiply_1 = new RPN.Node()
+                        {
+                            Children = new RPN.Node[] { g_derivative, f_Node },
+                            ID = GenerateNextID(),
+                            Parent = null,
+                            Token = new RPN.Token
+                            {
+                                Arguments = 2,
+                                Type = RPN.Type.Operator,
+                                Value = "*"
+                            }
+                        };
+
+                        f_Node.Parent = multiply_1;
+                        g_derivative.Parent = multiply_1;
+
+                        RPN.Node multiply_2 = new RPN.Node()
+                        {
+                            Children = new RPN.Node[] { f_derivative , g_Node },
+                            ID = GenerateNextID(),
+                            Parent = null,
+                            Token = new RPN.Token
+                            {
+                                Arguments = 2,
+                                Type = RPN.Type.Operator,
+                                Value = "*"
+                            }
+                        };
+
+                        g_Node.Parent = multiply_2;
+                        f_derivative.Parent = multiply_2;
+
+                        RPN.Node add = new RPN.Node()
+                        {
+                            Children = new RPN.Node[] {multiply_1, multiply_2 },
+                            ID = GenerateNextID(),
+                            Parent = null,
+                            Token = new RPN.Token
+                            {
+                                Arguments = 2,
+                                Type = RPN.Type.Operator,
+                                Value = "+"
+                            }
+                        };
+
+                        multiply_1.Parent = add;
+                        multiply_2.Parent = add;
+
+                        //Remove myself from the tree
+                        node.Parent.Replace(node.ID, add);
+                        Delete(node);
+
+                        //Explicit recursion
+                        Derive(f_derivative, variable);
+                        Derive(g_derivative, variable);
                     }
+                }
+                else
+                {
+                    Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
                 }
                 //Quotient Rule
 
@@ -744,11 +835,21 @@ namespace AbMath.Calculator
                     Value = "derive"
                 }
             };
-            child.Parent.Replace(child.ID, temp);
+
+            if (child.Parent != null)
+            {
+                child.Parent.Replace(child.ID, temp);
+            }
+
             child.Parent = temp;
         }
 
-        public bool IsExpression(RPN.Node node)
+        private RPN.Node Clone(RPN.Node node)
+        {
+            return Generate(node.ToPostFix().ToArray());
+        }
+
+        private bool IsExpression(RPN.Node node)
         {
             return !(node.Token.IsNumber() || node.Token.IsVariable() || node.Token.IsConstant());
         }
