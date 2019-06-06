@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CLI;
 
 namespace AbMath.Calculator
@@ -11,8 +12,10 @@ namespace AbMath.Calculator
         public class DataStore
         {
             private readonly List<string> _meta_functions;
+
             private readonly Dictionary<string,Function> _functions;
             private readonly Dictionary<string,Operator> _operators;
+
             private readonly Dictionary<string, string> _aliases;
 
             private readonly Dictionary<double, string> _autoFormat;
@@ -155,9 +158,39 @@ namespace AbMath.Calculator
                 DefaultFormats();
             }
 
+            public void ClearTimeRecords()
+            {
+                _time.Clear();
+            }
+
+            public void SetEquation(string equation)
+            {
+                Equation = equation;
+            }
+
+            public void AddTimeRecord(string type, Stopwatch stopwatch)
+            {
+                AddTimeRecord(new TimeRecord
+                {
+                    ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                    ElapsedTicks = stopwatch.ElapsedTicks,
+                    Type = type
+                });
+            }
+
             public void AddTimeRecord(TimeRecord time)
             {
-                _time.Add(time);
+                if (_time.Count > 0 && _time[_time.Count - 1].Type == time.Type)
+                {
+                    TimeRecord prev = _time[_time.Count - 1];
+                    prev.ElapsedMilliseconds += time.ElapsedMilliseconds;
+                    prev.ElapsedTicks += time.ElapsedTicks;
+                    _time[_time.Count - 1] = prev;
+                }
+                else
+                {
+                    _time.Add(time);
+                }
             }
 
             public void AddLeftBracket(string value)
@@ -704,12 +737,14 @@ namespace AbMath.Calculator
                 });
 
                 #region MetaCommands
+                /*
                 AddFunction("derive", new Function()
                 {
                     Arguments = 2,
                     MinArguments = 2,
                     MaxArguments = 2,
                 });
+                */
 
                 AddFunction("integrate", new Function()
                 {
@@ -723,15 +758,17 @@ namespace AbMath.Calculator
                 {
                     Arguments = 4,
                     MinArguments = 4,
-                    MaxArguments = 4
+                    MaxArguments = 5
                 });
 
+                /*
                 AddFunction("plot", new Function()
                 {
                     Arguments = 4,
                     MinArguments = 4,
                     MaxArguments = 4
                 });
+                */
 
                 _meta_functions.Add("derive");
                 _meta_functions.Add("integrate");

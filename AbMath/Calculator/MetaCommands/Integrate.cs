@@ -5,7 +5,7 @@ using AbMath.Calculator;
 
 namespace AbMath.Calculator
 {
-    public static class MetaCommands
+    public static partial class MetaCommands
     {
 
         public enum ApproximationModes

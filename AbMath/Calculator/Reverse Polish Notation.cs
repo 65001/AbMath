@@ -35,12 +35,6 @@ namespace AbMath.Calculator
         /// </summary>
         public event EventHandler<string> Output; 
 
-        public struct DivisionRepresentation
-        {
-            public int Numerator;
-            public int Denominator; 
-        }
-
         public struct Operator
         {
             public int Weight;
@@ -116,7 +110,10 @@ namespace AbMath.Calculator
         public void SetEquation(string equation)
         {
             Equation = equation;
-            Data = new DataStore(Equation);
+
+            Data.ClearTimeRecords();
+            Data.SetEquation(equation);
+
             _tokenizer = new Tokenizer(Data);
             _shunt = new Shunt(Data);
         }
@@ -136,44 +133,26 @@ namespace AbMath.Calculator
             Data.Polish = _shunt.ShuntYard( this.Tokens  );
 
             //Generate an Abstract Syntax Tree
-            Stopwatch SAST = new Stopwatch();
-            SAST.Start();
-
             AST ast = new AST(this);
             ast.Output += Output;
             ast.Logger += Logger;
-            Node tree = ast.Generate(this.Data.Polish);
-           
-            Logger?.Invoke(this, tree.Print() );
-            Logger?.Invoke(this, "AST RPN : " + ast.Root.ToPostFix().Print());
-            SAST.Stop();
 
-            this.Data.AddTimeRecord(new TimeRecord
-            {
-                ElapsedMilliseconds = SAST.ElapsedMilliseconds,
-                ElapsedTicks = SAST.ElapsedTicks,
-                Type = "AST"
-            });
+            ast.Generate(this.Data.Polish);
+           
+            Logger?.Invoke(this, ast.Root.Print() );
+            Logger?.Invoke(this, "AST RPN : " + ast.Root.ToPostFix().Print());
 
             //Simplify the Abstract Syntax Tree
             //This can take quite a lot of time
-            Stopwatch AST_Simplify = new Stopwatch();
-            AST_Simplify.Start();
+            ast.Simplify();
+            ast.MetaFunctions();
 
-            this.Data.Polish = ast.Simplify().MetaFunctions().Root.ToPostFix().ToArray();
+            this.Data.Polish = ast.Root.ToPostFix().ToArray();
             this.Data.SimplifiedEquation = ast.Root.ToInfix();
 
             Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
             Logger?.Invoke(this, "AST Simplified Infix : " + this.Data.SimplifiedEquation);
             Logger?.Invoke(this, ast.Root.Print());
-            AST_Simplify.Stop();
-
-            this.Data.AddTimeRecord(new TimeRecord
-            {
-                ElapsedMilliseconds = AST_Simplify.ElapsedMilliseconds,
-                ElapsedTicks = AST_Simplify.ElapsedTicks,
-                Type = "AST Simplify"
-            });
         }
     }
 }

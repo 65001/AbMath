@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -31,6 +32,8 @@ namespace AbMath.Calculator
 
         public RPN.Node Generate(RPN.Token[] input)
         {
+            Stopwatch SW = new Stopwatch();
+
             //Convert all the PostFix information to Nodes[]
             RPN.Node[] nodes = new RPN.Node[input.Length];
             for (int i = 0; i < input.Length; i++)
@@ -77,6 +80,8 @@ namespace AbMath.Calculator
                 Root = _stack.Peek();
             }
 
+            SW.Stop();
+            _rpn.Data.AddTimeRecord("AST Generate", SW);
             return _stack.Pop();
         }
 
@@ -86,6 +91,7 @@ namespace AbMath.Calculator
         /// <returns></returns>
         public AST Simplify()
         {
+            Stopwatch SW = new Stopwatch();
             int pass = 0;
             string hash = string.Empty;
 
@@ -113,7 +119,8 @@ namespace AbMath.Calculator
             {
                 Write("");
             }
-
+            SW.Stop();
+            _data.AddTimeRecord("AST Simplify", SW);
             return this;
         }
 
@@ -516,18 +523,28 @@ namespace AbMath.Calculator
         /// </summary>
         public AST MetaFunctions()
         {
+            Stopwatch SW = new Stopwatch();
             MetaFunctions(Root);
+            SW.Stop();
+
+            _data.AddTimeRecord("AST MetaFunctions", SW);
+
             return this;
         }
 
         private void MetaFunctions(RPN.Node node)
         {
+            //Propagate down the tree
+            for (int i = 0; i < node.Children.Length; i++)
+            {
+                MetaFunctions(node.Children[i]);
+            }
+
             if (node.Token.IsFunction() && _data.MetaFunctions.Contains(node.Token.Value))
             {
                 if (node.Token.Value == "integrate")
                 {
                     double answer = double.NaN;
-                    Write($"{node.Children.Length}");
                     if (node.Children.Length == 5)
                     {
                         answer = MetaCommands.Integrate(_rpn,
@@ -558,13 +575,34 @@ namespace AbMath.Calculator
                         node.Parent.Replace(node.ID, temp);
                     }
                 }
+                else if (node.Token.Value == "table")
+                {
+                    string table = string.Empty;
+                    if (node.Children.Length == 5)
+                    {
+                        table = MetaCommands.Table(_rpn,
+                            node.Children[4],
+                            node.Children[3],
+                            node.Children[2],
+                            node.Children[1],
+                            node.Children[0]);
+                    }
+                    else
+                    {
+                        table = MetaCommands.Table(_rpn,
+                            node.Children[3],
+                            node.Children[2],
+                            node.Children[1],
+                            node.Children[0],
+                            new RPN.Node(GenerateNextID(), 0.001));
+                    }
+                    //Write("Table Write: " + table);
+                    stdout(table);
+                    SetRoot(new RPN.Node(GenerateNextID(), double.NaN));
+                }
             }
 
-            //Propagate down the tree
-            for (int i = 0; i < node.Children.Length; i++)
-            {
-                MetaFunctions(node.Children[i]);
-            }
+
         }
 
         private int GenerateNextID()

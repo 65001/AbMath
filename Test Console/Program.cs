@@ -41,6 +41,7 @@ namespace Test_Console
                 }
 
                 RPN.Logger += Write;
+                RPN.Output += Write;
                 
                 RPN.Compute();
 
