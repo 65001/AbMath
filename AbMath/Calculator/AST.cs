@@ -207,8 +207,7 @@ namespace AbMath.Calculator
                 //3sin(x) - 2sin(x)
                 else if (node.Children[0].Token.IsMultiplication() && node.Children[1].Token.IsMultiplication())
                 {
-                    if (node.Children[0].Children[0].GetHash() == node.Children[1].Children[0].GetHash() &&
-                        node.Children[0].Children[1].Token.IsNumber() && node.Children[1].Children[1].Token.IsNumber())
+                    if (node.Children[0].Children[0].GetHash() == node.Children[1].Children[0].GetHash() && node.Children[0].Children[1].Token.IsNumber() && node.Children[1].Children[1].Token.IsNumber())
                     {
                         Write("\tSimplification: Subtraction Dual Node");
                         double coefficient = double.Parse(node.Children[1].Children[1].Token.Value) -
@@ -896,13 +895,30 @@ namespace AbMath.Calculator
                     //sin(x) -> cos(x)derive(x)
                     Write("DERIVE: sin(g(x)) -> cos(g(x))g'(x)");
                     RPN.Node body = node.Children[0].Children[0];
-                    body.Parent = null;
 
                     RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new []{Clone(body)}, _derive);
 
                     RPN.Node cos = new RPN.Node(GenerateNextID(), new []{body}, new RPN.Token("cos",1,RPN.Type.Function));
 
                     RPN.Node multiply = new RPN.Node(GenerateNextID(), new []{cos, bodyDerive}, new RPN.Token("*",2,RPN.Type.Operator));
+
+                    node.Replace(node.Children[0], multiply);
+                    //Delete self from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Chain Rule
+                    Derive(bodyDerive, variable);
+                }
+                else if (node.Children[0].Token.Value == "cos")
+                {
+                    //cos(g(x)) -> - sin(g(x)) g'(x)
+                    Write("DERIVE: cos(g(x)) -> -sin(g(x))g'(x)");
+                    RPN.Node body = node.Children[0].Children[0];
+                    RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new []{Clone(body)}, _derive);
+
+                    RPN.Node sin = new RPN.Node(GenerateNextID(),new []{body}, new RPN.Token("sin",1,RPN.Type.Function));
+                    RPN.Node negativeOneMultiply = new RPN.Node(GenerateNextID(), new [] {new RPN.Node(GenerateNextID(), -1), sin } , new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new []{negativeOneMultiply, bodyDerive}, new RPN.Token("*",2,RPN.Type.Operator));
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -918,7 +934,7 @@ namespace AbMath.Calculator
                 //TODO:
                 //All of this stuff requires chain rule! 
                 //Trig
-                    //cos
+
                     //tan
                     //sec
                     //csc
