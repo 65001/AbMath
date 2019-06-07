@@ -35,6 +35,7 @@ namespace AbMath.Calculator
         public RPN.Node Generate(RPN.Token[] input)
         {
             Stopwatch SW = new Stopwatch();
+            SW.Start();
 
             //Convert all the PostFix information to Nodes[]
             RPN.Node[] nodes = new RPN.Node[input.Length];
@@ -91,6 +92,8 @@ namespace AbMath.Calculator
         public AST Simplify()
         {
             Stopwatch SW = new Stopwatch();
+            SW.Start();
+
             int pass = 0;
             string hash = string.Empty;
 
@@ -580,6 +583,7 @@ namespace AbMath.Calculator
         public AST MetaFunctions()
         {
             Stopwatch SW = new Stopwatch();
+            SW.Start();
             MetaFunctions(Root);
             SW.Stop();
 

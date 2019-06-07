@@ -302,6 +302,7 @@ namespace AbMath.Calculator
                 }
 
                 Stopwatch SI = new Stopwatch();
+                SI.Start();
 
                 PostSimplify PS = new PostSimplify(_dataStore);
                 PS.Logger += Logger;

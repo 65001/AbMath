@@ -210,7 +210,7 @@ namespace AbMath.Calculator
 
                     _dataStore.AddTimeRecord(new TimeRecord()
                     {
-                        Type = "Simplification",
+                        Type = "PreSimplify",
                         ElapsedMilliseconds = si.ElapsedMilliseconds,
                         ElapsedTicks = si.ElapsedTicks
                     });
