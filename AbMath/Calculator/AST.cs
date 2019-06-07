@@ -719,6 +719,7 @@ namespace AbMath.Calculator
             {
                 if (node.Children[0].Token.IsAddition() || node.Children[0].Token.IsSubtraction())
                 {
+                    Write("DERIVE: Add/Sub Prorogation");
                     GenerateDerivativeAndReplace(node.Children[0].Children[0]);
                     GenerateDerivativeAndReplace(node.Children[0].Children[1]);
                     //Recurse explicitly down these branches
@@ -729,8 +730,9 @@ namespace AbMath.Calculator
                     Delete(node);
                 }
                 //Constant Rule -> 0
-                else if (node.Children[0].Token.IsNumber() || node.Children[0].Token.IsConstant())
+                else if (node.Children[0].Token.IsNumber() || node.Children[0].Token.IsConstant() || (node.Children[0].Token.IsVariable() && node.Children[0].Token.Value != variable.Token.Value))
                 {
+                    Write("DERIVE: Constant Rule");
                     node.Children[0].Parent = null;
                     RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                     //Remove myself from the tree
@@ -740,6 +742,7 @@ namespace AbMath.Calculator
                 //Variable -> 1
                 else if (node.Children[0].Token.IsVariable() && node.Children[0].Token.Value == variable.Token.Value)
                 {
+                    Write("DERIVE: Variable");
                     node.Children[0].Parent = null;
                     RPN.Node temp = new RPN.Node(GenerateNextID(), 1);
                     //Remove myself from the tree
@@ -843,24 +846,41 @@ namespace AbMath.Calculator
                     RPN.Node power = node.Children[0].Children[0];
 
                     //x^n -> n * x^(n - 1)
-                    if (baseNode.Token.IsVariable() && (power.Token.IsConstant() || power.Token.IsNumber()) && baseNode.Token.Value == variable.Token.Value)
+                    if (baseNode.Token.IsVariable() && (power.Token.IsConstant() || power.Token.IsNumber()))
                     {
-                        Write("DERIVE: Power Rule");
+                        if (baseNode.Token.Value == variable.Token.Value)
+                        {
+                            Write("DERIVE: Power Rule");
 
-                        RPN.Node powerClone = Clone(power);
-                        RPN.Node one = new RPN.Node(GenerateNextID(), 1);
+                            RPN.Node powerClone = Clone(power);
+                            RPN.Node one = new RPN.Node(GenerateNextID(), 1);
 
-                        RPN.Node subtraction = new RPN.Node(GenerateNextID(), new []{one, powerClone}, new RPN.Token("-",2,RPN.Type.Operator));
+                            RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] {one, powerClone},
+                                new RPN.Token("-", 2, RPN.Type.Operator));
 
-                        //Replace n with (n - 1) 
-                        RPN.Node exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] {subtraction, baseNode}, new RPN.Token("^",2,RPN.Type.Operator));
+                            //Replace n with (n - 1) 
+                            RPN.Node exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] {subtraction, baseNode},
+                                new RPN.Token("^", 2, RPN.Type.Operator));
 
-                        RPN.Node multiplication = new RPN.Node(GenerateNextID(), new []{exponent, power}, new RPN.Token("*",2, RPN.Type.Operator));  
-                        
-                        node.Replace(node.Children[0], multiplication);
-                        //Delete self from the tree
-                        node.Parent.Replace(node, node.Children[0]);
-                        Delete(node);
+                            RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] {exponent, power},
+                                new RPN.Token("*", 2, RPN.Type.Operator));
+
+                            node.Replace(node.Children[0], multiplication);
+
+                            //Delete self from the tree
+                            node.Parent.Replace(node, node.Children[0]);
+                            Delete(node);
+                        }
+                        else
+                        {
+                            Write("DERIVE: Power Rule edge case.");
+                            node.Children[0].Parent = null;
+                            RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
+                            //Remove myself from the tree
+                            node.Parent.Replace(node.ID, temp);
+                            Delete(node);
+
+                        }
                     }
                     else
                     {
