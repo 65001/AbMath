@@ -1045,26 +1045,77 @@ namespace AbMath.Calculator
                     {
                         Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
                     }
-
+                    //TODO:
                     //e^x
                     //b^x
                     //x^x
                 }
+                else if (node.Children[0].Token.Value == "sin")
+                {
+                    //sin(x) -> cos(x)derive(x)
+                    Write("DERIVE: sin(g(x)) -> cos(g(x))g'(x)");
+                    RPN.Node body = node.Children[0].Children[0];
+                    body.Parent = null;
 
+                    RPN.Node bodyDerive = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] {Clone(body)},
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token()
+                        {
+                            Arguments = 1,
+                            Type = RPN.Type.Function,
+                            Value = "derive"
+                        }
+                    };
+
+                    RPN.Node cos = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] {body},
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token()
+                        {
+                            Arguments = 1,
+                            Type = RPN.Type.Function,
+                            Value = "cos"
+                        }
+                    };
+                    body.Parent = cos;
+
+                    RPN.Node multiply = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] {cos, bodyDerive},
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token()
+                        {
+                            Arguments = 2,
+                            Type = RPN.Type.Operator,
+                            Value = "*"
+                        }
+                    };
+                    cos.Parent = multiply;
+                    bodyDerive.Parent = multiply;
+
+                    node.Replace(node.Children[0], multiply);
+                    //Delete self from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Chain Rule
+                    Derive(bodyDerive, variable);
+                }
                 else
                 {
                     Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
                 }
+                //TODO:
                 //All of this stuff requires chain rule! 
                 //Trig
-                //Power 
-                //Regular Case
-                //e^x
-                //b^x
-                //x^x
-                //Log
-                //Trig
                 //Inverse Trig
+                //ln
+                //log
             }
 
             //Propagate down the tree

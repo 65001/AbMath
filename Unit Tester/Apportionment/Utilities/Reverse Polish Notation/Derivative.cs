@@ -85,7 +85,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("derivative(sin(x)cos(x),x)");
             test.Compute();
-            if (test.Polish.Print() != "x sin x cos derive * x cos x sin derive * +")
+            if (test.Polish.Print() != "x sin x cos derive * x cos 2 ^ +")
             {
                 Assert.Fail();
             }
@@ -96,7 +96,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("derivative(sin(x)/x^2,x)");
             test.Compute();
-            if (test.Polish.Print() != "x 2 ^ x sin derive * x sin 2 x * * - x 2 ^ 2 ^ /")
+            if (test.Polish.Print() != "x 2 ^ x cos * x sin 2 x * * - x 2 ^ 2 ^ /")
             {
                 Assert.Fail();
             }
