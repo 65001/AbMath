@@ -67,14 +67,14 @@ namespace AbMath.Tests
         {
             test.SetEquation("derivative(2x,x)");
             test.Compute();
-            if (test.Polish.Print() != "2 1 *")
+            if (test.Polish.Print() != "2")
             {
                 Assert.Fail();
             }
 
             test.SetEquation("derivative(x2,x)");
             test.Compute();
-            if (test.Polish.Print() != "2 1 *")
+            if (test.Polish.Print() != "2")
             {
                 Assert.Fail();
             }
@@ -96,7 +96,18 @@ namespace AbMath.Tests
         {
             test.SetEquation("derivative(sin(x)/x^2,x)");
             test.Compute();
-            if (test.Polish.Print() != "x 2 ^ x sin derive * x sin x 2 ^ derive * - x 2 ^ 2 ^ /")
+            if (test.Polish.Print() != "x 2 ^ x sin derive * x sin 2 x * * - x 2 ^ 2 ^ /")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void PowerRule()
+        {
+            test.SetEquation("derivative(x^3,x)");
+            test.Compute();
+            if (test.Polish.Print() != "3 x 2 ^ *")
             {
                 Assert.Fail();
             }
