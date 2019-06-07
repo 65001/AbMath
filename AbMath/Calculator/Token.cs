@@ -12,6 +12,18 @@ namespace AbMath.Calculator
             public int Arguments;
             public Type Type;
 
+            public Token()
+            {
+
+            }
+
+            public Token(string value, int arguments, Type type)
+            {
+                Value = value;
+                Arguments = arguments;
+                Type = type;
+            }
+
             public override string ToString()
             {
                 return Value;

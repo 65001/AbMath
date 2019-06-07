@@ -31,6 +31,30 @@ namespace AbMath.Calculator
                 };
             }
 
+            public Node(int ID, Node[] children)
+            {
+                AssignChildren(children);
+                this.ID = ID;
+                Parent = null;
+                Token = null;
+            }
+
+            public Node(int ID, Node[] children, Token token)
+            {
+                AssignChildren(children);
+                this.ID = ID;
+                Parent = null;
+                Token = token;
+            }
+
+            public Node(int ID, Node[] children, Node parent)
+            {
+                AssignChildren(children);
+                this.ID = ID;
+                Parent = parent;
+                Token = null;
+            }
+
             public void Replace(Node node, Node replacement)
             {
                 Replace(node.ID, replacement);
@@ -105,6 +129,22 @@ namespace AbMath.Calculator
                 }
 
                 return sb.ToString();
+            }
+
+            private void AssignChildren(Node[] child)
+            {
+                if (this.Children == null || this.Children.Length < child.Length)
+                {
+                    Children = new Node[child.Length];
+                }
+
+                Children = child;
+
+                //Ensures that all children understand that the current node is their parent
+                for (int i = (child.Length - 1); i >= 0; i--)
+                {
+                    Children[i].Parent = this;
+                }
             }
 
             /// <summary>
