@@ -85,7 +85,7 @@ namespace AbMath.Tests
         {
             test.SetEquation("derivative(sin(x)cos(x),x)");
             test.Compute();
-            if (test.Polish.Print() != "x sin -1 x sin * * x cos 2 ^ +")
+            if (test.Polish.Print() != "-1 x sin 2 ^ * x cos 2 ^ +")
             {
                 Assert.Fail();
             }
@@ -108,6 +108,48 @@ namespace AbMath.Tests
             test.SetEquation("derivative(x^3,x)");
             test.Compute();
             if (test.Polish.Print() != "3 x 2 ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void DoubleDerivative()
+        {
+            test.SetEquation("derivative( derivative(x^3,x),x)");
+            test.Compute();
+            if (test.Polish.Print() != "6 x *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Sin()
+        {
+            test.SetEquation("derivative(sin(x),x)");
+            test.Compute();
+
+            if (test.Polish.Print() != "x cos")
+            {
+                Assert.Fail();
+            }
+
+            test.SetEquation("derivative(sin(x^2),x)");
+            test.Compute();
+            if (test.Polish.Print() != "2 x * x 2 ^ cos *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Cos()
+        {
+            test.SetEquation("derivative(cos(x^2),x)");
+            test.Compute();
+
+            if (test.Polish.Print() != "2 x * -1 x 2 ^ sin * *")
             {
                 Assert.Fail();
             }

@@ -12,7 +12,7 @@ namespace AbMath.Calculator
 
         private enum SimplificationMode
         {
-            Imaginary, Division, Subtraction, Addition, Multiplication, Exponent, Trig
+            Imaginary, Division, Subtraction, Addition, Multiplication, Swap, Exponent, Trig
         }
 
         private RPN _rpn;
@@ -108,6 +108,7 @@ namespace AbMath.Calculator
                 Simplify(Root, SimplificationMode.Subtraction);
                 Simplify(Root, SimplificationMode.Addition);
                 Simplify(Root, SimplificationMode.Multiplication);
+                Simplify(Root, SimplificationMode.Swap);
 
                 Simplify(Root, SimplificationMode.Trig);
                 pass++;
@@ -349,7 +350,6 @@ namespace AbMath.Calculator
                 //TODO: If one of the leafs is a division and the other a number or variable
                 if (node.ChildrenAreIdentical())
                 {
-                    Write($"\tThe current node is {node.GetHash()}");
                     RPN.Node temp = node.Children[0];
 
                     RPN.Node two = new RPN.Node(GenerateNextID(), 2)
@@ -434,6 +434,18 @@ namespace AbMath.Calculator
 
                     node.Replace( node.Children[0].ID, one );
                     node.Children[1].Children[0].Token.Value = (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
+                }
+            }
+            else if (mode == SimplificationMode.Swap)
+            {
+                //We can do complex swapping in here
+                if (node.Token.IsMultiplication() && node.Children[0].Token.IsMultiplication() && node.Children[0].Children[0].GetHash() == node.Children[1].GetHash())
+                {
+                    Write($"\tComplex Swap: Dual Node Multiplication Swapping");
+                    RPN.Node temp = node.Children[0].Children[1];
+
+                    node.Children[0].Children[1] = node.Children[1];
+                    node.Children[1] = temp;
                 }
             }
             else if (mode == SimplificationMode.Exponent && node.Token.IsExponent())
@@ -650,7 +662,6 @@ namespace AbMath.Calculator
                     //We solve first in an attempt to make constants easier to find
                     //for the derivative algorithm.
                     Solve(Root);
-                    Write($"{Root.ToInfix()}");
                     GenerateDerivativeAndReplace(node.Children[1]);
                     Derive(node.Children[0]); 
                     if (node.isRoot)
@@ -661,8 +672,13 @@ namespace AbMath.Calculator
                     {
                         node.Parent.Replace(node.ID, node.Children[1]);
                     }
-
                     Delete(node);
+
+                    if (_data.DebugMode)
+                    {
+                        Write($"Derived graph:");
+                        Write($"{Root.Print()}");
+                    }
                     Solve(Root);
                 }
             }
