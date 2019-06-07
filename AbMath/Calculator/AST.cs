@@ -20,6 +20,8 @@ namespace AbMath.Calculator
         private Stack<RPN.Node> _stack;
         private int count = -1;
 
+        private readonly RPN.Token _derive = new RPN.Token("derive", 1, RPN.Type.Function);
+
         public event EventHandler<string> Logger;
         public event EventHandler<string> Output;
 
@@ -312,7 +314,7 @@ namespace AbMath.Calculator
                     if (!node.isRoot)
                     {
                         Write("\tZero Addition. Case 2.");
-                        node.Parent.Replace(node.ID, node.Children[0]);
+                        node.Parent.Replace(node, node.Children[0]);
                     }
                     else if (node.isRoot)
                     {
@@ -539,7 +541,7 @@ namespace AbMath.Calculator
                 else if ( node.Children[0].Token.IsNumber() && !node.Children[1].Token.IsNumber())
                 {
                     node.Children.Swap(1, 0);
-                    Write("\tNode flip possible: Add : Number and a variable");
+                    Write("\tNode flip : Add : Number and a variable");
                 }
             }
             //Multiplication operator
@@ -706,12 +708,13 @@ namespace AbMath.Calculator
         private AST Derive(RPN.Node variable)
         {
             Derive(Root, variable);
-
             return this;
         }
 
         private void Derive(RPN.Node node, RPN.Node variable)
         {
+            
+
             if (node.Token.Value == "derive")
             {
                 if (node.Children[0].Token.IsAddition() || node.Children[0].Token.IsSubtraction())
@@ -781,187 +784,46 @@ namespace AbMath.Calculator
                     {
                         Write($"DERIVE: Product Rule");
 
-                        RPN.Node f_Node = node.Children[0].Children[0];
-                        RPN.Node g_Node = node.Children[0].Children[1];
+                        RPN.Token multiply = new RPN.Token("*",2,RPN.Type.Operator); 
 
-                        RPN.Node f_derivative = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] { Clone(f_Node) },
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token
-                            {
-                                Arguments = 1,
-                                Type = RPN.Type.Function,
-                                Value = "derive"
-                            }
-                        }; ;
+                        RPN.Node fNode = node.Children[0].Children[0];
+                        RPN.Node gNode = node.Children[0].Children[1];
 
-                        f_derivative.Children[0].Parent = f_derivative;
+                        RPN.Node fDerivative = new RPN.Node(GenerateNextID(), new[] {Clone(fNode)}, _derive);
+                        RPN.Node gDerivative = new RPN.Node(GenerateNextID(), new[] {Clone(gNode)}, _derive);
 
-                        RPN.Node g_derivative = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] { Clone(g_Node) },
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token
-                            {
-                                Arguments = 1,
-                                Type = RPN.Type.Function,
-                                Value = "derive"
-                            }
-                        }; ;
+                        RPN.Node multiply1 = new RPN.Node(GenerateNextID(), new[] {gDerivative, fNode}, multiply);
+                        RPN.Node multiply2 = new RPN.Node(GenerateNextID(), new[] {fDerivative, gNode}, multiply);
 
-                        g_derivative.Children[0].Parent = g_derivative;
-
-                        RPN.Node multiply_1 = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] { g_derivative, f_Node },
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token
-                            {
-                                Arguments = 2,
-                                Type = RPN.Type.Operator,
-                                Value = "*"
-                            }
-                        };
-
-                        f_Node.Parent = multiply_1;
-                        g_derivative.Parent = multiply_1;
-
-                        RPN.Node multiply_2 = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] { f_derivative , g_Node },
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token
-                            {
-                                Arguments = 2,
-                                Type = RPN.Type.Operator,
-                                Value = "*"
-                            }
-                        };
-
-                        g_Node.Parent = multiply_2;
-                        f_derivative.Parent = multiply_2;
-
-                        RPN.Node add = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] {multiply_1, multiply_2 },
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token
-                            {
-                                Arguments = 2,
-                                Type = RPN.Type.Operator,
-                                Value = "+"
-                            }
-                        };
-
-                        multiply_1.Parent = add;
-                        multiply_2.Parent = add;
+                        RPN.Node add = new RPN.Node(GenerateNextID(), new []{multiply1, multiply2}, new RPN.Token("+",2,RPN.Type.Operator));
 
                         //Remove myself from the tree
                         node.Parent.Replace(node.ID, add);
                         Delete(node);
 
                         //Explicit recursion
-                        Derive(f_derivative, variable);
-                        Derive(g_derivative, variable);
+                        Derive(fDerivative, variable);
+                        Derive(gDerivative, variable);
                     }
                 }
                 else if (node.Children[0].Token.IsDivision())
                 {
                     //Quotient Rule
                     Write("DERIVE: Quotient Rule");
+                    RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
+
                     RPN.Node numerator = node.Children[0].Children[1];
                     RPN.Node denominator = node.Children[0].Children[0];
 
-                    RPN.Node numeratorDerivative = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] { Clone(numerator) },
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token
-                        {
-                            Arguments = 1,
-                            Type = RPN.Type.Function,
-                            Value = "derive"
-                        }
-                    }; ;
+                    RPN.Node numeratorDerivative   = new RPN.Node(GenerateNextID(), new []{Clone(numerator)}, _derive); 
+                    RPN.Node denominatorDerivative = new RPN.Node(GenerateNextID(), new []{Clone(denominator)}, _derive); 
 
-                    RPN.Node denominatorDerivative = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] { Clone(denominator) },
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token
-                        {
-                            Arguments = 1,
-                            Type = RPN.Type.Function,
-                            Value = "derive"
-                        }
-                    }; ;
+                    RPN.Node multiplicationOne = new RPN.Node(GenerateNextID(), new []{numeratorDerivative, denominator}, multiply);
+                    RPN.Node multiplicationTwo = new RPN.Node(GenerateNextID(), new []{denominatorDerivative, numerator}, multiply);
 
-                    RPN.Node multiplicationOne = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] {numeratorDerivative, denominator},
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token()
-                        {
-                            Arguments = 2,
-                            Type = RPN.Type.Operator,
-                            Value = "*"
-                        }
-                    };
-                    numeratorDerivative.Parent = multiplicationOne;
-                    denominator.Parent = multiplicationOne;
+                    RPN.Node subtraction = new RPN.Node(GenerateNextID(), new []{multiplicationTwo, multiplicationOne}, new RPN.Token("-",2,RPN.Type.Operator));
 
-                    RPN.Node multiplicationTwo = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] { denominatorDerivative, numerator },
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token()
-                        {
-                            Arguments = 2,
-                            Type = RPN.Type.Operator,
-                            Value = "*"
-                        }
-                    };
-
-                    denominatorDerivative.Parent = multiplicationTwo;
-                    numerator.Parent = multiplicationTwo;
-
-                    RPN.Node subtraction = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] {multiplicationTwo, multiplicationOne},
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token()
-                        {
-                            Arguments = 2,
-                            Type = RPN.Type.Operator,
-                            Value = "-"
-                        }
-                    };
-                    multiplicationOne.Parent = subtraction;
-                    multiplicationTwo.Parent = subtraction;
-
-                    RPN.Node denominatorSquared = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] {new RPN.Node(GenerateNextID(),2),  Clone(denominator)},
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token
-                        {
-                            Arguments = 2,
-                            Type = RPN.Type.Operator,
-                            Value = "^"
-                        }
-                    };
+                    RPN.Node denominatorSquared = new RPN.Node(GenerateNextID(), new []{ new RPN.Node(GenerateNextID(), 2), Clone(denominator)}, new RPN.Token("^",2,RPN.Type.Operator));
 
                     //Replace in tree
                     node.Children[0].Replace(numerator, subtraction);
@@ -976,7 +838,7 @@ namespace AbMath.Calculator
                 else if (node.Children[0].Token.IsExponent())
                 {
                     //C0: 3 C1:2
-                    Write($"C0: {node.Children[0].Children[0].Token.Value} C1:{node.Children[0].Children[1].Token.Value}");
+                    Write($"Exponent: C0: {node.Children[0].Children[0].Token.Value} C1:{node.Children[0].Children[1].Token.Value}");
                     RPN.Node baseNode = node.Children[0].Children[1];
                     RPN.Node power = node.Children[0].Children[0];
 
@@ -986,55 +848,14 @@ namespace AbMath.Calculator
                         Write("DERIVE: Power Rule");
 
                         RPN.Node powerClone = Clone(power);
-
-                        powerClone.Parent = null;
                         RPN.Node one = new RPN.Node(GenerateNextID(), 1);
 
-                        RPN.Node subtraction = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] {one, powerClone },
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token()
-                            {
-                                Arguments = 2,
-                                Type = RPN.Type.Operator,
-                                Value = "-"
-                            }
-                        };
-                        powerClone.Parent = subtraction;
-                        one.Parent = subtraction;
+                        RPN.Node subtraction = new RPN.Node(GenerateNextID(), new []{one, powerClone}, new RPN.Token("-",2,RPN.Type.Operator));
 
                         //Replace n with (n - 1) 
-                        RPN.Node exponent = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] {subtraction, baseNode},
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token()
-                            {
-                                Arguments = 2,
-                                Type = RPN.Type.Operator,
-                                Value = "^"
-                            }
-                        };
-                        baseNode.Parent = exponent;
-                        subtraction.Parent = exponent;
+                        RPN.Node exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] {subtraction, baseNode}, new RPN.Token("^",2,RPN.Type.Operator));
 
-                        RPN.Node multiplication = new RPN.Node()
-                        {
-                            Children = new RPN.Node[] { exponent, power },
-                            ID = GenerateNextID(),
-                            Parent = null,
-                            Token = new RPN.Token()
-                            {
-                                Arguments = 2,
-                                Type = RPN.Type.Operator,
-                                Value = "*"
-                            }
-                        };
-                        power.Parent = multiplication;
-                        exponent.Parent = multiplication;   
+                        RPN.Node multiplication = new RPN.Node(GenerateNextID(), new []{exponent, power}, new RPN.Token("*",2, RPN.Type.Operator));  
                         
                         node.Replace(node.Children[0], multiplication);
                         //Delete self from the tree
@@ -1057,47 +878,11 @@ namespace AbMath.Calculator
                     RPN.Node body = node.Children[0].Children[0];
                     body.Parent = null;
 
-                    RPN.Node bodyDerive = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] {Clone(body)},
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token()
-                        {
-                            Arguments = 1,
-                            Type = RPN.Type.Function,
-                            Value = "derive"
-                        }
-                    };
+                    RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new []{Clone(body)}, _derive);
 
-                    RPN.Node cos = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] {body},
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token()
-                        {
-                            Arguments = 1,
-                            Type = RPN.Type.Function,
-                            Value = "cos"
-                        }
-                    };
-                    body.Parent = cos;
+                    RPN.Node cos = new RPN.Node(GenerateNextID(), new []{body}, new RPN.Token("cos",1,RPN.Type.Function));
 
-                    RPN.Node multiply = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] {cos, bodyDerive},
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token()
-                        {
-                            Arguments = 2,
-                            Type = RPN.Type.Operator,
-                            Value = "*"
-                        }
-                    };
-                    cos.Parent = multiply;
-                    bodyDerive.Parent = multiply;
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new []{cos, bodyDerive}, new RPN.Token("*",2,RPN.Type.Operator));
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -1113,13 +898,24 @@ namespace AbMath.Calculator
                 //TODO:
                 //All of this stuff requires chain rule! 
                 //Trig
+                    //cos
+                    //tan
+                    //sec
+                    //csc
+                    //cot
                 //Inverse Trig
+                    //arcsin
+                    //arccos
+                    //arcsec
+                    //arccsc
+                    //acccot
+                //sqrt
                 //ln
                 //log
             }
 
             //Propagate down the tree
-            for (int i = 0; i < node.Children.Length; i++)
+            for (int i = (node.Children.Length - 1); i >= 0; i--)
             {
                 Derive(node.Children[i], variable);
             }
