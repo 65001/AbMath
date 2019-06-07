@@ -90,5 +90,16 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void QuotientRule()
+        {
+            test.SetEquation("derivative(sin(x)/x^2,x)");
+            test.Compute();
+            if (test.Polish.Print() != "x 2 ^ x sin derive * x sin x 2 ^ derive * - x 2 ^ 2 ^ /")
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

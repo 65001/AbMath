@@ -31,6 +31,10 @@ namespace AbMath.Calculator
                 };
             }
 
+            public void Replace(Node node, Node replacement)
+            {
+                Replace(node.ID, replacement);
+            }
 
             public void Replace(int identification, Node node)
             {

@@ -136,7 +136,7 @@ namespace AbMath.Calculator
                 //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
             }
             //Division
-            else if (mode == SimplificationMode.Division && node.Token.Value == "/")
+            else if (mode == SimplificationMode.Division && node.Token.IsDivision())
             {
                 //if there are any divide by zero exceptions -> NaN to the root node
                 //NaN propagate anyways
@@ -156,6 +156,27 @@ namespace AbMath.Calculator
                     node.Children[0].Token.Value = (num1 / gcd).ToString();
                     node.Children[1].Token.Value = (num2 / gcd).ToString();
                     Write("\tDivision GCD.");
+                }
+                else if (node.Children[0].Token.IsVariable() && node.Children[1].Token.IsNumber())
+                {
+                    Write("Division -> Multiplication and exponentiation.");
+                    RPN.Node negativeOne = new RPN.Node(GenerateNextID(), -1);
+                    RPN.Node exponent = new RPN.Node()
+                    {
+                        Children = new RPN.Node[]{negativeOne, node.Children[0]},
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token
+                        {
+                            Arguments = 2,
+                            Type = RPN.Type.Operator,
+                            Value = "^"
+                        }
+                    };
+                    negativeOne.Parent = exponent;
+
+                    node.Token.Value = "*";
+                    node.Replace(node.Children[0], exponent);
                 }
             }
             //Subtraction
@@ -784,12 +805,110 @@ namespace AbMath.Calculator
                         Derive(g_derivative, variable);
                     }
                 }
+                else if (node.Children[0].Token.IsDivision())
+                {
+                    //Quotient Rule
+                    RPN.Node numerator = node.Children[0].Children[1];
+                    RPN.Node denominator = node.Children[0].Children[0];
+
+                    RPN.Node numeratorDerivative = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] { Clone(numerator) },
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token
+                        {
+                            Arguments = 1,
+                            Type = RPN.Type.Function,
+                            Value = "derive"
+                        }
+                    }; ;
+
+                    RPN.Node denominatorDerivative = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] { Clone(denominator) },
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token
+                        {
+                            Arguments = 1,
+                            Type = RPN.Type.Function,
+                            Value = "derive"
+                        }
+                    }; ;
+
+                    RPN.Node multiplicationOne = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] {numeratorDerivative, denominator},
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token()
+                        {
+                            Arguments = 2,
+                            Type = RPN.Type.Operator,
+                            Value = "*"
+                        }
+                    };
+                    numeratorDerivative.Parent = multiplicationOne;
+                    denominator.Parent = multiplicationOne;
+
+                    RPN.Node multiplicationTwo = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] { denominatorDerivative, numerator },
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token()
+                        {
+                            Arguments = 2,
+                            Type = RPN.Type.Operator,
+                            Value = "*"
+                        }
+                    };
+
+                    denominatorDerivative.Parent = multiplicationTwo;
+                    numerator.Parent = multiplicationTwo;
+
+                    RPN.Node subtraction = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] {multiplicationTwo, multiplicationOne},
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token()
+                        {
+                            Arguments = 2,
+                            Type = RPN.Type.Operator,
+                            Value = "-"
+                        }
+                    };
+                    multiplicationOne.Parent = subtraction;
+                    multiplicationTwo.Parent = subtraction;
+
+                    RPN.Node denominatorSquared = new RPN.Node()
+                    {
+                        Children = new RPN.Node[] {new RPN.Node(GenerateNextID(),2),  Clone(denominator)},
+                        ID = GenerateNextID(),
+                        Parent = null,
+                        Token = new RPN.Token
+                        {
+                            Arguments = 2,
+                            Type = RPN.Type.Operator,
+                            Value = "^"
+                        }
+                    };
+
+                    //Replace in tree
+                    node.Children[0].Replace(numerator, subtraction);
+                    node.Children[0].Replace(denominator, denominatorSquared);
+                    //Delete myself from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Explicitly recurse down these branches
+                    Derive(subtraction, variable);
+                }
                 else
                 {
                     Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
                 }
-                //Quotient Rule
-
                 //All of this stuff requires chain rule! 
                 //Trig
                 //Power 
@@ -809,7 +928,7 @@ namespace AbMath.Calculator
             }
         }
 
-        private void Delete(RPN.Node node)
+        private static void Delete(RPN.Node node)
         {
             node.Parent = null;
             node.Children = new RPN.Node[0];
@@ -836,10 +955,7 @@ namespace AbMath.Calculator
                 }
             };
 
-            if (child.Parent != null)
-            {
-                child.Parent.Replace(child.ID, temp);
-            }
+            child.Parent?.Replace(child.ID, temp);
 
             child.Parent = temp;
         }
