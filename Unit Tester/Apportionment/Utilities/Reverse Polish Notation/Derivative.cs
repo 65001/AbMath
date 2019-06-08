@@ -154,5 +154,16 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void Tan()
+        {
+            test.SetEquation("derivative(tan(x^2),x)");
+            test.Compute();
+            if (test.Polish.Print() != "2 x * x 2 ^ sec 2 ^ *")
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

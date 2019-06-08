@@ -865,9 +865,9 @@ namespace AbMath.Calculator
                     RPN.Node power = node.Children[0].Children[0];
 
                     //x^n -> n * x^(n - 1)
-                    if (baseNode.Token.IsVariable() && (power.Token.IsConstant() || power.Token.IsNumber()))
+                    if ( (baseNode.Token.IsVariable() || baseNode.Token.IsFunction()) && (power.Token.IsConstant() || power.Token.IsNumber()))
                     {
-                        if (baseNode.Token.Value == variable.Token.Value)
+                        if (baseNode.Token.Value == variable.Token.Value )
                         {
                             Write("DERIVE: Power Rule");
 
@@ -890,6 +890,11 @@ namespace AbMath.Calculator
                             node.Parent.Replace(node, node.Children[0]);
                             Delete(node);
                         }
+                        else if (baseNode.Token.IsFunction())
+                        {
+                            //TODO: Implement
+                            Write("DERIVE: Power Chain Rule");
+                        }
                         else
                         {
                             Write("DERIVE: Power Rule edge case.");
@@ -910,6 +915,7 @@ namespace AbMath.Calculator
                     //b^x
                     //x^x
                 }
+                #region Trig
                 else if (node.Children[0].Token.Value == "sin")
                 {
                     //sin(x) -> cos(x)derive(x)
@@ -947,6 +953,25 @@ namespace AbMath.Calculator
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
+                else if (node.Children[0].Token.Value == "tan")
+                {
+                    //tan(g(x)) -> sec(g(x))^2 g'(x)
+                    Write("tan(g(x)) -> sec(g(x))^2 g'(x)");
+                    RPN.Node body = node.Children[0].Children[0];
+                    RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new []{Clone(body)}, _derive);
+
+                    RPN.Node sec = new RPN.Node(GenerateNextID(), new [] {body}, new RPN.Token("sec",1,RPN.Type.Function));
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new []{new RPN.Node(GenerateNextID(),2), sec}, new RPN.Token("^",2,RPN.Type.Operator) );
+
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new []{exponent, bodyDerive},new RPN.Token("*",2,RPN.Type.Operator));
+                    node.Replace(node.Children[0], multiply);
+                    //Delete self from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Chain Rule
+                    Derive(bodyDerive, variable);
+                }
+                #endregion
                 else
                 {
                     Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
@@ -954,8 +979,6 @@ namespace AbMath.Calculator
                 //TODO:
                 //All of this stuff requires chain rule! 
                 //Trig
-
-                    //tan
                     //sec
                     //csc
                     //cot
