@@ -4,6 +4,8 @@ sudo: required
 dist: xenial
 dotnet: 2.2.3
 
+before_install:
+  - sudo apt install nuget
 install:
   - dotnet restore 
   - nuget restore "Ab Math.sln"
