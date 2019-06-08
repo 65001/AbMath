@@ -4,21 +4,14 @@ using NUnit.Framework;
 
 namespace AbMath.Tests
 {
+    [Parallelizable]
     [TestFixture]
     public class PostFixTest
     {
-        private RPN test;
-
-        [OneTimeSetUp]
-        public void StartUp()
-        {
-            test = new RPN("");
-        }
-
         [Test]
         public void Add()
         {
-            test.SetEquation("2 + 2 + 2");
+            RPN test = new RPN("2 + 2 + 2");
             test.Compute();
 
             PostFix math = new PostFix(test.Data);
@@ -28,7 +21,7 @@ namespace AbMath.Tests
         [Test]
         public void ComplexIncrement()
         {
-            test.SetEquation("2++ + 2 + 2");
+            RPN test = new RPN("2++ + 2 + 2");
             test.Compute();
 
             PostFix math = new PostFix(test.Data);
@@ -38,7 +31,7 @@ namespace AbMath.Tests
         [Test]
         public void Increment()
         {
-            test.SetEquation("7++");
+            RPN test = new RPN("7++");
             test.Compute();
 
             PostFix math = new PostFix(test.Data);
@@ -48,7 +41,7 @@ namespace AbMath.Tests
         [Test]
         public void Mod()
         {
-            test.SetEquation("5 % 2");
+            RPN test = new RPN("5 % 2");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -58,7 +51,7 @@ namespace AbMath.Tests
         [Test]
         public void UnarySubtract()
         {
-            test.SetEquation("-2 + 4");
+            RPN test = new RPN("-2 + 4");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -68,7 +61,7 @@ namespace AbMath.Tests
         [Test]
         public void UnarySubtract2()
         {
-            test.SetEquation("5 + -2");
+            RPN test = new RPN("5 + -2");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -78,7 +71,7 @@ namespace AbMath.Tests
         [Test]
         public void UnaryDecimal()
         {
-            test.SetEquation("-.5 + .5");
+            RPN test = new RPN("-.5 + .5");
 
             test.Compute();
             PostFix math = new PostFix(test);
@@ -88,7 +81,7 @@ namespace AbMath.Tests
         [Test]
         public void UnaryEOS()
         {
-            test.SetEquation("-.5 + -.5");
+            RPN test = new RPN("-.5 + -.5");
 
             test.Compute();
             PostFix math = new PostFix(test);
@@ -103,7 +96,7 @@ namespace AbMath.Tests
         [Test]
         public void Sin()
         {
-            test.SetEquation("sin(pi/2)");
+            RPN test = new RPN("sin(pi/2)");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -119,7 +112,7 @@ namespace AbMath.Tests
         [Test]
         public void SinOfe()
         {
-            test.SetEquation("sin(e/2)");
+            RPN test = new RPN("sin(e/2)");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -129,7 +122,7 @@ namespace AbMath.Tests
         [Test]
         public void Cos()
         {
-            test.SetEquation("cos(pi)");
+            RPN test = new RPN("cos(pi)");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -139,7 +132,7 @@ namespace AbMath.Tests
         [Test]
         public void Functions()
         {
-            test.SetEquation("sin( max( 2 , 3 )/3 * 3.1415 )");
+            RPN test = new RPN("sin( max( 2 , 3 )/3 * 3.1415 )");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -149,7 +142,7 @@ namespace AbMath.Tests
         [Test]
         public void CompositeFunctions()
         {
-            test.SetEquation("max( sqrt( 16 ) , 100)");
+            RPN test = new RPN("max( sqrt( 16 ) , 100)");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -159,7 +152,7 @@ namespace AbMath.Tests
         [Test]
         public void Factorial()
         {
-            test.SetEquation("5!");
+            RPN test = new RPN("5!");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -169,7 +162,7 @@ namespace AbMath.Tests
         [Test]
         public void Round()
         {
-            test.SetEquation("round(pi,2)");
+            RPN test = new RPN("round(pi,2)");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -179,7 +172,7 @@ namespace AbMath.Tests
         [Test]
         public void NotEqual()
         {
-            test.SetEquation("5 != 2");
+            RPN test = new RPN("5 != 2");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -189,7 +182,7 @@ namespace AbMath.Tests
         [Test]
         public void Log()
         {
-            test.SetEquation("log(16,2)");
+            RPN test = new RPN("log(16,2)");
             
             test.Compute();
             PostFix math = new PostFix(test);
@@ -206,7 +199,7 @@ namespace AbMath.Tests
         [Test]
         public void Reset()
         {
-            test.SetEquation("x^2");
+            RPN test = new RPN("x^2");
             
             test.Compute();
             
@@ -226,7 +219,7 @@ namespace AbMath.Tests
         [Test]
         public void ComplexReset()
         {
-            test.SetEquation("x^2");
+            RPN test = new RPN("x^2");
             
             test.Compute();
 
@@ -246,7 +239,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacMax()
         {
-            test.SetEquation("max(1, 2, 3)");
+            RPN test = new RPN("max(1, 2, 3)");
 
             
             test.Compute();
@@ -258,7 +251,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacMin()
         {
-            test.SetEquation("min(1, 2, 3)");
+            RPN test = new RPN("min(1, 2, 3)");
 
             
             test.Compute();
@@ -270,7 +263,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacComposite()
         {
-            test.SetEquation("sin(min (0, 1) )");
+            RPN test = new RPN("sin(min (0, 1) )");
 
             
             test.Compute();
@@ -282,7 +275,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacCompositeConstants()
         {
-            test.SetEquation("sin( max(2,3,4) * pi )");
+            RPN test = new RPN("sin( max(2,3,4) * pi )");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -302,7 +295,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacStressTest()
         {
-            test.SetEquation("sum( sqrt(16), min(0,1), max(1,2,3), avg(10,5,7,9) )");
+            RPN test = new RPN("sum( sqrt(16), min(0,1), max(1,2,3), avg(10,5,7,9) )");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -312,7 +305,7 @@ namespace AbMath.Tests
         [Test]
         public void Max()
         {
-            test.SetEquation("max(0, 1)");
+            RPN test = new RPN("max(0, 1)");
             
             test.Compute();
 
@@ -323,7 +316,7 @@ namespace AbMath.Tests
         [Test]
         public void Min()
         {
-            test.SetEquation("min(0, 1)");
+            RPN test = new RPN("min(0, 1)");
             
             test.Compute();
 
@@ -334,7 +327,7 @@ namespace AbMath.Tests
         [Test]
         public void Arcsin()
         {
-            test.SetEquation("arcsin( sin(pi/2) )");
+            RPN test = new RPN("arcsin( sin(pi/2) )");
             
             test.Compute();
 
@@ -345,7 +338,7 @@ namespace AbMath.Tests
         [Test]
         public void Arccos()
         {
-            test.SetEquation("arccos( cos(pi/2) )");
+            RPN test = new RPN("arccos( cos(pi/2) )");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -355,7 +348,7 @@ namespace AbMath.Tests
         [Test]
         public void Arctan()
         {
-            test.SetEquation("arctan( tan(pi/4) )");
+            RPN test = new RPN("arctan( tan(pi/4) )");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -365,7 +358,7 @@ namespace AbMath.Tests
         [Test]
         public void Gamma()
         {
-            test.SetEquation("gamma(3.7)");
+            RPN test = new RPN("gamma(3.7)");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -381,7 +374,7 @@ namespace AbMath.Tests
         [Test]
         public void DivideByZero()
         {
-            test.SetEquation("1/0");
+            RPN test = new RPN("1/0");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -391,7 +384,7 @@ namespace AbMath.Tests
         [Test]
         public void ExponentianOperator()
         {
-            test.SetEquation("1E3");
+            RPN test = new RPN("1E3");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -401,7 +394,7 @@ namespace AbMath.Tests
         [Test]
         public void Substract()
         {
-            test.SetEquation("5 - 2");
+            RPN test = new RPN("5 - 2");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -411,7 +404,7 @@ namespace AbMath.Tests
         [Test]
         public void SqrtSubtraction()
         {
-            test.SetEquation("sqrt(-1) - sqrt(-1)");
+            RPN test = new RPN("sqrt(-1) - sqrt(-1)");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -422,7 +415,7 @@ namespace AbMath.Tests
         [Test]
         public void GCD()
         {
-            test.SetEquation("gcd(123,277)");
+            RPN test = new RPN("gcd(123,277)");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -432,7 +425,7 @@ namespace AbMath.Tests
         [Test]
         public void LCM()
         {
-            test.SetEquation("lcm(1000,625)");
+            RPN test = new RPN("lcm(1000,625)");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -442,7 +435,7 @@ namespace AbMath.Tests
         [Test]
         public void Abs()
         {
-            test.SetEquation("abs(-1)");
+            RPN test = new RPN("abs(-1)");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -452,7 +445,7 @@ namespace AbMath.Tests
         [Test]
         public void LN()
         {
-            test.SetEquation("ln(e)");
+            RPN test = new RPN("ln(e)");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -462,7 +455,7 @@ namespace AbMath.Tests
         [Test]
         public void SwapStackOverflow()
         {
-            test.SetEquation("x^p + x - x^p - x + x^2 + x - x^2 - x");
+            RPN test = new RPN("x^p + x - x^p - x + x^2 + x - x^2 - x");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -472,7 +465,7 @@ namespace AbMath.Tests
         [Test]
         public void SqrtReduction()
         {
-            test.SetEquation("sqrt(-1)^2");
+            RPN test = new RPN("sqrt(-1)^2");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -482,7 +475,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacImplicitMultiplication()
         {
-            test.SetEquation("3sum(1,4,5)");
+            RPN test = new RPN("3sum(1,4,5)");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -492,7 +485,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacUltimateStressTest()
         {
-            test.SetEquation("sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) ) - sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) )");
+            RPN test = new RPN("sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) ) - sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) )");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -502,7 +495,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacImplicitMultiplication2()
         {
-            test.SetEquation("sum(1,4,5)3");
+            RPN test = new RPN("sum(1,4,5)3");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -514,7 +507,7 @@ namespace AbMath.Tests
         [Test]
         public void Equals()
         {
-            test.SetEquation("30 = 30");
+            RPN test = new RPN("30 = 30");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -530,7 +523,7 @@ namespace AbMath.Tests
         [Test]
         public void GreaterThan()
         {
-            test.SetEquation("5 > 2");
+            RPN test = new RPN("5 > 2");
             test.Compute();
 
             PostFix math = new PostFix(test);
@@ -564,7 +557,7 @@ namespace AbMath.Tests
         [Test]
         public void LessThan()
         {
-            test.SetEquation("1 < 2");
+            RPN test = new RPN("1 < 2");
             test.Compute();
 
             PostFix math = new PostFix(test);

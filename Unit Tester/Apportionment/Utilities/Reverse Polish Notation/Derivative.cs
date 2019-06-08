@@ -4,21 +4,14 @@ using NUnit.Framework;
 
 namespace AbMath.Tests
 {
+    [Parallelizable]
     [TestFixture]
     public class Derivative
     {
-        private RPN test;
-
-        [OneTimeSetUp]
-        public void StartUp()
-        {
-            test = new RPN("");
-        }
-
         [Test]
         public void Constant()
         {
-            test.SetEquation("derivative(1,x)");
+            RPN test = new RPN("derivative(1,x)");
             test.Compute();
             if (test.Polish.Print() != "0")
             {
@@ -29,7 +22,7 @@ namespace AbMath.Tests
         [Test]
         public void Variable()
         {
-            test.SetEquation("derivative(x,x)");
+            RPN test = new RPN("derivative(x,x)");
             test.Compute();
             if (test.Polish.Print() != "1")
             {
@@ -40,7 +33,7 @@ namespace AbMath.Tests
         [Test]
         public void DualNumberMultiplication()
         {
-            test.SetEquation("derivative(2pi,x)");
+            RPN test = new RPN("derivative(2pi,x)");
             test.Compute();
             if (test.Polish.Print() != "0")
             {
@@ -65,7 +58,7 @@ namespace AbMath.Tests
         [Test]
         public void ConstantMultiplications()
         {
-            test.SetEquation("derivative(2x,x)");
+            RPN test = new RPN("derivative(2x,x)");
             test.Compute();
             if (test.Polish.Print() != "2")
             {
@@ -83,7 +76,7 @@ namespace AbMath.Tests
         [Test]
         public void ProductRule()
         {
-            test.SetEquation("derivative(sin(x)cos(x),x)");
+            RPN test = new RPN("derivative(sin(x)cos(x),x)");
             test.Compute();
             if (test.Polish.Print() != "-1 x sin 2 ^ * x cos 2 ^ +")
             {
@@ -94,7 +87,7 @@ namespace AbMath.Tests
         [Test]
         public void QuotientRule()
         {
-            test.SetEquation("derivative(sin(x)/x^2,x)");
+            RPN test = new RPN("derivative(sin(x)/x^2,x)");
             test.Compute();
             if (test.Polish.Print() != "x 2 ^ x cos * x sin 2 x * * - x 2 ^ 2 ^ /")
             {
@@ -105,7 +98,7 @@ namespace AbMath.Tests
         [Test]
         public void PowerRule()
         {
-            test.SetEquation("derivative(x^3,x)");
+            RPN test = new RPN("derivative(x^3,x)");
             test.Compute();
             if (test.Polish.Print() != "3 x 2 ^ *")
             {
@@ -116,7 +109,7 @@ namespace AbMath.Tests
         [Test]
         public void EulerExponentSimple()
         {
-            test.SetEquation("derivative(e^x,x)");
+            RPN test = new RPN("derivative(e^x,x)");
             test.Compute();
             if (test.Polish.Print() != "e x ^")
             {
@@ -127,7 +120,7 @@ namespace AbMath.Tests
         [Test]
         public void DoubleDerivative()
         {
-            test.SetEquation("derivative( derivative(x^3,x),x)");
+            RPN test = new RPN("derivative( derivative(x^3,x),x)");
             test.Compute();
             if (test.Polish.Print() != "6 x *")
             {
@@ -138,7 +131,7 @@ namespace AbMath.Tests
         [Test]
         public void Sin()
         {
-            test.SetEquation("derivative(sin(x),x)");
+            RPN test = new RPN("derivative(sin(x),x)");
             test.Compute();
 
             if (test.Polish.Print() != "x cos")
@@ -157,7 +150,7 @@ namespace AbMath.Tests
         [Test]
         public void Cos()
         {
-            test.SetEquation("derivative(cos(x^2),x)");
+            RPN test = new RPN("derivative(cos(x^2),x)");
             test.Compute();
 
             if (test.Polish.Print() != "2 x * -1 x 2 ^ sin * *")
@@ -169,7 +162,7 @@ namespace AbMath.Tests
         [Test]
         public void Tan()
         {
-            test.SetEquation("derivative(tan(x^2),x)");
+            RPN test = new RPN("derivative(tan(x^2),x)");
             test.Compute();
             if (test.Polish.Print() != "2 x * x 2 ^ sec 2 ^ *")
             {
