@@ -733,6 +733,7 @@ namespace AbMath.Calculator
         {
             Write("Starting to derive ROOT.");
             Derive(Root, variable);
+            Write("");
             return this;
         }
 
@@ -869,7 +870,7 @@ namespace AbMath.Calculator
                     RPN.Node power = node.Children[0].Children[0];
 
                     //x^n -> n * x^(n - 1)
-                    if ( (baseNode.Token.IsVariable() || baseNode.Token.IsFunction()) && (power.Token.IsConstant() || power.Token.IsNumber()))
+                    if ( (baseNode.Token.IsVariable() || baseNode.Token.IsFunction() || IsExpression(baseNode)) && (power.Token.IsConstant() || power.Token.IsNumber()))
                     {
                         if (baseNode.Token.Value == variable.Token.Value )
                         {
@@ -894,7 +895,7 @@ namespace AbMath.Calculator
                             node.Parent.Replace(node, node.Children[0]);
                             Delete(node);
                         }
-                        else if (baseNode.Token.IsFunction())
+                        else if (baseNode.Token.IsFunction() || IsExpression(baseNode))
                         {
                             Write("f(x)^n -> n * f(x)^(n - 1) * f'(x). Power Chain Rule. ");
 
@@ -1034,6 +1035,22 @@ namespace AbMath.Calculator
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
+                else if (node.Children[0].Token.Value == "csc")
+                {
+                    //TODO: csc
+                }
+                else if (node.Children[0].Token.Value == "cot")
+                {
+                    //TODO: cot
+                }
+                else if (node.Children[0].Token.Value == "sqrt")
+                {
+                    Write("DERIVE: sqrt cast to exponent.");
+                    RPN.Node body = node.Children[0].Children[0];
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), .5), body }, new RPN.Token("^",2,RPN.Type.Operator) );
+                    node.Replace(node.Children[0], exponent);
+                    Derive(node, variable);
+                }
                 #endregion
                 else
                 {
@@ -1042,7 +1059,6 @@ namespace AbMath.Calculator
                 //TODO:
                 //All of this stuff requires chain rule! 
                 //Trig
-                    //sec
                     //csc
                     //cot
                 //Inverse Trig
@@ -1051,7 +1067,6 @@ namespace AbMath.Calculator
                     //arcsec
                     //arccsc
                     //acccot
-                //sqrt
                 //abs
                 //ln
                 //log

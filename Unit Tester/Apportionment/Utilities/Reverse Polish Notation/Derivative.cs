@@ -116,6 +116,25 @@ namespace AbMath.Tests
             }
         }
 
+        [Test]
+        public void Sqrt()
+        {
+            RPN test = new RPN("derivative(sqrt(x),x)");
+            test.Compute();
+            if (test.Polish.Print() != "0.5 x -0.5 ^ *")
+            {
+                Assert.Fail();
+            }
+
+            test.SetEquation("derivative(sqrt(x + 3),x)");
+            test.Compute();
+
+            if (test.Polish.Print() != "0.5 3 x + -0.5 ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
 
         [Test]
         public void EulerExponentSimple()
