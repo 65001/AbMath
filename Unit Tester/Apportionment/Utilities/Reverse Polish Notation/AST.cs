@@ -7,10 +7,18 @@ namespace AbMath.Tests
     [TestFixture]
     public class AST
     {
+        private RPN rpn;
+
+        [OneTimeSetUp]
+        public void Setup()
+        {
+            rpn = new RPN("");
+        }
+
         [Test]
         public void IncreaseExponent()
         {
-            RPN rpn = new RPN("sin(x)sin(x)sin(x)");
+            rpn.SetEquation("sin(x)sin(x)sin(x)");
             rpn.Compute();
             string tokens = rpn.Polish.Print();
             if ("x sin 3 ^" != tokens)
@@ -30,7 +38,7 @@ namespace AbMath.Tests
         [Test]
         public void TrigIdentiySinAndCos()
         {
-            RPN rpn = new RPN("sin(x)sin(x) + cos(x)cos(x)");
+            rpn.SetEquation("sin(x)sin(x) + cos(x)cos(x)");
             rpn.Compute();
             if ("1" != rpn.Polish.Print())
             {
@@ -41,7 +49,7 @@ namespace AbMath.Tests
         [Test]
         public void Simplification()
         {
-            RPN rpn = new RPN("3sin(x) - 4sin(x) + sin(x)");
+            rpn.SetEquation("3sin(x) - 4sin(x) + sin(x)");
             rpn.Compute();
             if ("0" != rpn.Polish.Print())
             {
