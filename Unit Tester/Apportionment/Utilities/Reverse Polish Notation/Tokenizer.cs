@@ -4,7 +4,6 @@ using NUnit.Framework;
 
 namespace AbMath.Tests
 {
-    [Parallelizable]
     [TestFixture]
     public class TokenizerTest
     {
