@@ -62,7 +62,7 @@ namespace AbMath.Tests
             };
 
             double allocation = 7;
-            Run(new Webster<string>(pop, allocation), expected);
+            Run(new Webster<string>(pop, allocation, 100), expected);
         }
 
         [Test]
@@ -88,7 +88,7 @@ namespace AbMath.Tests
             };
 
             double allocation = 25;
-            Run(new Hunnington<string>(pop, allocation), expected);
+            Run(new Hunnington<string>(pop, allocation, 9800), expected);
         }
 
         static void Run<T>(IApportionment<T> test, Dictionary<T, double> expected)
