@@ -210,5 +210,16 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void Csc()
+        {
+            RPN test = new RPN("derivative(csc(x^2),x)");
+            test.Compute();
+            if (test.Polish.Print() != "-1 2 x * x 2 ^ cot x 2 ^ csc * * *")
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

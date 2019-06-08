@@ -731,6 +731,11 @@ namespace AbMath.Calculator
 
         private AST Derive(RPN.Node variable)
         {
+            if (!variable.Token.IsVariable())
+            {
+                throw new ArgumentException("The variable of deriviation is not a variable!", nameof(variable));
+            }
+
             Write("Starting to derive ROOT.");
             Derive(Root, variable);
             Write("");
@@ -961,7 +966,6 @@ namespace AbMath.Calculator
                 #region Trig
                 else if (node.Children[0].Token.Value == "sin")
                 {
-                    //sin(x) -> cos(x)derive(x)
                     Write("DERIVE: sin(g(x)) -> cos(g(x))g'(x)");
                     RPN.Node body = node.Children[0].Children[0];
 
@@ -980,7 +984,6 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].Token.Value == "cos")
                 {
-                    //cos(g(x)) -> - sin(g(x)) g'(x)
                     Write("DERIVE: cos(g(x)) -> -sin(g(x))g'(x)");
                     RPN.Node body = node.Children[0].Children[0];
                     RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new []{Clone(body)}, _derive);
@@ -998,7 +1001,6 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].Token.Value == "tan")
                 {
-                    //tan(g(x)) -> sec(g(x))^2 g'(x)
                     Write("tan(g(x)) -> sec(g(x))^2 g'(x)");
                     RPN.Node body = node.Children[0].Children[0];
                     RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new []{Clone(body)}, _derive);
@@ -1016,7 +1018,6 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].Token.Value == "sec")
                 {
-                    //sec(g(x)) -> tan(g(x))sec(g(x))g'(x)
                     Write("sec(g(x)) -> tan(g(x))sec(g(x))g'(x)");
                     RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
 
@@ -1037,11 +1038,28 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].Token.Value == "csc")
                 {
-                    //TODO: csc
+                    Write("csc(g(x)) -> - cot(g(x)) csc(g(x)) g'(x) ");
+                    RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
+
+                    RPN.Node body = node.Children[0].Children[0];
+                    RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
+                    RPN.Node csc = node.Children[0];
+                    RPN.Node cot = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, new RPN.Token("cot", 1, RPN.Type.Function));
+
+                    RPN.Node temp = new RPN.Node(GenerateNextID(), new[] { csc, cot }, multiplyToken);
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { temp, bodyDerive }, multiplyToken);
+
+                    node.Replace(node.Children[0], new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1) , multiply }, multiplyToken) );
+                    //Delete self from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Chain Rule
+                    Derive(bodyDerive, variable);
                 }
                 else if (node.Children[0].Token.Value == "cot")
                 {
                     //TODO: cot
+                    //cot(g(x)) -> - csc(g(x))^2 g'(x)
                 }
                 else if (node.Children[0].Token.Value == "sqrt")
                 {
@@ -1059,8 +1077,6 @@ namespace AbMath.Calculator
                 //TODO:
                 //All of this stuff requires chain rule! 
                 //Trig
-                    //csc
-                    //cot
                 //Inverse Trig
                     //arcsin
                     //arccos
