@@ -9,8 +9,8 @@ before_install:
 install:
   - dotnet restore 
   - nuget restore "Ab Math.sln"
-  - nuget install NUnit.Console -Version 3.9.0 -OutputDirectory "Unit Tester/Apportionment/"
+  - nuget install NUnit.Console -Version 3.10.0 -OutputDirectory "Unit Tester/Apportionment/"
 script:
   - cd "Unit Tester/Apportionment/"
   - dotnet build 
-  - mono ./NUnit.ConsoleRunner.3.9.0/tools/nunit3-console.exe ./bin/Release/netcoreapp2.2/Unit Tester.dll
+  - mono ./NUnit.ConsoleRunner.3.10.0/tools/nunit3-console.exe ./bin/Release/netcoreapp2.2/Unit Tester.dll
