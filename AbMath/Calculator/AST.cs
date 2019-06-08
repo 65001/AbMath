@@ -726,14 +726,13 @@ namespace AbMath.Calculator
 
         private AST Derive(RPN.Node variable)
         {
+            Write("Starting to derive ROOT.");
             Derive(Root, variable);
             return this;
         }
 
         private void Derive(RPN.Node node, RPN.Node variable)
         {
-            
-
             if (node.Token.Value == "derive")
             {
                 if (node.Children[0].Token.IsAddition() || node.Children[0].Token.IsSubtraction())
@@ -903,17 +902,31 @@ namespace AbMath.Calculator
                             //Remove myself from the tree
                             node.Parent.Replace(node.ID, temp);
                             Delete(node);
-
                         }
+                    }
+                    else if (baseNode.Token.IsConstant() && baseNode.Token.Value == "e")
+                    {
+                        Write("e^g(x) -> g'(x)e^g(x)");
+                        RPN.Node exponent = baseNode.Parent;
+                        RPN.Node powerDerivative = new RPN.Node(GenerateNextID(), new []{Clone(power)}, _derive);
+                        RPN.Node multiply = new RPN.Node(GenerateNextID(), new []{powerDerivative, exponent}, new RPN.Token("*", 2, RPN.Type.Operator));
+                        node.Replace(power.Parent, multiply);
+                        //Delete self from the tree
+                        node.Parent.Replace(node, node.Children[0]);
+                        Delete(node);
+
+                        Derive(powerDerivative, variable);
+                    }
+                    //TODO: b^x
+                    else if (baseNode.Token.IsConstant() || baseNode.Token.IsNumber() && IsExpression(power))
+                    {
+                        
                     }
                     else
                     {
                         Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
                     }
-                    //TODO:
-                    //e^x
-                    //b^x
-                    //x^x
+                    //TODO: x^x
                 }
                 #region Trig
                 else if (node.Children[0].Token.Value == "sin")
@@ -989,6 +1002,7 @@ namespace AbMath.Calculator
                     //arccsc
                     //acccot
                 //sqrt
+                //abs
                 //ln
                 //log
             }

@@ -114,6 +114,17 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void EulerExponentSimple()
+        {
+            test.SetEquation("derivative(e^x,x)");
+            test.Compute();
+            if (test.Polish.Print() != "e x ^")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void DoubleDerivative()
         {
             test.SetEquation("derivative( derivative(x^3,x),x)");
