@@ -26,7 +26,7 @@ namespace AbMath.Discrete.Apportionment
 
             int iterations = 0;
             Dictionary<T, double> Quota = (_Input.StandardQuota(Divisor)).Floor();
-            while (Math.Abs(Quota.Sum() - Allocation) > .00001)
+            while (Math.Abs(Quota.Sum() - Allocation) > _tolerance)
             {
 
                 if (Quota.Sum() > Allocation)
