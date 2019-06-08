@@ -96,28 +96,24 @@ namespace AbMath.Calculator
             int pass = 0;
             string hash = string.Empty;
 
-            Write("");
+            if (_data.DebugMode)
+            {
+                Write("");
+            }
 
             while (hash != Root.GetHash())
             {
+
                 hash = Root.GetHash();
-                //Write($"Pass: {pass}\n\tHash: {hash}");
-                Swap(Root);
-                Simplify(Root, SimplificationMode.Imaginary);
-                Simplify(Root, SimplificationMode.Division);
-                Simplify(Root, SimplificationMode.Exponent);
-
-                Simplify(Root, SimplificationMode.Subtraction);
-                Simplify(Root, SimplificationMode.Addition);
-                Simplify(Root, SimplificationMode.Multiplication);
-                Simplify(Root, SimplificationMode.Swap);
-
-                Simplify(Root, SimplificationMode.Trig);
+                Simplify(Root);
                 pass++;
-
-                //Write($"{this.Root.Print()}");
-                //Write($"{this.Root.ToInfix()}");
-                //Write($"");
+                if (_data.DebugMode)
+                {
+                    Write($"Pass: {pass}");
+                    Write($"{this.Root.Print()}");
+                    Write($"{this.Root.ToInfix()}");
+                    Write($"");
+                }
             }
 
             if (_data.DebugMode)
@@ -129,8 +125,29 @@ namespace AbMath.Calculator
             return this;
         }
 
+        private void Simplify(RPN.Node node)
+        {
+            Swap(node);
+            Simplify(node, SimplificationMode.Imaginary);
+            Simplify(node, SimplificationMode.Division);
+            Simplify(node, SimplificationMode.Exponent);
+
+            Simplify(node, SimplificationMode.Subtraction);
+            Simplify(node, SimplificationMode.Addition);
+            Simplify(node, SimplificationMode.Multiplication);
+            Simplify(node, SimplificationMode.Swap);
+
+            Simplify(node, SimplificationMode.Trig);
+        }
+
         private void Simplify(RPN.Node node, SimplificationMode mode)
         {
+            //If Root is a number abort. 
+            if (Root.Token.IsNumber())
+            {
+                return;
+            }
+
             //Imaginary
             if (mode == SimplificationMode.Imaginary && node.Token.Value == "sqrt")
             {
@@ -890,7 +907,7 @@ namespace AbMath.Calculator
                         }
                         else if (baseNode.Token.IsFunction())
                         {
-                            //TODO: Implement
+                            //TODO: Implement Power Chain Rule
                             Write("DERIVE: Power Chain Rule");
                         }
                         else
@@ -921,11 +938,15 @@ namespace AbMath.Calculator
                     {
                         
                     }
+                    //TODO: x^x
+                    else if (IsExpression(baseNode) && IsExpression(power))
+                    {
+
+                    }
                     else
                     {
                         Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
                     }
-                    //TODO: x^x
                 }
                 #region Trig
                 else if (node.Children[0].Token.Value == "sin")
