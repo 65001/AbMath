@@ -106,6 +106,18 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void PowerChainRule()
+        {
+            RPN test = new RPN("derivative(sec(x)^2,x)");
+            test.Compute();
+            if (test.Polish.Print() != "2 x sec * x tan x sec * *")
+            {
+                Assert.Fail();
+            }
+        }
+
+
+        [Test]
         public void EulerExponentSimple()
         {
             RPN test = new RPN("derivative(e^x,x)");
@@ -164,6 +176,17 @@ namespace AbMath.Tests
             RPN test = new RPN("derivative(tan(x^2),x)");
             test.Compute();
             if (test.Polish.Print() != "2 x * x 2 ^ sec 2 ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Sec()
+        {
+            RPN test = new RPN("derivative(sec(2x),x)");
+            test.Compute();
+            if (test.Polish.Print() != "2 2 x * tan 2 x * sec * *")
             {
                 Assert.Fail();
             }
