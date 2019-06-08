@@ -9,7 +9,7 @@ before_install:
 install:
   - dotnet restore 
   - nuget restore "Ab Math.sln"
-  - nuget install NUnit.Console -Version 3.10.0 -OutputDirectory "Unit Tester/Apportionment/"
+  - nuget install NUnit.Console -OutputDirectory "Unit Tester/Apportionment/"
 script:
   - cd "Unit Tester/Apportionment/"
   - dotnet build 
