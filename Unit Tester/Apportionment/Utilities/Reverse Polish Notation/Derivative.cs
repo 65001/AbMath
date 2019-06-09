@@ -121,7 +121,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(2^x,x)");
             test.Compute();
-            if (test.Polish.Print() != "0.693147180559945 2 x ^ *")
+            if (test.Polish.Print() != "0.693147180559945 2 x ^ *" && test.Polish.Print() != "2 ln 2 x ^ *")
             {
                 Assert.Fail();
             }
@@ -228,6 +228,17 @@ namespace AbMath.Tests
             RPN test = new RPN("derivative(csc(x^2),x)");
             test.Compute();
             if (test.Polish.Print() != "-1 2 x * x 2 ^ cot x 2 ^ csc * * *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Cot()
+        {
+            RPN test = new RPN("derivative(cot(2x),x)");
+            test.Compute();
+            if (test.Polish.Print() != "-2 2 x * csc 2 ^ *")
             {
                 Assert.Fail();
             }
