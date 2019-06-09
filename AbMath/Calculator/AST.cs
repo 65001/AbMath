@@ -668,9 +668,6 @@ namespace AbMath.Calculator
                 }
                 else if (node.Token.Value == "derivative")
                 {
-                    //We solve first in an attempt to make constants easier to find
-                    //for the derivative algorithm.
-                    Solve(Root);
                     GenerateDerivativeAndReplace(node.Children[1]);
                     Derive(node.Children[0]); 
                     if (node.isRoot)
@@ -689,6 +686,13 @@ namespace AbMath.Calculator
                         Write($"{Root.Print()}");
                     }
                     Solve(Root);
+                    //TODO: Remove solve
+                    //Tests that fail afterwards :
+                    //Constant Multiplications
+                    //Power Chain Rule
+                    //Sec
+                    //Sqrt
+
                 }
             }
         }
@@ -736,7 +740,7 @@ namespace AbMath.Calculator
                 throw new ArgumentException("The variable of deriviation is not a variable!", nameof(variable));
             }
 
-            Write("Starting to derive ROOT.");
+            Write($"Starting to derive ROOT: {Root.ToInfix()}");
             Derive(Root, variable);
             Write("");
             return this;
@@ -759,7 +763,7 @@ namespace AbMath.Calculator
                     Delete(node);
                 }
                 //Constant Rule -> 0
-                else if (node.Children[0].Token.IsNumber() || node.Children[0].Token.IsConstant() || (node.Children[0].Token.IsVariable() && node.Children[0].Token.Value != variable.Token.Value) )
+                else if (node.Children[0].Token.IsNumber() || node.Children[0].Token.IsConstant() || (node.Children[0].Token.IsVariable() && node.Children[0].Token.Value != variable.Token.Value) || IsSolveable(node))
                 {
                     Write("DERIVE: Constant Rule");
                     node.Children[0].Parent = null;
@@ -883,17 +887,26 @@ namespace AbMath.Calculator
                             Write("DERIVE: Power Rule");
 
                             RPN.Node powerClone = Clone(power);
+                            RPN.Node exponent;
 
-                            //1
-                            RPN.Node one = new RPN.Node(GenerateNextID(), 1);
+                            if (!powerClone.Token.IsNumber())
+                            {
+                                //1
+                                RPN.Node one = new RPN.Node(GenerateNextID(), 1);
 
-                            //(n - 1)
-                            RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] {one, powerClone},
-                                new RPN.Token("-", 2, RPN.Type.Operator));
+                                //(n - 1)
+                                RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] { one, powerClone },
+                                    new RPN.Token("-", 2, RPN.Type.Operator));
 
-                            //x^(n - 1) 
-                            RPN.Node exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] {subtraction, baseNode},
-                                new RPN.Token("^", 2, RPN.Type.Operator));
+                                //x^(n - 1) 
+                                exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { subtraction, baseNode },
+                                    new RPN.Token("^", 2, RPN.Type.Operator));
+                            }
+                            else
+                            {
+                                double temp = double.Parse(powerClone.Token.Value) - 1;
+                                exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { new RPN.Node(GenerateNextID(), temp), baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
+                            }
 
 
                             RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] {exponent, power},
@@ -979,6 +992,7 @@ namespace AbMath.Calculator
                     }
                     else
                     {
+                        //TODO: Throw Exception
                         Write($"Derivative of {node.Children[0].ToInfix()} is not known at this time. ");
                     }
                 }
@@ -1077,9 +1091,23 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].Token.Value == "cot")
                 {
-                    //TODO: cot
-                    //cot(g(x)) -> - csc(g(x))^2 g'(x)
+                    Write("cot(g(x)) -> - csc(g(x))^2 g'(x)");
+
+                    RPN.Node body = node.Children[0].Children[0];
+                    RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
+                    RPN.Node csc = new RPN.Node(GenerateNextID(), new[] { body }, new RPN.Token("csc", 1, RPN.Type.Function));
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), csc }, new RPN.Token("^",2,RPN.Type.Operator));
+                    RPN.Node temp = new RPN.Node(GenerateNextID(),new[] {new RPN.Node(GenerateNextID(),-1) , exponent }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                    node.Replace(node.Children[0], multiply);
+                    //Delete self from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Chain Rule
+                    Derive(bodyDerive, variable);
                 }
+                #endregion
                 else if (node.Children[0].Token.Value == "sqrt")
                 {
                     Write("DERIVE: sqrt cast to exponent.");
@@ -1088,9 +1116,9 @@ namespace AbMath.Calculator
                     node.Replace(node.Children[0], exponent);
                     Derive(node, variable);
                 }
-                #endregion
                 else
                 {
+                    //TODO: Throw Exception
                     Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
                 }
                 //TODO:
