@@ -701,7 +701,7 @@ namespace AbMath.Calculator
             }
 
             //All children of a node must be either numbers of constant functions
-            bool isSolveable = node.Children.All(t => t.Token.Type == RPN.Type.Number || t.Token.IsConstant());
+            bool isSolveable = IsSolveable(node);
 
             //Functions that are not constants and/or meta functions 
             if ( (node.Token.IsFunction() && ! (node.Token.IsConstant() || _data.MetaFunctions.Contains(node.Token.Value)) || node.Token.IsOperator()) && isSolveable)
@@ -759,7 +759,7 @@ namespace AbMath.Calculator
                     Delete(node);
                 }
                 //Constant Rule -> 0
-                else if (node.Children[0].Token.IsNumber() || node.Children[0].Token.IsConstant() || (node.Children[0].Token.IsVariable() && node.Children[0].Token.Value != variable.Token.Value))
+                else if (node.Children[0].Token.IsNumber() || node.Children[0].Token.IsConstant() || (node.Children[0].Token.IsVariable() && node.Children[0].Token.Value != variable.Token.Value) )
                 {
                     Write("DERIVE: Constant Rule");
                     node.Children[0].Parent = null;
@@ -873,6 +873,7 @@ namespace AbMath.Calculator
                     Write($"Exponent: C0: {node.Children[0].Children[0].Token.Value} C1:{node.Children[0].Children[1].Token.Value}");
                     RPN.Node baseNode = node.Children[0].Children[1];
                     RPN.Node power = node.Children[0].Children[0];
+                    Write($"Base : {baseNode.Token.Value}. Power: {power.Token.Value}");
 
                     //x^n -> n * x^(n - 1)
                     if ( (baseNode.Token.IsVariable() || baseNode.Token.IsFunction() || IsExpression(baseNode)) && (power.Token.IsConstant() || power.Token.IsNumber()))
@@ -882,14 +883,18 @@ namespace AbMath.Calculator
                             Write("DERIVE: Power Rule");
 
                             RPN.Node powerClone = Clone(power);
+
+                            //1
                             RPN.Node one = new RPN.Node(GenerateNextID(), 1);
 
+                            //(n - 1)
                             RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] {one, powerClone},
                                 new RPN.Token("-", 2, RPN.Type.Operator));
 
-                            //Replace n with (n - 1) 
+                            //x^(n - 1) 
                             RPN.Node exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] {subtraction, baseNode},
                                 new RPN.Token("^", 2, RPN.Type.Operator));
+
 
                             RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] {exponent, power},
                                 new RPN.Token("*", 2, RPN.Type.Operator));
@@ -949,18 +954,32 @@ namespace AbMath.Calculator
                         Derive(powerDerivative, variable);
                     }
                     //TODO: b^x
-                    else if (baseNode.Token.IsConstant() || baseNode.Token.IsNumber() && IsExpression(power))
+                    else if ( (baseNode.Token.IsConstant() || baseNode.Token.IsNumber()) && (IsExpression(power) || power.Token.IsVariable()))
                     {
-                        Write($"NOT IMPLEMENTED: b^x ");
+                        Write($"b^g(x) -> ln(b) b^g(x) g'(x)");
+
+                        RPN.Node exponent = baseNode.Parent;
+                        RPN.Node ln = new RPN.Node(GenerateNextID(), new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
+                        RPN.Node powerDerivative = new RPN.Node(GenerateNextID(), new[] { Clone(power) }, _derive);
+                        RPN.Node temp = new RPN.Node(GenerateNextID(), new[] { exponent, ln }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { temp, powerDerivative }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                        node.Replace(power.Parent, multiply);
+                        //Delete self from the tree
+                        node.Parent.Replace(node, node.Children[0]);
+                        Delete(node);
+
+                        Derive(powerDerivative, variable);
                     }
                     //TODO: x^x
                     else if (IsExpression(baseNode) && IsExpression(power))
                     {
                         Write($"NOT IMPLEMENTED: x^x ");
+                        Write("x^x -> derive( e^(x*ln(x)) )");
                     }
                     else
                     {
-                        Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
+                        Write($"Derivative of {node.Children[0].ToInfix()} is not known at this time. ");
                     }
                 }
                 #region Trig
@@ -1076,7 +1095,6 @@ namespace AbMath.Calculator
                 }
                 //TODO:
                 //All of this stuff requires chain rule! 
-                //Trig
                 //Inverse Trig
                     //arcsin
                     //arccos
@@ -1132,9 +1150,26 @@ namespace AbMath.Calculator
             return Generate(node.ToPostFix().ToArray());
         }
 
+        /// <summary>
+        /// A node is an expression if it is not 
+        /// a variable, number, or constant. 
+        /// </summary>
+        /// <param name="node">node to test.</param>
+        /// <returns></returns>
         private bool IsExpression(RPN.Node node)
         {
             return !(node.Token.IsNumber() || node.Token.IsVariable() || node.Token.IsConstant());
+        }
+
+        /// <summary>
+        /// If a node that is an operator or function is solveable 
+        /// that means it is in effect a constant!
+        /// </summary>
+        /// <param name="node">node to test.</param>
+        /// <returns></returns>
+        private bool IsSolveable(RPN.Node node)
+        {
+            return node.Children.All(t => t.Token.Type == RPN.Type.Number || t.Token.IsConstant());
         }
 
         /// <summary>

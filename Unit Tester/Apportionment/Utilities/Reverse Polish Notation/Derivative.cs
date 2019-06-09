@@ -117,6 +117,17 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void BaseExponentSimple()
+        {
+            RPN test = new RPN("derivative(2^x,x)");
+            test.Compute();
+            if (test.Polish.Print() != "0.693147180559945 2 x ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void Sqrt()
         {
             RPN test = new RPN("derivative(sqrt(x),x)");
