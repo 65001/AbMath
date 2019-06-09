@@ -146,6 +146,18 @@ namespace AbMath.Tests
             }
         }
 
+        [Test]
+        public void Ln()
+        {
+            RPN test = new RPN("derivative(ln(x^2),x)");
+            test.Compute();
+
+            if (test.Polish.Print() != "2 x * x 2 ^ /")
+            {
+                Assert.Fail();
+            }
+        }
+
 
         [Test]
         public void EulerExponentSimple()

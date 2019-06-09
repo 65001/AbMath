@@ -1116,6 +1116,20 @@ namespace AbMath.Calculator
                     node.Replace(node.Children[0], exponent);
                     Derive(node, variable);
                 }
+                else if (node.Children[0].Token.Value == "ln")
+                {
+                    Write("ln(g(x)) -> g'(x)/g(x)");
+                    RPN.Node body = node.Children[0].Children[0];
+                    RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
+                    RPN.Node division = new RPN.Node(GenerateNextID(), new[] { body, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                    node.Replace(node.Children[0], division);
+                    //Delete self from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Chain Rule
+                    Derive(bodyDerive, variable);
+                }
                 else
                 {
                     //TODO: Throw Exception
