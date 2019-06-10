@@ -1110,7 +1110,7 @@ namespace AbMath.Calculator
                 #endregion
                 else if (node.Children[0].Token.Value == "sqrt")
                 {
-                    Write("DERIVE: sqrt cast to exponent.");
+                    Write("sqrt(g(x)) cast to g(x)^0.5");
                     RPN.Node body = node.Children[0].Children[0];
                     RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), .5), body }, new RPN.Token("^",2,RPN.Type.Operator) );
                     node.Replace(node.Children[0], exponent);
@@ -1130,6 +1130,14 @@ namespace AbMath.Calculator
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
+                else if (node.Children[0].Token.Value == "log")
+                {
+                    Write("NOT IMPLEMENTED: log_b(g(x)) cast to ln(g(x))/ln(b)");
+                }
+                else if (node.Children[0].Token.Value == "abs")
+                {
+                    Write("NOT IMPLEMENTED: abs(g(x)) cast to sqrt( g(x)^2 )");
+                }
                 else
                 {
                     //TODO: Throw Exception
@@ -1143,9 +1151,6 @@ namespace AbMath.Calculator
                     //arcsec
                     //arccsc
                     //acccot
-                //abs
-                //ln
-                //log
             }
 
             //Propagate down the tree
