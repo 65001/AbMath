@@ -151,7 +151,7 @@ namespace AbMath.Calculator
                 if (node.Children[0].Token.IsNumber() && double.Parse(node.Children[0].Token.Value) < 0)
                 {
                     Root = new RPN.Node(GenerateNextID(), double.NaN);
-                    Write("\tSqrt Imaginary Number -> Root.");
+                    Write($"\tSqrt Imaginary Number -> Root. {node.GetHash()}");
                 }
                 //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
             }
@@ -262,15 +262,16 @@ namespace AbMath.Calculator
                 //0 - 3sin(x)
                 else if (node.Children[1].Token.Value == "0")
                 {
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1), node.Children[0] }, new RPN.Token("*",2,RPN.Type.Operator));
                     //Root case
                     if (node.isRoot)
                     {
-                        SetRoot( node.Children[0] );
+                        SetRoot(multiply);
                     }
                     //Non-root case
                     else if (!node.isRoot)
                     {
-                        node.Parent.Replace(node.ID, node.Children[0]);
+                        node.Parent.Replace(node.ID, multiply);
                     }
                     Write("\tSubtraction by zero. Case 2.");
                 }
@@ -593,6 +594,8 @@ namespace AbMath.Calculator
             SW.Stop();
 
             _data.AddTimeRecord("AST MetaFunctions", SW);
+            Write($"Before Simplifications: {Root.ToInfix()}");
+            Write($"{Root.Print()}");
             Simplify();
 
             return this;
@@ -845,7 +848,6 @@ namespace AbMath.Calculator
                 else if (node.Children[0].Token.IsDivision())
                 {
                     //Quotient Rule
-                    Write("DERIVE: Quotient Rule");
                     RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
 
                     RPN.Node numerator = node.Children[0].Children[1];
@@ -860,6 +862,8 @@ namespace AbMath.Calculator
                     RPN.Node subtraction = new RPN.Node(GenerateNextID(), new []{multiplicationTwo, multiplicationOne}, new RPN.Token("-",2,RPN.Type.Operator));
 
                     RPN.Node denominatorSquared = new RPN.Node(GenerateNextID(), new []{ new RPN.Node(GenerateNextID(), 2), Clone(denominator)}, new RPN.Token("^",2,RPN.Type.Operator));
+
+                    Write($"DERIVE: Quotient Rule : { subtraction.ToInfix()}/{denominatorSquared.ToInfix()}");
 
                     //Replace in tree
                     node.Children[0].Replace(numerator, subtraction);
