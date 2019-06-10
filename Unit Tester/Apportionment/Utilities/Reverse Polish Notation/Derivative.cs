@@ -255,5 +255,16 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void ComplexEquation()
+        {
+            RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");
+            test.Compute();
+            if (test.Polish.Print() != "x x 1 - * e -1 2 x * / ^ -2 -1 * 2 x * 2 ^ / * * e -1 2 x * / ^ x x 1 - + * +")
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

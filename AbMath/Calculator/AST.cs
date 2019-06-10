@@ -123,7 +123,6 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
-            Swap(node);
             Simplify(node, SimplificationMode.Imaginary);
             Simplify(node, SimplificationMode.Division);
             Simplify(node, SimplificationMode.Exponent);
@@ -179,7 +178,7 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].Token.IsVariable() && node.Children[1].Token.IsNumber())
                 {
-                    Write("Division -> Multiplication and exponentiation.");
+                    Write($"Division -> Multiplication and exponentiation. {node.GetHash()}");
                     RPN.Node negativeOne = new RPN.Node(GenerateNextID(), -1);
                     RPN.Node exponent = new RPN.Node()
                     {
@@ -263,6 +262,9 @@ namespace AbMath.Calculator
                 else if (node.Children[1].Token.Value == "0")
                 {
                     RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1), node.Children[0] }, new RPN.Token("*",2,RPN.Type.Operator));
+
+                    Write($"\tSubtraction by zero. Case 2. {node.GetHash()}");
+
                     //Root case
                     if (node.isRoot)
                     {
@@ -273,7 +275,7 @@ namespace AbMath.Calculator
                     {
                         node.Parent.Replace(node.ID, multiply);
                     }
-                    Write("\tSubtraction by zero. Case 2.");
+                    
                 }
             }
             //Addition
@@ -396,16 +398,6 @@ namespace AbMath.Calculator
 
                     Write("\tSimplification: Multiplication -> Exponent\n");
                 }
-                else if (node.Children[1].Token.IsNumber() && node.Children[0].Token.IsMultiplication() && node.Children[0].Children[1].Token.IsNumber() && !node.Children[0].Children[0].Token.IsNumber()) 
-                {
-                    double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
-                    double num2 = double.Parse(node.Children[1].Token.Value);
-                    double result = num1 * num2;
-                    //TODO: Replace
-                    node.Children[0].Children[1].Token.Value = "1";
-                    node.Children[1].Token.Value = result.ToString();
-                    Write("\tDual Node Multiplication.");
-                }
                 else if ( (node.Children[1].Token.IsNumber() && node.Children[1].Token.Value == "1") || (node.Children[0].Token.IsNumber() && node.Children[0].Token.Value == "1"))
                 {
                     RPN.Node temp;
@@ -421,7 +413,7 @@ namespace AbMath.Calculator
 
                     if (!node.isRoot)
                     {
-                        Write("\tMultiplication by one simplification.");
+                        Write($"\tMultiplication by one simplification. {node.GetHash()}");
                         node.Parent.Replace(node.ID, temp);
                     }
                     else if (node.isRoot)
@@ -435,7 +427,7 @@ namespace AbMath.Calculator
                     RPN.Node temp = node.Children[1];
                     if (!node.isRoot)
                     {
-                        Write("\tMultiplication by zero simplification.");
+                        Write($"\tMultiplication by zero simplification. {node.GetHash()}");
                         node.Parent.Replace(node.ID, temp);
                     }
                     else if (node.isRoot)
@@ -455,6 +447,18 @@ namespace AbMath.Calculator
 
                     node.Replace( node.Children[0].ID, one );
                     node.Children[1].Children[0].Token.Value = (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
+                }
+                else if (node.Children[1].Token.IsNumber() && node.Children[0].Token.IsMultiplication() && node.Children[0].Children[1].Token.IsNumber() && !node.Children[0].Children[0].Token.IsNumber())
+                {
+
+                    Write($"\tDual Node Multiplication. {node.GetHash()}");
+                    double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
+                    double num2 = double.Parse(node.Children[1].Token.Value);
+                    double result = num1 * num2;
+                    //TODO: Replace
+
+                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(GenerateNextID(), 1));
+                    node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), result));
                 }
             }
             else if (mode == SimplificationMode.Swap)
@@ -570,7 +574,7 @@ namespace AbMath.Calculator
                 //a number and a expression
                 if (node.Children[0].Token.IsNumber() && !(node.Children[1].Token.IsNumber() || node.Children[1].Token.IsVariable()))
                 {
-                    Write($"\tMultiplication Swap");
+                    Write($"\tMultiplication Swap. {node.GetHash()}");
                     node.Children.Swap(1, 0);
                 }
             }
