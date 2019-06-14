@@ -256,7 +256,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("1/2x");
             test.Compute();
-            if ("1 2 x * /" != test.Polish.Print())
+            if ("1 2 x * /" != test.Polish.Print() && "2 x * -1 ^" != test.Polish.Print())
             {
                 Assert.Fail();
             }

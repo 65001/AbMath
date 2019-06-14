@@ -46,14 +46,6 @@ namespace AbMath.Calculator
                 Token = token;
             }
 
-            public Node(int ID, Node[] children, Node parent)
-            {
-                AssignChildren(children);
-                this.ID = ID;
-                Parent = parent;
-                Token = null;
-            }
-
             public void Replace(Node node, Node replacement)
             {
                 Replace(node.ID, replacement);

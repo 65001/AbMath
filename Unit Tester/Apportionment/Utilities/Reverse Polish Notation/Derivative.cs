@@ -117,6 +117,17 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void BaseExponentSimple()
+        {
+            RPN test = new RPN("derivative(2^x,x)");
+            test.Compute();
+            if (test.Polish.Print() != "0.693147180559945 2 x ^ *" && test.Polish.Print() != "2 ln 2 x ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void Sqrt()
         {
             RPN test = new RPN("derivative(sqrt(x),x)");
@@ -130,6 +141,42 @@ namespace AbMath.Tests
             test.Compute();
 
             if (test.Polish.Print() != "0.5 3 x + -0.5 ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Abs()
+        {
+            RPN test = new RPN("derivative( abs(x^2), x)");
+            test.Compute();
+
+            if (test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 x 2 ^ * 2 x * * *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Ln()
+        {
+            RPN test = new RPN("derivative(ln(x^2),x)");
+            test.Compute();
+
+            if (test.Polish.Print() != "2 x * x 2 ^ /")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Log()
+        {
+            RPN test = new RPN("derivative( log(2,x) , x)");
+            test.Compute();
+
+            if (test.Polish.Print() != "1 0.693147180559945 x * /")
             {
                 Assert.Fail();
             }
@@ -217,6 +264,28 @@ namespace AbMath.Tests
             RPN test = new RPN("derivative(csc(x^2),x)");
             test.Compute();
             if (test.Polish.Print() != "-1 2 x * x 2 ^ cot x 2 ^ csc * * *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void Cot()
+        {
+            RPN test = new RPN("derivative(cot(2x),x)");
+            test.Compute();
+            if (test.Polish.Print() != "-2 2 x * csc 2 ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void ComplexEquation()
+        {
+            RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");
+            test.Compute();
+            if (test.Polish.Print() != "x x 1 - * e -1 2 x * / ^ -2 -1 * 2 x * 2 ^ / * * e -1 2 x * / ^ x x 1 - + * +")
             {
                 Assert.Fail();
             }
