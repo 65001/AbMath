@@ -172,8 +172,8 @@ namespace AbMath.Calculator
                     double num2 = double.Parse(node.Children[1].Token.Value);
                     double gcd = RPN.DoFunctions.Gcd(new double[] { num1, num2 });
 
-                    node.Children[0].Token.Value = (num1 / gcd).ToString();
-                    node.Children[1].Token.Value = (num2 / gcd).ToString();
+                    node.Replace(node.Children[0], new RPN.Node(GenerateNextID(), (num1 / gcd)));
+                    node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), (num2 / gcd)));
                     Write("\tDivision GCD.");
                 }
                 else if (node.Children[0].Token.IsVariable() && node.Children[1].Token.IsNumber())
@@ -454,11 +454,9 @@ namespace AbMath.Calculator
                     Write($"\tDual Node Multiplication. {node.GetHash()}");
                     double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
                     double num2 = double.Parse(node.Children[1].Token.Value);
-                    double result = num1 * num2;
-                    //TODO: Replace
 
                     node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(GenerateNextID(), 1));
-                    node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), result));
+                    node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), num1 * num2));
                 }
             }
             else if (mode == SimplificationMode.Swap)
@@ -1140,11 +1138,33 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].Token.Value == "log")
                 {
-                    Write("NOT IMPLEMENTED: log_b(g(x)) cast to ln(g(x))/ln(b)");
+                    Write("log_b(g(x)) -> g'(x)/(g(x) * ln(b))");
+                    RPN.Token ln = new RPN.Token("ln", 1, RPN.Type.Function);
+
+                    RPN.Node power = node.Children[0].Children[1];
+                    RPN.Node body = node.Children[0].Children[0];
+
+                    RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { body, new RPN.Node(GenerateNextID(), new[] { power }, ln) }, new RPN.Token("*",2,RPN.Type.Operator));
+                    RPN.Node division = new RPN.Node(GenerateNextID(), new[] {multiply, bodyDerive}, new RPN.Token("/",2,RPN.Type.Operator));
+
+                    node.Replace(node.Children[0], division);
+                    //Delete self from the tree
+                    node.Parent.Replace(node, node.Children[0]);
+                    Delete(node);
+                    //Chain Rule
+                    Derive(bodyDerive, variable);
                 }
                 else if (node.Children[0].Token.Value == "abs")
                 {
-                    Write("NOT IMPLEMENTED: abs(g(x)) cast to sqrt( g(x)^2 )");
+                    Write("abs(g(x)) cast to sqrt( g(x)^2 )");
+
+                    RPN.Node body = node.Children[0].Children[0];
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    RPN.Node sqrt = new RPN.Node(GenerateNextID(), new[] { exponent }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+
+                    node.Replace(node.Children[0], sqrt);
+                    Derive(node, variable);
                 }
                 else
                 {
