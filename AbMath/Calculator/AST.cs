@@ -11,7 +11,7 @@ namespace AbMath.Calculator
 
         private enum SimplificationMode
         {
-            Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap, Trig, COUNT
+            Sqrt,Log,Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap, Trig, COUNT
         }
 
         private RPN _rpn;
@@ -123,6 +123,8 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
+            Simplify(node, SimplificationMode.Sqrt);
+            Simplify(node, SimplificationMode.Log);
             Simplify(node, SimplificationMode.Imaginary);
             Simplify(node, SimplificationMode.Division);
             Simplify(node, SimplificationMode.Exponent);
@@ -142,10 +144,29 @@ namespace AbMath.Calculator
                 return;
             }
 
-            Write($"{mode}");
+            if (mode == SimplificationMode.Sqrt)
+            {
+                //sqrt(g(x))^2 -> g(x)
+                if (node.Token.IsExponent() && node.Children[0].Token.IsNumber() && double.Parse(node.Children[0].Token.Value) == 2 && node.Children[1].Token.Value == "sqrt")
+                {
+                    Write("sqrt(g(x))^2 -> g(x)");
+                    if (node.isRoot)
+                    {
+                        SetRoot(node.Children[1].Children[0]);
+                    }
+                    else
+                    {
+                        node.Parent.Replace(node, node.Children[1].Children[0]);
+                    }
+                }
+                //sqrt(g(x)^2) -> abs(g(x))
+            }
+            else if (mode == SimplificationMode.Log)
+            {
 
+            }
             //Imaginary
-            if (mode == SimplificationMode.Imaginary && node.Token.Value == "sqrt")
+            else if (mode == SimplificationMode.Imaginary && node.Token.Value == "sqrt")
             {
                 //Any sqrt function with a negative number -> Imaginary number to the root node
                 //An imaginary number propagates anyways

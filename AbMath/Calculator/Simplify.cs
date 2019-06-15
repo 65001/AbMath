@@ -592,16 +592,9 @@ namespace AbMath.Calculator
                     for (int i = 0; i < tokens.Count; i++)
                     {
                         GenerateState(ref tokens, i);
-                        //t     a   a2
-                        //sqrt  2   ^ -> null
-                        if (_token.Value == "sqrt" && !_ahead.IsNull() && _ahead.Value == "2" && !_ahead2.IsNull() && _ahead2.Value == "^")
-                        {
-                            i += 2;
-                            Log("Sqrt Simplification");
-                        }
                         //t a a2
                         //2 ^ sqrt -> abs
-                        else if (!_ahead.IsNull() && !_ahead2.IsNull() && _token.Value == "2" && _ahead.Value == "^" && _ahead2.Value == "sqrt")
+                         if (!_ahead.IsNull() && !_ahead2.IsNull() && _token.Value == "2" && _ahead.Value == "^" && _ahead2.Value == "sqrt")
                         {
                             i += 2;
                             results.Add(new Token {Arguments = 1, Type = Type.Function, Value = "abs"});
