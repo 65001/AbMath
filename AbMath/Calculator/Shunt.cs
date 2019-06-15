@@ -294,28 +294,9 @@ namespace AbMath.Calculator
                     ElapsedTicks = sw.ElapsedTicks
                 });
 
-                if (!_dataStore.PostOptimization)
-                {
-                    return _output.ToArray();
-                }
-
-                Stopwatch SI = new Stopwatch();
-                SI.Start();
-
-                PostSimplify PS = new PostSimplify(_dataStore);
-                PS.Logger += Logger;
-                Token[] complex = PS.Apply(_output.ToList()).ToArray();
+                Token[] complex = _output.ToList().ToArray();
 
                 Write($"Complex RPN : {complex.Print()}");
-
-                SI.Stop();
-
-                _dataStore.AddTimeRecord(new TimeRecord()
-                {
-                    Type = "PostSimplify",
-                    ElapsedMilliseconds = SI.ElapsedMilliseconds,
-                    ElapsedTicks = SI.ElapsedTicks
-                });
 
                 if (_output.Print() != complex.Print())
                 {

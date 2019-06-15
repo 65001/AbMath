@@ -190,18 +190,6 @@ namespace AbMath.Tests
     public class PostSimplification
     {
         [Test]
-        public void Swap()
-        {
-            RPN rpn = new RPN("(x^4) + (x^6) + (x^2) + (x^5) + x + (x^3)");
-            rpn.Compute();
-
-            if ("x 6 ^ x 5 ^ + x 4 ^ + x 3 ^ + x 2 ^ + x +" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
-        }
-
-        [Test]
         public void Log_Base_Power()
         {
             RPN rpn = new RPN("log(b,b)");
