@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -34,17 +35,37 @@ namespace AbMath.Calculator
 
             public List<Token> Apply(List<Token> tokens)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
                 List<Token> expanded = expand(tokens);
+                SW.Stop();
+
+                _dataStore.AddTimeRecord("PreSimplify.Expand", SW);
+
+                SW.Reset();
+                SW.Start();
                 List<Token> swapped = swap(expanded);
+                SW.Stop();
+                _dataStore.AddTimeRecord("PreSimplify.Swap", SW);
+                SW.Reset();
+                SW.Start();
                 List<Token> simplified = simplify(swapped);
+                SW.Stop();
+                _dataStore.AddTimeRecord("PreSimplify.Simplify", SW);
+                SW.Reset();
+                SW.Start();
                 List<Token> compressed = compress(simplified);
+                SW.Stop();
+                _dataStore.AddTimeRecord("PreSimplify.Compress", SW);
 
                 if (_dataStore.DebugMode)
                 {
+                    SW.Reset();
+                    SW.Start();
+
                     Tables<string> table = new Tables<string>(new Config()
                         {Title = "Pre Simplification", Format = _dataStore.DefaultFormat}
                     );
-
 
                     table.Add(new Schema() {Column = "Type", Width = 12});
                     table.Add(new Schema() {Column = "Tokens", Width = 100});
@@ -55,6 +76,9 @@ namespace AbMath.Calculator
                     table.Add(new string[] {"Compressed", compressed.Print()});
 
                     Log(table.ToString());
+
+                    SW.Stop();
+                    _dataStore.AddTimeRecord("PreSimplify.Debug", SW);
                 }
 
                 return compressed;
@@ -322,9 +346,11 @@ namespace AbMath.Calculator
                 }
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void GenerateState(ref List<Token> tokens, int i)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 _prev5 = (i > 4) ? _prev4 : _null;
                 _prev4 = (i > 3) ? _prev3 : _null;
                 _prev3 = (i > 2) ? _prev2 : _null;
@@ -336,6 +362,9 @@ namespace AbMath.Calculator
                 _ahead3 = ((i + 3) < tokens.Count) ? tokens[i + 3] : _null;
                 _ahead4 = ((i + 4) < tokens.Count) ? tokens[i + 4] : _null;
                 _ahead5 = ((i + 5) < tokens.Count) ? tokens[i + 5] : _null;
+
+                SW.Stop();
+                _dataStore.AddTimeRecord("PreSimplify.GenerateState", SW);
             }
 
             private static Token GenerateNull() => new Token { Type = Type.Null };

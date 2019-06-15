@@ -143,10 +143,7 @@ namespace AbMath.Calculator
         }
         public static void Pop<T>(this List<T> list,int count)
         {
-            for (int i = 0; i < count; i++)
-            {
-                list.RemoveAt(list.Count - 1);
-            }
+            list.RemoveRange(list.Count - count, count);
         }
 
         public static string GetDecimalFormat(double n)

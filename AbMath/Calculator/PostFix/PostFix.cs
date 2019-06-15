@@ -118,7 +118,7 @@ namespace AbMath.Calculator
                     Title = "Time"
                 });
 
-                times.Add(new Schema() {Column = "Type", Width = 18});
+                times.Add(new Schema() {Column = "Type", Width = 30});
                 times.Add(new Schema() {Column = "Time (ms)", Width = 10});
                 times.Add(new Schema() {Column = "Ticks", Width = 8});
                 times.Add(new Schema() {Column = "% Milliseconds", Width = 16});
