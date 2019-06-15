@@ -133,6 +133,56 @@ namespace AbMath.Calculator
                 }
             }
 
+            public bool IsNumber()
+            {
+                return Token.IsNumber();
+            }
+
+            public bool IsFunction()
+            {
+                return Token.IsFunction();
+            }
+
+            public bool IsConstant()
+            {
+                return Token.IsConstant();
+            }
+
+            public bool IsOperator()
+            {
+                return Token.IsOperator();
+            }
+
+            public bool IsVariable()
+            {
+                return Token.IsVariable();
+            }
+
+            public bool IsAddition()
+            {
+                return Token.IsAddition();
+            }
+
+            public bool IsSubtraction()
+            {
+                return Token.IsSubtraction();
+            }
+
+            public bool IsDivision()
+            {
+                return Token.IsDivision();
+            }
+
+            public bool IsMultiplication()
+            {
+                return Token.IsMultiplication();
+            }
+
+            public bool IsExponent()
+            {
+                return Token.IsExponent();
+            }
+
             /// <summary>
             /// Returns the postfix representation
             /// of the entire abstract syntax tree.
