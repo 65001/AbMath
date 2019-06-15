@@ -69,9 +69,9 @@ namespace AbMath.Calculator
 
             public void Remove()
             {
-                if (Children.Length > 0)
+                if (Children.Length > 1)
                 {
-                    throw new InvalidOperationException("This node has more than one children.");
+                    throw new InvalidOperationException($"This node has {Children.Length} children.");
                 }
                 Remove(Children[0]);
             }

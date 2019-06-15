@@ -796,8 +796,7 @@ namespace AbMath.Calculator
                     Derive(node.Children[0].Children[0], variable);
                     Derive(node.Children[0].Children[1], variable);
                     //Delete myself from the tree
-                    node.Parent.Replace(node.ID, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                 }
                 //Constant Rule -> 0
                 else if (node.Children[0].IsNumber() || node.Children[0].IsConstant() || (node.Children[0].IsVariable() && node.Children[0].Token.Value != variable.Token.Value) || node.IsSolveable())
@@ -806,8 +805,7 @@ namespace AbMath.Calculator
                     node.Children[0].Parent = null;
                     RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                     //Remove myself from the tree
-                    node.Parent.Replace(node.ID, temp);
-                    node.Delete();
+                    node.Remove(temp);
                 }
                 //Variable -> 1
                 else if (node.Children[0].IsVariable() && node.Children[0].Token.Value == variable.Token.Value)
@@ -816,8 +814,7 @@ namespace AbMath.Calculator
                     node.Children[0].Parent = null;
                     RPN.Node temp = new RPN.Node(GenerateNextID(), 1);
                     //Remove myself from the tree
-                    node.Parent.Replace(node.ID, temp);
-                    node.Delete();
+                    node.Remove(temp);
                 }
                 else if (node.Children[0].IsMultiplication())
                 {
@@ -826,8 +823,7 @@ namespace AbMath.Calculator
                     {
                         RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                         //Remove myself from the tree
-                        node.Parent.Replace(node.ID, temp);
-                        node.Delete();
+                        node.Remove(temp);
                     }
                     //Constant multiplication - 0
                     else if ( (node.Children[0].Children[0].IsNumber() || node.Children[0].Children[0].IsConstant()) && node.Children[1].IsExpression())
@@ -837,8 +833,7 @@ namespace AbMath.Calculator
                         //Recurse explicitly down these branches
                         Derive(node.Children[0].Children[1], variable);
                         //Remove myself from the tree
-                        node.Parent.Replace(node.ID, node.Children[0]);
-                        node.Delete();
+                        node.Remove();
                     }
                     //Constant multiplication - 1
                     else if ((node.Children[0].Children[1].IsNumber() || node.Children[0].Children[1].IsConstant()) && node.Children[0].IsExpression())
@@ -849,8 +844,7 @@ namespace AbMath.Calculator
                         Derive(node.Children[0].Children[0], variable);
 
                         //Remove myself from the tree
-                        node.Parent.Replace(node.ID, node.Children[0]);
-                        node.Delete();
+                        node.Remove();
                     }
                     //Product Rule [Two expressions] 
                     else
@@ -871,8 +865,7 @@ namespace AbMath.Calculator
                         RPN.Node add = new RPN.Node(GenerateNextID(), new []{multiply1, multiply2}, new RPN.Token("+",2,RPN.Type.Operator));
 
                         //Remove myself from the tree
-                        node.Parent.Replace(node.ID, add);
-                        node.Delete();
+                        node.Remove(add);
 
                         //Explicit recursion
                         Derive(fDerivative, variable);
@@ -903,8 +896,7 @@ namespace AbMath.Calculator
                     node.Children[0].Replace(numerator, subtraction);
                     node.Children[0].Replace(denominator, denominatorSquared);
                     //Delete myself from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
 
                     //Explicitly recurse down these branches
                     Derive(subtraction, variable);
@@ -954,8 +946,7 @@ namespace AbMath.Calculator
                             node.Replace(node.Children[0], multiplication);
 
                             //Delete self from the tree
-                            node.Parent.Replace(node, node.Children[0]);
-                            node.Delete();
+                            node.Remove();
                         }
                         else if (baseNode.IsFunction() || baseNode.IsExpression())
                         {
@@ -977,8 +968,7 @@ namespace AbMath.Calculator
                             node.Replace(node.Children[0], multiply);
 
                             //Delete self from the tree
-                            node.Parent.Replace(node, node.Children[0]);
-                            node.Delete();
+                            node.Remove();
 
                             Derive(bodyDerive, variable);
                         }
@@ -988,8 +978,7 @@ namespace AbMath.Calculator
                             node.Children[0].Parent = null;
                             RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                             //Remove myself from the tree
-                            node.Parent.Replace(node.ID, temp);
-                            node.Delete();
+                            node.Remove(temp);
                         }
                     }
                     else if (baseNode.IsConstant() && baseNode.Token.Value == "e")
@@ -1000,8 +989,7 @@ namespace AbMath.Calculator
                         RPN.Node multiply = new RPN.Node(GenerateNextID(), new []{powerDerivative, exponent}, new RPN.Token("*", 2, RPN.Type.Operator));
                         node.Replace(power.Parent, multiply);
                         //Delete self from the tree
-                        node.Parent.Replace(node, node.Children[0]);
-                        node.Delete();
+                        node.Remove();
 
                         Derive(powerDerivative, variable);
                     }
@@ -1018,8 +1006,7 @@ namespace AbMath.Calculator
 
                         node.Replace(power.Parent, multiply);
                         //Delete self from the tree
-                        node.Parent.Replace(node, node.Children[0]);
-                        node.Delete();
+                        node.Remove();
 
                         Derive(powerDerivative, variable);
                     }
@@ -1049,8 +1036,7 @@ namespace AbMath.Calculator
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
@@ -1066,8 +1052,7 @@ namespace AbMath.Calculator
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
@@ -1083,8 +1068,7 @@ namespace AbMath.Calculator
                     RPN.Node multiply = new RPN.Node(GenerateNextID(), new []{exponent, bodyDerive},new RPN.Token("*",2,RPN.Type.Operator));
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
@@ -1103,8 +1087,7 @@ namespace AbMath.Calculator
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
@@ -1123,8 +1106,7 @@ namespace AbMath.Calculator
 
                     node.Replace(node.Children[0], new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1) , multiply }, multiplyToken) );
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
@@ -1141,8 +1123,7 @@ namespace AbMath.Calculator
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
@@ -1164,8 +1145,7 @@ namespace AbMath.Calculator
 
                     node.Replace(node.Children[0], division);
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
@@ -1183,8 +1163,7 @@ namespace AbMath.Calculator
 
                     node.Replace(node.Children[0], division);
                     //Delete self from the tree
-                    node.Parent.Replace(node, node.Children[0]);
-                    node.Delete();
+                    node.Remove();
                     //Chain Rule
                     Derive(bodyDerive, variable);
                 }
