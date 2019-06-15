@@ -466,9 +466,9 @@ namespace AbMath.Calculator
                         SetRoot( temp );
                     }
                 }
-                else if (node.Children[1].IsNumber() && node.Children[1].Token.Value == "0")
+                else if ( (node.Children[1].IsNumber() && node.Children[1].Token.Value == "0") || (node.Children[0].IsNumber() && node.Children[0].Token.Value == "0"))
                 {
-                    RPN.Node temp = node.Children[1];
+                    RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                     if (!node.isRoot)
                     {
                         Write($"\tMultiplication by zero simplification. {node.GetHash()}");
@@ -492,6 +492,18 @@ namespace AbMath.Calculator
                     node.Replace( node.Children[0].ID, one );
                     node.Children[1].Children[0].Token.Value = (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
                 }
+                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[1].Children[0].GetHash() == node.Children[0].Children[1].GetHash() && node.Children[0].Children[0].IsNumber())
+                {
+                    Write("\tIncrease Exponent 2");
+                    node.Children[0].Children[0].Token.Value = (double.Parse(node.Children[0].Children[0].Token.Value) + 1).ToString();
+                    node.Children[1].Children[0].Remove(new RPN.Node(GenerateNextID(), 1));
+                }
+                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[1].GetHash() == node.Children[1].GetHash())
+                {
+                    Write("\tIncrease Exponent 3");
+                    node.Children[0].Children[0].Token.Value = (double.Parse(node.Children[0].Children[0].Token.Value) + 1).ToString();
+                    node.Children[1].Remove(new RPN.Node(GenerateNextID(), 1));
+                }
                 else if (node.Children[1].IsNumber() && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber() && !node.Children[0].Children[0].IsNumber())
                 {
 
@@ -508,11 +520,21 @@ namespace AbMath.Calculator
                 //We can do complex swapping in here
                 if (node.IsMultiplication() && node.Children[0].IsMultiplication() && node.Children[0].Children[0].GetHash() == node.Children[1].GetHash())
                 {
-                    Write($"\tComplex Swap: Dual Node Multiplication Swapping");
+                    Write($"\tComplex Swap: Dual Node Multiplication Swap");
                     RPN.Node temp = node.Children[0].Children[1];
 
                     node.Children[0].Children[1] = node.Children[1];
                     node.Children[1] = temp;
+                }
+                else if (node.IsMultiplication() && node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication() )
+                {
+                    if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber())
+                    {
+                        Write($"\tComplex Swap: Tri Node Multiplication Swap");
+                        RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { Clone( node.Children[0].Children[1] ), Clone( node.Children[1].Children[1] ) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        node.Children[1].Children[1].Remove(multiply);
+                        node.Children[0].Children[1].Remove(new RPN.Node(GenerateNextID(),1));
+                    }
                 }
             }
             else if (mode == SimplificationMode.Exponent && node.IsExponent())
@@ -616,6 +638,11 @@ namespace AbMath.Calculator
                 if (node.Children[0].IsNumber() && !(node.Children[1].IsNumber() || node.Children[1].IsVariable()))
                 {
                     Write($"\tMultiplication Swap. {node.GetHash()}");
+                    node.Children.Swap(1, 0);
+                }
+                else if (node.Children[1].IsExponent() && node.Children[0].IsMultiplication())
+                {
+                    Write("\tSwap: Multiplication and Exponent");
                     node.Children.Swap(1, 0);
                 }
             }

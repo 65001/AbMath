@@ -17,10 +17,14 @@ namespace AbMath.Tests
             {
                 Assert.Fail();
             }
+        }
 
-            rpn.SetEquation("(x(x + 1))(x(x + 1))(x(x + 1))");
+        [Test]
+        public void ComplexIncreaseExponent()
+        {
+            RPN rpn = new RPN("(x(x + 1))(x(x + 1))(x(x + 1))");
             rpn.Compute();
-            tokens = rpn.Polish.Print();
+            string tokens = rpn.Polish.Print();
             if ("x 1 x + * 3 ^" != tokens)
             {
                 Assert.Fail();

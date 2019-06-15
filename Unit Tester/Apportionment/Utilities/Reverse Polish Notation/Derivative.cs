@@ -152,7 +152,7 @@ namespace AbMath.Tests
             RPN test = new RPN("derivative( abs(x^2), x)");
             test.Compute();
 
-            if (test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 x 2 ^ * 2 x * * *")
+            if (test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 x 2 ^ * 2 x * * *" && test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 2 ^ x 2 ^ * x * *")
             {
                 Assert.Fail();
             }
@@ -230,7 +230,7 @@ namespace AbMath.Tests
             RPN test = new RPN("derivative(cos(x^2),x)");
             test.Compute();
 
-            if (test.Polish.Print() != "2 x * -1 x 2 ^ sin * *")
+            if (test.Polish.Print() != "2 x * -1 x 2 ^ sin * *" && test.Polish.Print() != "2 -1 * x * x 2 ^ sin *")
             {
                 Assert.Fail();
             }

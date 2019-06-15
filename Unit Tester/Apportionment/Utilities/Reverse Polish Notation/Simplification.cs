@@ -179,7 +179,7 @@ namespace AbMath.Tests
             RPN rpn = new RPN("2x(3x^2)");
             rpn.Compute();
 
-            if ("6 x 3 ^ *" != rpn.Polish.Print() && "x 3 ^ 6 *" != rpn.Polish.Print())
+            if ("6 x 3 ^ *" != rpn.Polish.Print() && "x 3 ^ 6 *" != rpn.Polish.Print() && "2 3 * x 3 ^ *" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }
