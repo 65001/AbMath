@@ -175,7 +175,11 @@ namespace AbMath.Calculator
                     Write("log(b,1) -> 0");
                     temp = new RPN.Node(GenerateNextID(), 0);
                 }
-                //log(b,b) -> 1
+                else if (node.Token.Value == "log" && node.ChildrenAreIdentical())
+                {
+                    Write("log(b,b) -> 1");
+                    temp = new RPN.Node(GenerateNextID(), 1);
+                }
                 //b^log(b,x) -> x
                 //log(b,R^c) -> c * log(b,R)
                 //log(b,R) + log(b,S) -> log(b,R*S)

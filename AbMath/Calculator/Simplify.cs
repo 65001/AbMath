@@ -621,31 +621,10 @@ namespace AbMath.Calculator
                     for (int i = 0; i < tokens.Count; i++)
                     {
                         GenerateState(ref tokens, i);
-                        //TODO: Implement Log Rules
-                        // t a1 a2
-                        // b b  log -> 1 by log rule
-                        if (!_ahead.IsNull() && !_ahead2.IsNull() &&
-                                 _token.Value == _ahead.Value &&
-                                 _ahead2.Value == "log"
-                        )
-                        {
-                            i += 2;
-                            results.Add(new Token(1));
-                        }
-                        // t a1 a2
-                        // b 1 log -> 0
-                        else if (!_ahead.IsNull() && !_ahead2.IsNull() &&
-                                 (_token.IsVariable() || _token.IsNumber()) &&
-                                 _ahead.Value == "1" &&
-                                 _ahead2.Value == "log"
-                        )
-                        {
-                            i += 2;
-                            results.Add(new Token(0));
-                        }
+
                         // t a1 a2 a3  a4
                         // b b  x  log ^ -> x
-                        else if (!_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() &&
+                        if (!_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() &&
                                  _token.Value == _ahead.Value && (_ahead2.IsNumber() || _ahead2.IsVariable()) &&
                                  _ahead3.Value == "log" && _ahead4.Value == "^"
                         )
