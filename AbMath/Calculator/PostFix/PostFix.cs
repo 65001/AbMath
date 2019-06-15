@@ -112,36 +112,7 @@ namespace AbMath.Calculator
 
             if (_dataStore.DebugMode)
             {
-                Tables<string> times = new Tables<string>(new Config()
-                {
-                    Format = _dataStore.DefaultFormat,
-                    Title = "Time"
-                });
-
-                times.Add(new Schema() {Column = "Type", Width = 30});
-                times.Add(new Schema() {Column = "Time (ms)", Width = 10});
-                times.Add(new Schema() {Column = "Ticks", Width = 8});
-                times.Add(new Schema() {Column = "% Milliseconds", Width = 16});
-                times.Add(new Schema() {Column = "% Ticks", Width = 9});
-
-                for (int i = 0; i < _dataStore.Time.Count; i++)
-                {
-                    RPN.TimeRecord TR = _dataStore.Time[i];
-
-                    times.Add(new string[]
-                    {
-                        TR.Type, TR.ElapsedMilliseconds.ToString(), TR.ElapsedTicks.ToString("N0"),
-                        Math.Round((100 * TR.ElapsedMilliseconds / _dataStore.TotalMilliseconds), 2).ToString(),
-                        (100 * TR.ElapsedTicks / _dataStore.TotalSteps).ToString("N0")
-                    });
-                }
-
-                times.Add(new string[]
-                {
-                    "Total", _dataStore.TotalMilliseconds.ToString(), _dataStore.TotalSteps.ToString("N0"), " ", " "
-                });
-
-                Write(times.ToString());
+                Write(_dataStore.TimeRecords().ToString());
                 Write($"Frequency: {Stopwatch.Frequency}");
                 Write("");
             }

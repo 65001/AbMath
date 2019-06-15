@@ -192,6 +192,43 @@ namespace AbMath.Calculator
                 }
             }
 
+            public Tables<string> TimeRecords()
+            {
+                Tables<string> times = new Tables<string>(new Config()
+                {
+                    Format = DefaultFormat,
+                    Title = "Time"
+                });
+
+                times.Add(new Schema() { Column = "Type", Width = 30 });
+                times.Add(new Schema() { Column = "Time (ms)", Width = 10 });
+                times.Add(new Schema() { Column = "Ticks", Width = 8 });
+                times.Add(new Schema() { Column = "% Milliseconds", Width = 16 });
+                times.Add(new Schema() { Column = "% Ticks", Width = 9 });
+
+                double miliseconds = TotalMilliseconds;
+                double steps = TotalSteps;
+
+                for (int i = 0; i < _time.Count; i++)
+                {
+                    RPN.TimeRecord TR = _time[i];
+
+                    times.Add(new string[]
+                    {
+                        TR.Type, TR.ElapsedMilliseconds.ToString(), TR.ElapsedTicks.ToString("N0"),
+                        Math.Round((100 * TR.ElapsedMilliseconds / miliseconds), 2).ToString(),
+                        (100 * TR.ElapsedTicks / steps).ToString("N0")
+                    });
+                }
+
+                times.Add(new string[]
+                {
+                    "Total", miliseconds.ToString("N0") , steps.ToString("N0"), " ", " "
+                });
+
+                return times;
+            }
+
             public void AddLeftBracket(string value)
             {
                 _leftbracket.Add(value);
