@@ -95,6 +95,11 @@ namespace AbMath.Calculator
                 Write("");
             }
 
+            Simplify(Root, SimplificationMode.Sqrt);
+            Simplify(Root, SimplificationMode.Log);
+            Simplify(Root, SimplificationMode.Imaginary);
+            Simplify(Root, SimplificationMode.Division);
+
             while (hash != Root.GetHash())
             {
                 hash = Root.GetHash();
@@ -117,10 +122,6 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
-            Simplify(node, SimplificationMode.Sqrt);
-            Simplify(node, SimplificationMode.Log);
-            Simplify(node, SimplificationMode.Imaginary);
-            Simplify(node, SimplificationMode.Division);
             Simplify(node, SimplificationMode.Exponent);
             Simplify(node, SimplificationMode.Subtraction);
             Simplify(node, SimplificationMode.Addition);
@@ -180,12 +181,18 @@ namespace AbMath.Calculator
                     Write("log(b,b) -> 1");
                     temp = new RPN.Node(GenerateNextID(), 1);
                 }
-                //b^log(b,x) -> x
+                else if (node.IsExponent() && node.Children[0].Token.Value == "log" && node.Children[0].Children[1].GetHash() == node.Children[1].GetHash())
+                {
+                    Write($"b^log(b,x) -> x");
+                    temp = node.Children[0].Children[0];
+                }
                 //log(b,R^c) -> c * log(b,R)
                 //log(b,R) + log(b,S) -> log(b,R*S)
                 //log(b,R) - log(b,S) -> log(b,R/S)
+                //ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)
+                //ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)
 
-                if(node.isRoot && temp != null)
+                if (node.isRoot && temp != null)
                 {
                     SetRoot(temp);
                 }

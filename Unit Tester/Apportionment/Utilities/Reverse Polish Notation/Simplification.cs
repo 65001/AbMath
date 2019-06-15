@@ -243,6 +243,13 @@ namespace AbMath.Tests
             {
                 Assert.Fail();
             }
+
+            rpn.SetEquation("(2x)^log(2x,2)");
+            rpn.Compute();
+            if ("2" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
         }
 
         [Test]

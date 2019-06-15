@@ -621,25 +621,13 @@ namespace AbMath.Calculator
                     for (int i = 0; i < tokens.Count; i++)
                     {
                         GenerateState(ref tokens, i);
-
-                        // t a1 a2 a3  a4
-                        // b b  x  log ^ -> x
-                        if (!_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() &&
-                                 _token.Value == _ahead.Value && (_ahead2.IsNumber() || _ahead2.IsVariable()) &&
-                                 _ahead3.Value == "log" && _ahead4.Value == "^"
-                        )
-                        {
-                            i += 4;
-                            results.Add(_ahead2);
-                        }
-
                         //p5    p4  p3   p2   p     t   a   a2      a3     a4   a5
                         //c     x   c|x   ^   *     c   x   c|x     ^      *    (+|-|*) ->
                         //NC x pow ^ *
                         //NC p5 \pm t
                         //p3 and a2 must be the same constant or variable (Powers must be constant) or a5 must be *
                         //p4 and a  must be the same variable
-                        else if (!_prev5.IsNull() && !_prev4.IsNull() && !_prev3.IsNull() && !_prev2.IsNull() && !_prev.IsNull() &&
+                        if (!_prev5.IsNull() && !_prev4.IsNull() && !_prev3.IsNull() && !_prev2.IsNull() && !_prev.IsNull() &&
                                  !_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() && !_ahead4.IsNull() && !_ahead5.IsNull() &&
                                  _prev5.IsNumber() && _prev4.IsVariable() &&
                                  (_prev3.IsVariable() || _prev3.IsNumber()) &&
