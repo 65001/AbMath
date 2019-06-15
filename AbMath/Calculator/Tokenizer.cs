@@ -192,29 +192,6 @@ namespace AbMath.Calculator
                     ElapsedTicks = sw.ElapsedTicks
                 });
 
-                if (_dataStore.PreOptimization)
-                {
-                    Stopwatch si = new Stopwatch();
-                    si.Start();
-
-                    PreSimplify preSimplify = new PreSimplify(_dataStore);
-                    if (_dataStore.DebugMode)
-                    {
-                        preSimplify.Logger += Logger;
-                    }
-
-                    _tokens = preSimplify.Apply(_tokens);
-
-                    si.Stop();
-
-                    _dataStore.AddTimeRecord(new TimeRecord()
-                    {
-                        Type = "PreSimplify",
-                        ElapsedMilliseconds = si.ElapsedMilliseconds,
-                        ElapsedTicks = si.ElapsedTicks
-                    });
-                }
-
                 Write("");
 
                 return _tokens;

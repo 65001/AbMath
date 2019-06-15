@@ -458,6 +458,8 @@ namespace AbMath.Tests
             test.Compute();
 
             PostFix math = new PostFix(test);
+            math.SetVariable("x", 1);
+            math.SetVariable("p", 2);
             Assert.AreEqual(0, math.Compute());
         }
 

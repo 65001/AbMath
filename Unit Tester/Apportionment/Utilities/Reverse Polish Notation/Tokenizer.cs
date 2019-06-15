@@ -210,7 +210,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("x2sin(x) + x3sin(x)");
             test.Compute();
-            if ("x 2 * x sin * 3 x * x sin * +" != test.Polish.Print())
+            if ("x 2 * x sin * 3 x * x sin * +" != test.Polish.Print() && "x 2 * x sin * x 3 * x sin * +" != test.Polish.Print())
             {
                 Assert.Fail();
             }

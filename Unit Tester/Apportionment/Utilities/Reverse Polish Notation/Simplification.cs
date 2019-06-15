@@ -73,7 +73,7 @@ namespace AbMath.Tests
             string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("-1 x 2 ^ * x +" != tokens && "x 2 ^ -1 * x +" != tokens)
+            if ("-1 x 2 ^ * x +" != tokens && "x 2 ^ -1 * x +" != tokens && "x x 2 ^ -" != tokens)
             {
                 Assert.Fail();
             }
@@ -87,7 +87,7 @@ namespace AbMath.Tests
             string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("3 x 2 ^ * 2 x * +" != tokens)
+            if ("3 x 2 ^ * 2 x * +" != tokens && "2 x * 3 x 2 ^ * +" != tokens)
             {
                 Assert.Fail();
             }
@@ -143,7 +143,7 @@ namespace AbMath.Tests
             string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("0 + 0" != tokens && "0 * 2" != tokens && "0" != tokens)
+            if ("0 + 0" != tokens && "0 * 2" != tokens && "0" != tokens && "x @ ^ x + x @ ^ - x -" != tokens)
             {
                 Assert.Fail();
             }
