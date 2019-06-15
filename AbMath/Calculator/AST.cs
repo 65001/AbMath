@@ -40,13 +40,7 @@ namespace AbMath.Calculator
             RPN.Node[] nodes = new RPN.Node[input.Length];
             for (int i = 0; i < input.Length; i++)
             {
-                nodes[i] = new RPN.Node()
-                {
-                    Children = new RPN.Node[0],
-                    ID = GenerateNextID(),
-                    Parent = null,
-                    Token = input[i]
-                };
+                nodes[i] = new RPN.Node(GenerateNextID(), input[i]);
             }
 
             for (int i = 0; i < nodes.Length; i++)
@@ -236,19 +230,7 @@ namespace AbMath.Calculator
                 {
                     Write($"Division -> Multiplication and exponentiation. {node.GetHash()}");
                     RPN.Node negativeOne = new RPN.Node(GenerateNextID(), -1);
-                    RPN.Node exponent = new RPN.Node()
-                    {
-                        Children = new RPN.Node[]{negativeOne, node.Children[0]},
-                        ID = GenerateNextID(),
-                        Parent = null,
-                        Token = new RPN.Token
-                        {
-                            Arguments = 2,
-                            Type = RPN.Type.Operator,
-                            Value = "^"
-                        }
-                    };
-                    negativeOne.Parent = exponent;
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { negativeOne, node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
 
                     node.Token.Value = "*";
                     node.Replace(node.Children[0], exponent);
@@ -434,12 +416,7 @@ namespace AbMath.Calculator
                         Children = new RPN.Node[] {two, temp},
                         ID = GenerateNextID(),
                         Parent = node.Parent,
-                        Token = new RPN.Token()
-                        {
-                            Arguments = 2,
-                            Type = RPN.Type.Operator,
-                            Value = "^"
-                        }
+                        Token = new RPN.Token("^",2,RPN.Type.Operator)
                     };
 
                     //Is not the root
@@ -1262,12 +1239,7 @@ namespace AbMath.Calculator
                 Children = new RPN.Node[] {child},
                 ID = GenerateNextID(),
                 Parent = child.Parent,
-                Token = new RPN.Token
-                {
-                    Arguments = 1,
-                    Type = RPN.Type.Function,
-                    Value = "derive"
-                }
+                Token = new RPN.Token("derive",1,RPN.Type.Function)
             };
 
             child.Parent?.Replace(child.ID, temp);

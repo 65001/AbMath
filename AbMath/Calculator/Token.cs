@@ -15,6 +15,13 @@ namespace AbMath.Calculator
 
             }
 
+            public Token(double number)
+            {
+                Value = number.ToString();
+                Arguments = 0;
+                Type = Type.Number;
+            }
+
             public Token(string value, int arguments, Type type)
             {
                 Value = value;

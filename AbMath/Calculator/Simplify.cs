@@ -120,7 +120,7 @@ namespace AbMath.Calculator
                                 result = data1 - data2;
                             }
 
-                            results.Add(new Token() {Arguments = 0, Type = Type.Number, Value = result.ToString()});
+                            results.Add(new Token(result));
                             results.Add(_prev3);
                             results.Add(_prev2);
                             results.Add(_prev);
@@ -132,7 +132,7 @@ namespace AbMath.Calculator
                         {
                             i += 1;
                             results.Pop(2);
-                            results.Add(new Token() {Arguments = 0, Type = Type.Number, Value = "1"});
+                            results.Add(new Token(1));
                         }
                         //t a_1 a_2 a_3
                         //0 x   ^   c -> 0
@@ -178,7 +178,7 @@ namespace AbMath.Calculator
                         if ( (_prev.IsNull() || !_prev.IsNull() && !_prev.IsNumber() && _prev.Value != "^") &&
                              (_ahead.IsNull() || !_ahead.IsNull() && !_ahead.IsNumber()))
                         {
-                            results.Add(new Token() {Arguments = 0,Type = Type.Number, Value = "1"});
+                            results.Add(new Token(1));
                         }
 
                         if (!_prev.IsNull() && !_prev.IsNumber() && !_ahead.IsNull() && _ahead.IsNumber())
@@ -195,8 +195,8 @@ namespace AbMath.Calculator
                             (_ahead.IsNull() || !_ahead.IsNull() && _ahead.Value != "^") &&
                             ( _ahead2.IsNull() || !_ahead2.IsNull() && ( !_ahead2.IsNumber() || !_ahead2.IsVariable() ) ) )
                         {
-                            results.Add(new Token() {Arguments = 2,Type = Type.Operator, Value = "^"});
-                            results.Add(new Token() { Arguments = 0, Type = Type.Number, Value = "1" });
+                            results.Add(new Token("^",2,Type.Operator));
+                            results.Add(new Token(1));
                             //Log($"Adding exponent");
                             //Log($"Token is a {_token.Type} with a value of {_token.Value}");
                             //Log($"Ahead is a {_ahead.Type} with a value of {_ahead.Value}");
@@ -318,7 +318,7 @@ namespace AbMath.Calculator
 
                             if (_prev5.IsNull())
                             {
-                                results.Add(new Token {Arguments = 2, Type = Type.Operator, Value = "+"});
+                                results.Add(new Token("+",2,Type.Operator) );
                             }
                             else if (!_prev5.IsLeftBracket())
                             {
@@ -472,7 +472,7 @@ namespace AbMath.Calculator
                                 Log("\tAdding Coefficient");
                             }
 
-                            results.Add(new Token { Arguments = 0, Type = Type.Number, Value = "1" });
+                            results.Add(new Token(1));
                         }
 
                         results.Add(_token);
@@ -488,13 +488,13 @@ namespace AbMath.Calculator
 
                             addedExponent = true;
 
-                            results.Add(new Token { Arguments = 0, Type = Type.Number, Value = "1" });
-                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "^" });
+                            results.Add(new Token(1));
+                            results.Add(new Token("^",2,Type.Operator));
                         }
 
                         if (addedCoefficient)
                         {
-                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "*" });
+                            results.Add(new Token("*",2,Type.Operator));
                         }
 
 
@@ -630,7 +630,7 @@ namespace AbMath.Calculator
                         )
                         {
                             i += 2;
-                            results.Add(new Token {Arguments = 1, Type = Type.Number, Value = "1"});
+                            results.Add(new Token(1));
                         }
                         // t a1 a2
                         // b 1 log -> 0
@@ -641,7 +641,7 @@ namespace AbMath.Calculator
                         )
                         {
                             i += 2;
-                            results.Add(new Token { Arguments = 1, Type = Type.Number, Value = "0" });
+                            results.Add(new Token(0));
                         }
                         // t a1 a2 a3  a4
                         // b b  x  log ^ -> x
@@ -691,7 +691,7 @@ namespace AbMath.Calculator
                             }
 
 
-                            results.Add(new Token { Arguments = 0, Type = Type.Number, Value = coefficient.ToString() });
+                            results.Add(new Token(coefficient));
                             results.Add(_ahead);
 
                             if (_ahead5.Value == "*")
@@ -700,12 +700,12 @@ namespace AbMath.Calculator
                                 {
                                     results.Add(_ahead2);
                                     results.Add(_prev3);
-                                    results.Add(new Token {Arguments = 2, Type = Type.Operator, Value = "+"});
+                                    results.Add(new Token("+",2,Type.Operator));
                                 }
                                 else
                                 {
                                     double power = double.Parse(_ahead2.Value) + double.Parse(_prev3.Value);
-                                    results.Add(new Token {Arguments = 0, Type = Type.Number, Value = power.ToString()});
+                                    results.Add(new Token(power) );
                                 }
                             }
                             else
@@ -713,8 +713,8 @@ namespace AbMath.Calculator
                                 results.Add(_ahead2);
                             }
 
-                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "^" });
-                            results.Add(new Token { Arguments = 2, Type = Type.Operator, Value = "*" });
+                            results.Add(new Token("^",2,Type.Operator));
+                            results.Add(new Token("*",2,Type.Operator));
                         }
                         //c  x  c  ^  *  0  * -> 0
                         //p  t  a1 a2 a3 a4 a5

@@ -17,30 +17,25 @@ namespace AbMath.Calculator
             {
             }
 
+            public Node(int ID, Node[] children, Token token)
+            {
+                AssignChildren(children);
+                this.ID = ID;
+                Parent = null;
+                Token = token;
+            }
+
             public Node(int ID, double number)
             {
                 Children = new RPN.Node[0];
                 this.ID = ID;
                 Parent = null;
-                Token = new RPN.Token
-                {
-                    Arguments = 0,
-                    Type = RPN.Type.Number,
-                    Value = number.ToString()
-                };
+                Token = new RPN.Token(number);
             }
 
-            public Node(int ID, Node[] children)
+            public Node(int ID, Token token)
             {
-                AssignChildren(children);
-                this.ID = ID;
-                Parent = null;
-                Token = null;
-            }
-
-            public Node(int ID, Node[] children, Token token)
-            {
-                AssignChildren(children);
+                Children = new RPN.Node[0];
                 this.ID = ID;
                 Parent = null;
                 Token = token;

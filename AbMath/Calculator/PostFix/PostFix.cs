@@ -47,7 +47,7 @@ namespace AbMath.Calculator
                 RPN.Token token = _input[i];
                 if (token.Type == RPN.Type.Variable && token.Value == variable)
                 {
-                    _input[i] = (new RPN.Token {Arguments = 0,Type = RPN.Type.Number,Value = number });
+                    _input[i] = new RPN.Token(number,0,RPN.Type.Number);
                 }
             }
         }

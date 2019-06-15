@@ -441,14 +441,9 @@ namespace AbMath.Calculator
                 }
             }
 
-            private static Token GenerateMultiply() => new Token {
-                Value = "*", Arguments = 2, Type = Type.Operator
-            };
+            private static Token GenerateMultiply() => new Token("*", 2, Type.Operator);
 
-            private static Token GenerateDivision() => new Token
-            {
-                Arguments = 2, Type = Type.Operator, Value = "/"
-            };
+            private static Token GenerateDivision() => new Token("/", 2, Type.Operator);
 
             private static Token GenerateNull() => new Token { Type = Type.Null };
 

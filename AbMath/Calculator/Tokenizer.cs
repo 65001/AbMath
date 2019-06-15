@@ -234,12 +234,7 @@ namespace AbMath.Calculator
                 }
 
                 _rule = rule;
-                Token token = new Token
-                {
-                    Value = _token,
-                    Type = _dataStore.Resolve(_token),
-                    Arguments = 0
-                };
+                Token token = new Token(_token, 0, _dataStore.Resolve(_token));
 
                 switch (token.Type)
                 {
