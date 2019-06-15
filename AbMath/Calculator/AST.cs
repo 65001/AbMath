@@ -95,11 +95,6 @@ namespace AbMath.Calculator
                 Write("");
             }
 
-            Simplify(Root, SimplificationMode.Sqrt);
-            Simplify(Root, SimplificationMode.Log);
-            Simplify(Root, SimplificationMode.Imaginary);
-            Simplify(Root, SimplificationMode.Division);
-
             while (hash != Root.GetHash())
             {
                 hash = Root.GetHash();
@@ -122,6 +117,11 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
+            Simplify(Root, SimplificationMode.Sqrt);
+            Simplify(Root, SimplificationMode.Log);
+            Simplify(Root, SimplificationMode.Imaginary);
+            Simplify(Root, SimplificationMode.Division);
+
             Simplify(node, SimplificationMode.Exponent);
             Simplify(node, SimplificationMode.Subtraction);
             Simplify(node, SimplificationMode.Addition);

@@ -683,23 +683,6 @@ namespace AbMath.Calculator
                             results.Add(new Token("^",2,Type.Operator));
                             results.Add(new Token("*",2,Type.Operator));
                         }
-                        //c  x  c  ^  *  0  * -> 0
-                        //p  t  a1 a2 a3 a4 a5
-                        //a1 >= 0
-                        else if (!_ahead.IsNull() && !_ahead2.IsNull() && !_ahead3.IsNull() &&
-                                 !_ahead4.IsNull() && !_prev.IsNull() && 
-                                 _prev.IsNumber() && _token.IsVariable() && 
-                                  ( _ahead.IsNumber() && double.Parse(_ahead.Value) >= 0) &&
-                                  _ahead2.Value == "^" && _ahead3.Value == "*" &&
-                                 _ahead4.Value == "0" && _ahead5.Value == "*"
-                                 )
-                        {
-                            results.Pop(1);
-                            i += 5;
-                            results.Add(_ahead4);
-                        }
-                        //6 5 4 3 2 1 t 1 2 3 4 5 6
-                        //c 1 x 1 ^ * + 1 x 1 ^ * +
                         else
                         {
                             results.Add(_token);
