@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -63,6 +65,27 @@ namespace AbMath.Calculator
                 {
                     Children[i].Replace(identification, node);
                 }
+            }
+
+            public void Remove()
+            {
+                if (Children.Length > 0)
+                {
+                    throw new InvalidOperationException("This node has more than one children.");
+                }
+                Remove(Children[0]);
+            }
+
+            public void Remove(Node replacement)
+            {
+                this.Parent.Replace(this, replacement);
+                this.Delete();
+            }
+
+            public void Delete()
+            {
+                Parent = null;
+                Children = new RPN.Node[0];
             }
 
             public override string ToString()
@@ -181,6 +204,28 @@ namespace AbMath.Calculator
             public bool IsExponent()
             {
                 return Token.IsExponent();
+            }
+
+            /// <summary>
+            /// A node is an expression if it is not 
+            /// a variable, number, or constant. 
+            /// </summary>
+            /// <param name="node">node to test.</param>
+            /// <returns></returns>
+            public bool IsExpression()
+            {
+                return !(IsNumber() || IsVariable() || IsConstant());
+            }
+
+            /// <summary>
+            /// If a node that is an operator or function is solveable 
+            /// that means it is in effect a constant!
+            /// </summary>
+            /// <param name="node">node to test.</param>
+            /// <returns></returns>
+            public bool IsSolveable()
+            {
+                return this.Children.All(t => t.Token.Type == RPN.Type.Number || t.Token.IsConstant());
             }
 
             /// <summary>
