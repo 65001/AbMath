@@ -470,6 +470,16 @@ namespace AbMath.Tests
             PostFix math = new PostFix(test);
             Assert.AreEqual(-1, math.Compute());
         }
+        
+        [Test]
+        public void Distance()
+        {
+            RPN test = new RPN("sqrt(2^2 + 8^2)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual( Math.Sqrt( 68 ), math.Compute());
+        }
 
         [Test]
         public void VardiacImplicitMultiplication()

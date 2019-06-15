@@ -142,6 +142,8 @@ namespace AbMath.Calculator
                 return;
             }
 
+            Write($"{mode}");
+
             //Imaginary
             if (mode == SimplificationMode.Imaginary && node.Token.Value == "sqrt")
             {
@@ -500,15 +502,14 @@ namespace AbMath.Calculator
                     node.Children[1].Token.IsExponent() &&
                     node.Children[0].Children[0].Token.IsNumber() &&
                     node.Children[1].Children[0].Token.IsNumber() &&
-
                     node.Children[0].Children[0].Token.Value == "2" &&
-                    node.Children[1].Children[0].Token.Value == "2" &&
-                    node.Children[0].Children[1].Children[0].GetHash() ==
-                    node.Children[1].Children[1].Children[0].GetHash() &&
-                    (
-                        (node.Children[0].Children[1].Token.Value == "cos" && node.Children[1].Children[1].Token.Value == "sin") || 
-                        (node.Children[0].Children[1].Token.Value == "sin" && node.Children[1].Children[1].Token.Value == "cos") 
-                    )
+                    node.Children[1].Children[0].Token.Value == "2" &&   
+                    node.Children[0].Children[1].Token.IsFunction() &&
+                    node.Children[1].Children[1].Token.IsFunction() &&
+
+                    ((node.Children[0].Children[1].Token.Value == "cos" && node.Children[1].Children[1].Token.Value == "sin") || 
+                     (node.Children[0].Children[1].Token.Value == "sin" && node.Children[1].Children[1].Token.Value == "cos")) && 
+                    node.Children[0].Children[1].Children[0].GetHash() == node.Children[1].Children[1].Children[0].GetHash()
                 )
                 {
                     RPN.Node head = new RPN.Node(GenerateNextID(), 1);
