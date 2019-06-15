@@ -138,8 +138,8 @@ namespace AbMath.Calculator
 
             ast.Generate(this.Data.Polish);
            
-            Logger?.Invoke(this, ast.Root.Print() );
-            Logger?.Invoke(this, "AST RPN : " + ast.Root.ToPostFix().Print());
+            Write( ast.Root.Print() );
+            Write( "AST RPN : " + ast.Root.ToPostFix().Print());
 
             //Simplify the Abstract Syntax Tree
             //This can take quite a lot of time
@@ -149,9 +149,14 @@ namespace AbMath.Calculator
             this.Data.Polish = ast.Root.ToPostFix().ToArray();
             this.Data.SimplifiedEquation = ast.Root.ToInfix();
 
-            Logger?.Invoke(this, "AST Simplified RPN : " + this.Data.Polish.Print());
-            Logger?.Invoke(this, "AST Simplified Infix : " + this.Data.SimplifiedEquation);
-            Logger?.Invoke(this, ast.Root.Print());
+            Write("AST Simplified RPN : " + this.Data.Polish.Print());
+            Write("AST Simplified Infix : " + this.Data.SimplifiedEquation);
+            Write( ast.Root.Print());
+        }
+
+        private void Write(string message)
+        {
+            Logger?.Invoke(this, message.Alias());
         }
     }
 }

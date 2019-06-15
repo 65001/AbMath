@@ -257,5 +257,11 @@ namespace AbMath.Calculator
                 return null;
             }
         }
+
+        public static string Alias(this string data)
+        {
+            
+            return data.Replace("pi", "π ");
+        }
     }
 }

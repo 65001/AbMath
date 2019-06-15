@@ -224,6 +224,14 @@ namespace AbMath.Tests
             {
                 Assert.Fail();
             }
+
+            rpn.SetEquation("log(x^2,1)");
+            rpn.Compute();
+
+            if ("0" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
         }
 
         [Test]

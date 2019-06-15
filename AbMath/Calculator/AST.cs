@@ -139,7 +139,7 @@ namespace AbMath.Calculator
         private void Simplify(RPN.Node node, SimplificationMode mode)
         {
             //If Root is a number abort. 
-            if (Root.Token.IsNumber())
+            if (Root.Token.IsNumber() || node.Token.IsNumber() || node.Token.IsConstant() )
             {
                 return;
             }
@@ -147,7 +147,7 @@ namespace AbMath.Calculator
             if (mode == SimplificationMode.Sqrt)
             {
                 //sqrt(g(x))^2 -> g(x)
-                if (node.Token.IsExponent() && node.Children[0].Token.IsNumber() && double.Parse(node.Children[0].Token.Value) == 2 && node.Children[1].Token.Value == "sqrt")
+                if (node.Token.IsExponent() && node.Children[0].Token.IsNumber() && node.Children[1].Token.Value == "sqrt" && double.Parse(node.Children[0].Token.Value) == 2)
                 {
                     Write("sqrt(g(x))^2 -> g(x)");
                     if (node.isRoot)
@@ -159,11 +159,44 @@ namespace AbMath.Calculator
                         node.Parent.Replace(node, node.Children[1].Children[0]);
                     }
                 }
-                //sqrt(g(x)^2) -> abs(g(x))
+                else if (node.Token.Value == "sqrt" && node.Children[0].Token.IsExponent() && node.Children[0].Children[0].Token.IsNumber() && double.Parse(node.Children[0].Children[0].Token.Value) == 2)
+                {
+                    Write("sqrt(g(x)^2) -> abs(g(x))");
+                    RPN.Node abs = new RPN.Node(GenerateNextID(), new[] { node.Children[0].Children[1] }, new RPN.Token("abs", 1, RPN.Type.Function));
+                    if (node.isRoot)
+                    {
+                        SetRoot(abs);
+                    }
+                    else
+                    {
+                        node.Parent.Replace(node, abs);
+                    }
+                }
             }
             else if (mode == SimplificationMode.Log)
             {
+                RPN.Node temp = null;
+                if (node.Token.Value == "log" && node.Children[0].Token.IsNumber() && double.Parse(node.Children[0].Token.Value) == 1)
+                {
+                    Write("log(b,1) -> 0");
+                    temp = new RPN.Node(GenerateNextID(), 0);
+                }
+                //log(b,b) -> 1
+                //b^log(b,x) -> x
+                //log(b,R^c) -> c * log(b,R)
+                //log(b,R) + log(b,S) -> log(b,R*S)
+                //log(b,R) - log(b,S) -> log(b,R/S)
 
+                if(node.isRoot && temp != null)
+                {
+                    SetRoot(temp);
+                }
+                else if (!node.isRoot && temp != null)
+                {
+                    node.Parent.Replace(node, temp);
+                }
+
+                //ln(R^c) -> log(e,R^c) -> Resolve
             }
             //Imaginary
             else if (mode == SimplificationMode.Imaginary && node.Token.Value == "sqrt")
@@ -512,9 +545,9 @@ namespace AbMath.Calculator
                     Delete(power);
                     Delete(node);
                 }
-                //f(x)^1 -> f(x)
-
-                //f(x)^0
+                //f(x)^0 -> 1
+                //f(x)^-c -> 1/f(x)^c
+                //f(x)^0.5 -> sqrt(f(x))
             }
             else if (mode == SimplificationMode.Trig)
             {
@@ -1282,12 +1315,12 @@ namespace AbMath.Calculator
 
         private void Write(string message)
         {
-            Logger?.Invoke(this, message);
+            Logger?.Invoke(this, message.Alias());
         }
 
         private void stdout(string message)
         {
-            Output?.Invoke(this, message);
+            Output?.Invoke(this, message.Alias());
         }
     }
 }

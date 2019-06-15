@@ -479,7 +479,7 @@ namespace AbMath.Calculator
 
             void Write(string message)
             {
-                Logger?.Invoke(this, message);
+                Logger?.Invoke(this, message.Alias());
             }
         }
     }

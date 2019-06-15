@@ -260,13 +260,13 @@ namespace AbMath.Calculator
             {
                 if (_dataStore.DebugMode)
                 {
-                    Logger?.Invoke(this, message);
+                    Logger?.Invoke(this, message.Alias());
                 }
             }
 
             private void Log(string message)
             {
-                Logger?.Invoke(this, message);
+                Logger?.Invoke(this, message.Alias());
             }
         }
     }

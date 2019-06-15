@@ -371,7 +371,7 @@ namespace AbMath.Calculator
 
             private void Log(string message)
             {
-                Logger?.Invoke(this, message);
+                Logger?.Invoke(this, message.Alias());
             }
         }
 
@@ -621,18 +621,10 @@ namespace AbMath.Calculator
                     for (int i = 0; i < tokens.Count; i++)
                     {
                         GenerateState(ref tokens, i);
-                        //t a a2
-                        //2 ^ sqrt -> abs
-                         if (!_ahead.IsNull() && !_ahead2.IsNull() && _token.Value == "2" && _ahead.Value == "^" && _ahead2.Value == "sqrt")
-                        {
-                            i += 2;
-                            results.Add(new Token {Arguments = 1, Type = Type.Function, Value = "abs"});
-                            Log("Sqrt -> abs Simplification");
-                        }
                         //TODO: Implement Log Rules
                         // t a1 a2
                         // b b  log -> 1 by log rule
-                        else if (!_ahead.IsNull() && !_ahead2.IsNull() &&
+                        if (!_ahead.IsNull() && !_ahead2.IsNull() &&
                                  _token.Value == _ahead.Value &&
                                  _ahead2.Value == "log"
                         )
@@ -930,7 +922,7 @@ namespace AbMath.Calculator
 
             private void Log(string message)
             {
-                Logger?.Invoke(this, message);
+                Logger?.Invoke(this, message.Alias());
             }
 
             private static Token GenerateNull() => new Token { Type = Type.Null };
