@@ -343,11 +343,9 @@ namespace AbMath.Calculator
                 //Both nodes are multiplications with 
                 //the parent node being addition
                 //Case: 2sin(x) + 3sin(x)
-                else if (node.Children[0].GetHash() == node.Children[1].GetHash() && node.Children[0].IsMultiplication())
+                else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
                 {
-                    if (node.Children[0].Children[0].GetHash() == node.Children[1].Children[0].GetHash() &&
-                        (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() )
-                        )
+                    if (node.Children[0].Children[0].GetHash() == node.Children[1].Children[0].GetHash() && (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() ) )
                     {
                         Write("\tSimplification: Addition");
                         double coef1 = double.Parse( node.Children[0].Children[1].Token.Value);
@@ -555,7 +553,22 @@ namespace AbMath.Calculator
                     power.Delete();
                     node.Delete();
                 }
-                //f(x)^0 -> 1
+                else if (power.IsNumber() && double.Parse(power.Token.Value) == 0)
+                {
+                    Write("f(x)^0 -> 1");
+                    if (node.isRoot)
+                    {
+                        SetRoot(new RPN.Node(GenerateNextID(), 1));
+                    }
+                    else
+                    {
+                        node.Parent.Replace(node, new RPN.Node(GenerateNextID(), 1));
+                    }
+
+                    baseNode.Delete();
+                    power.Delete();
+                    node.Delete();
+                }
                 //f(x)^-c -> 1/f(x)^c
                 //f(x)^0.5 -> sqrt(f(x))
             }

@@ -86,6 +86,7 @@ namespace AbMath.Calculator
 
             public List<Token> simplify(List<Token> tokens)
             {
+                return tokens; 
                 while (true)
                 {
                     List<Token> results = new List<Token>(tokens.Count);
