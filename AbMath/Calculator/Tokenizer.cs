@@ -73,17 +73,15 @@ namespace AbMath.Calculator
                         WriteToken("WhiteSpace");
                     }
                     //Unary Input at the start of the input or after another operator or left parenthesis
-                    else if ((i == 0 && _dataStore.IsUnary(_character)) 
-                             || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken ==",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(_token) && 
-                        !_dataStore.IsOperator(_character + _readAhead)))
+                    else if ((i == 0 && _dataStore.IsUnary(_character)) || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken ==",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(_token) && !_dataStore.IsOperator(_character + _readAhead)))
                     {
                         _rule = "Unary";
                         _token += _character;
                         if(!string.IsNullOrWhiteSpace(_readAhead) && (_dataStore.IsVariable(_readAhead) || _dataStore.IsLeftBracket(_readAhead) ))
-                         {
+                        {
                             _token += "1";
                             WriteToken("Unary");
-                         }
+                        }
                     }
                     else if (_dataStore.IsNumber( _character ) && _token == "-.")
                     {
@@ -114,8 +112,7 @@ namespace AbMath.Calculator
                         _token = _character;
                         WriteToken("Function Start");
                     }
-                    else if (_dataStore.IsFunction(_token) && ( _dataStore.IsRightBracket(_character) 
-                             || _dataStore.IsOperator(_character) ))
+                    else if (_dataStore.IsFunction(_token) && ( _dataStore.IsRightBracket(_character) || _dataStore.IsOperator(_character) ))
                     {
                         WriteToken("Function End");
                         _token = _character;
@@ -169,8 +166,7 @@ namespace AbMath.Calculator
 
                     if (_dataStore.DebugMode)
                     {
-                        _tables.Add(new string[]
-                            {i.ToString(), _character, ((int)_character[0]).ToString() , _token, _tokens.Count.ToString(), _rule ?? string.Empty});
+                        _tables.Add(new string[] {i.ToString(), _character, ((int)_character[0]).ToString() , _token, _tokens.Count.ToString(), _rule ?? string.Empty});
                     }
                 }
 
