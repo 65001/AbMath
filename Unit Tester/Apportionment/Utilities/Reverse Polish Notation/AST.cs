@@ -81,5 +81,20 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void LnAddOrSub()
+        {
+            RPN rpn = new RPN("ln(2) + ln(1/2)").Compute();
+            if ("2 1 2 / * ln" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+            rpn.SetEquation("ln(2) - ln(3)").Compute();
+            if("2 3 / ln" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

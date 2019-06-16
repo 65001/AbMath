@@ -103,6 +103,26 @@ namespace AbMath.Calculator
             {
                 return Value == "^";
             }
+
+            public bool IsLog()
+            {
+                return Value == "log";
+            }
+
+            public bool IsLn()
+            {
+                return Value == "ln";
+            }
+
+            public bool IsSqrt()
+            {
+                return Value == "sqrt";
+            }
+
+            public bool IsAbs()
+            {
+                return Value == "abs";
+            }
         }
     }
 }

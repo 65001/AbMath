@@ -206,6 +206,26 @@ namespace AbMath.Calculator
                 return Token.IsExponent();
             }
 
+            public bool IsLog()
+            {
+                return Token.IsLog();
+            }
+
+            public bool IsLn()
+            {
+                return Token.IsLn();
+            }
+
+            public bool IsSqrt()
+            {
+                return Token.IsSqrt();
+            }
+
+            public bool IsAbs()
+            {
+                return Token.IsAbs();
+            }
+
             /// <summary>
             /// A node is an expression if it is not 
             /// a variable, number, or constant. 

@@ -106,7 +106,7 @@ namespace AbMath.Calculator
         /**
          * Set's a new equation with the default Tokenizer
          */
-        public void SetEquation(string equation)
+        public RPN SetEquation(string equation)
         {
             Equation = equation;
 
@@ -115,6 +115,7 @@ namespace AbMath.Calculator
 
             _tokenizer = new Tokenizer(Data);
             _shunt = new Shunt(Data);
+            return this;
         }
 
         private void Startup()
@@ -123,7 +124,7 @@ namespace AbMath.Calculator
         }
         #endregion
 
-        public void Compute()
+        public RPN Compute()
         {
             _tokenizer.Logger += Logger;
             Tokens = _tokenizer.Tokenize();
@@ -152,6 +153,8 @@ namespace AbMath.Calculator
             Write("AST Simplified RPN : " + this.Data.Polish.Print());
             Write("AST Simplified Infix : " + this.Data.SimplifiedEquation);
             Write( ast.Root.Print());
+
+            return this;
         }
 
         private void Write(string message)
