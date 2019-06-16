@@ -63,5 +63,23 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void LogAddOrSub()
+        {
+            RPN rpn = new RPN("log(b,R) + log(b,S)");
+            rpn.Compute();
+            if("b R S * log" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+
+            rpn.SetEquation("log(b,R) - log(b,S)");
+            rpn.Compute();
+            if("b R S / log" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

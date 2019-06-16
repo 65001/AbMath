@@ -196,8 +196,23 @@ namespace AbMath.Calculator
                     RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
                     temp = multiply;
                 }
-                //log(b,R) + log(b,S) -> log(b,R*S)
-                //log(b,R) - log(b,S) -> log(b,R/S)
+                else if ( (node.IsAddition() || node.IsSubtraction()) &&  node.Children[0].Token.Value == "log" && node.Children[1].Token.Value == "log" && node.Children[0].Children[1].GetHash() == node.Children[1].Children[1].GetHash())
+                {
+                    RPN.Node parameter;
+                    if (node.IsAddition())
+                    {
+                        Write("log(b,R) + log(b,S) -> log(b,R*S)");
+                        parameter = new RPN.Node(GenerateNextID(), new[] { node.Children[0].Children[0], node.Children[1].Children[0] }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    }
+                    else
+                    {
+                        Write("log(b,R) - log(b,S) -> log(b,R/S)");
+                        parameter = new RPN.Node(GenerateNextID(), new[] {  node.Children[0].Children[0], node.Children[1].Children[0] }, new RPN.Token("/", 2, RPN.Type.Operator));
+                    }
+                    RPN.Node baseNode = node.Children[0].Children[1];
+                    RPN.Node log = new RPN.Node(GenerateNextID(), new[] {parameter, baseNode }, new RPN.Token("log", 2, RPN.Type.Function));
+                    temp = log;
+                }
                 //ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)
                 //ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)
 
