@@ -100,7 +100,6 @@ namespace AbMath.Calculator
                 hash = Root.GetHash();
                 Simplify(Root);
                 Write($"Pass: {pass}. Hash {hash}. Root: {Root.GetHash()}");
-                Write($"{this.Root.Print()}");
                 Write($"{this.Root.ToInfix()}");
                 Write($"");
                 pass++;
@@ -186,7 +185,17 @@ namespace AbMath.Calculator
                     Write($"b^log(b,x) -> x");
                     temp = node.Children[0].Children[0];
                 }
-                //log(b,R^c) -> c * log(b,R)
+                else if (node.Token.Value == "log" && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
+                {
+                    Write("log(b,R^c) -> c * log(b,R)");
+                    RPN.Node exponent = node.Children[0];
+                    RPN.Node baseNode = exponent.Children[1];
+                    RPN.Node power = exponent.Children[0];
+
+                    RPN.Node log = new RPN.Node(GenerateNextID(), new[] {Clone(baseNode) ,node.Children[1] }, new RPN.Token("log",2,RPN.Type.Function));
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    temp = multiply;
+                }
                 //log(b,R) + log(b,S) -> log(b,R*S)
                 //log(b,R) - log(b,S) -> log(b,R/S)
                 //ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)
@@ -201,7 +210,7 @@ namespace AbMath.Calculator
                     node.Parent.Replace(node, temp);
                 }
 
-                //ln(R^c) -> log(e,R^c) -> Resolve
+                //ln(R^c) -> log(e,R^c) -> 
             }
             //Imaginary
             else if (mode == SimplificationMode.Imaginary && node.Token.Value == "sqrt")
@@ -211,7 +220,7 @@ namespace AbMath.Calculator
                 if (node.Children[0].Token.IsNumber() && double.Parse(node.Children[0].Token.Value) < 0)
                 {
                     Root = new RPN.Node(GenerateNextID(), double.NaN);
-                    Write($"\tSqrt Imaginary Number -> Root. {node.GetHash()}");
+                    Write($"\tSqrt Imaginary Number -> Root.");
                 }
                 //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
             }
@@ -239,7 +248,7 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].IsVariable() && node.Children[1].IsNumber())
                 {
-                    Write($"Division -> Multiplication and exponentiation. {node.GetHash()}");
+                    Write($"Division -> Multiplication and exponentiation.");
                     RPN.Node negativeOne = new RPN.Node(GenerateNextID(), -1);
                     RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { negativeOne, node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
 
@@ -312,7 +321,7 @@ namespace AbMath.Calculator
                 {
                     RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1), node.Children[0] }, new RPN.Token("*",2,RPN.Type.Operator));
 
-                    Write($"\tSubtraction by zero. Case 2. {node.GetHash()}");
+                    Write($"\tSubtraction by zero. Case 2.");
 
                     //Root case
                     if (node.isRoot)
@@ -455,7 +464,7 @@ namespace AbMath.Calculator
 
                     if (!node.isRoot)
                     {
-                        Write($"\tMultiplication by one simplification. {node.GetHash()}");
+                        Write($"\tMultiplication by one simplification.");
                         node.Parent.Replace(node.ID, temp);
                     }
                     else if (node.isRoot)
@@ -469,7 +478,7 @@ namespace AbMath.Calculator
                     RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                     if (!node.isRoot)
                     {
-                        Write($"\tMultiplication by zero simplification. {node.GetHash()}");
+                        Write($"\tMultiplication by zero simplification.");
                         node.Parent.Replace(node.ID, temp);
                     }
                     else if (node.isRoot)
@@ -505,7 +514,7 @@ namespace AbMath.Calculator
                 else if (node.Children[1].IsNumber() && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber() && !node.Children[0].Children[0].IsNumber())
                 {
 
-                    Write($"\tDual Node Multiplication. {node.GetHash()}");
+                    Write($"\tDual Node Multiplication.");
                     double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
                     double num2 = double.Parse(node.Children[1].Token.Value);
 
@@ -650,7 +659,7 @@ namespace AbMath.Calculator
                 //a number and a expression
                 if (node.Children[0].IsNumber() && !(node.Children[1].IsNumber() || node.Children[1].IsVariable()))
                 {
-                    Write($"\tMultiplication Swap. {node.GetHash()}");
+                    Write($"\tMultiplication Swap.");
                     node.Children.Swap(1, 0);
                 }
                 else if (node.Children[1].IsExponent() && node.Children[0].IsMultiplication())
@@ -731,7 +740,7 @@ namespace AbMath.Calculator
                 }
                 else if (node.Token.Value == "table")
                 {
-                    string table = string.Empty;
+                    string table;
                     if (node.Children.Length == 5)
                     {
                         table = MetaCommands.Table(_rpn,

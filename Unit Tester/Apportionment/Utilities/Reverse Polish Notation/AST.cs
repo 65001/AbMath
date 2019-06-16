@@ -52,5 +52,16 @@ namespace AbMath.Tests
                Assert.Fail();
             }
         }
+
+        [Test]
+        public void LogExponentMultiply()
+        {
+            RPN rpn = new RPN("log(2,3^x)");
+            rpn.Compute();
+            if ("x 2 3 log *" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
     }
 }
