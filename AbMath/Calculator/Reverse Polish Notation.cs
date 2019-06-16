@@ -139,8 +139,7 @@ namespace AbMath.Calculator
 
             ast.Generate(this.Data.Polish);
            
-            Write( ast.Root.Print() );
-            Write( "AST RPN : " + ast.Root.ToPostFix().Print());
+            Write("AST RPN : " + ast.Root.ToPostFix().Print());
 
             //Simplify the Abstract Syntax Tree
             //This can take quite a lot of time

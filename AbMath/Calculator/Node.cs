@@ -142,7 +142,7 @@ namespace AbMath.Calculator
 
             private void AssignChildren(Node[] child)
             {
-                if (this.Children == null || this.Children.Length < child.Length)
+                if (Children == null || Children.Length < child.Length)
                 {
                     Children = new Node[child.Length];
                 }
@@ -159,6 +159,11 @@ namespace AbMath.Calculator
             public bool IsNumber()
             {
                 return Token.IsNumber();
+            }
+
+            public bool IsNumber(double number)
+            {
+                return Token.IsNumber() && double.Parse(Token.Value) == number;
             }
 
             public bool IsFunction()
@@ -245,7 +250,7 @@ namespace AbMath.Calculator
             /// <returns></returns>
             public bool IsSolveable()
             {
-                return this.Children.All(t => t.Token.Type == RPN.Type.Number || t.Token.IsConstant());
+                return this.Children.All(t => t.Token.Type == Type.Number || t.Token.IsConstant());
             }
 
             /// <summary>

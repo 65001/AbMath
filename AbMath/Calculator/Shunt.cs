@@ -217,19 +217,13 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     Write(tables.ToString());
-                }
-
-                if (_dataStore.DebugMode && tables.SuggestedRedraw)
-                {
-                    Write(tables.Redraw());
-                }
-
-                Dump();
-
-                if (_dataStore.DebugMode)
-                {
+                    if (tables.SuggestedRedraw)
+                    {
+                        Write(tables.Redraw());
+                    }
                     Write("");
                 }
+                Dump();
 
                 Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity", Format = _dataStore.DefaultFormat });
 
@@ -387,9 +381,7 @@ namespace AbMath.Calculator
             {
                 //p t a
                 //3 x (
-                return !_prev.IsNull() && !_prev.IsComma() &&
-                       ( _prev.IsRightBracket() || _prev.IsVariable() )
-                       && (_token.IsNumber() || _token.IsVariable());
+                return !_prev.IsNull() && !_prev.IsComma() && ( _prev.IsRightBracket() || _prev.IsVariable() ) && (_token.IsNumber() || _token.IsVariable());
             }
 
             private bool Chain()
