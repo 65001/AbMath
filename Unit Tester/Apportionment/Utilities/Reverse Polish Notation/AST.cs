@@ -65,6 +65,17 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void LnExponentMultiply()
+        {
+            RPN rpn = new RPN("ln(2^x)");
+            rpn.Compute();
+            if ("x 2 ln *" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void LogAddOrSub()
         {
             RPN rpn = new RPN("log(b,R) + log(b,S)");

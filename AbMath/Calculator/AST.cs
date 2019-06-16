@@ -16,7 +16,6 @@ namespace AbMath.Calculator
 
         private RPN _rpn;
         private RPN.DataStore _data;
-        private Stack<RPN.Node> _stack;
         private int count = -1;
 
         private readonly RPN.Token _derive = new RPN.Token("derive", 1, RPN.Type.Function);
@@ -28,13 +27,15 @@ namespace AbMath.Calculator
         {
             _rpn = rpn;
             _data = rpn.Data;
-            _stack = new Stack<RPN.Node>(5);
+            
         }
 
         public RPN.Node Generate(RPN.Token[] input)
         {
             Stopwatch SW = new Stopwatch();
             SW.Start();
+
+            Stack<RPN.Node> stack = new Stack<RPN.Node>(5);
 
             //Convert all the PostFix information to Nodes[]
             RPN.Node[] nodes = new RPN.Node[input.Length];
@@ -53,16 +54,16 @@ namespace AbMath.Calculator
                         nodes[i].Children = new RPN.Node[nodes[i].Token.Arguments];
                         for (int j = 0; j < nodes[i].Token.Arguments; j++)
                         {
-                            RPN.Node temp = _stack.Pop();
+                            RPN.Node temp = stack.Pop();
                             temp.Parent = nodes[i];
-                            nodes[i].Children[j] =(temp);
+                            nodes[i].Children[j] = temp;
                         }
 
-                        _stack.Push(nodes[i]); //Push new tree into the stack 
+                        stack.Push(nodes[i]); //Push new tree into the stack 
                         break;
                     //When an operand is encountered push into stack
                     default:
-                        _stack.Push(nodes[i]);
+                        stack.Push(nodes[i]);
                         break;
                 }
             }
@@ -70,12 +71,12 @@ namespace AbMath.Calculator
             //This prevents the reassignment of the root node
             if (Root is null)
             {
-                Root = _stack.Peek();
+                Root = stack.Peek();
             }
 
             SW.Stop();
             _rpn.Data.AddTimeRecord("AST Generate", SW);
-            return _stack.Pop();
+            return stack.Pop();
         }
 
         /// <summary>
@@ -177,7 +178,13 @@ namespace AbMath.Calculator
                 else if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
                 {
                     //TODO:
-                    Write("\tln(R^c) -> log(e,R^c) -> ");
+                    Write("\tln(R^c) -> log(e,R^c) -> c * ln(R)");
+                    RPN.Node exponent = node.Children[0];
+                    RPN.Node power = exponent.Children[0];
+
+                    RPN.Node log = new RPN.Node(GenerateNextID(), new[] { exponent.Children[1] }, new RPN.Token("ln", 1, RPN.Type.Function));
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    temp = multiply;
                 }
                 else if ( (node.IsAddition() || node.IsSubtraction()) &&  node.Children[0].IsLog() && node.Children[1].IsLog() && node.Children[0].Children[1].GetHash() == node.Children[1].Children[1].GetHash())
                 {
