@@ -11,7 +11,7 @@ namespace AbMath.Calculator
 
         private enum SimplificationMode
         {
-            Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap, Trig, COUNT
+            Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap, Trig, Compress, COUNT
         }
 
         private RPN _rpn;
@@ -101,8 +101,10 @@ namespace AbMath.Calculator
                 hash = Root.GetHash();
                 Simplify(Root);
                 Write($"Pass: {pass}. Hash {hash}. Root: {Root.GetHash()}. Equation: {Root.ToInfix()}");
+                Write($"{Root.Print()}");
                 pass++;
             }
+
             SW.Stop();
             _data.AddTimeRecord("AST Simplify", SW);
             return this;
@@ -177,7 +179,6 @@ namespace AbMath.Calculator
                 }
                 else if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
                 {
-                    //TODO:
                     Write("\tln(R^c) -> log(e,R^c) -> c * ln(R)");
                     RPN.Node exponent = node.Children[0];
                     RPN.Node power = exponent.Children[0];
@@ -259,15 +260,7 @@ namespace AbMath.Calculator
                     node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), (num2 / gcd)));
                     Write("\tDivision GCD.");
                 }
-                else if (node.Children[0].IsVariable() && node.Children[1].IsNumber())
-                {
-                    Write($"\tDivision -> Multiplication and exponentiation.");
-                    RPN.Node negativeOne = new RPN.Node(GenerateNextID(), -1);
-                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { negativeOne, node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
 
-                    node.Token.Value = "*";
-                    node.Replace(node.Children[0], exponent);
-                }
             }
             //Subtraction
             else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
@@ -432,9 +425,9 @@ namespace AbMath.Calculator
                     node.Replace( node.Children[0].ID, one );
                     node.Children[1].Children[0].Token.Value = (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
                 }
-                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[1].Children[0].GetHash() == node.Children[0].Children[1].GetHash() && node.Children[0].Children[0].IsNumber())
+                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[1].Children[0].GetHash() == node.Children[0].Children[1].GetHash() && node.Children[0].Children[0].IsGreaterThanNumber(0))
                 {
-                    Write("\tIncrease Exponent 2");
+                    Write($"\tIncrease Exponent 2: {node.GetHash()}");
                     node.Children[0].Children[0].Token.Value = (double.Parse(node.Children[0].Children[0].Token.Value) + 1).ToString();
                     node.Children[1].Children[0].Remove(new RPN.Node(GenerateNextID(), 1));
                 }
@@ -454,6 +447,8 @@ namespace AbMath.Calculator
                     node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(GenerateNextID(), 1));
                     node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), num1 * num2));
                 }
+                //3 * 1/x -> 3/x
+                //1/3 * 4/3  -> (1 * 4)/(3 * 3)
             }
             else if (mode == SimplificationMode.Swap)
             {
@@ -476,6 +471,15 @@ namespace AbMath.Calculator
                         node.Children[0].Children[1].Remove(new RPN.Node(GenerateNextID(),1));
                     }
                 }
+                else if (node.IsDivision() && node.Children[0].IsVariable() && node.Children[1].IsNumber())
+                {
+                    Write($"\tDivision -> Multiplication and exponentiation.");
+                    RPN.Node negativeOne = new RPN.Node(GenerateNextID(), -1);
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { negativeOne, node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
+
+                    node.Token.Value = "*";
+                    node.Replace(node.Children[0], exponent);
+                }
             }
             else if (mode == SimplificationMode.Exponent && node.IsExponent())
             {
@@ -497,8 +501,17 @@ namespace AbMath.Calculator
                     power.Delete();
                     node.Delete();
                 }
-                //f(x)^-c -> 1/f(x)^c
-                //f(x)^0.5 -> sqrt(f(x))
+                else if (baseNode.IsNumber(1))
+                {
+                    Write("\t1^(fx) -> 1");
+                    Assign(node, new RPN.Node(GenerateNextID(), 1));
+
+                    baseNode.Delete();
+                    power.Delete();
+                    node.Delete();
+                }
+                //f(x)^0.5
+                //f(x)^-0.5
             }
             else if (mode == SimplificationMode.Trig)
             {
@@ -849,72 +862,61 @@ namespace AbMath.Calculator
                         RPN.Node power = node.Children[0].Children[0];
 
                         //x^n -> n * x^(n - 1)
-                        if ((baseNode.IsVariable() || baseNode.IsFunction() || baseNode.IsExpression()) && (power.IsConstant() || power.IsNumber()))
+                        if ((baseNode.IsVariable() || baseNode.IsFunction() || baseNode.IsExpression()) && (power.IsConstant() || power.IsNumber()) && baseNode.Token.Value == variable.Token.Value)
                         {
-                            if (baseNode.Token.Value == variable.Token.Value)
+                            Write("\tDERIVE: Power Rule");
+
+                            RPN.Node powerClone = Clone(power);
+                            RPN.Node exponent;
+
+                            if (!powerClone.Token.IsNumber())
                             {
-                                Write("\tDERIVE: Power Rule");
-
-                                RPN.Node powerClone = Clone(power);
-                                RPN.Node exponent;
-
-                                if (!powerClone.Token.IsNumber())
-                                {
-                                    //1
-                                    RPN.Node one = new RPN.Node(GenerateNextID(), 1);
-
-                                    //(n - 1)
-                                    RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] { one, powerClone }, new RPN.Token("-", 2, RPN.Type.Operator));
-
-                                    //x^(n - 1) 
-                                    exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
-                                }
-                                else
-                                {
-                                    double temp = double.Parse(powerClone.Token.Value) - 1;
-                                    exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { new RPN.Node(GenerateNextID(), temp), baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
-                                }
-
-
-                                RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                                node.Replace(node.Children[0], multiplication);
-
-                                //Delete self from the tree
-                                node.Remove();
-                            }
-                            else if (baseNode.IsFunction() || baseNode.IsExpression())
-                            {
-                                Write("\tf(x)^n -> n * f(x)^(n - 1) * f'(x). Power Chain Rule. ");
-
-                                RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(baseNode) }, _derive);
-
-                                RPN.Node powerClone = Clone(power);
+                                //1
                                 RPN.Node one = new RPN.Node(GenerateNextID(), 1);
 
+                                //(n - 1)
                                 RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] { one, powerClone }, new RPN.Token("-", 2, RPN.Type.Operator));
 
-                                //Replace n with (n - 1) 
-                                RPN.Node exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
-
-                                RPN.Node temp = new RPN.Node(GenerateNextID(), new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-                                RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                                node.Replace(node.Children[0], multiply);
-
-                                //Delete self from the tree
-                                node.Remove();
-
-                                Derive(bodyDerive, variable);
+                                //x^(n - 1) 
+                                exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
                             }
                             else
                             {
-                                Write("\tDERIVE: Power Rule edge case.");
-                                node.Children[0].Parent = null;
-                                RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
-                                //Remove myself from the tree
-                                node.Remove(temp);
+                                double temp = double.Parse(powerClone.Token.Value) - 1;
+                                exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { new RPN.Node(GenerateNextID(), temp), baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
                             }
+
+
+                            RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                            node.Replace(node.Children[0], multiplication);
+
+                            //Delete self from the tree
+                            node.Remove();
+                        }
+                        else if ( (baseNode.IsFunction() || baseNode.IsExpression()) && (power.IsConstant() || power.IsNumber()))
+                        {
+                            Write("\tf(x)^n -> n * f(x)^(n - 1) * f'(x). Power Chain Rule. ");
+
+                            RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(baseNode) }, _derive);
+
+                            RPN.Node powerClone = Clone(power);
+                            RPN.Node one = new RPN.Node(GenerateNextID(), 1);
+
+                            RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] { one, powerClone }, new RPN.Token("-", 2, RPN.Type.Operator));
+
+                            //Replace n with (n - 1) 
+                            RPN.Node exponent = new RPN.Node(GenerateNextID(), new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
+
+                            RPN.Node temp = new RPN.Node(GenerateNextID(), new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+                            RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                            node.Replace(node.Children[0], multiply);
+
+                            //Delete self from the tree
+                            node.Remove();
+
+                            Derive(bodyDerive, variable);
                         }
                         else if (baseNode.IsConstant() && baseNode.Token.Value == "e")
                         {
@@ -928,7 +930,6 @@ namespace AbMath.Calculator
 
                             Derive(powerDerivative, variable);
                         }
-                        //TODO: b^x
                         else if ((baseNode.IsConstant() || baseNode.IsNumber()) && (power.IsExpression() || power.IsVariable()))
                         {
                             Write($"\tb^g(x) -> ln(b) b^g(x) g'(x)");
@@ -945,16 +946,20 @@ namespace AbMath.Calculator
 
                             Derive(powerDerivative, variable);
                         }
-                        //TODO: x^x
-                        else if (baseNode.IsExpression() && power.IsExpression())
-                        {
-                            Write($"\tNOT IMPLEMENTED: x^x ");
-                            Write("x^x -> derive( e^(x*ln(x)) )");
-                        }
                         else
                         {
-                            //TODO: Throw Exception
-                            Write($"Derivative of {node.Children[0].ToInfix()} is not known at this time. ");
+                            Write("\td/dx[ f(x)^g(x) ] -> f(x)^g(x) * d/dx[ g(x) * ln( f(x) ) ]");
+                            RPN.Node exponent = Clone(baseNode.Parent);
+                            RPN.Node ln = new RPN.Node(GenerateNextID(), new[] { Clone( baseNode ) }, new RPN.Token("ln", 1, RPN.Type.Function));
+                            RPN.Node temp = new RPN.Node(GenerateNextID(), new[] { Clone(power), ln }, new RPN.Token("*", 2, RPN.Type.Operator));
+                            RPN.Node derive = new RPN.Node(GenerateNextID(), new[] { temp }, _derive);
+                            RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { exponent, derive }, new RPN.Token("*",2,RPN.Type.Operator));
+
+                            node.Replace(power.Parent, multiply);
+                            //Delete self from the tree
+                            node.Remove();
+
+                            Derive(derive, variable);
                         }
                     }
                     #region Trig
@@ -1115,14 +1120,13 @@ namespace AbMath.Calculator
                     }
                     else
                     {
-                        //TODO: Throw Exception
-                        Write($"Derivative of {node.Children[0].ToInfix()} not known at this time. ");
+                        throw new NotImplementedException($"Derivative of {node.Children[0].ToInfix()} not known at this time.");
                     }
                     //TODO:
                     //All of this stuff requires chain rule! 
-                    //Inverse Trig
                     //arcsin
                     //arccos
+                    //arctan
                     //arcsec
                     //arccsc
                     //acccot
@@ -1130,7 +1134,7 @@ namespace AbMath.Calculator
             }
             catch(IndexOutOfRangeException ex)
             {
-                throw new InvalidOperationException("Invalid node access violation", ex);
+                throw new InvalidOperationException("Invalid node child access violation", ex);
             }
 
             try

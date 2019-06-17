@@ -166,6 +166,16 @@ namespace AbMath.Calculator
                 return Token.IsNumber() && double.Parse(Token.Value) == number;
             }
 
+            public bool IsLessThanNumber(double number)
+            {
+                return Token.IsNumber() && double.Parse(Token.Value) < number;
+            }
+
+            public bool IsGreaterThanNumber(double number)
+            {
+                return Token.IsNumber() && double.Parse(Token.Value) > number;
+            }
+
             public bool IsFunction()
             {
                 return Token.IsFunction();

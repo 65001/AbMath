@@ -117,6 +117,22 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void GeneralPowerRule()
+        {
+            RPN test = new RPN("derivative(x^(2x),x)");
+            test.Compute();
+            if (test.Polish.Print() != "2 x ln * 2 x * x -1 ^ * + x 2 x * ^ *")
+            {
+                Assert.Fail();
+            }
+            test.SetEquation("derivative(x^x,x)").Compute();
+            if (test.Polish.Print() != "x ln x x -1 ^ * + x x ^ *")
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void BaseExponentSimple()
         {
             RPN test = new RPN("derivative(2^x,x)");
