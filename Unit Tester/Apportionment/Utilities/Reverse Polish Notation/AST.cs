@@ -107,5 +107,25 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void ExpressionTimesDivision()
+        {
+            RPN rpn = new RPN("1(3/4)").Compute();
+            if ("3 4 /" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void DivisionTimesDivision()
+        {
+            RPN rpn = new RPN("(3/4)(1/4)").Compute();
+            if ("3 4 2 ^ /" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
     }
 }

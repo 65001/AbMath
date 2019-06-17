@@ -474,10 +474,18 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
                 {
-                    //TODO:
                     Write($"\tDivision times a division -> Division");
+                    RPN.Node[] numerator  =  { Clone( node.Children[0].Children[1] ), Clone( node.Children[1].Children[1] )};
+                    RPN.Node[] denominator = { Clone( node.Children[0].Children[0] ), Clone( node.Children[1].Children[0] )};
+                    RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
+
+                    RPN.Node top = new RPN.Node(GenerateNextID(), numerator, multiply);
+                    RPN.Node bottom = new RPN.Node(GenerateNextID(), denominator, multiply);
+                    RPN.Node division = new RPN.Node(GenerateNextID(), new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                    node.Children[0].Remove(division);
+                    node.Children[1].Remove(new RPN.Node(GenerateNextID(), 1));
                 }
-                //1/3 * 4/3  -> (1 * 4)/(3 * 3)
             }
             else if (mode == SimplificationMode.Swap)
             {
