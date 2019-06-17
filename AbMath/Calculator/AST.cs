@@ -231,7 +231,7 @@ namespace AbMath.Calculator
             {
                 //Any sqrt function with a negative number -> Imaginary number to the root node
                 //An imaginary number propagates anyways
-                if (node.Children[0].IsNumber() && double.Parse(node.Children[0].Token.Value) < 0)
+                if (node.Children[0].IsLessThanNumber(0))
                 {
                     Root = new RPN.Node(GenerateNextID(), double.NaN);
                     Write($"\tSqrt Imaginary Number -> Root.");
@@ -260,6 +260,12 @@ namespace AbMath.Calculator
                     node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), (num2 / gcd)));
                     Write("\tDivision GCD.");
                 }
+                else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
+                {
+                    //TODO:
+                    Write("\tDivison Flip");
+                }
+                //TODO: Division by one
 
             }
             //Subtraction
@@ -292,7 +298,7 @@ namespace AbMath.Calculator
                     {
                         Parent = node,
                     };
-                    node.Replace( node.Children[0].ID, temp );
+                    node.Replace( node.Children[0], temp );
                     node.Children[1].Children[1].Token.Value = (double.Parse(node.Children[1].Children[1].Token.Value) - 1).ToString();
                 }
                 //3sin(x) - 0
@@ -391,11 +397,11 @@ namespace AbMath.Calculator
                     Assign(node, head);
                     Write("\tSimplification: Multiplication -> Exponent\n");
                 }
-                else if ( node.Children[1].IsNumber(1) || node.Children[0].IsNumber(1) )
+                else if ( node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1) )
                 {
                     RPN.Node temp;
 
-                    if (node.Children[1].IsNumber())
+                    if (node.Children[1].IsNumber(1))
                     {
                         temp = node.Children[0];
                     }
@@ -403,7 +409,6 @@ namespace AbMath.Calculator
                     {
                         temp = node.Children[1];
                     }
-
                     Assign(node, temp);
                     Write($"\tMultiplication by one simplification.");
                 }
@@ -422,7 +427,7 @@ namespace AbMath.Calculator
                         Parent = node,
                     };
 
-                    node.Replace( node.Children[0].ID, one );
+                    node.Replace( node.Children[0], one );
                     node.Children[1].Children[0].Token.Value = (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
                 }
                 else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[1].Children[0].GetHash() == node.Children[0].Children[1].GetHash() && node.Children[0].Children[0].IsGreaterThanNumber(0))
@@ -447,7 +452,31 @@ namespace AbMath.Calculator
                     node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(GenerateNextID(), 1));
                     node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), num1 * num2));
                 }
-                //3 * 1/x -> 3/x
+                else if ( (node.Children[0].IsDivision() || node.Children[1].IsDivision()) && !(node.Children[0].IsDivision() && node.Children[1].IsDivision()) )
+                {
+                    Write($"\tExpression times a divison -> Division ");
+                    RPN.Node division;
+                    RPN.Node expression; 
+                    if (node.Children[0].IsDivision())
+                    {
+                        division = node.Children[0];
+                        expression = node.Children[1];
+                    }
+                    else
+                    {
+                        division = node.Children[1];
+                        expression = node.Children[0];
+                    }
+                    RPN.Node numerator = division.Children[1];
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] {Clone(numerator), Clone(expression) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    numerator.Remove(multiply);
+                    expression.Remove(new RPN.Node(GenerateNextID(), 1));
+                }
+                else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
+                {
+                    //TODO:
+                    Write($"\tDivision times a division -> Division");
+                }
                 //1/3 * 4/3  -> (1 * 4)/(3 * 3)
             }
             else if (mode == SimplificationMode.Swap)
@@ -1167,7 +1196,7 @@ namespace AbMath.Calculator
                 Token = new RPN.Token("derive",1,RPN.Type.Function)
             };
 
-            child.Parent?.Replace(child.ID, temp);
+            child.Parent?.Replace(child, temp);
 
             child.Parent = temp;
         }

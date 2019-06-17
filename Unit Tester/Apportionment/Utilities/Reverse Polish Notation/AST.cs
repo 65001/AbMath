@@ -97,7 +97,7 @@ namespace AbMath.Tests
         public void LnAddOrSub()
         {
             RPN rpn = new RPN("ln(2) + ln(1/2)").Compute();
-            if ("2 1 2 / * ln" != rpn.Polish.Print())
+            if ("1 1 / ln" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }

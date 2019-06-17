@@ -121,12 +121,12 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(x^(2x),x)");
             test.Compute();
-            if (test.Polish.Print() != "2 x ln * 2 x * x -1 ^ * + x 2 x * ^ *")
+            if (test.Polish.Print() != "2 x ln * 2 x * x / + x 2 x * ^ *")
             {
                 Assert.Fail();
             }
             test.SetEquation("derivative(x^x,x)").Compute();
-            if (test.Polish.Print() != "x ln x x -1 ^ * + x x ^ *")
+            if (test.Polish.Print() != "x ln x x / + x x ^ *")
             {
                 Assert.Fail();
             }
@@ -301,7 +301,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");
             test.Compute();
-            if (test.Polish.Print() != "x x 1 - * e -1 2 x * / ^ -2 -1 * 2 x * 2 ^ / * * e -1 2 x * / ^ x x 1 - + * +")
+            if (test.Polish.Print() != "x x 1 - * -2 -1 * e -1 2 x * / ^ * * 2 x * 2 ^ / e -1 2 x * / ^ x x 1 - + * +")
             {
                 Assert.Fail();
             }

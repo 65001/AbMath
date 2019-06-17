@@ -144,7 +144,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("sin ( max ( 2 , 3 ) / 3 * 3.1415 )");
             test.Compute();
-            if ("2 3 max 3 / 3.1415 * sin" != test.Polish.Print() && "3.1415 2 3 max 3 / * sin" != test.Polish.Print())
+            if ("2 3 max 3 / 3.1415 * sin" != test.Polish.Print() && "3.1415 2 3 max 3 / * sin" != test.Polish.Print() && "3.1415 2 3 max * 3 / sin" != test.Polish.Print())
             {
                 Assert.Fail();
             }

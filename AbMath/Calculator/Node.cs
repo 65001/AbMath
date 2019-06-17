@@ -43,11 +43,23 @@ namespace AbMath.Calculator
                 Token = token;
             }
 
+            /// <summary>
+            /// Replaces in the tree the node with 
+            /// the given replacement
+            /// </summary>
+            /// <param name="node">The node to look for</param>
+            /// <param name="replacement">The replacement for the node</param>
             public void Replace(Node node, Node replacement)
             {
                 Replace(node.ID, replacement);
             }
 
+            /// <summary>
+            /// Replaces in the tree the node with 
+            /// the given replacement
+            /// </summary>
+            /// <param name="identification">The unique ID number the node posseses</param>
+            /// <param name="node">The replacement</param>
             public void Replace(int identification, Node node)
             {
                 for (int i = 0; i < Children.Length; i++)
@@ -67,6 +79,11 @@ namespace AbMath.Calculator
                 }
             }
 
+            /// <summary>
+            /// Removes the current node from the tree. 
+            /// If it has only one child, that child will 
+            /// replace it's position in the tree.
+            /// </summary>
             public void Remove()
             {
                 if (Children.Length > 1)
@@ -76,6 +93,10 @@ namespace AbMath.Calculator
                 Remove(Children[0]);
             }
 
+            /// <summary>
+            /// Removes the current node from the tree and 
+            /// replace it with the replacement node. 
+            /// </summary>
             public void Remove(Node replacement)
             {
                 this.Parent.Replace(this, replacement);
