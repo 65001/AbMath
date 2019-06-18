@@ -722,7 +722,6 @@ namespace AbMath.Calculator
                     Assign(node, node.Children[1]);
                     node.Delete();
                     Solve(Root);
-                    Write($"Before Simplifications: {Root.ToInfix()}");
                     //TODO: Remove solve
                     //Tests that fail afterwards :
                     //Constant Multiplications
