@@ -91,17 +91,11 @@ namespace AbMath.Calculator
             int pass = 0;
             string hash = string.Empty;
 
-            if (_data.DebugMode)
-            {
-                Write("");
-            }
-
             while (hash != Root.GetHash())
             {
                 hash = Root.GetHash();
+                Write($"{pass}. {Root.ToInfix()}");
                 Simplify(Root);
-                Write($"Pass: {pass}. Hash {hash}. Root: {Root.GetHash()}. Equation: {Root.ToInfix()}");
-                Write($"{Root.Print()}");
                 pass++;
             }
 
@@ -248,6 +242,11 @@ namespace AbMath.Calculator
                     Root = new RPN.Node(GenerateNextID(), double.NaN);
                     Write("\tDivision by zero -> Root");
                 }
+                else if (node.Children[0].IsNumber(1))
+                {
+                    Write("\tDivision by one");
+                    Assign(node, node.Children[1]);
+                }
                 //gcd if the leafs are both numbers since the values of the leafs themselves are changed
                 //we don't have to worry about if the node is the root or not
                 else if (node.Children[0].IsNumber() && node.Children[1].IsNumber())
@@ -264,9 +263,14 @@ namespace AbMath.Calculator
                 {
                     //TODO:
                     Write("\tDivison Flip");
-                }
-                //TODO: Division by one
+                    RPN.Node[] numerator = { Clone(node.Children[0].Children[1]), Clone(node.Children[1].Children[1]) };
+                    RPN.Node[] denominator = { Clone(node.Children[0].Children[0]), Clone(node.Children[1].Children[0]) };
 
+                    RPN.Node top = new RPN.Node(GenerateNextID(), new[] { denominator[0] , numerator[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node bottom = new RPN.Node(GenerateNextID(), new[] { denominator[1], numerator[0] }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node division = new RPN.Node(GenerateNextID(), new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
+                    Assign(node, division);
+                }
             }
             //Subtraction
             else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
@@ -395,7 +399,7 @@ namespace AbMath.Calculator
                     };
 
                     Assign(node, head);
-                    Write("\tSimplification: Multiplication -> Exponent\n");
+                    Write("\tSimplification: Multiplication -> Exponent");
                 }
                 else if ( node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1) )
                 {
@@ -574,7 +578,7 @@ namespace AbMath.Calculator
 
             //Propagate down the tree IF there is a root 
             //which value is not NaN or a number
-            if (Root == null || Root.Token.Value == "NaN" || Root.IsNumber() )
+            if (Root == null || Root.IsNumber() || Root.IsNumber(double.NaN))
             {
                 return;
             }
@@ -645,7 +649,7 @@ namespace AbMath.Calculator
             SW.Stop();
 
             _data.AddTimeRecord("AST MetaFunctions", SW);
-            Write($"Before Simplifications: {Root.ToInfix()}");
+
             Simplify();
 
             return this;
@@ -718,6 +722,7 @@ namespace AbMath.Calculator
                     Assign(node, node.Children[1]);
                     node.Delete();
                     Solve(Root);
+                    Write($"Before Simplifications: {Root.ToInfix()}");
                     //TODO: Remove solve
                     //Tests that fail afterwards :
                     //Constant Multiplications
@@ -1105,7 +1110,7 @@ namespace AbMath.Calculator
                         Derive(bodyDerive, variable);
                     }
                     #endregion
-                    else if (node.Children[0].Token.Value == "sqrt")
+                    else if (node.Children[0].IsSqrt())
                     {
                         Write("\tsqrt(g(x)) cast to g(x)^0.5");
                         RPN.Node body = node.Children[0].Children[0];
@@ -1113,7 +1118,7 @@ namespace AbMath.Calculator
                         node.Replace(node.Children[0], exponent);
                         Derive(node, variable);
                     }
-                    else if (node.Children[0].Token.Value == "ln")
+                    else if (node.Children[0].IsLn())
                     {
                         Write("\tln(g(x)) -> g'(x)/g(x)");
                         RPN.Node body = node.Children[0].Children[0];
@@ -1126,7 +1131,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "log")
+                    else if (node.Children[0].IsLog())
                     {
                         Write("\tlog_b(g(x)) -> g'(x)/(g(x) * ln(b))");
                         RPN.Token ln = new RPN.Token("ln", 1, RPN.Type.Function);
@@ -1144,7 +1149,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "abs")
+                    else if (node.Children[0].IsAbs())
                     {
                         Write("\tabs(g(x)) cast to sqrt( g(x)^2 )");
 

@@ -97,7 +97,7 @@ namespace AbMath.Tests
         public void LnAddOrSub()
         {
             RPN rpn = new RPN("ln(2) + ln(1/2)").Compute();
-            if ("1 1 / ln" != rpn.Polish.Print())
+            if ("1 ln" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -123,6 +123,16 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("(3/4)(1/4)").Compute();
             if ("3 4 2 ^ /" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void DivisionFlip()
+        {
+            RPN rpn = new RPN("(5/x)/(x/3)").Compute();
+            if ("5 3 * x 2 ^ /" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }
