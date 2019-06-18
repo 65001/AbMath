@@ -433,7 +433,7 @@ namespace AbMath.Calculator
                     {
                         if (!_dataStore.AllowMismatchedParentheses)
                         {
-                            throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
+                            ,throw new ArgumentException("Error: Mismatched Parentheses or Brackets");
                         }
 
                         OperatorPop();

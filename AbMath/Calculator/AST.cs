@@ -1109,6 +1109,30 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
+                    else if (node.Children[0].Token.Value == "arcsin")
+                    {
+
+                    }
+                    else if (node.Children[0].Token.Value == "arccos")
+                    {
+
+                    }
+                    else if (node.Children[0].Token.Value == "arctan")
+                    {
+
+                    }
+                    else if (node.Children[0].Token.Value == "arcsec")
+                    {
+
+                    }
+                    else if (node.Children[0].Token.Value == "arccsc")
+                    {
+
+                    }
+                    else if (node.Children[0].Token.Value == "arccot")
+                    {
+
+                    }
                     #endregion
                     else if (node.Children[0].IsSqrt())
                     {
@@ -1160,18 +1184,24 @@ namespace AbMath.Calculator
                         node.Replace(node.Children[0], sqrt);
                         Derive(node, variable);
                     }
+                    else if (node.Children[0].Token.Value == "sum")
+                    {
+                        Write("\tExploding sum");
+                        explode(node.Children[0]);
+                        Derive(node, variable);
+                    }
+                    else if (node.Children[0].Token.Value == "avg")
+                    {
+                        Write("\tExploding avg");
+                        explode(node.Children[0]);
+                        Derive(node, variable);
+                    }
                     else
                     {
                         throw new NotImplementedException($"Derivative of {node.Children[0].ToInfix()} not known at this time.");
                     }
                     //TODO:
                     //All of this stuff requires chain rule! 
-                    //arcsin
-                    //arccos
-                    //arctan
-                    //arcsec
-                    //arccsc
-                    //acccot
                 }
             }
             catch(IndexOutOfRangeException ex)
@@ -1190,6 +1220,62 @@ namespace AbMath.Calculator
             catch(IndexOutOfRangeException ex)
             {
                 throw new InvalidOperationException("Invalid node access propogation violation", ex);
+            }
+        }
+
+
+        /// <summary>
+        /// converts a vardiac function into a simpler form
+        /// </summary>
+        /// <param name="node"></param>
+        private void explode(RPN.Node node)
+        {
+            RPN.Token add = new RPN.Token("+", 2, RPN.Type.Operator);
+            RPN.Token division = new RPN.Token("/", 2, RPN.Type.Operator);
+
+            //convert a sum to a series of additions
+            if (node.Token.Value == "sum")
+            {
+                if (node.Children.Length == 1)
+                {
+                    node.Remove();
+                    return;
+                }
+
+                List<RPN.Token> results = new List<RPN.Token>(node.Children.Length);
+                results.AddRange(node.Children[0].ToPostFix());
+                results.AddRange(node.Children[1].ToPostFix());
+                results.Add(add);
+                for (int i = 2; i < node.Children.Length; i++)
+                {
+                    results.AddRange(node.Children[i].ToPostFix());
+                    results.Add(add);
+                }
+                RPN.Node temp = Generate(results.ToArray());
+                Assign(node, temp );
+            }
+            //convert an avg to a series of additions and a division
+            else if (node.Token.Value == "avg")
+            {
+                if (node.Children.Length == 1)
+                {
+                    node.Remove();
+                    return;
+                }
+
+                List<RPN.Token> results = new List<RPN.Token>(node.Children.Length);
+
+                for (int i = 0; i < node.Children.Length; i++)
+                {
+                    results.AddRange(node.Children[i].ToPostFix());
+                }
+
+                results.Add(new RPN.Token("sum", node.Children.Length, RPN.Type.Function));
+                results.Add(new RPN.Token(node.Children.Length));
+                results.Add(division);
+                RPN.Node temp = Generate(results.ToArray());
+                explode(temp.Children[1]);
+                Assign(node, temp);
             }
         }
 
