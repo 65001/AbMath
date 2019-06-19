@@ -15,6 +15,8 @@ namespace AbMath.Calculator
             public Node Parent;
             public Node[] Children;
 
+            private MD5 _md5;
+
             public Node()
             {
             }
@@ -143,9 +145,13 @@ namespace AbMath.Calculator
             private string MD5(string input)
             {
                 // step 1, calculate MD5 hash from input
-                MD5 md5 = System.Security.Cryptography.MD5.Create();
+                if (_md5 == null)
+                {
+                    _md5 = System.Security.Cryptography.MD5.Create();
+                }
+
                 byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-                byte[] hash = md5.ComputeHash(inputBytes);
+                byte[] hash = _md5.ComputeHash(inputBytes);
 
                 // step 2, convert byte array to hex string
                 StringBuilder sb = new StringBuilder();

@@ -155,7 +155,7 @@ namespace AbMath.Calculator
                     Write("\tlog(b,b) -> 1");
                     temp = new RPN.Node(GenerateNextID(), 1);
                 }
-                else if (node.IsExponent() && node.Children[0].IsLog() && node.Children[0].Children[1].GetHash() == node.Children[1].GetHash())
+                else if (node.IsExponent() && node.Children[0].IsLog() && node.Children[0].Children[1].Matches(node.Children[1]) )
                 {
                     Write($"\tb^log(b,x) -> x");
                     temp = node.Children[0].Children[0];
@@ -181,7 +181,7 @@ namespace AbMath.Calculator
                     RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
                     temp = multiply;
                 }
-                else if ( (node.IsAddition() || node.IsSubtraction()) &&  node.Children[0].IsLog() && node.Children[1].IsLog() && node.Children[0].Children[1].GetHash() == node.Children[1].Children[1].GetHash())
+                else if ( (node.IsAddition() || node.IsSubtraction()) &&  node.Children[0].IsLog() && node.Children[1].IsLog() && node.Children[0].Children[1].Matches( node.Children[1].Children[1] ))
                 {
                     RPN.Node parameter;
                     if (node.IsAddition())
@@ -284,7 +284,7 @@ namespace AbMath.Calculator
                 //3sin(x) - 2sin(x)
                 else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
                 {
-                    if (node.Children[0].Children[0].GetHash() == node.Children[1].Children[0].GetHash() && node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber())
+                    if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
                     {
                         Write("\tSimplification: Subtraction Dual Node");
                         double coefficient = double.Parse(node.Children[1].Children[1].Token.Value) -
@@ -295,7 +295,7 @@ namespace AbMath.Calculator
                     }
                 }
                 //3sin(x) - sin(x)
-                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].GetHash() == node.Children[0].GetHash())
+                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches( node.Children[0]) )
                 {
                     Write("\tSimplification: Subtraction: Dual Node: Sub one.");
                     RPN.Node temp = new RPN.Node(GenerateNextID(), 0)
@@ -336,7 +336,7 @@ namespace AbMath.Calculator
                 //Case: 2sin(x) + 3sin(x)
                 else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
                 {
-                    if (node.Children[0].Children[0].GetHash() == node.Children[1].Children[0].GetHash() && (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() ) )
+                    if ( node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
                     {
                         Write("\tSimplification: Addition");
                         double coef1 = double.Parse( node.Children[0].Children[1].Token.Value);
@@ -363,7 +363,7 @@ namespace AbMath.Calculator
                 //7sin(x) + sin(x)
                 //C0: Anything
                 //C1:C0: Compare hash to C0.
-                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].GetHash() == node.Children[0].GetHash())
+                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches( node.Children[0]) )
                 {
                       Write("\tSimplification Addition Dual Node.");
 
@@ -423,7 +423,7 @@ namespace AbMath.Calculator
                     Assign(node, temp);
                 }
                 //sin(x)sin(x)sin(x) -> sin(x)^3
-                else if (node.Children[1].IsExponent() && node.Children[1].Children[0].IsNumber() && node.Children[0].GetHash() == node.Children[1].Children[1].GetHash())
+                else if (node.Children[1].IsExponent() && node.Children[1].Children[0].IsNumber() && node.Children[0].Matches( node.Children[1].Children[1]) )
                 {
                     Write("\tIncrease Exponent");
                     RPN.Node one = new RPN.Node(GenerateNextID(),1)
@@ -434,13 +434,13 @@ namespace AbMath.Calculator
                     node.Replace( node.Children[0], one );
                     node.Children[1].Children[0].Token.Value = (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
                 }
-                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[1].Children[0].GetHash() == node.Children[0].Children[1].GetHash() && node.Children[0].Children[0].IsGreaterThanNumber(0))
+                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[0].IsGreaterThanNumber(0) && node.Children[1].Children[0].Matches( node.Children[0].Children[1]) )
                 {
-                    Write($"\tIncrease Exponent 2: {node.GetHash()}");
+                    Write($"\tIncrease Exponent 2:");
                     node.Children[0].Children[0].Token.Value = (double.Parse(node.Children[0].Children[0].Token.Value) + 1).ToString();
                     node.Children[1].Children[0].Remove(new RPN.Node(GenerateNextID(), 1));
                 }
-                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[1].GetHash() == node.Children[1].GetHash())
+                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[1].Matches(node.Children[1]))
                 {
                     Write("\tIncrease Exponent 3");
                     node.Children[0].Children[0].Token.Value = (double.Parse(node.Children[0].Children[0].Token.Value) + 1).ToString();
@@ -494,7 +494,7 @@ namespace AbMath.Calculator
             else if (mode == SimplificationMode.Swap)
             {
                 //We can do complex swapping in here
-                if (node.IsMultiplication() && node.Children[0].IsMultiplication() && node.Children[0].Children[0].GetHash() == node.Children[1].GetHash())
+                if (node.IsMultiplication() && node.Children[0].IsMultiplication() && node.Children[0].Children[0].Matches( node.Children[1]) )
                 {
                     Write($"\tComplex Swap: Dual Node Multiplication Swap");
                     RPN.Node temp = node.Children[0].Children[1];
@@ -566,7 +566,7 @@ namespace AbMath.Calculator
 
                     ((node.Children[0].Children[1].Token.Value == "cos" && node.Children[1].Children[1].Token.Value == "sin") || 
                      (node.Children[0].Children[1].Token.Value == "sin" && node.Children[1].Children[1].Token.Value == "cos")) && 
-                    node.Children[0].Children[1].Children[0].GetHash() == node.Children[1].Children[1].Children[0].GetHash()
+                    node.Children[0].Children[1].Children[0].Matches( node.Children[1].Children[1].Children[0] )
                 )
                 {
                     RPN.Node head = new RPN.Node(GenerateNextID(), 1);
