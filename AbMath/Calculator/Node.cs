@@ -131,11 +131,7 @@ namespace AbMath.Calculator
 
                 for (int i = 0; i < (Children.Length - 1); i++)
                 {
-                    if (Children[i + 1].GetHash() == Children[i].GetHash())
-                    {
-
-                    }
-                    else
+                    if(!Children[i].Matches(Children[i + 1]))
                     {
                         return false;
                     }
@@ -175,6 +171,72 @@ namespace AbMath.Calculator
                 {
                     Children[i].Parent = this;
                 }
+            }
+
+            /// <summary>
+            /// Generates a list of all the descendants of this node
+            /// and their descendants and so forth.
+            /// </summary>
+            /// <returns>The current node and all its descendants</returns>
+            private List<Node> GetAllDescendants()
+            {
+                List<Node> results = new List<Node>();
+                Queue<Node> unvisited = new Queue<Node>();
+
+                //we should attempt to do this without using recursion for performance reasons
+                //we first need to add the current node to the unvisited node tree
+                unvisited.Enqueue(this);
+                while (unvisited.Count > 0)
+                {
+                    Node temp = unvisited.Dequeue();
+                    results.Add(temp);
+
+                    for (int i = (temp.Children.Length - 1); i >= 0; i--)
+                    {
+                        unvisited.Enqueue(temp.Children[i]);
+                    }
+                }
+
+                return results;
+            }
+
+            /// <summary>
+            /// Returns true if two nodes are exactly alike and false otherwise.
+            /// </summary>
+            /// <param name="branch">The other node</param>
+            public bool Matches(Node branch)
+            {
+                Queue<Node> home = new Queue<Node>();
+                Queue<Node> foreign = new Queue<Node>();
+
+                home.Enqueue(this);
+                foreign.Enqueue(branch);
+
+                while (home.Count > 0)
+                {
+                    RPN.Node peter = home.Dequeue();
+                    RPN.Node pan = foreign.Dequeue();
+
+                    //if the contents of the token 
+                    //or the number of children this branch has do not match by definition they cannot be the same
+                    if (peter.Token.Value != pan.Token.Value || peter.Children.Length != pan.Children.Length)
+                    {
+                        return false;
+                    }
+
+                    for (int i = (peter.Children.Length - 1); i >= 0; i--)
+                    {
+                        home.Enqueue(peter.Children[i]);
+                    }
+
+                    for (int i = (pan.Children.Length - 1); i >= 0; i--)
+                    {
+                        foreign.Enqueue(pan.Children[i]);
+                    }
+                }
+
+
+                return true;
             }
 
             public bool IsNumber()
@@ -319,6 +381,11 @@ namespace AbMath.Calculator
                 return infix.ToString();
             }
 
+            public List<Node> ToPrefix()
+            {
+                return GetAllDescendants();
+            }
+
             private void PostFix(RPN.Node node, List<RPN.Token> polish)
             {
                 if (node is null)
@@ -371,7 +438,7 @@ namespace AbMath.Calculator
                 {
                     infix.Append("(");
                     Infix(node.Children[1], infix);
-                    infix.Append(node.Token);
+                    infix.Append(node.Token.Value);
                     Infix(node.Children[0], infix);
                     infix.Append(")");
                     return;
@@ -380,7 +447,7 @@ namespace AbMath.Calculator
                 //Operators that only have one child
                 if (node.Children.Length == 1 && node.Token.IsOperator())
                 {
-                    infix.Append(node.Token);
+                    infix.Append(node.Token.Value);
                     Infix(node.Children[0], infix);
                     return;
                 }

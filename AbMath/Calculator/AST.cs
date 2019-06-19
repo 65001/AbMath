@@ -94,7 +94,7 @@ namespace AbMath.Calculator
             while (hash != Root.GetHash())
             {
                 hash = Root.GetHash();
-                Write($"{pass}. {Root.ToInfix()}");
+                Write($"{pass}. {Root.ToInfix()}.");
                 Simplify(Root);
                 pass++;
             }
