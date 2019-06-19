@@ -186,6 +186,14 @@ namespace AbMath.Calculator
                     prev.ElapsedTicks += time.ElapsedTicks;
                     _time[_time.Count - 1] = prev;
                 }
+                //If a Type contains a period it denotes that it should always be merged.
+                else if (time.Type.Contains(".") && _time.Any(t => t.Type == time.Type) )
+                {
+                    TimeRecord prev = _time.Find(t => t.Type == time.Type);
+                    prev.ElapsedMilliseconds += time.ElapsedMilliseconds;
+                    prev.ElapsedTicks += time.ElapsedTicks;
+                    //_time.Add(time);
+                }
                 else
                 {
                     _time.Add(time);
@@ -225,6 +233,8 @@ namespace AbMath.Calculator
                 {
                     "Total", miliseconds.ToString("N0") , steps.ToString("N0"), " ", " "
                 });
+
+                times.Add(new string[] {Equation, "", "", "", "" });
 
                 return times;
             }

@@ -106,6 +106,7 @@ namespace AbMath.Calculator
 
                     bool Left = LeftImplicit();
                     bool Right = RightImplicit();
+                    
 
                     //Unary Input at the start of the input or 
                     if ( i == 0 && _ahead != null && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
@@ -123,7 +124,7 @@ namespace AbMath.Calculator
                         //Left
                         OperatorRule(_multiply);
                     }
-                    else if (_prev != null && _ahead != null && _prev.IsOperator() && _prev.Value == "/" && _token.IsNumber() && _ahead.IsVariable() )
+                    else if (_prev != null && _ahead != null && _prev.IsOperator() && _prev.IsDivision() && _token.IsNumber() && _ahead.IsVariable() )
                     {
                         //Case for 1/2x -> 1/(2x)
                         //Postfix : 1 2 x * /
@@ -170,6 +171,9 @@ namespace AbMath.Calculator
                     }
                     else
                     {
+                        Stopwatch SW = new Stopwatch();
+                        SW.Start();
+
                         switch (_token.Type)
                         {
                             case Type.Number: 
@@ -209,6 +213,8 @@ namespace AbMath.Calculator
                             default:
                                 throw new NotImplementedException(_token.Value);
                         }
+
+                        _dataStore.AddTimeRecord("Shunt.Shunting", SW);
                     }
 
                     if (_dataStore.DebugMode)
@@ -225,12 +231,17 @@ namespace AbMath.Calculator
 
                 if (_dataStore.DebugMode)
                 {
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
                     Write(tables.ToString());
                     if (tables.SuggestedRedraw)
                     {
                         Write(tables.Redraw());
                     }
                     Write("");
+
+                    _dataStore.AddTimeRecord("Shunt.Debug", stopwatch);
                 }
                 Dump();
 
@@ -242,7 +253,6 @@ namespace AbMath.Calculator
                     arityTables.Add(new Schema {Column = "Token", Width = 10});
                     arityTables.Add(new Schema {Column = "Arity", Width = 5});
                 }
-
                 
                 for (int i = 0; i < _output.Count; i++)
                 {
@@ -269,12 +279,17 @@ namespace AbMath.Calculator
 
                 if (_dataStore.DebugMode)
                 {
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
                     Write(arityTables.ToString());
 
                     if (arityTables.SuggestedRedraw)
                     {
                         Write(arityTables.Redraw());
                     }
+
+                    _dataStore.AddTimeRecord("Shunt.Debug", stopwatch);
                 }
 
                 if (_arity.Count > 0)
@@ -285,46 +300,31 @@ namespace AbMath.Calculator
                     throw new InvalidOperationException("Arity not completely assigned");
                 }
 
-                Write("");
-
                 sw.Stop();
-
-                _dataStore.AddTimeRecord(new TimeRecord()
-                {
-                    Type = "Shunting",
-                    ElapsedMilliseconds = sw.ElapsedMilliseconds,
-                    ElapsedTicks = sw.ElapsedTicks
-                });
-
-                Token[] complex = _output.ToArray();
-
-                Write($"Complex RPN : {complex.Print()}");
-
-                if (_output.Print() != complex.Print())
-                {
-                    if (_dataStore.MarkdownTables)
-                    {
-                        Write($"Raw Reverse Polish Notation:\n``{_output.Print()}``");
-                    }
-                    else
-                    {
-                        Write($"Raw Reverse Polish Notation:\n{_output.Print()}");
-                    }
-                }
+                _dataStore.AddTimeRecord("Shunting", sw);
 
                 Write("");
+                Write($"RPN : {_output.Print()}");
+                Write("");
 
-                return complex;
+                return _output.ToArray();
             }
 
             void Implicit()
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 OperatorRule(_multiply);
                 _output.Add(_token);
+                _dataStore.AddTimeRecord("Shunt.Implicit", SW);
             }
 
             void RightBracketRule(Token token)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 while (!_operator.Peek().IsLeftBracket())
                 {
                     if (_operator.Count == 0)
@@ -338,32 +338,44 @@ namespace AbMath.Calculator
                 if (token.IsComma())
                 {
                     _arity.Push(_arity.Pop() + 1);
+                    _dataStore.AddTimeRecord("Shunt.RightBracketRule", SW);
                     return;
                 }
 
                 //Pops the left bracket or Parentheses from the stack. 
                 OperatorPop();
+                _dataStore.AddTimeRecord("Shunt.RightBracketRule", SW);
             }
 
             //Sort Stack equivalent in sb
             private void OperatorRule(Token token)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 while (DoOperatorRule(token))
                 {
                     _output.Add(OperatorPop());
                 }
                 _operator.Push(token);
+
+                _dataStore.AddTimeRecord("Shunt.OperatorRule", SW);
             }
 
             private bool DoOperatorRule(Token token)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 if (_operator.Count == 0 || _operator.Peek().IsLeftBracket())
                 {
+                    _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                     return false;
                 }
 
                 if (_operator.Peek().IsFunction())
                 {
+                    _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                     return true;
                 }
 
@@ -372,39 +384,43 @@ namespace AbMath.Calculator
 
                 if (peek.Weight > op.Weight || (peek.Weight == op.Weight && op.Assoc == Assoc.Left) )
                 {
+                    _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                     return true;
                 }
 
+                _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                 return false;
             }
 
             private bool LeftImplicit()
             {
-                //p t a
-                //3 x (
                 return _ahead != null && (_token.IsNumber() || _token.IsVariable()) && (_ahead.IsFunction() || _ahead.IsLeftBracket() || _ahead.IsVariable());
             }
 
             private bool RightImplicit()
             {
-                //p t a
-                //3 x (
-                return _prev != null && !_prev.IsComma() && ( _prev.IsRightBracket() || _prev.IsVariable() ) && (_token.IsNumber() || _token.IsVariable());
+                return _prev != null && !_prev.IsComma() &&  (_prev.IsRightBracket() || _prev.IsVariable()) && (_token.IsNumber() || _token.IsVariable());
             }
 
             private Token OperatorPop()
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
                 //TODO: We can use this to generate an AST directly. 
                 Token temp = _operator.Pop();
                 if (temp.IsFunction())
                 {
                     temp.Arguments = _arity.Pop();
                 }
+                SW.Stop();
+                _dataStore.AddTimeRecord("Shunt.OperatorPop", SW);
                 return temp;
             }
 
             private void WriteFunction(Token function)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
                 _operator.Push(function);
                 
                 if (_dataStore.Functions[function.Value].Arguments > 0)
@@ -415,6 +431,8 @@ namespace AbMath.Calculator
                 {
                     _arity.Push(0);
                 }
+                SW.Stop();
+                _dataStore.AddTimeRecord("Shunt.WriteFunc", SW);
             }
 
             /// <summary>
@@ -422,6 +440,9 @@ namespace AbMath.Calculator
             /// </summary>
             private void Dump()
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 while (_operator.Count > 0)
                 {
                     Token peek = _operator.Peek();
@@ -440,6 +461,8 @@ namespace AbMath.Calculator
                         _output.Add(OperatorPop());
                     }
                 }
+                SW.Stop();
+                _dataStore.AddTimeRecord("Shunt.Dump", SW);
             }
 
             void Write(string message)
