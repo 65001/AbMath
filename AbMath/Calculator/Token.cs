@@ -39,11 +39,6 @@ namespace AbMath.Calculator
                 return Type == Type.Number;
             }
 
-            public bool IsNull()
-            {
-                return Type == Type.Null;
-            }
-
             public bool IsFunction()
             {
                 return Type == Type.Function;

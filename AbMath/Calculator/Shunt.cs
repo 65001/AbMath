@@ -24,7 +24,6 @@ namespace AbMath.Calculator
             private Stack<Node> AST;
             //An AST node only gets created when we have a function or operator present
 
-            private int _count = 0;
             private Token _prev;
             private Token _token;
             private Token _ahead;
@@ -45,9 +44,12 @@ namespace AbMath.Calculator
             {
                 _dataStore = dataStore;
 
-                _multiply = GenerateMultiply();
-                _division = GenerateDivision();
-                _null = GenerateNull();
+                _multiply = new Token("*", 2, Type.Operator);
+                _division = new Token("/", 2, Type.Operator);
+                _null = new Token()
+                {
+                    Type = Type.Null
+                };
             }
 
             public Token[] ShuntYard(List<Token> tokens)
@@ -57,8 +59,7 @@ namespace AbMath.Calculator
 
                 _output = new List<Token>(tokens.Count + 10);
                 _operator = new Stack<Token>(5);
-
-                _arity = new Stack<int>();
+                _arity = new Stack<int>(5);
 
                 var tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm", Format = _dataStore.DefaultFormat});
 
@@ -78,25 +79,43 @@ namespace AbMath.Calculator
                 string action = string.Empty;
                 string type = string.Empty;
 
+
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev = (i > 0) ? _token : _null;
                     _token = tokens[i]; 
-                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+
+                    if (i < tokens.Count - 2)
+                    {
+                        _ahead = tokens[i + 1];
+                        _ahead2 = tokens[i + 2];
+                    }
+                    else if (i < tokens.Count - 1)
+                    {
+                        _ahead = tokens[i + 1];
+                        _ahead2 = _null;
+                    }
+                    else
+                    {
+                        _ahead = _null;
+                        _ahead2 = _null;
+                    }
 
                     action = string.Empty;
                     type = string.Empty;
-                    
+
+                    bool Left = LeftImplicit();
+                    bool Right = RightImplicit();
+
                     //Unary Input at the start of the input or 
-                    if ( i == 0 && !_ahead.IsNull() && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
+                    if ( i == 0 && _ahead != null && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
                     {
                         type = "Start of Sequence Unary";
                         _ahead.Value = (double.Parse(tokens[i + 1].Value) * -1).ToString();
                         tokens[i + 1] = _ahead;
                     }
                     //TODO: Unary Input after another operator or left parenthesis
-                    else if (Chain())
+                    else if (Left && Right)
                     {
                         type = "Chain Multiplication";
                         //Right
@@ -104,7 +123,7 @@ namespace AbMath.Calculator
                         //Left
                         OperatorRule(_multiply);
                     }
-                    else if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsOperator() && _prev.Value == "/" && _token.IsNumber() && _ahead.IsVariable() )
+                    else if (_prev != null && _ahead != null && _prev.IsOperator() && _prev.Value == "/" && _token.IsNumber() && _ahead.IsVariable() )
                     {
                         //Case for 1/2x -> 1/(2x)
                         //Postfix : 1 2 x * /
@@ -120,30 +139,30 @@ namespace AbMath.Calculator
                     }
                     //2 x (
                     //2 x sin
-                    else if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsNumber() && _token.IsVariable() && ( _ahead.IsLeftBracket() || _ahead.IsFunction() ))
+                    else if (_prev != null && _ahead != null && _prev.IsNumber() && _token.IsVariable() && ( _ahead.IsLeftBracket() || _ahead.IsFunction() ))
                     {
                         type = "Variable Chain Multiplication";
                         _output.Add(_token);
                         _output.Add(_multiply);
                     }
-                    else if (LeftImplicit())
+                    else if (Left)
                     {
                         //This will flip the order of the multiplication :(
                         type = "Implicit Left";
                         Implicit();
                     }
-                    else if (!_prev.IsNull()  && (_prev.IsRightBracket() && _token.IsLeftBracket()) || (_prev.IsVariable() && _token.IsNumber()) || (_prev.IsConstant() && _token.IsLeftBracket() && (_ahead.IsNumber() || _ahead.IsFunction()))) 
+                    else if (_prev != null && _ahead != null && (_prev.IsRightBracket() && _token.IsLeftBracket()) || (_prev.IsVariable() && _token.IsNumber()) || (_prev.IsConstant() && _token.IsLeftBracket() && (_ahead.IsNumber() || _ahead.IsFunction()))) 
                     {
                         type = "Implicit Left 2";
                         OperatorRule(_multiply);
                         _operator.Push(_token);
                     }
-                    else if (RightImplicit())
+                    else if (Right)
                     {
                         type = "Implicit Right";
                         Implicit();
                     }
-                    else if (_prev.IsRightBracket() && !_prev.IsComma() && _token.IsFunction())
+                    else if (_prev != null && _prev.IsRightBracket() && !_prev.IsComma() && _token.IsFunction())
                     {
                         type = "Implicit Left Functional";
                         OperatorRule(_multiply);
@@ -363,19 +382,14 @@ namespace AbMath.Calculator
             {
                 //p t a
                 //3 x (
-                return !_ahead.IsNull() && (_token.IsNumber() || _token.IsVariable()) && (_ahead.IsFunction() || _ahead.IsLeftBracket() || _ahead.IsVariable());
+                return _ahead != null && (_token.IsNumber() || _token.IsVariable()) && (_ahead.IsFunction() || _ahead.IsLeftBracket() || _ahead.IsVariable());
             }
 
             private bool RightImplicit()
             {
                 //p t a
                 //3 x (
-                return !_prev.IsNull() && !_prev.IsComma() && ( _prev.IsRightBracket() || _prev.IsVariable() ) && (_token.IsNumber() || _token.IsVariable());
-            }
-
-            private bool Chain()
-            {
-                return LeftImplicit() && RightImplicit();
+                return _prev != null && !_prev.IsComma() && ( _prev.IsRightBracket() || _prev.IsVariable() ) && (_token.IsNumber() || _token.IsVariable());
             }
 
             private Token OperatorPop()
@@ -402,12 +416,6 @@ namespace AbMath.Calculator
                     _arity.Push(0);
                 }
             }
-
-            private static Token GenerateMultiply() => new Token("*", 2, Type.Operator);
-
-            private static Token GenerateDivision() => new Token("/", 2, Type.Operator);
-
-            private static Token GenerateNull() => new Token { Type = Type.Null };
 
             /// <summary>
             /// Moves all remaining data from the stack onto the queue

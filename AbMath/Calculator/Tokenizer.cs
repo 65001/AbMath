@@ -54,7 +54,7 @@ namespace AbMath.Calculator
                 for (int i = 0; i < length; i++)
                 {
                     _character = equation[i].ToString();
-                    _readAhead = i < (length - 1) ? equation[i + 1].ToString() : string.Empty;
+                    _readAhead = i < (length - 1) ? equation[i + 1].ToString() : null;
 
                     //Alias code
                     if (_dataStore.Aliases.ContainsKey(_token))
@@ -77,7 +77,7 @@ namespace AbMath.Calculator
                     {
                         _rule = "Unary";
                         _token += _character;
-                        if(!string.IsNullOrWhiteSpace(_readAhead) && (_dataStore.IsVariable(_readAhead) || _dataStore.IsLeftBracket(_readAhead) ))
+                        if( !(string.IsNullOrWhiteSpace(_readAhead) )  && (_dataStore.IsVariable(_readAhead) || _dataStore.IsLeftBracket(_readAhead) ))
                         {
                             _token += "1";
                             WriteToken("Unary");
@@ -173,20 +173,15 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     Write(_tables.ToString());
+
+                    if (_tables.SuggestedRedraw)
+                    {
+                        Write(_tables.Redraw());
+                    }
                 }
 
-                if (_dataStore.DebugMode && _tables.SuggestedRedraw)
-                {
-                    Write(_tables.Redraw());
-                }
                 sw.Stop();
-
-                _dataStore.AddTimeRecord(new TimeRecord()
-                {
-                    Type = "Tokenize",
-                    ElapsedMilliseconds = sw.ElapsedMilliseconds,
-                    ElapsedTicks = sw.ElapsedTicks
-                });
+                _dataStore.AddTimeRecord("Tokenize", sw);
 
                 Write("");
 
@@ -207,15 +202,18 @@ namespace AbMath.Calculator
                 }
 
                 _rule = rule;
-                Token token = new Token(_token, 0, _dataStore.Resolve(_token));
 
-                switch (token.Type)
+                Token token;
+                switch (_dataStore.Resolve(_token))
                 {
                     case Type.Function:
-                        token.Arguments = _dataStore.Functions[_token].Arguments;
+                        token = new Token(_token, _dataStore.Functions[_token].Arguments, Type.Function);
                         break;
                     case Type.Operator:
-                        token.Arguments = _dataStore.Operators[_token].Arguments;
+                        token = new Token(_token, _dataStore.Operators[_token].Arguments, Type.Operator);
+                        break;
+                    default:
+                        token = new Token(_token, 0, _dataStore.Resolve(_token));
                         break;
                 }
                 _tokens.Add(token);
