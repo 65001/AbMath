@@ -17,7 +17,7 @@ namespace AbMath.Calculator
             private readonly DataStore _dataStore;
 
             //TODO: The _output queue and the _operator stack must be redone to add AST support
-            private Queue<Token> _output;
+            private List<Token> _output;
 
             private Stack<Token> _operator;
 
@@ -55,12 +55,13 @@ namespace AbMath.Calculator
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                _output = new Queue<Token>(tokens.Count);
+                _output = new List<Token>(tokens.Count + 10);
                 _operator = new Stack<Token>(5);
 
                 _arity = new Stack<int>();
 
                 var tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm", Format = _dataStore.DefaultFormat});
+
                 if (_dataStore.DebugMode)
                 {
                     tables.Add(new Schema {Column = "#", Width = 3});
@@ -86,9 +87,9 @@ namespace AbMath.Calculator
 
                     action = string.Empty;
                     type = string.Empty;
-
+                    
                     //Unary Input at the start of the input or 
-                    if ( i == 0 && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
+                    if ( i == 0 && !_ahead.IsNull() && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
                     {
                         type = "Start of Sequence Unary";
                         _ahead.Value = (double.Parse(tokens[i + 1].Value) * -1).ToString();
@@ -103,12 +104,7 @@ namespace AbMath.Calculator
                         //Left
                         OperatorRule(_multiply);
                     }
-                    else if (!_prev.IsNull() 
-                             && !_ahead.IsNull() 
-                             && _prev.IsOperator() 
-                             && _prev.Value == "/" 
-                             && _token.IsNumber() 
-                             && _ahead.IsVariable() )
+                    else if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsOperator() && _prev.Value == "/" && _token.IsNumber() && _ahead.IsVariable() )
                     {
                         //Case for 1/2x -> 1/(2x)
                         //Postfix : 1 2 x * /
@@ -117,20 +113,18 @@ namespace AbMath.Calculator
                         //Ahead : Variable 
                         type = "Mixed division and multiplication";
                         OperatorPop();
-                        _output.Enqueue(_token);
+                        _output.Add(_token);
 
                         _operator.Push(_division);
                         _operator.Push(_multiply);
                     }
                     //2 x (
                     //2 x sin
-                    else if (!_prev.IsNull() && !_ahead.IsNull() &&
-                             _prev.IsNumber() && _token.IsVariable() && 
-                             ( _ahead.IsLeftBracket() || _ahead.IsFunction() ))
+                    else if (!_prev.IsNull() && !_ahead.IsNull() && _prev.IsNumber() && _token.IsVariable() && ( _ahead.IsLeftBracket() || _ahead.IsFunction() ))
                     {
                         type = "Variable Chain Multiplication";
-                        _output.Enqueue(_token);
-                        _output.Enqueue(_multiply);
+                        _output.Add(_token);
+                        _output.Add(_multiply);
                     }
                     else if (LeftImplicit())
                     {
@@ -138,11 +132,7 @@ namespace AbMath.Calculator
                         type = "Implicit Left";
                         Implicit();
                     }
-                    else if (!_prev.IsNull()  
-                             && (_prev.IsRightBracket() && _token.IsLeftBracket()) 
-                             || (_prev.IsVariable() && _token.IsNumber()) 
-                             || (_prev.IsConstant() && _token.IsLeftBracket() && (_ahead.IsNumber() || _ahead.IsFunction()))
-                             ) 
+                    else if (!_prev.IsNull()  && (_prev.IsRightBracket() && _token.IsLeftBracket()) || (_prev.IsVariable() && _token.IsNumber()) || (_prev.IsConstant() && _token.IsLeftBracket() && (_ahead.IsNumber() || _ahead.IsFunction()))) 
                     {
                         type = "Implicit Left 2";
                         OperatorRule(_multiply);
@@ -166,7 +156,7 @@ namespace AbMath.Calculator
                             case Type.Number: 
                                 action = "Added token to output";
                                 type = "Number";
-                                _output.Enqueue(_token);
+                                _output.Add(_token);
                                 break;
                             case Type.Function:
                                 action = "Added token to stack";
@@ -195,7 +185,7 @@ namespace AbMath.Calculator
                             case Type.Variable:
                                 action = "Added token to output";
                                 type = "Variable";
-                                _output.Enqueue(_token);
+                                _output.Add(_token);
                                 break;
                             default:
                                 throw new NotImplementedException(_token.Value);
@@ -237,7 +227,7 @@ namespace AbMath.Calculator
                 
                 for (int i = 0; i < _output.Count; i++)
                 {
-                    Token token = _output.Dequeue();
+                    Token token = _output[i];
 
                     if (_dataStore.DebugMode)
                     {
@@ -255,7 +245,6 @@ namespace AbMath.Calculator
                         }
 
                     }
-                    _output.Enqueue(token);
                 }
                 
 
@@ -288,7 +277,7 @@ namespace AbMath.Calculator
                     ElapsedTicks = sw.ElapsedTicks
                 });
 
-                Token[] complex = _output.ToList().ToArray();
+                Token[] complex = _output.ToArray();
 
                 Write($"Complex RPN : {complex.Print()}");
 
@@ -312,7 +301,7 @@ namespace AbMath.Calculator
             void Implicit()
             {
                 OperatorRule(_multiply);
-                _output.Enqueue(_token);
+                _output.Add(_token);
             }
 
             void RightBracketRule(Token token)
@@ -323,7 +312,7 @@ namespace AbMath.Calculator
                     {
                         throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
                     }
-                    _output.Enqueue(OperatorPop());
+                    _output.Add(OperatorPop());
                 }
 
                 //For functions and composite functions the to work, we must return now.
@@ -342,7 +331,7 @@ namespace AbMath.Calculator
             {
                 while (DoOperatorRule(token))
                 {
-                    _output.Enqueue(OperatorPop());
+                    _output.Add(OperatorPop());
                 }
                 _operator.Push(token);
             }
@@ -440,7 +429,7 @@ namespace AbMath.Calculator
                     }
                     else
                     {
-                        _output.Enqueue(OperatorPop());
+                        _output.Add(OperatorPop());
                     }
                 }
             }
