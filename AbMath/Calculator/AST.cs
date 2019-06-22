@@ -1110,7 +1110,19 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arcsin")
                     {
+                        RPN.Node body = Clone(node.Children[0].Children[0]);
+                        RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
+                        RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                        RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] { exponent, new RPN.Node(GenerateNextID(), 1) }, new RPN.Token("-", 2, RPN.Type.Operator));
+                        RPN.Node sqrt = new RPN.Node(GenerateNextID(), new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                        RPN.Node division = new RPN.Node(GenerateNextID(), new[] { sqrt, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                        node.Replace(node.Children[0], division);
+                        //Delete self from the tree
+                        node.Remove();
+                        //Chain Rule
+                        Derive(bodyDerive, variable);
                     }
                     else if (node.Children[0].Token.Value == "arccos")
                     {
