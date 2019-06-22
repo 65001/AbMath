@@ -319,6 +319,17 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void Arctan()
+        {
+            RPN test = new RPN("derivative(arctan(x^2),x)");
+            test.Compute();
+            if("2 x * x 2 ^ 2 ^ 1 + /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void ComplexEquation()
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");
