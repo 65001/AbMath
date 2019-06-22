@@ -308,6 +308,17 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void Arccos()
+        {
+            RPN test = new RPN("derivative(arccos(x^2),x)");
+            test.Compute();
+            if ("-2 x * 1 x 2 ^ 2 ^ - sqrt /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void ComplexEquation()
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");
