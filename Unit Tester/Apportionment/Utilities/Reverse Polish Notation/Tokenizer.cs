@@ -144,7 +144,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("sin ( max ( 2 , 3 ) / 3 * 3.1415 )");
             test.Compute();
-            if ("2 3 max 3 / 3.1415 * sin" != test.Polish.Print() && "3.1415 2 3 max 3 / * sin" != test.Polish.Print())
+            if ("2 3 max 3 / 3.1415 * sin" != test.Polish.Print() && "3.1415 2 3 max 3 / * sin" != test.Polish.Print() && "3.1415 2 3 max * 3 / sin" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -210,7 +210,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("x2sin(x) + x3sin(x)");
             test.Compute();
-            if ("x 2 * x sin * 3 x * x sin * +" != test.Polish.Print())
+            if ("x 2 * x sin * 3 x * x sin * +" != test.Polish.Print() && "x 2 * x sin * x 3 * x sin * +" != test.Polish.Print())
             {
                 Assert.Fail();
             }

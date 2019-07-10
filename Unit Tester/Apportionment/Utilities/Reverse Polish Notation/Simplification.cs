@@ -12,11 +12,10 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("x - x + 2 - 2");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("0 + 2 - 2" != tokens)
+            if ("0 + 2 - 2" != tokens && "0" != tokens)
             {
                 Assert.Fail();
             }
@@ -27,11 +26,10 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("2x - 3x");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("-1 x" != tokens)
+            if ("-1 x *" != tokens)
             {
                 Assert.Fail();
             }
@@ -43,8 +41,7 @@ namespace AbMath.Tests
             RPN rpn = new RPN("2x - x");
             rpn.Compute();
 
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
             if ("x" != tokens)
@@ -58,11 +55,10 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("2x + 3x");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("5 x" != tokens)
+            if ("5 x *" != tokens)
             {
                 Assert.Fail();
             }
@@ -77,7 +73,7 @@ namespace AbMath.Tests
             string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("-1 x 2 ^ * x +" != tokens && "x 2 ^ -1 * x +" != tokens)
+            if ("-1 x 2 ^ * x +" != tokens && "x 2 ^ -1 * x +" != tokens && "x x 2 ^ -" != tokens)
             {
                 Assert.Fail();
             }
@@ -88,11 +84,10 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("2x + 3x^2");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("2 x + 3 x ^ 2" != tokens && "3 x ^ 2 + 2 x" != tokens )
+            if ("3 x 2 ^ * 2 x * +" != tokens && "2 x * 3 x 2 ^ * +" != tokens)
             {
                 Assert.Fail();
             }
@@ -103,11 +98,10 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("3(x^2 - x^2)");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("3 ( 0 )" != tokens)
+            if ("3 ( 0 )" != tokens && "0" != tokens)
             {
                 Assert.Fail();
             }
@@ -118,8 +112,7 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("x^@ - x^@");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
             if ("0" != tokens)
@@ -133,8 +126,7 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("x^0");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
             if ("1" != tokens)
@@ -148,11 +140,10 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("x^@ + x - x^@ - x");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("0 + 0" != tokens && "0 * 2" != tokens)
+            if ("0 + 0" != tokens && "0 * 2" != tokens && "0" != tokens && "x @ ^ x + x @ ^ - x -" != tokens)
             {
                 Assert.Fail();
             }
@@ -163,11 +154,10 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("x^2 + x^3/x");
             rpn.Compute();
-            RPN.PreSimplify SI = new RPN.PreSimplify(rpn.Data);
-            string tokens = SI.Apply(rpn.Tokens).Print();
+            string tokens = rpn.Polish.Print();
             Console.WriteLine(tokens);
 
-            if ("x ^ 2 + x ^ 3 / x" != tokens)
+            if ("x 2 ^ x 3 ^ x / +" != tokens)
             {
                 Assert.Fail();
             }
@@ -179,7 +169,7 @@ namespace AbMath.Tests
             RPN rpn = new RPN("2x(3x^2)");
             rpn.Compute();
 
-            if ("6 x 3 ^ *" != rpn.Polish.Print() && "x 3 ^ 6 *" != rpn.Polish.Print())
+            if ("6 x 3 ^ *" != rpn.Polish.Print() && "x 3 ^ 6 *" != rpn.Polish.Print() && "2 3 * x 3 ^ *" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -189,18 +179,6 @@ namespace AbMath.Tests
     [TestFixture]
     public class PostSimplification
     {
-        [Test]
-        public void Swap()
-        {
-            RPN rpn = new RPN("(x^4) + (x^6) + (x^2) + (x^5) + x + (x^3)");
-            rpn.Compute();
-
-            if ("x 6 ^ x 5 ^ + x 4 ^ + x 3 ^ + x 2 ^ + x +" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
-        }
-
         [Test]
         public void Log_Base_Power()
         {
@@ -224,6 +202,14 @@ namespace AbMath.Tests
             {
                 Assert.Fail();
             }
+
+            rpn.SetEquation("log(x^2,1)");
+            rpn.Compute();
+
+            if ("0" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
         }
 
         [Test]
@@ -232,6 +218,13 @@ namespace AbMath.Tests
             RPN rpn = new RPN("b^log(b,x)");
             rpn.Compute();
             if ("x" != rpn.Polish.Print())
+            {
+                Assert.Fail();
+            }
+
+            rpn.SetEquation("(2x)^log(2x,2)");
+            rpn.Compute();
+            if ("2" != rpn.Polish.Print())
             {
                 Assert.Fail();
             }

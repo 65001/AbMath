@@ -1,4 +1,4 @@
-﻿
+﻿using System;
 
 namespace AbMath.Calculator
 {
@@ -13,6 +13,13 @@ namespace AbMath.Calculator
             public Token()
             {
 
+            }
+
+            public Token(double number)
+            {
+                Value = number.ToString();
+                Arguments = 0;
+                Type = Type.Number;
             }
 
             public Token(string value, int arguments, Type type)
@@ -30,11 +37,6 @@ namespace AbMath.Calculator
             public bool IsNumber()
             {
                 return Type == Type.Number;
-            }
-
-            public bool IsNull()
-            {
-                return Type == Type.Null;
             }
 
             public bool IsFunction()
@@ -95,6 +97,26 @@ namespace AbMath.Calculator
             public bool IsExponent()
             {
                 return Value == "^";
+            }
+
+            public bool IsLog()
+            {
+                return Value == "log";
+            }
+
+            public bool IsLn()
+            {
+                return Value == "ln";
+            }
+
+            public bool IsSqrt()
+            {
+                return Value == "sqrt";
+            }
+
+            public bool IsAbs()
+            {
+                return Value == "abs";
             }
         }
     }

@@ -96,7 +96,7 @@ namespace AbMath.Calculator
         static void PrintNode(RPN.Node node, string indent, ref StringBuilder sb)
         {
             //node [Hash] ID:[$ID] Children:[$#]
-            sb.AppendLine($"{node} [{node.ID}: {node.GetHash()}:{node.Children.Length}:{node.Token.Type}:{node.isRoot}]");
+            sb.AppendLine($"{node} [{node.ID}| {node.Children.Length} | {node.Token.Type} | {node.isRoot} | {node.GetHash()}]");
 
             // Loop through the children recursively, passing in the
             // indent, and the isLast parameter
@@ -143,10 +143,7 @@ namespace AbMath.Calculator
         }
         public static void Pop<T>(this List<T> list,int count)
         {
-            for (int i = 0; i < count; i++)
-            {
-                list.RemoveAt(list.Count - 1);
-            }
+            list.RemoveRange(list.Count - count, count);
         }
 
         public static string GetDecimalFormat(double n)
@@ -259,6 +256,13 @@ namespace AbMath.Calculator
             {
                 return null;
             }
+        }
+
+        public static string Alias(this string data)
+        {
+            //TODO: Move all these aliases into RPN.Data.Aliases and convert 
+            //all functions to handle them properley 
+            return data.Replace("pi", "π ");
         }
     }
 }

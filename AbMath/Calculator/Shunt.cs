@@ -17,14 +17,13 @@ namespace AbMath.Calculator
             private readonly DataStore _dataStore;
 
             //TODO: The _output queue and the _operator stack must be redone to add AST support
-            private Queue<Token> _output;
+            private List<Token> _output;
 
             private Stack<Token> _operator;
 
             private Stack<Node> AST;
             //An AST node only gets created when we have a function or operator present
 
-            private int _count = 0;
             private Token _prev;
             private Token _token;
             private Token _ahead;
@@ -45,9 +44,12 @@ namespace AbMath.Calculator
             {
                 _dataStore = dataStore;
 
-                _multiply = GenerateMultiply();
-                _division = GenerateDivision();
-                _null = GenerateNull();
+                _multiply = new Token("*", 2, Type.Operator);
+                _division = new Token("/", 2, Type.Operator);
+                _null = new Token()
+                {
+                    Type = Type.Null
+                };
             }
 
             public Token[] ShuntYard(List<Token> tokens)
@@ -55,12 +57,12 @@ namespace AbMath.Calculator
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                _output = new Queue<Token>(tokens.Count);
+                _output = new List<Token>(tokens.Count + 10);
                 _operator = new Stack<Token>(5);
-
-                _arity = new Stack<int>();
+                _arity = new Stack<int>(5);
 
                 var tables = new Tables<string>(new Config {Title = "Shunting Yard Algorithm", Format = _dataStore.DefaultFormat});
+
                 if (_dataStore.DebugMode)
                 {
                     tables.Add(new Schema {Column = "#", Width = 3});
@@ -77,25 +79,44 @@ namespace AbMath.Calculator
                 string action = string.Empty;
                 string type = string.Empty;
 
+
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev = (i > 0) ? _token : _null;
                     _token = tokens[i]; 
-                    _ahead = ((i + 1) < tokens.Count) ? tokens[i + 1] : _null;
-                    _ahead2 = ((i + 2) < tokens.Count) ? tokens[i + 2] : _null;
+
+                    if (i < tokens.Count - 2)
+                    {
+                        _ahead = tokens[i + 1];
+                        _ahead2 = tokens[i + 2];
+                    }
+                    else if (i < tokens.Count - 1)
+                    {
+                        _ahead = tokens[i + 1];
+                        _ahead2 = _null;
+                    }
+                    else
+                    {
+                        _ahead = _null;
+                        _ahead2 = _null;
+                    }
 
                     action = string.Empty;
                     type = string.Empty;
 
+                    bool Left = LeftImplicit();
+                    bool Right = RightImplicit();
+                    
+
                     //Unary Input at the start of the input or 
-                    if ( i == 0 && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
+                    if ( i == 0 && _ahead != null && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
                     {
                         type = "Start of Sequence Unary";
                         _ahead.Value = (double.Parse(tokens[i + 1].Value) * -1).ToString();
                         tokens[i + 1] = _ahead;
                     }
                     //TODO: Unary Input after another operator or left parenthesis
-                    else if (Chain())
+                    else if (Left && Right)
                     {
                         type = "Chain Multiplication";
                         //Right
@@ -103,12 +124,7 @@ namespace AbMath.Calculator
                         //Left
                         OperatorRule(_multiply);
                     }
-                    else if (!_prev.IsNull() 
-                             && !_ahead.IsNull() 
-                             && _prev.IsOperator() 
-                             && _prev.Value == "/" 
-                             && _token.IsNumber() 
-                             && _ahead.IsVariable() )
+                    else if (_prev != null && _ahead != null && _prev.IsOperator() && _prev.IsDivision() && _token.IsNumber() && _ahead.IsVariable() )
                     {
                         //Case for 1/2x -> 1/(2x)
                         //Postfix : 1 2 x * /
@@ -117,43 +133,37 @@ namespace AbMath.Calculator
                         //Ahead : Variable 
                         type = "Mixed division and multiplication";
                         OperatorPop();
-                        _output.Enqueue(_token);
+                        _output.Add(_token);
 
                         _operator.Push(_division);
                         _operator.Push(_multiply);
                     }
                     //2 x (
                     //2 x sin
-                    else if (!_prev.IsNull() && !_ahead.IsNull() &&
-                             _prev.IsNumber() && _token.IsVariable() && 
-                             ( _ahead.IsLeftBracket() || _ahead.IsFunction() ))
+                    else if (_prev != null && _ahead != null && _prev.IsNumber() && _token.IsVariable() && ( _ahead.IsLeftBracket() || _ahead.IsFunction() ))
                     {
                         type = "Variable Chain Multiplication";
-                        _output.Enqueue(_token);
-                        _output.Enqueue(_multiply);
+                        _output.Add(_token);
+                        _output.Add(_multiply);
                     }
-                    else if (LeftImplicit())
+                    else if (Left)
                     {
                         //This will flip the order of the multiplication :(
                         type = "Implicit Left";
                         Implicit();
                     }
-                    else if (!_prev.IsNull()  
-                             && (_prev.IsRightBracket() && _token.IsLeftBracket()) 
-                             || (_prev.IsVariable() && _token.IsNumber()) 
-                             || (_prev.IsConstant() && _token.IsLeftBracket() && (_ahead.IsNumber() || _ahead.IsFunction()))
-                             ) 
+                    else if (_prev != null && _ahead != null && (_prev.IsRightBracket() && _token.IsLeftBracket()) || (_prev.IsVariable() && _token.IsNumber()) || (_prev.IsConstant() && _token.IsLeftBracket() && (_ahead.IsNumber() || _ahead.IsFunction()))) 
                     {
                         type = "Implicit Left 2";
                         OperatorRule(_multiply);
                         _operator.Push(_token);
                     }
-                    else if (RightImplicit())
+                    else if (Right)
                     {
                         type = "Implicit Right";
                         Implicit();
                     }
-                    else if (_prev.IsRightBracket() && !_prev.IsComma() && _token.IsFunction())
+                    else if (_prev != null && _prev.IsRightBracket() && !_prev.IsComma() && _token.IsFunction())
                     {
                         type = "Implicit Left Functional";
                         OperatorRule(_multiply);
@@ -161,12 +171,15 @@ namespace AbMath.Calculator
                     }
                     else
                     {
+                        Stopwatch SW = new Stopwatch();
+                        SW.Start();
+
                         switch (_token.Type)
                         {
                             case Type.Number: 
                                 action = "Added token to output";
                                 type = "Number";
-                                _output.Enqueue(_token);
+                                _output.Add(_token);
                                 break;
                             case Type.Function:
                                 action = "Added token to stack";
@@ -195,11 +208,13 @@ namespace AbMath.Calculator
                             case Type.Variable:
                                 action = "Added token to output";
                                 type = "Variable";
-                                _output.Enqueue(_token);
+                                _output.Add(_token);
                                 break;
                             default:
                                 throw new NotImplementedException(_token.Value);
                         }
+
+                        _dataStore.AddTimeRecord("Shunt.Shunting", SW);
                     }
 
                     if (_dataStore.DebugMode)
@@ -216,20 +231,19 @@ namespace AbMath.Calculator
 
                 if (_dataStore.DebugMode)
                 {
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
                     Write(tables.ToString());
-                }
-
-                if (_dataStore.DebugMode && tables.SuggestedRedraw)
-                {
-                    Write(tables.Redraw());
-                }
-
-                Dump();
-
-                if (_dataStore.DebugMode)
-                {
+                    if (tables.SuggestedRedraw)
+                    {
+                        Write(tables.Redraw());
+                    }
                     Write("");
+
+                    _dataStore.AddTimeRecord("Shunt.Debug", stopwatch);
                 }
+                Dump();
 
                 Tables<string> arityTables = new Tables<string>(new Config { Title = "Arity", Format = _dataStore.DefaultFormat });
 
@@ -239,11 +253,10 @@ namespace AbMath.Calculator
                     arityTables.Add(new Schema {Column = "Token", Width = 10});
                     arityTables.Add(new Schema {Column = "Arity", Width = 5});
                 }
-
                 
                 for (int i = 0; i < _output.Count; i++)
                 {
-                    Token token = _output.Dequeue();
+                    Token token = _output[i];
 
                     if (_dataStore.DebugMode)
                     {
@@ -261,18 +274,22 @@ namespace AbMath.Calculator
                         }
 
                     }
-                    _output.Enqueue(token);
                 }
                 
 
                 if (_dataStore.DebugMode)
                 {
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
                     Write(arityTables.ToString());
 
                     if (arityTables.SuggestedRedraw)
                     {
                         Write(arityTables.Redraw());
                     }
+
+                    _dataStore.AddTimeRecord("Shunt.Debug", stopwatch);
                 }
 
                 if (_arity.Count > 0)
@@ -283,104 +300,82 @@ namespace AbMath.Calculator
                     throw new InvalidOperationException("Arity not completely assigned");
                 }
 
-                Write("");
-
                 sw.Stop();
-
-                _dataStore.AddTimeRecord(new TimeRecord()
-                {
-                    Type = "Shunting",
-                    ElapsedMilliseconds = sw.ElapsedMilliseconds,
-                    ElapsedTicks = sw.ElapsedTicks
-                });
-
-                if (!_dataStore.PostOptimization)
-                {
-                    return _output.ToArray();
-                }
-
-                Stopwatch SI = new Stopwatch();
-                SI.Start();
-
-                PostSimplify PS = new PostSimplify(_dataStore);
-                PS.Logger += Logger;
-                Token[] complex = PS.Apply(_output.ToList()).ToArray();
-
-                Write($"Complex RPN : {complex.Print()}");
-
-                SI.Stop();
-
-                _dataStore.AddTimeRecord(new TimeRecord()
-                {
-                    Type = "PostSimplify",
-                    ElapsedMilliseconds = SI.ElapsedMilliseconds,
-                    ElapsedTicks = SI.ElapsedTicks
-                });
-
-                if (_output.Print() != complex.Print())
-                {
-                    if (_dataStore.MarkdownTables)
-                    {
-                        Write($"Raw Reverse Polish Notation:\n``{_output.Print()}``");
-                    }
-                    else
-                    {
-                        Write($"Raw Reverse Polish Notation:\n{_output.Print()}");
-                    }
-                }
+                _dataStore.AddTimeRecord("Shunting", sw);
 
                 Write("");
+                Write($"RPN : {_output.Print()}");
+                Write("");
 
-                return complex;
+                return _output.ToArray();
             }
 
             void Implicit()
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 OperatorRule(_multiply);
-                _output.Enqueue(_token);
+                _output.Add(_token);
+                _dataStore.AddTimeRecord("Shunt.Implicit", SW);
             }
 
             void RightBracketRule(Token token)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 while (!_operator.Peek().IsLeftBracket())
                 {
                     if (_operator.Count == 0)
                     {
                         throw new ArgumentException("Error : Mismatched Brackets or Parentheses.");
                     }
-                    _output.Enqueue(OperatorPop());
+                    _output.Add(OperatorPop());
                 }
 
                 //For functions and composite functions the to work, we must return now.
                 if (token.IsComma())
                 {
                     _arity.Push(_arity.Pop() + 1);
+                    _dataStore.AddTimeRecord("Shunt.RightBracketRule", SW);
                     return;
                 }
 
                 //Pops the left bracket or Parentheses from the stack. 
                 OperatorPop();
+                _dataStore.AddTimeRecord("Shunt.RightBracketRule", SW);
             }
 
             //Sort Stack equivalent in sb
             private void OperatorRule(Token token)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 while (DoOperatorRule(token))
                 {
-                    _output.Enqueue(OperatorPop());
+                    _output.Add(OperatorPop());
                 }
                 _operator.Push(token);
+
+                _dataStore.AddTimeRecord("Shunt.OperatorRule", SW);
             }
 
             private bool DoOperatorRule(Token token)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 if (_operator.Count == 0 || _operator.Peek().IsLeftBracket())
                 {
+                    _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                     return false;
                 }
 
                 if (_operator.Peek().IsFunction())
                 {
+                    _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                     return true;
                 }
 
@@ -389,46 +384,43 @@ namespace AbMath.Calculator
 
                 if (peek.Weight > op.Weight || (peek.Weight == op.Weight && op.Assoc == Assoc.Left) )
                 {
+                    _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                     return true;
                 }
 
+                _dataStore.AddTimeRecord("Shunt.OpRule", SW);
                 return false;
             }
 
             private bool LeftImplicit()
             {
-                //p t a
-                //3 x (
-                return !_ahead.IsNull() && (_token.IsNumber() || _token.IsVariable()) && (_ahead.IsFunction() || _ahead.IsLeftBracket() || _ahead.IsVariable());
+                return _ahead != null && (_token.IsNumber() || _token.IsVariable()) && (_ahead.IsFunction() || _ahead.IsLeftBracket() || _ahead.IsVariable());
             }
 
             private bool RightImplicit()
             {
-                //p t a
-                //3 x (
-                return !_prev.IsNull() && !_prev.IsComma() &&
-                       ( _prev.IsRightBracket() || _prev.IsVariable() )
-                       && (_token.IsNumber() || _token.IsVariable());
-            }
-
-            private bool Chain()
-            {
-                return LeftImplicit() && RightImplicit();
+                return _prev != null && !_prev.IsComma() &&  (_prev.IsRightBracket() || _prev.IsVariable()) && (_token.IsNumber() || _token.IsVariable());
             }
 
             private Token OperatorPop()
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
                 //TODO: We can use this to generate an AST directly. 
                 Token temp = _operator.Pop();
                 if (temp.IsFunction())
                 {
                     temp.Arguments = _arity.Pop();
                 }
+                SW.Stop();
+                _dataStore.AddTimeRecord("Shunt.OperatorPop", SW);
                 return temp;
             }
 
             private void WriteFunction(Token function)
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
                 _operator.Push(function);
                 
                 if (_dataStore.Functions[function.Value].Arguments > 0)
@@ -439,24 +431,18 @@ namespace AbMath.Calculator
                 {
                     _arity.Push(0);
                 }
+                SW.Stop();
+                _dataStore.AddTimeRecord("Shunt.WriteFunc", SW);
             }
-
-            private static Token GenerateMultiply() => new Token {
-                Value = "*", Arguments = 2, Type = Type.Operator
-            };
-
-            private static Token GenerateDivision() => new Token
-            {
-                Arguments = 2, Type = Type.Operator, Value = "/"
-            };
-
-            private static Token GenerateNull() => new Token { Type = Type.Null };
 
             /// <summary>
             /// Moves all remaining data from the stack onto the queue
             /// </summary>
             private void Dump()
             {
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+
                 while (_operator.Count > 0)
                 {
                     Token peek = _operator.Peek();
@@ -472,14 +458,16 @@ namespace AbMath.Calculator
                     }
                     else
                     {
-                        _output.Enqueue(OperatorPop());
+                        _output.Add(OperatorPop());
                     }
                 }
+                SW.Stop();
+                _dataStore.AddTimeRecord("Shunt.Dump", SW);
             }
 
             void Write(string message)
             {
-                Logger?.Invoke(this, message);
+                Logger?.Invoke(this, message.Alias());
             }
         }
     }

@@ -458,6 +458,8 @@ namespace AbMath.Tests
             test.Compute();
 
             PostFix math = new PostFix(test);
+            math.SetVariable("x", 1);
+            math.SetVariable("p", 2);
             Assert.AreEqual(0, math.Compute());
         }
 
@@ -469,6 +471,16 @@ namespace AbMath.Tests
 
             PostFix math = new PostFix(test);
             Assert.AreEqual(-1, math.Compute());
+        }
+        
+        [Test]
+        public void Distance()
+        {
+            RPN test = new RPN("sqrt(2^2 + 8^2)");
+            test.Compute();
+
+            PostFix math = new PostFix(test);
+            Assert.AreEqual( Math.Sqrt( 68 ), math.Compute());
         }
 
         [Test]
