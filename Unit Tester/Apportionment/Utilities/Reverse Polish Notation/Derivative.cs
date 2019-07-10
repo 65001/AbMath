@@ -148,7 +148,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(sqrt(x),x)");
             test.Compute();
-            if (test.Polish.Print() != "0.5 x -0.5 ^ *")
+            if (test.Polish.Print() != "0.5 x sqrt /")
             {
                 Assert.Fail();
             }
@@ -156,7 +156,7 @@ namespace AbMath.Tests
             test.SetEquation("derivative(sqrt(x + 3),x)");
             test.Compute();
 
-            if (test.Polish.Print() != "0.5 3 x + -0.5 ^ *")
+            if (test.Polish.Print() != "0.5 3 x + sqrt /")
             {
                 Assert.Fail();
             }
@@ -168,7 +168,7 @@ namespace AbMath.Tests
             RPN test = new RPN("derivative( abs(x^2), x)");
             test.Compute();
 
-            if (test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 x 2 ^ * 2 x * * *" && test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 2 ^ x 2 ^ * x * *")
+            if (test.Polish.Print() != "0.5 2 2 ^ x 2 ^ * x * * x 2 ^ abs /")
             {
                 Assert.Fail();
             }
@@ -382,7 +382,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");
             test.Compute();
-            if (test.Polish.Print() != "x x 1 - * -2 -1 * e -1 2 x * / ^ * * 2 x * 2 ^ / e -1 2 x * / ^ x x 1 - + * +")
+            if (test.Polish.Print() != "x x 1 - * 2 e -1 2 x * / ^ * * 2 x * 2 ^ / e -1 2 x * / ^ x x 1 - + * +")
             {
                 Assert.Fail();
             }
