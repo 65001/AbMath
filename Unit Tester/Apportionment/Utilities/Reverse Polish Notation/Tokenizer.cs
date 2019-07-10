@@ -75,7 +75,7 @@ namespace AbMath.Tests
             RPN test = new RPN("2+x");
             test.Compute();
 
-            if ("2 x +" != test.Polish.Print() && "2 1 x 1 ^ * +" != test.Polish.Print())
+            if ("x 2 +" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -133,7 +133,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3");
             test.Compute();
-            if ("3 4 2 * 1 5 - 2 3 ^ ^ / +" != test.Polish.Print())
+            if ("3 4 2 * 1 5 - 2 3 ^ ^ / +" != test.Polish.Print() && "4 2 * 1 5 - 2 3 ^ ^ / 3 +" != test.Polish.Print())
             {
                 Assert.Fail();
             }

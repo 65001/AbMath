@@ -571,6 +571,29 @@ namespace AbMath.Calculator
                     Assign(power.Parent, sqrt);
                     Write("\tf(x)^0.5 -> sqrt( f(x) )");
                 }
+                else if (power.IsNumber() && baseNode.IsMultiplication())
+                {
+                    //TODO: Implement Exponent distribution 
+                    Write("\tTODO: [f(x)g(x)]^c -> f(x)^c * g(x)^c");
+                }
+                else if ( ( power.IsNumber() || power.IsConstant() ) && baseNode.IsExponent() && (baseNode.Children[0].IsNumber() || baseNode.Children[0].IsConstant()) )
+                {
+                    Write("\t(f(x)^c)^a -> f(x)^[c * a]");
+                    RPN.Node multiply;
+
+                    if (power.IsNumber() && baseNode.Children[0].IsNumber())
+                    {
+                        multiply = new RPN.Node(GenerateNextID(), double.Parse( power.Token.Value ) * double.Parse(baseNode.Children[0].Token.Value) );
+                    }
+                    else
+                    {
+                        multiply = new RPN.Node(GenerateNextID(), new[] { Clone(power), Clone(baseNode.Children[0]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    }
+
+                    RPN.Node func = Clone(baseNode.Children[1]);
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { multiply, func }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    Assign(power.Parent, exponent);
+                }
             }
             else if (mode == SimplificationMode.Trig)
             {
@@ -620,16 +643,17 @@ namespace AbMath.Calculator
             {
                 //Two numbers
 
-                //Number and expression
-                if (node.Children[0].IsNumber() && !(node.Children[1].IsNumber() || node.Children[1].IsVariable()))
-                {
-                    Write("\tNode flip possible: Add");
-                }
                 //Number and a variable
-                else if ( node.Children[0].IsNumber() && !node.Children[1].IsNumber())
+                if ( node.Children[1].IsNumber() && !node.Children[0].IsNumber())
                 {
-                    node.Children.Swap(1, 0);
-                    Write("\tNode flip : Add : Number and a variable");
+                    node.Children.Swap(0, 1);
+                    Write("\tNode Swap : Add : Number and a nonnumber");
+                }
+                //Number,variable, or constant and an exponent
+                else if ( node.Children[0].IsExponent() && !(node.Children[1].IsExponent() || node.Children[1].IsAddition()) )
+                {
+                    Write($"\tNode flip addition on {node.ID}");
+                    node.Children.Swap(0, 1);
                 }
             }
             //Multiplication operator
