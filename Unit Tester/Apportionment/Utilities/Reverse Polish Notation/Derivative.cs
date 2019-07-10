@@ -330,6 +330,54 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void ArcCot()
+        {
+            RPN test = new RPN("derivative( arccot(x), x)").Compute();
+            if ("-1 x 2 ^ 1 + /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+
+            test.SetEquation("derivative( arccot(x^2), x)").Compute();
+            if ("-2 x * x 2 ^ 2 ^ 1 + /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void ArcSec()
+        {
+            RPN test = new RPN("derivative( arcsec(x), x)").Compute();
+            if ("1 x x 2 ^ 1 - sqrt * /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+
+            test.SetEquation("derivative( arcsec(x^2), x)").Compute();
+            if ("2 x * x 2 ^ x 2 ^ 2 ^ 1 - sqrt * /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
+        public void ArcCsc()
+        {
+            RPN test = new RPN("derivative( arccsc(x), x)").Compute();
+            if ("-1 x x 2 ^ 1 - sqrt * /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+
+            test.SetEquation("derivative( arccsc(x^2), x)").Compute();
+            if ("-2 x * x 2 ^ x 2 ^ 2 ^ 1 - sqrt * /" != test.Polish.Print())
+            {
+                Assert.Fail();
+            }
+        }
+
+        [Test]
         public void ComplexEquation()
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");

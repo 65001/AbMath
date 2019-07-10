@@ -1159,15 +1159,55 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arccot")
                     {
+                        RPN.Node body = Clone(node.Children[0].Children[0]);
+                        RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
+                        RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                        RPN.Node add = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 1), exponent }, new RPN.Token("+", 2, RPN.Type.Operator));
+                        RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1) , bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(GenerateNextID(), new[] { add, multiplication }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                        node.Replace(node.Children[0], division);
+                        //Delete self from the tree
+                        node.Remove();
+                        //Chain Rule
+                        Derive(bodyDerive, variable);
                     }
                     else if (node.Children[0].Token.Value == "arcsec")
                     {
+                        RPN.Node body = Clone(node.Children[0].Children[0]);
+                        RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
+                        RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                        RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 1), exponent }, new RPN.Token("-", 2, RPN.Type.Operator));
+                        RPN.Node sqrt = new RPN.Node(GenerateNextID(), new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                        RPN.Node denominator = new RPN.Node(GenerateNextID(), new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                        RPN.Node division = new RPN.Node(GenerateNextID(), new[] { denominator, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                        node.Replace(node.Children[0], division);
+                        //Delete self from the tree
+                        node.Remove();
+                        //Chain Rule
+                        Derive(bodyDerive, variable);
                     }
                     else if (node.Children[0].Token.Value == "arccsc")
                     {
+                        RPN.Node body = Clone(node.Children[0].Children[0]);
+                        RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
+                        RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                        RPN.Node subtraction = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 1), exponent }, new RPN.Token("-", 2, RPN.Type.Operator));
+                        RPN.Node sqrt = new RPN.Node(GenerateNextID(), new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                        RPN.Node denominator = new RPN.Node(GenerateNextID(), new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1), bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(GenerateNextID(), new[] { denominator, multiplication }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                        node.Replace(node.Children[0], division);
+                        //Delete self from the tree
+                        node.Remove();
+                        //Chain Rule
+                        Derive(bodyDerive, variable);
                     }
                     #endregion
                     else if (node.Children[0].IsSqrt())
