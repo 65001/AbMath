@@ -77,7 +77,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(sin(x)cos(x),x)");
             test.Compute();
-            if (test.Polish.Print() != "-1 x sin 2 ^ * x cos 2 ^ +")
+            if (test.Polish.Print() != "-1 x sin 2 ^ * x cos 2 ^ +" && test.Polish.Print() != "x cos 2 ^ -1 x sin 2 ^ * +")
             {
                 Assert.Fail();
             }
@@ -88,7 +88,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(sin(x)/x^2,x)");
             test.Compute();
-            if (test.Polish.Print() != "x 2 ^ x cos * x sin 2 x * * - x 2 ^ 2 ^ /")
+            if (test.Polish.Print() != "x 2 ^ x cos * x sin 2 x * * - x 4 ^ /")
             {
                 Assert.Fail();
             }
@@ -148,7 +148,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(sqrt(x),x)");
             test.Compute();
-            if (test.Polish.Print() != "0.5 x -0.5 ^ *")
+            if (test.Polish.Print() != "0.5 x sqrt /")
             {
                 Assert.Fail();
             }
@@ -156,7 +156,7 @@ namespace AbMath.Tests
             test.SetEquation("derivative(sqrt(x + 3),x)");
             test.Compute();
 
-            if (test.Polish.Print() != "0.5 3 x + -0.5 ^ *")
+            if (test.Polish.Print() != "0.5 x 3 + sqrt /")
             {
                 Assert.Fail();
             }
@@ -168,7 +168,7 @@ namespace AbMath.Tests
             RPN test = new RPN("derivative( abs(x^2), x)");
             test.Compute();
 
-            if (test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 x 2 ^ * 2 x * * *" && test.Polish.Print() != "0.5 x 2 ^ 2 ^ -0.5 ^ * 2 2 ^ x 2 ^ * x * *")
+            if (test.Polish.Print() != "0.5 2 2 ^ x 2 ^ * x * * x 4 ^ sqrt /")
             {
                 Assert.Fail();
             }
@@ -301,7 +301,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(arcsin(x^2),x)");
             test.Compute();
-            if ("2 x * 1 x 2 ^ 2 ^ - sqrt /" != test.Polish.Print())
+            if ("2 x * 1 x 4 ^ - sqrt /" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -312,7 +312,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(arccos(x^2),x)");
             test.Compute();
-            if ("-2 x * 1 x 2 ^ 2 ^ - sqrt /" != test.Polish.Print())
+            if ("-2 x * 1 x 4 ^ - sqrt /" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -323,7 +323,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative(arctan(x^2),x)");
             test.Compute();
-            if("2 x * x 2 ^ 2 ^ 1 + /" != test.Polish.Print())
+            if("2 x * x 4 ^ 1 + /" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -339,7 +339,7 @@ namespace AbMath.Tests
             }
 
             test.SetEquation("derivative( arccot(x^2), x)").Compute();
-            if ("-2 x * x 2 ^ 2 ^ 1 + /" != test.Polish.Print())
+            if ("-2 x * x 4 ^ 1 + /" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -355,7 +355,7 @@ namespace AbMath.Tests
             }
 
             test.SetEquation("derivative( arcsec(x^2), x)").Compute();
-            if ("2 x * x 2 ^ x 2 ^ 2 ^ 1 - sqrt * /" != test.Polish.Print())
+            if ("2 x * x 2 ^ x 4 ^ 1 - sqrt * /" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -371,7 +371,7 @@ namespace AbMath.Tests
             }
 
             test.SetEquation("derivative( arccsc(x^2), x)").Compute();
-            if ("-2 x * x 2 ^ x 2 ^ 2 ^ 1 - sqrt * /" != test.Polish.Print())
+            if ("-2 x * x 2 ^ x 4 ^ 1 - sqrt * /" != test.Polish.Print())
             {
                 Assert.Fail();
             }
@@ -382,7 +382,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)");
             test.Compute();
-            if (test.Polish.Print() != "x x 1 - * -2 -1 * e -1 2 x * / ^ * * 2 x * 2 ^ / e -1 2 x * / ^ x x 1 - + * +")
+            if (test.Polish.Print() != "x x 1 - * 2 e -1 2 x * / ^ * * 2 x * 2 ^ / e -1 2 x * / ^ x x 1 - + * +")
             {
                 Assert.Fail();
             }

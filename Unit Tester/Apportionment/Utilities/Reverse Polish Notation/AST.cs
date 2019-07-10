@@ -25,7 +25,7 @@ namespace AbMath.Tests
             RPN rpn = new RPN("(x(x + 1))(x(x + 1))(x(x + 1))");
             rpn.Compute();
             string tokens = rpn.Polish.Print();
-            if ("x 1 x + * 3 ^" != tokens)
+            if ("x x 1 + * 3 ^" != tokens)
             {
                 Assert.Fail();
             }

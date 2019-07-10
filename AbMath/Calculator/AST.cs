@@ -490,6 +490,12 @@ namespace AbMath.Calculator
                     node.Children[0].Remove(division);
                     node.Children[1].Remove(new RPN.Node(GenerateNextID(), 1));
                 }
+                else if (node.Children[0].IsLessThanNumber(0) && node.Children[1].IsLessThanNumber(1))
+                {
+                    Write("\tA negative times a negative is always positive.");
+                    node.Replace(node.Children[0], new RPN.Node(GenerateNextID(), Math.Abs( double.Parse(node.Children[0].Token.Value ))));
+                    node.Replace(node.Children[1], new RPN.Node(GenerateNextID(), Math.Abs( double.Parse(node.Children[1].Token.Value ))));
+                }
             }
             else if (mode == SimplificationMode.Swap)
             {
@@ -551,8 +557,43 @@ namespace AbMath.Calculator
                     power.Delete();
                     node.Delete();
                 }
-                //f(x)^0.5
-                //f(x)^-0.5
+                else if (power.IsLessThanNumber(0))
+                {
+                    RPN.Node powerClone = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), -1), Clone(power) } , new RPN.Token("*", 2, RPN.Type.Operator) );
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { powerClone, Clone(baseNode) }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    RPN.Node division = new RPN.Node(GenerateNextID(), new[] { exponent, new RPN.Node(GenerateNextID(), 1) }, new RPN.Token("/", 2, RPN.Type.Operator) );
+                    Assign(power.Parent, division);
+                    Write($"\tf(x)^-c -> 1/f(x)^c");
+                }
+                else if (power.IsNumber(0.5))
+                {
+                    RPN.Node sqrt = new RPN.Node(GenerateNextID(), new[] { Clone(baseNode) }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    Assign(power.Parent, sqrt);
+                    Write("\tf(x)^0.5 -> sqrt( f(x) )");
+                }
+                else if (power.IsNumber() && baseNode.IsMultiplication())
+                {
+                    //TODO: Implement Exponent distribution 
+                    Write("\tTODO: [f(x)g(x)]^c -> f(x)^c * g(x)^c");
+                }
+                else if ( ( power.IsNumber() || power.IsConstant() ) && baseNode.IsExponent() && (baseNode.Children[0].IsNumber() || baseNode.Children[0].IsConstant()) )
+                {
+                    Write("\t(f(x)^c)^a -> f(x)^[c * a]");
+                    RPN.Node multiply;
+
+                    if (power.IsNumber() && baseNode.Children[0].IsNumber())
+                    {
+                        multiply = new RPN.Node(GenerateNextID(), double.Parse( power.Token.Value ) * double.Parse(baseNode.Children[0].Token.Value) );
+                    }
+                    else
+                    {
+                        multiply = new RPN.Node(GenerateNextID(), new[] { Clone(power), Clone(baseNode.Children[0]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    }
+
+                    RPN.Node func = Clone(baseNode.Children[1]);
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { multiply, func }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    Assign(power.Parent, exponent);
+                }
             }
             else if (mode == SimplificationMode.Trig)
             {
@@ -602,16 +643,17 @@ namespace AbMath.Calculator
             {
                 //Two numbers
 
-                //Number and expression
-                if (node.Children[0].IsNumber() && !(node.Children[1].IsNumber() || node.Children[1].IsVariable()))
-                {
-                    Write("\tNode flip possible: Add");
-                }
                 //Number and a variable
-                else if ( node.Children[0].IsNumber() && !node.Children[1].IsNumber())
+                if ( node.Children[1].IsNumber() && !node.Children[0].IsNumber())
                 {
-                    node.Children.Swap(1, 0);
-                    Write("\tNode flip : Add : Number and a variable");
+                    node.Children.Swap(0, 1);
+                    Write("\tNode Swap : Add : Number and a nonnumber");
+                }
+                //Number,variable, or constant and an exponent
+                else if ( node.Children[0].IsExponent() && !(node.Children[1].IsExponent() || node.Children[1].IsAddition()) )
+                {
+                    Write($"\tNode flip addition on {node.ID}");
+                    node.Children.Swap(0, 1);
                 }
             }
             //Multiplication operator
