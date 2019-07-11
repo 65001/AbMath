@@ -114,9 +114,9 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Exponent);
             Simplify(node, SimplificationMode.Subtraction);
             Simplify(node, SimplificationMode.Addition);
+            Simplify(node, SimplificationMode.Trig);
             Simplify(node, SimplificationMode.Multiplication);
             Simplify(node, SimplificationMode.Swap);
-            Simplify(node, SimplificationMode.Trig);
             Swap(node);
         }
 
@@ -376,6 +376,27 @@ namespace AbMath.Calculator
                 }
 
             }
+            else if (mode == SimplificationMode.Trig)
+            {
+                if (node.IsAddition() &&
+                    node.Children[0].IsExponent() &&
+                    node.Children[1].IsExponent() &&
+                    node.Children[0].Children[0].IsNumber(2) &&
+                    node.Children[1].Children[0].IsNumber(2) &&
+                    node.Children[0].Children[1].IsFunction() &&
+                    node.Children[1].Children[1].IsFunction() &&
+
+                    ((node.Children[0].Children[1].Token.Value == "cos" && node.Children[1].Children[1].Token.Value == "sin") ||
+                     (node.Children[0].Children[1].Token.Value == "sin" && node.Children[1].Children[1].Token.Value == "cos")) &&
+                    node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0])
+                )
+                {
+                    RPN.Node head = new RPN.Node(GenerateNextID(), 1);
+                    Write("\tsin²(x) + cos²(x) -> 1");
+                    Assign(node, head);
+                }
+
+            }
             else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
             {
                 //TODO: If one of the leafs is a division and the other a number or variable
@@ -569,12 +590,6 @@ namespace AbMath.Calculator
                     Assign(power.Parent, sqrt);
                     Write("\tf(x)^0.5 -> sqrt( f(x) )");
                 }
-                else if (power.IsNumber() && baseNode.IsMultiplication())
-                {
-                    //TODO: Implement Exponent distribution 
-                    Write("\tTODO: [f(x)g(x)]^c -> f(x)^c * g(x)^c");
-
-                }
                 else if ( ( power.IsNumber() || power.IsConstant() ) && baseNode.IsExponent() && (baseNode.Children[0].IsNumber() || baseNode.Children[0].IsConstant()) )
                 {
                     Write("\t(f(x)^c)^a -> f(x)^[c * a]");
@@ -593,27 +608,6 @@ namespace AbMath.Calculator
                     RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { multiply, func }, new RPN.Token("^", 2, RPN.Type.Operator));
                     Assign(power.Parent, exponent);
                 }
-            }
-            else if (mode == SimplificationMode.Trig)
-            {
-                if (node.IsAddition() &&
-                    node.Children[0].IsExponent() &&
-                    node.Children[1].IsExponent() &&
-                    node.Children[0].Children[0].IsNumber(2) &&
-                    node.Children[1].Children[0].IsNumber(2) && 
-                    node.Children[0].Children[1].IsFunction() &&
-                    node.Children[1].Children[1].IsFunction() &&
-
-                    ((node.Children[0].Children[1].Token.Value == "cos" && node.Children[1].Children[1].Token.Value == "sin") || 
-                     (node.Children[0].Children[1].Token.Value == "sin" && node.Children[1].Children[1].Token.Value == "cos")) && 
-                    node.Children[0].Children[1].Children[0].Matches( node.Children[1].Children[1].Children[0] )
-                )
-                {
-                    RPN.Node head = new RPN.Node(GenerateNextID(), 1);
-                    Write("\tsin²(x) + cos²(x) -> 1");
-                    Assign(node, head);
-                }
-
             }
 
             //Propagate down the tree IF there is a root 
