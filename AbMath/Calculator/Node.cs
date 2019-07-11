@@ -275,6 +275,11 @@ namespace AbMath.Calculator
                 return Token.IsFunction();
             }
 
+            public bool IsFunction(string function)
+            {
+                return Token.IsFunction() && Token.Value == function;
+            }
+
             public bool IsConstant()
             {
                 return Token.IsConstant();

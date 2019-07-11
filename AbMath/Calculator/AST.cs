@@ -383,11 +383,9 @@ namespace AbMath.Calculator
                     node.Children[1].IsExponent() &&
                     node.Children[0].Children[0].IsNumber(2) &&
                     node.Children[1].Children[0].IsNumber(2) &&
-                    node.Children[0].Children[1].IsFunction() &&
-                    node.Children[1].Children[1].IsFunction() &&
-
-                    ((node.Children[0].Children[1].Token.Value == "cos" && node.Children[1].Children[1].Token.Value == "sin") ||
-                     (node.Children[0].Children[1].Token.Value == "sin" && node.Children[1].Children[1].Token.Value == "cos")) &&
+                    (node.Children[0].Children[1].IsFunction("cos") || node.Children[0].Children[1].IsFunction("sin")) &&
+                    (node.Children[1].Children[1].IsFunction("sin") || node.Children[1].Children[1].IsFunction("cos")) &&
+                    !node.ChildrenAreIdentical() &&
                     node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0])
                 )
                 {
@@ -395,7 +393,26 @@ namespace AbMath.Calculator
                     Write("\tsin²(x) + cos²(x) -> 1");
                     Assign(node, head);
                 }
-
+                else if ( node.IsDivision() && node.Children[0].IsFunction("sin") && node.Children[1].IsFunction("cos") && node.Children[0].Children[0].Matches( node.Children[1].Children[0] ) )
+                {
+                    Write("\tcos(x)/sin(x) -> cot(x)");
+                    RPN.Node cot = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("cot", 1, RPN.Type.Function));
+                    Assign(node, cot);
+                }
+                else if (node.IsDivision() && node.Children[0].IsFunction("cos") && node.Children[1].IsFunction("sin") && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
+                {
+                    Write("\tsin(x)/cos(x) -> tan(x)");
+                    RPN.Node tan = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("tan", 1, RPN.Type.Function));
+                    Assign(node, tan);
+                }
+                //TODO:
+                //[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)
+                //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
+                //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
+                //TODO
+                //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
+                //sin(x)/[f(x) * cos(x)] -> tan(x)/f(x)
+                //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x)  
             }
             else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
             {

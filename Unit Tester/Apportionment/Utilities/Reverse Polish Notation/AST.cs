@@ -137,5 +137,19 @@ namespace AbMath.Tests
                 Assert.Fail();
             }
         }
+
+        [Test]
+        public void Cot()
+        {
+            RPN rpn = new RPN("cos(x^2)/sin(x^2)").Compute();
+            Assert.AreEqual("x 2 ^ cot", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void Tan()
+        {
+            RPN rpn = new RPN("sin(x^2)/cos(x^2)").Compute();
+            Assert.AreEqual("x 2 ^ tan", rpn.Polish.Print());
+        }
     }
 }
