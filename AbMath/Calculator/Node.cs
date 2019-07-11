@@ -245,6 +245,11 @@ namespace AbMath.Calculator
                 return true;
             }
 
+            public double GetNumber()
+            {
+                return double.Parse(Token.Value);
+            }
+
             public bool IsNumber()
             {
                 return Token.IsNumber();

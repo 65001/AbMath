@@ -251,8 +251,8 @@ namespace AbMath.Calculator
                 //we don't have to worry about if the node is the root or not
                 else if (node.Children[0].IsNumber() && node.Children[1].IsNumber())
                 {
-                    double num1 = double.Parse(node.Children[0].Token.Value);
-                    double num2 = double.Parse(node.Children[1].Token.Value);
+                    double num1 = node.Children[0].GetNumber();
+                    double num2 = node.Children[1].GetNumber();
                     double gcd = RPN.DoFunctions.Gcd(new double[] { num1, num2 });
 
                     node.Replace(node.Children[0], new RPN.Node(GenerateNextID(), (num1 / gcd)));
@@ -287,9 +287,7 @@ namespace AbMath.Calculator
                     if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
                     {
                         Write("\tSimplification: Subtraction Dual Node");
-                        double coefficient = double.Parse(node.Children[1].Children[1].Token.Value) -
-                                             double.Parse(node.Children[0].Children[1].Token.Value);
-
+                        double coefficient = node.Children[1].Children[1].GetNumber() - node.Children[0].Children[1].GetNumber();
                         node.Children[0].Children[1].Token.Value = "0";
                         node.Children[1].Children[1].Token.Value = coefficient.ToString();
                     }
@@ -575,6 +573,7 @@ namespace AbMath.Calculator
                 {
                     //TODO: Implement Exponent distribution 
                     Write("\tTODO: [f(x)g(x)]^c -> f(x)^c * g(x)^c");
+
                 }
                 else if ( ( power.IsNumber() || power.IsConstant() ) && baseNode.IsExponent() && (baseNode.Children[0].IsNumber() || baseNode.Children[0].IsConstant()) )
                 {
