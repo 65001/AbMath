@@ -37,34 +37,29 @@ namespace AbMath.Calculator
 
             Stack<RPN.Node> stack = new Stack<RPN.Node>(5);
 
-            //Convert all the PostFix information to Nodes[]
-            RPN.Node[] nodes = new RPN.Node[input.Length];
+            RPN.Node node;
             for (int i = 0; i < input.Length; i++)
             {
-                nodes[i] = new RPN.Node(GenerateNextID(), input[i]);
-            }
-
-            for (int i = 0; i < nodes.Length; i++)
-            {
-                switch (nodes[i].Token.Type)
+                node = new RPN.Node(GenerateNextID(), input[i]);
+                if (node.IsOperator() || node.IsFunction())
                 {
-                    //When an operator or function is encountered 
-                    case RPN.Type.Function:
-                    case RPN.Type.Operator:
-                        nodes[i].Children = new RPN.Node[nodes[i].Token.Arguments];
-                        for (int j = 0; j < nodes[i].Token.Arguments; j++)
-                        {
-                            RPN.Node temp = stack.Pop();
-                            temp.Parent = nodes[i];
-                            nodes[i].Children[j] = temp;
-                        }
+                    //Due to the nature of PostFix we know that all children
+                    //of a function or operator have already been processed before this point
+                    //this ensures we do not have any overflows or exceptions.
+                    node.Children = new RPN.Node[node.Token.Arguments];
 
-                        stack.Push(nodes[i]); //Push new tree into the stack 
-                        break;
+                    for (int j = 0; j < node.Token.Arguments; j++)
+                    {
+                        RPN.Node temp = stack.Pop();
+                        temp.Parent = node;
+                        node.Children[j] = temp;
+                    }
+                    stack.Push(node); //Push new tree into the stack 
+                }
+                else
+                {
                     //When an operand is encountered push into stack
-                    default:
-                        stack.Push(nodes[i]);
-                        break;
+                    stack.Push(node);
                 }
             }
 
@@ -261,7 +256,6 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
                 {
-                    //TODO:
                     Write("\tDivison Flip");
                     RPN.Node[] numerator = { Clone(node.Children[0].Children[1]), Clone(node.Children[1].Children[1]) };
                     RPN.Node[] denominator = { Clone(node.Children[0].Children[0]), Clone(node.Children[1].Children[0]) };
@@ -780,7 +774,6 @@ namespace AbMath.Calculator
                     //Power Chain Rule
                     //Sec
                     //Sqrt
-
                 }
             }
         }
@@ -1328,8 +1321,6 @@ namespace AbMath.Calculator
                     {
                         throw new NotImplementedException($"Derivative of {node.Children[0].ToInfix()} not known at this time.");
                     }
-                    //TODO:
-                    //All of this stuff requires chain rule! 
                 }
             }
             catch(IndexOutOfRangeException ex)
@@ -1379,8 +1370,7 @@ namespace AbMath.Calculator
                     results.AddRange(node.Children[i].ToPostFix());
                     results.Add(add);
                 }
-                RPN.Node temp = Generate(results.ToArray());
-                Assign(node, temp );
+                Assign(node, Generate(results.ToArray()) );
             }
             //convert an avg to a series of additions and a division
             else if (node.Token.Value == "avg")
