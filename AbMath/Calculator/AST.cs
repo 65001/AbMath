@@ -54,13 +54,8 @@ namespace AbMath.Calculator
                         temp.Parent = node;
                         node.Children[j] = temp;
                     }
-                    stack.Push(node); //Push new tree into the stack 
                 }
-                else
-                {
-                    //When an operand is encountered push into stack
-                    stack.Push(node);
-                }
+                stack.Push(node); //Push new tree into the stack 
             }
 
             //This prevents the reassignment of the root node
@@ -399,8 +394,14 @@ namespace AbMath.Calculator
                     RPN.Node tan = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("tan", 1, RPN.Type.Function));
                     Assign(node, tan);
                 }
+                else if (node.IsDivision() && node.Children[1].IsMultiplication() && node.Children[0].IsFunction("sin") && node.Children[1].Children[0].IsFunction("cos") && node.Children[0].Children[0].Matches( node.Children[1].Children[0].Children[0] ) )
+                {
+                    Write("\t[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
+                    RPN.Node cot = new RPN.Node(GenerateNextID(), new[] { Clone( node.Children[0].Children[0] ) }, new RPN.Token("cot", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { cot, Clone(node.Children[1].Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
                 //TODO:
-                //[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)
                 //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
                 //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
                 //TODO
