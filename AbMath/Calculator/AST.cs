@@ -829,13 +829,16 @@ namespace AbMath.Calculator
             {
                 if (node.Token.Value == "derive")
                 {
+
+                    string v = variable.ToInfix();
+
                     if (node.Children[0].IsAddition() || node.Children[0].IsSubtraction())
                     {
                         if (debug)
                         {
                             string f_x = node.Children[0].Children[0].ToInfix();
                             string g_x = node.Children[0].Children[1].ToInfix();
-                            Write($"\td/dx[ {f_x} ± {g_x} ] -> d/dx( {f_x} ) ± d/dx( {g_x} )");
+                            Write($"\td/d{v}[ {f_x} ± {g_x} ] -> d/d{v}( {f_x} ) ± d/d{v}( {g_x} )");
                         }
                         else
                         {
@@ -854,7 +857,7 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            Write($"\td/dx[ {node.Children[0].ToInfix()} ] -> 0");
+                            Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 0");
                         }
                         else
                         {
@@ -869,7 +872,7 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            Write($"\td/dx[ {node.Children[0].ToInfix()} ] -> 1");
+                            Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 1");
                         }
                         else
                         {
@@ -887,7 +890,7 @@ namespace AbMath.Calculator
                         {
                             if (debug)
                             {
-                                Write($"\td/dx[ {node.Children[0].Children[0].ToInfix()} * {node.Children[0].Children[1].ToInfix()} ] -> 0");
+                                Write($"\td/d{v}[ {node.Children[0].Children[0].ToInfix()} * {node.Children[0].Children[1].ToInfix()} ] -> 0");
                             }
                             else
                             {
@@ -902,7 +905,7 @@ namespace AbMath.Calculator
                         {
                             if (debug)
                             {
-                                Write($"\td/dx[ {node.Children[0].Children[1].ToInfix()} * {node.Children[0].Children[0].ToInfix()}] -> d/dx[ {node.Children[0].Children[1].ToInfix()} ] * {node.Children[0].Children[0].ToInfix()}");
+                                Write($"\td/d{v}[ {node.Children[0].Children[1].ToInfix()} * {node.Children[0].Children[0].ToInfix()}] -> d/d{v}[ {node.Children[0].Children[1].ToInfix()} ] * {node.Children[0].Children[0].ToInfix()}");
                             }
                             else
                             {
@@ -921,7 +924,7 @@ namespace AbMath.Calculator
                             {
                                 string constant = node.Children[0].Children[1].ToInfix();
                                 string expr = node.Children[0].Children[0].ToInfix();
-                                Write($"\td/dx[ {constant} * {expr}] -> {constant} * d/dx[ {expr} ]");
+                                Write($"\td/d{v}[ {constant} * {expr}] -> {constant} * d/d{v}[ {expr} ]");
                             }
                             else
                             {
@@ -946,7 +949,7 @@ namespace AbMath.Calculator
                             {
                                 string f = fNode.ToInfix();
                                 string g = gNode.ToInfix();
-                                Write($"\td/dx[ {f} * {g} ] -> {f} * d/dx[ {g} ] + d/dx[ {f} ] * {g}");
+                                Write($"\td/d{v}[ {f} * {g} ] -> {f} * d/d{v}[ {g} ] + d/d{v}[ {f} ] * {g}");
                             }
                             else
                             {
@@ -991,7 +994,7 @@ namespace AbMath.Calculator
                         {
                             string n = numerator.ToInfix();
                             string d = denominator.ToInfix();
-                            Write($"\td/dx[ {n} / {d} ] -> [ d/dx( {n} ) * {d} - {d} * d/dx( {n} ) ]/{d}^2");
+                            Write($"\td/d{v}[ {n} / {d} ] -> [ d/d{v}( {n} ) * {d} - {d} * d/d{v}( {n} ) ]/{d}^2");
                         }
                         else
                         {
@@ -1018,7 +1021,7 @@ namespace AbMath.Calculator
                             {
                                 string b = baseNode.ToInfix();
                                 string p = power.ToInfix();
-                                Write($"\td/dx[ {b}^{p} ] -> {p} * {b}^({p} - 1)");
+                                Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1)");
                             }
                             else
                             {
@@ -1059,7 +1062,7 @@ namespace AbMath.Calculator
                             {
                                 string b = baseNode.ToInfix();
                                 string p = power.ToInfix();
-                                Write($"\td/dx[ {b}^{p} ] -> {p} * {b}^({p} - 1) * d/dx[ {b} ]");
+                                Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1) * d/d{v}[ {b} ]");
                             }
                             else
                             {
@@ -1091,7 +1094,7 @@ namespace AbMath.Calculator
                             if (debug)
                             {
                                 string p = power.ToInfix();
-                                Write($"\td/dx[ e^{p} ] -> d/dx[ {p} ] * e^{p}");
+                                Write($"\td/d{v}[ e^{p} ] -> d/d{v}[ {p} ] * e^{p}");
                             }
                             else
                             {
@@ -1112,7 +1115,7 @@ namespace AbMath.Calculator
                             {
                                 string b = baseNode.ToInfix();
                                 string p = power.ToInfix();
-                                Write($"\td/dx[ {b}^{p} ] -> ln({b}) * {b}^{p} * d/dx[ {p} ]");
+                                Write($"\td/d{v}[ {b}^{p} ] -> ln({b}) * {b}^{p} * d/d{v}[ {p} ]");
                             }
                             else
                             {
@@ -1137,7 +1140,7 @@ namespace AbMath.Calculator
                             {
                                 string b = baseNode.ToInfix();
                                 string p = power.ToInfix();
-                                Write($"\td/dx[ {b}^{p} ] -> {b}^{p} * d/dx[ {b} * ln( {p} ) ]");
+                                Write($"\td/d{v}[ {b}^{p} ] -> {b}^{p} * d/d{v}[ {b} * ln( {p} ) ]");
                             }
                             else
                             {
@@ -1162,7 +1165,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ sin({expr}) ] -> cos({expr}) * d/dx[ {expr} ]");
+                            Write($"\td/d{v}[ sin({expr}) ] -> cos({expr}) * d/d{v}[ {expr} ]");
                         }
                         else
                         {
@@ -1187,7 +1190,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ cos({expr}) ] -> -sin({expr}) * d/dx[ {expr} ]");
+                            Write($"\td/d{v}[ cos({expr}) ] -> -sin({expr}) * d/d{v}[ {expr} ]");
                         }
                         else
                         {
@@ -1211,7 +1214,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ tan({expr}) ] -> sec({expr})^2 * d/dx[ {expr} ]");
+                            Write($"\td/d{v}[ tan({expr}) ] -> sec({expr})^2 * d/d{v}[ {expr} ]");
                         }
                         else
                         {
@@ -1235,7 +1238,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ sec({expr}) ] -> tan({expr}) * sec({expr}) * d/dx[ {expr} ]");
+                            Write($"\td/d{v}[ sec({expr}) ] -> tan({expr}) * sec({expr}) * d/d{v}[ {expr} ]");
                         }
                         else
                         {
@@ -1262,7 +1265,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ csc({expr}) ] -> - cot({expr}) * csc({expr}) * d/dx[ {expr} ] ");
+                            Write($"\td/d{v}[ csc({expr}) ] -> - cot({expr}) * csc({expr}) * d/d{v}[ {expr} ] ");
                         }
                         else
                         {
@@ -1289,7 +1292,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ cot({expr}) ] -> -csc({expr})^2 * d/dx[ {expr} ]");
+                            Write($"\td/d{v}[ cot({expr}) ] -> -csc({expr})^2 * d/d{v}[ {expr} ]");
                         }
                         else
                         {
@@ -1314,7 +1317,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ arcsin({expr}) ] -> d/dx[ {expr} ]/sqrt(1 - {expr}^2)");
+                            Write($"\td/d{v}[ arcsin({expr}) ] -> d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
                         }
                         else
                         {
@@ -1339,7 +1342,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ arccos({expr}) ] -> -1 * d/dx[ {expr} ]/sqrt(1 - {expr}^2)");
+                            Write($"\td/d{v}[ arccos({expr}) ] -> -1 * d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
                         }
                         else
                         {
@@ -1366,7 +1369,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ arctan({expr}) ] -> d/dx[ {expr} ]/(1 + {expr}^2)");
+                            Write($"\td/d{v}[ arctan({expr}) ] -> d/d{v}[ {expr} ]/(1 + {expr}^2)");
                         }
                         else
                         {
@@ -1390,7 +1393,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ arccot({expr}) ] -> -1 * d/dx[ {expr} ]/(1 + {expr}^2)");
+                            Write($"\td/d{v}[ arccot({expr}) ] -> -1 * d/d{v}[ {expr} ]/(1 + {expr}^2)");
                         }
                         else
                         {
@@ -1415,7 +1418,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ arcsec({expr}) ] -> d/dx[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
+                            Write($"\td/d{v}[ arcsec({expr}) ] -> d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
                         }
                         else
                         {
@@ -1442,7 +1445,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ arccsc({expr}) ] -> -1 * d/dx[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
+                            Write($"\td/d{v}[ arccsc({expr}) ] -> -1 * d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
                         }
                         else
                         {
@@ -1486,7 +1489,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/dx[ ln({expr}) ] -> d/dx[ {expr} ]/{expr}");
+                            Write($"\td/d{v}[ ln({expr}) ] -> d/d{v}[ {expr} ]/{expr}");
                         }
                         else
                         {
@@ -1513,7 +1516,7 @@ namespace AbMath.Calculator
                         {
                             string b = body.ToInfix();
                             string p = power.ToInfix();
-                            Write($"\td/dx[ log({b},{p}) ] -> d/dx[ {p} ]/({p} * ln({b}))");
+                            Write($"\td/d{v}[ log({b},{p}) ] -> d/d{v}[ {p} ]/({p} * ln({b}))");
                         }
                         else
                         {
