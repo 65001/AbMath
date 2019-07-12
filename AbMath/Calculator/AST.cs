@@ -18,6 +18,8 @@ namespace AbMath.Calculator
         private RPN.DataStore _data;
         private int count = -1;
 
+        private bool debug => _rpn.Data.DebugMode;
+
         private readonly RPN.Token _derive = new RPN.Token("derive", 1, RPN.Type.Function);
 
         public event EventHandler<string> Logger;
@@ -829,7 +831,17 @@ namespace AbMath.Calculator
                 {
                     if (node.Children[0].IsAddition() || node.Children[0].IsSubtraction())
                     {
-                        Write("\td/dx[ f(x) ± g(x) ] -> d/dx( f(x) ) ± d/dx( g(x) )");
+                        if (debug)
+                        {
+                            string f_x = node.Children[0].Children[0].ToInfix();
+                            string g_x = node.Children[0].Children[1].ToInfix();
+                            Write($"\td/dx[ {f_x} ± {g_x} ] -> d/dx( {f_x} ) ± d/dx( {g_x} )");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ f(x) ± g(x) ] -> d/dx( f(x) ) ± d/dx( g(x) )");
+                        }
+
                         GenerateDerivativeAndReplace(node.Children[0].Children[0]);
                         GenerateDerivativeAndReplace(node.Children[0].Children[1]);
                         //Recurse explicitly down these branches
@@ -840,7 +852,14 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].IsNumber() || node.Children[0].IsConstant() || (node.Children[0].IsVariable() && node.Children[0].Token.Value != variable.Token.Value) || node.IsSolveable())
                     {
-                        Write("\td/dx[ c ] -> 0");
+                        if (debug)
+                        {
+                            Write($"\td/dx[ {node.Children[0].ToInfix()} ] -> 0");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ c ] -> 0");
+                        }
                         node.Children[0].Parent = null;
                         RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                         //Remove myself from the tree
@@ -848,7 +867,14 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].IsVariable() && node.Children[0].Token.Value == variable.Token.Value)
                     {
-                        Write("\td/dx[ x ] -> 1");
+                        if (debug)
+                        {
+                            Write($"\td/dx[ {node.Children[0].ToInfix()} ] -> 1");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ x ] -> 1");
+                        }
                         node.Children[0].Parent = null;
                         RPN.Node temp = new RPN.Node(GenerateNextID(), 1);
                         //Remove myself from the tree
@@ -859,7 +885,14 @@ namespace AbMath.Calculator
                         //Both numbers
                         if ((node.Children[0].Children[0].IsNumber() || node.Children[0].Children[0].IsConstant()) && (node.Children[0].Children[1].IsNumber() || node.Children[0].Children[1].IsConstant()))
                         {
-                            Write("\td/dx[ c_0 * c_1 ] -> 0");
+                            if (debug)
+                            {
+                                Write($"\td/dx[ {node.Children[0].Children[0].ToInfix()} * {node.Children[0].Children[1].ToInfix()} ] -> 0");
+                            }
+                            else
+                            {
+                                Write("\td/dx[ c_0 * c_1 ] -> 0");
+                            }
                             RPN.Node temp = new RPN.Node(GenerateNextID(), 0);
                             //Remove myself from the tree
                             node.Remove(temp);
@@ -867,7 +900,14 @@ namespace AbMath.Calculator
                         //Constant multiplication - 0
                         else if ((node.Children[0].Children[0].IsNumber() || node.Children[0].Children[0].IsConstant()) && node.Children[0].Children[1].IsExpression())
                         {
-                            Write("\td/dx[ f(x) * c] -> d/dx[ f(x) ] * c");
+                            if (debug)
+                            {
+                                Write($"\td/dx[ {node.Children[0].Children[1].ToInfix()} * {node.Children[0].Children[0].ToInfix()}] -> d/dx[ {node.Children[0].Children[1].ToInfix()} ] * {node.Children[0].Children[0].ToInfix()}");
+                            }
+                            else
+                            {
+                                Write("\td/dx[ f(x) * c] -> d/dx[ f(x) ] * c");
+                            }
                             GenerateDerivativeAndReplace(node.Children[0].Children[1]);
                             //Recurse explicitly down these branches
                             Derive(node.Children[0].Children[1], variable);
@@ -877,7 +917,16 @@ namespace AbMath.Calculator
                         //Constant multiplication - 1
                         else if ((node.Children[0].Children[1].IsNumber() || node.Children[0].Children[1].IsConstant()))
                         {
-                            Write("\td/dx[ c * f(x)] -> c * d/dx[ f(x) ]");
+                            if (debug)
+                            {
+                                string constant = node.Children[0].Children[1].ToInfix();
+                                string expr = node.Children[0].Children[0].ToInfix();
+                                Write($"\td/dx[ {constant} * {expr}] -> {constant} * d/dx[ {expr} ]");
+                            }
+                            else
+                            {
+                                Write("\td/dx[ c * f(x)] -> c * d/dx[ f(x) ]");
+                            }
                             GenerateDerivativeAndReplace(node.Children[0].Children[0]);
                             //Recurse explicitly down these branches
                             Derive(node.Children[0].Children[0], variable);
@@ -888,12 +937,21 @@ namespace AbMath.Calculator
                         //Product Rule [Two expressions] 
                         else
                         {
-                            Write($"\td/dx[ f(x) * g(x) ] -> f(x) * d/dx[ g(x) ] + d/dx[ f(x) ] * g(x)");
-
                             RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
 
                             RPN.Node fNode = node.Children[0].Children[0];
                             RPN.Node gNode = node.Children[0].Children[1];
+
+                            if (debug)
+                            {
+                                string f = fNode.ToInfix();
+                                string g = gNode.ToInfix();
+                                Write($"\td/dx[ {f} * {g} ] -> {f} * d/dx[ {g} ] + d/dx[ {f} ] * {g}");
+                            }
+                            else
+                            {
+                                Write($"\td/dx[ f(x) * g(x) ] -> f(x) * d/dx[ g(x) ] + d/dx[ f(x) ] * g(x)");
+                            }
 
                             RPN.Node fDerivative = new RPN.Node(GenerateNextID(), new[] { Clone(fNode) }, _derive);
                             RPN.Node gDerivative = new RPN.Node(GenerateNextID(), new[] { Clone(gNode) }, _derive);
@@ -929,7 +987,16 @@ namespace AbMath.Calculator
 
                         RPN.Node denominatorSquared = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), Clone(denominator) }, new RPN.Token("^", 2, RPN.Type.Operator));
 
-                        Write($"\td/dx[ f(x) / g(x) ] -> [ d/dx( f(x) ) * g(x) - g(x) * d/dx( f(x) ) ]/g(x)^2");
+                        if (debug)
+                        {
+                            string n = numerator.ToInfix();
+                            string d = denominator.ToInfix();
+                            Write($"\td/dx[ {n} / {d} ] -> [ d/dx( {n} ) * {d} - {d} * d/dx( {n} ) ]/{d}^2");
+                        }
+                        else
+                        {
+                            Write($"\td/dx[ f(x) / g(x) ] -> [ d/dx( f(x) ) * g(x) - g(x) * d/dx( f(x) ) ]/g(x)^2");
+                        }
 
                         //Replace in tree
                         node.Children[0].Replace(numerator, subtraction);
@@ -947,7 +1014,16 @@ namespace AbMath.Calculator
                         RPN.Node power = node.Children[0].Children[0];
                         if ((baseNode.IsVariable() || baseNode.IsFunction() || baseNode.IsExpression()) && (power.IsConstant() || power.IsNumber()) && baseNode.Token.Value == variable.Token.Value)
                         {
-                            Write("\td/dx[ x^n ] -> n * x^(n - 1)");
+                            if (debug)
+                            {
+                                string b = baseNode.ToInfix();
+                                string p = power.ToInfix();
+                                Write($"\td/dx[ {b}^{p} ] -> {p} * {b}^({p} - 1)");
+                            }
+                            else
+                            {
+                                Write("\td/dx[ x^n ] -> n * x^(n - 1)");
+                            }
 
                             RPN.Node powerClone = Clone(power);
                             RPN.Node exponent;
@@ -979,7 +1055,16 @@ namespace AbMath.Calculator
                         }
                         else if ( (baseNode.IsFunction() || baseNode.IsExpression()) && (power.IsConstant() || power.IsNumber()))
                         {
-                            Write("\td/dx[ f(x)^n ] -> n * f(x)^(n - 1) * d/dx[ f(x) ]");
+                            if (debug)
+                            {
+                                string b = baseNode.ToInfix();
+                                string p = power.ToInfix();
+                                Write($"\td/dx[ {b}^{p} ] -> {p} * {b}^({p} - 1) * d/dx[ {b} ]");
+                            }
+                            else
+                            {
+                                Write("\td/dx[ f(x)^n ] -> n * f(x)^(n - 1) * d/dx[ f(x) ]");
+                            }
 
                             RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(baseNode) }, _derive);
 
@@ -1003,7 +1088,15 @@ namespace AbMath.Calculator
                         }
                         else if (baseNode.IsConstant() && baseNode.Token.Value == "e")
                         {
-                            Write("\td/dx[ e^g(x) ] -> d/dx[ g(x) ] * e^g(x)");
+                            if (debug)
+                            {
+                                string p = power.ToInfix();
+                                Write($"\td/dx[ e^{p} ] -> d/dx[ {p} ] * e^{p}");
+                            }
+                            else
+                            {
+                                Write("\td/dx[ e^g(x) ] -> d/dx[ g(x) ] * e^g(x)");
+                            }
                             RPN.Node exponent = baseNode.Parent;
                             RPN.Node powerDerivative = new RPN.Node(GenerateNextID(), new[] { Clone(power) }, _derive);
                             RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { powerDerivative, exponent }, new RPN.Token("*", 2, RPN.Type.Operator));
@@ -1015,7 +1108,16 @@ namespace AbMath.Calculator
                         }
                         else if ((baseNode.IsConstant() || baseNode.IsNumber()) && (power.IsExpression() || power.IsVariable()))
                         {
-                            Write($"\td/dx[ b^g(x) ] -> ln(b) * b^g(x) * d/dx[ g(x) ]");
+                            if (debug)
+                            {
+                                string b = baseNode.ToInfix();
+                                string p = power.ToInfix();
+                                Write($"\td/dx[ {b}^{p} ] -> ln({b}) * {b}^{p} * d/dx[ {p} ]");
+                            }
+                            else
+                            {
+                                Write($"\td/dx[ b^g(x) ] -> ln(b) * b^g(x) * d/dx[ g(x) ]");
+                            }
 
                             RPN.Node exponent = baseNode.Parent;
                             RPN.Node ln = new RPN.Node(GenerateNextID(), new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
@@ -1031,7 +1133,16 @@ namespace AbMath.Calculator
                         }
                         else
                         {
-                            Write("\td/dx[ f(x)^g(x) ] -> f(x)^g(x) * d/dx[ g(x) * ln( f(x) ) ]");
+                            if (debug)
+                            {
+                                string b = baseNode.ToInfix();
+                                string p = power.ToInfix();
+                                Write($"\td/dx[ {b}^{p} ] -> {b}^{p} * d/dx[ {b} * ln( {p} ) ]");
+                            }
+                            else
+                            {
+                                Write("\td/dx[ f(x)^g(x) ] -> f(x)^g(x) * d/dx[ g(x) * ln( f(x) ) ]");
+                            }
                             RPN.Node exponent = Clone(baseNode.Parent);
                             RPN.Node ln = new RPN.Node(GenerateNextID(), new[] { Clone( baseNode ) }, new RPN.Token("ln", 1, RPN.Type.Function));
                             RPN.Node temp = new RPN.Node(GenerateNextID(), new[] { Clone(power), ln }, new RPN.Token("*", 2, RPN.Type.Operator));
@@ -1048,7 +1159,15 @@ namespace AbMath.Calculator
                     #region Trig
                     else if (node.Children[0].Token.Value == "sin")
                     {
-                        Write("\td/dx[ sin(g(x)) ] -> cos(g(x)) * d/dx[ g(x) ]");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ sin({expr}) ] -> cos({expr}) * d/dx[ {expr} ]");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ sin(g(x)) ] -> cos(g(x)) * d/dx[ g(x) ]");
+                        }
                         RPN.Node body = node.Children[0].Children[0];
 
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
@@ -1065,7 +1184,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "cos")
                     {
-                        Write("\td/dx[ cos(g(x)) ] -> -sin(g(x)) * d/dx[ g(x) ]");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ cos({expr}) ] -> -sin({expr}) * d/dx[ {expr} ]");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ cos(g(x)) ] -> -sin(g(x)) * d/dx[ g(x) ]");
+                        }
                         RPN.Node body = node.Children[0].Children[0];
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1081,7 +1208,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "tan")
                     {
-                        Write("\td/dx[ tan(g(x)) ] -> sec(g(x))^2 * d/dx[ g(x) ]");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ tan({expr}) ] -> sec({expr})^2 * d/dx[ {expr} ]");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ tan(g(x)) ] -> sec(g(x))^2 * d/dx[ g(x) ]");
+                        }
                         RPN.Node body = node.Children[0].Children[0];
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1097,7 +1232,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "sec")
                     {
-                        Write("\td/dx[ sec(g(x)) ] -> tan(g(x)) * sec(g(x)) * d/dx[ g(x) ]");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ sec({expr}) ] -> tan({expr}) * sec({expr}) * d/dx[ {expr} ]");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ sec(g(x)) ] -> tan(g(x)) * sec(g(x)) * d/dx[ g(x) ]");
+                        }
                         RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
 
                         RPN.Node body = node.Children[0].Children[0];
@@ -1116,7 +1259,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "csc")
                     {
-                        Write("\td/dx[ csc(g(x)) ] -> - cot(g(x)) * csc(g(x)) * d/dx[ g(x) ] ");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ csc({expr}) ] -> - cot({expr}) * csc({expr}) * d/dx[ {expr} ] ");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ csc(g(x)) ] -> - cot(g(x)) * csc(g(x)) * d/dx[ g(x) ] ");
+                        }
                         RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
 
                         RPN.Node body = node.Children[0].Children[0];
@@ -1135,7 +1286,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "cot")
                     {
-                        Write("\td/dx[ cot(g(x)) ] -> -csc(g(x))^2 * d/dx[ g(x) ]");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ cot({expr}) ] -> -csc({expr})^2 * d/dx[ {expr} ]");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ cot(g(x)) ] -> -csc(g(x))^2 * d/dx[ g(x) ]");
+                        }
 
                         RPN.Node body = node.Children[0].Children[0];
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
@@ -1152,7 +1311,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arcsin")
                     {
-                        Write("d/dx[ arcsin(g(x)) ] -> d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ arcsin({expr}) ] -> d/dx[ {expr} ]/sqrt(1 - {expr}^2)");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ arcsin(g(x)) ] -> d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
+                        }
                         RPN.Node body = Clone(node.Children[0].Children[0]);
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1169,7 +1336,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arccos")
                     {
-                        Write("d/dx[ arccos(g(x)) ] -> -1 * d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ arccos({expr}) ] -> -1 * d/dx[ {expr} ]/sqrt(1 - {expr}^2)");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ arccos(g(x)) ] -> -1 * d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
+                        }
                         RPN.Node body = Clone(node.Children[0].Children[0]);
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1188,7 +1363,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arctan")
                     {
-                        Write("d/dx[ arctan(g(x)) ] -> d/dx[ g(x) ]/(1 + g(x)^2)");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ arctan({expr}) ] -> d/dx[ {expr} ]/(1 + {expr}^2)");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ arctan(g(x)) ] -> d/dx[ g(x) ]/(1 + g(x)^2)");
+                        }
                         RPN.Node body = Clone(node.Children[0].Children[0]);
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1204,7 +1387,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arccot")
                     {
-                        Write("d/dx[ arccot(g(x)) ] -> -1 * d/dx[ g(x) ]/(1 + g(x)^2)");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ arccot({expr}) ] -> -1 * d/dx[ {expr} ]/(1 + {expr}^2)");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ arccot(g(x)) ] -> -1 * d/dx[ g(x) ]/(1 + g(x)^2)");
+                        }
                         RPN.Node body = Clone(node.Children[0].Children[0]);
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1221,7 +1412,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arcsec")
                     {
-                        Write("d/dx[ arcsec(g(x)) ] -> d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ arcsec({expr}) ] -> d/dx[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ arcsec(g(x)) ] -> d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
+                        }
                         RPN.Node body = Clone(node.Children[0].Children[0]);
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1240,7 +1439,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].Token.Value == "arccsc")
                     {
-                        Write("d/dx[ arccsc(g(x)) ] -> -1 * d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ arccsc({expr}) ] -> -1 * d/dx[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ arccsc(g(x)) ] -> -1 * d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
+                        }
                         RPN.Node body = Clone(node.Children[0].Children[0]);
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
 
@@ -1260,7 +1467,15 @@ namespace AbMath.Calculator
                     #endregion
                     else if (node.Children[0].IsSqrt())
                     {
-                        Write("\tsqrt(g(x)) -> g(x)^0.5");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\tsqrt({expr}) -> {expr}^0.5");
+                        }
+                        else
+                        {
+                            Write("\tsqrt(g(x)) -> g(x)^0.5");
+                        }
                         RPN.Node body = node.Children[0].Children[0];
                         RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), .5), body }, new RPN.Token("^", 2, RPN.Type.Operator));
                         node.Replace(node.Children[0], exponent);
@@ -1268,7 +1483,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].IsLn())
                     {
-                        Write("\td/dx[ ln(g(x)) ] -> d/dx[ g(x) ]/g(x)");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\td/dx[ ln({expr}) ] -> d/dx[ {expr} ]/{expr}");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ ln(g(x)) ] -> d/dx[ g(x) ]/g(x)");
+                        }
                         RPN.Node body = node.Children[0].Children[0];
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
                         RPN.Node division = new RPN.Node(GenerateNextID(), new[] { body, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
@@ -1281,11 +1504,21 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].IsLog())
                     {
-                        Write("\td/dx[ log(b,g(x)) ] -> d/dx[ g(x) ]/(g(x) * ln(b))");
                         RPN.Token ln = new RPN.Token("ln", 1, RPN.Type.Function);
 
                         RPN.Node power = node.Children[0].Children[1];
                         RPN.Node body = node.Children[0].Children[0];
+
+                        if (debug)
+                        {
+                            string b = body.ToInfix();
+                            string p = power.ToInfix();
+                            Write($"\td/dx[ log({b},{p}) ] -> d/dx[ {p} ]/({p} * ln({b}))");
+                        }
+                        else
+                        {
+                            Write("\td/dx[ log(b,g(x)) ] -> d/dx[ g(x) ]/(g(x) * ln(b))");
+                        }
 
                         RPN.Node bodyDerive = new RPN.Node(GenerateNextID(), new[] { Clone(body) }, _derive);
                         RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { body, new RPN.Node(GenerateNextID(), new[] { power }, ln) }, new RPN.Token("*", 2, RPN.Type.Operator));
@@ -1299,7 +1532,15 @@ namespace AbMath.Calculator
                     }
                     else if (node.Children[0].IsAbs())
                     {
-                        Write("\tabs(g(x)) -> ( g(x)^2 )");
+                        if (debug)
+                        {
+                            string expr = node.Children[0].Children[0].ToInfix();
+                            Write($"\tabs({expr}) -> sqrt( {expr}^2 )");
+                        }
+                        else
+                        {
+                            Write("\tabs(g(x)) -> sqrt( g(x)^2 )");
+                        }
 
                         RPN.Node body = node.Children[0].Children[0];
                         RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
