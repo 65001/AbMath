@@ -380,9 +380,7 @@ namespace AbMath.Calculator
             /// <returns></returns>
             public List<RPN.Token> ToPostFix(RPN.Node node)
             {
-                List<RPN.Token> tokens = new List<RPN.Token>();
-                PostFix(node, tokens);
-                return tokens;
+                return PostFix(node);
             }
 
             public string ToInfix()
@@ -402,48 +400,45 @@ namespace AbMath.Calculator
                 return GetAllDescendants();
             }
 
-            private void PostFix(RPN.Node node, List<RPN.Token> polish)
+            /// <summary>
+            /// PostOrder traversal algorithim implementation
+            /// </summary>
+            /// <param name="node"></param>
+            /// <returns></returns>
+            private List<RPN.Token> PostFix(RPN.Node node)
             {
-                if (node is null)
-                {
-                    return;
-                }
+                //https://www.geeksforgeeks.org/iterative-postorder-traversal/
+                Stack<RPN.Node> first = new Stack<Node>();
+                Stack<Token> second = new Stack<Token>();
+                first.Push(node);
 
-                //Operators with left and right
-                if (node.Children.Length == 2 && node.Token.IsOperator())
+                while (first.Count > 0)
                 {
-                    PostFix(node.Children[1], polish);
-                    PostFix(node.Children[0], polish);
-                    polish.Add(node.Token);
-                    return;
-                }
+                    RPN.Node temp = first.Pop();
+                    second.Push(temp.Token);
 
-                //Operators that only have one child
-                if (node.Children.Length == 1 && node.Token.IsOperator())
-                {
-                    PostFix(node.Children[0], polish);
-                    polish.Add(node.Token);
-                    return;
-                }
-
-                //Functions
-                if (node.Children.Length > 0 && node.Token.IsFunction())
-                {
-                    for (int i = (node.Children.Length - 1); i >= 0; i--)
+                    for (int i = (temp.Children.Length - 1); i >= 0 ; i--)
                     {
-                        PostFix(node.Children[i], polish);
+                        first.Push(temp.Children[i]);
                     }
-
-                    polish.Add(node.Token);
-                    return;
                 }
 
-                //Number, Variable, or constant function
-                polish.Add(node.Token);
+                List<RPN.Token> tokens = new List<Token>();
+                while (second.Count > 0)
+                {
+                    tokens.Add(second.Pop());
+                }
+                return tokens;
             }
 
+            /// <summary>
+            /// Inorder traversal algorithim
+            /// </summary>
+            /// <param name="node"></param>
+            /// <param name="infix"></param>
             private void Infix(RPN.Node node, StringBuilder infix)
             {
+                //TODO: Implement nonrecursive algorithim!
                 if (node is null)
                 {
                     return;
