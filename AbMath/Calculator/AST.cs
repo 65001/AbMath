@@ -262,6 +262,8 @@ namespace AbMath.Calculator
                     RPN.Node division = new RPN.Node(GenerateNextID(), new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
                     Assign(node, division);
                 }
+                //TODO:
+                // [f(x)/g(x)]/h(x) - > f(x)/[g(x) * h(x)]
             }
             //Subtraction
             else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
@@ -403,13 +405,58 @@ namespace AbMath.Calculator
                     RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { cot, Clone(node.Children[1].Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
                     Assign(node, multiplication);
                 }
+                else if (node.IsDivision() && node.Children[0].IsFunction("sec"))
+                {
+                    Write("\tf(x)/sec(g(x)) -> f(x)cos(g(x))");
+                    RPN.Node cos = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("cos", 1, RPN.Type.Function) );
+                    RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { cos, Clone(node.Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsDivision() && node.Children[0].IsFunction("csc"))
+                {
+                    Write("\tf(x)/csc(g(x)) -> f(x)sin(g(x))");
+                    RPN.Node sin = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("sin", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { sin, Clone(node.Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsDivision() && node.Children[0].IsFunction("cot"))
+                {
+                    Write("\tf(x)/cot(g(x)) -> f(x)tan(g(x))");
+                    RPN.Node tan = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("tan", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { tan, Clone(node.Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsDivision() && node.Children[0].IsFunction("cos"))
+                {
+                    Write("\tf(x)/cos(g(x)) -> f(x)sec(g(x))");
+                    RPN.Node sec = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("sec", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { sec, Clone(node.Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsDivision() && node.Children[0].IsFunction("sin"))
+                {
+                    Write("\tf(x)/sin(g(x)) -> f(x)csc(g(x))");
+                    RPN.Node csc = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("csc", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { csc, Clone(node.Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsDivision() && node.Children[0].IsFunction("tan"))
+                {
+                    Write("\tf(x)/tan(g(x)) -> f(x)cot(g(x))");
+                    RPN.Node cot = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("cot", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { cot, Clone(node.Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
                 //TODO:
                 //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
                 //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
-                //TODO
+
                 //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
                 //sin(x)/[f(x) * cos(x)] -> tan(x)/f(x)
-                //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x)  
+                //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x) 
+
+                //[1 + tan(f(x))^2] -> sec(f(x))^2
+                //[cot(f(x))^2 + 1] -> csc(f(x))^2
             }
             else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
             {
@@ -817,19 +864,28 @@ namespace AbMath.Calculator
                 throw new ArgumentException("The variable of deriviation is not a variable!", nameof(variable));
             }
 
+            Stopwatch SW = new Stopwatch();
+            SW.Start();
+
             Write($"Starting to derive ROOT: {Root.ToInfix()}");
             Derive(Root, variable);
             Write("");
+            SW.Stop();
+            _data.AddTimeRecord("AST.Derive", SW);
             return this;
         }
 
         private void Derive(RPN.Node node, RPN.Node variable)
         {
+            //TODO: Move away from recursion to an itterative approach
+            //We do not know in advance the depth of a tree 
+            //and given a big enough expression the current recursion 
+            //is more likley to fail compared to an itterative approach.
+
             try
             {
                 if (node.Token.Value == "derive")
                 {
-
                     string v = variable.ToInfix();
 
                     if (node.Children[0].IsAddition() || node.Children[0].IsSubtraction())

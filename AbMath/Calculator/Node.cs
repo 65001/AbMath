@@ -424,10 +424,12 @@ namespace AbMath.Calculator
                 }
 
                 List<RPN.Token> tokens = new List<Token>();
+
                 while (second.Count > 0)
                 {
                     tokens.Add(second.Pop());
                 }
+
                 return tokens;
             }
 
