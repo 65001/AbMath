@@ -731,6 +731,20 @@ namespace AbMath.Calculator
                     node.Children.Swap(1, 0);
                 }
             }
+            else if (node.IsFunction("sum"))
+            {
+
+            }
+            else if (node.IsFunction("product"))
+            {
+
+            }
+            //Sum swapping
+                //1) A constant or number should always be swapped with any other expression if it comes before another expression if 
+                //that expression is not a constant or number. 
+
+                //2)
+            //Product Swapping
 
             //Propagate down the tree
             for (int i = (node.Children.Length - 1); i >= 0; i--)
@@ -747,7 +761,22 @@ namespace AbMath.Calculator
         {
             Stopwatch SW = new Stopwatch();
             SW.Start();
+
+            //This makes derive an internal only function
+            //when called from the outside of this function
+            //it will not appear to be a function
+            if (!_rpn.Data.Functions.ContainsKey("derive"))
+            {
+                _rpn.Data.AddFunction("derive", new RPN.Function { Arguments = 1, MaxArguments = 1, MinArguments = 1 });
+            }
+
             MetaFunctions(Root);
+
+            if (_rpn.Data.Functions.ContainsKey("derive"))
+            {
+                _rpn.Data.RemoveFunction("derive");
+            }
+
             SW.Stop();
 
             _data.AddTimeRecord("AST MetaFunctions", SW);
@@ -1704,6 +1733,43 @@ namespace AbMath.Calculator
                 explode(temp.Children[1]);
                 Assign(node, temp);
             }
+        }
+
+        /// <summary>
+        /// Converts a series of multiplications, additions, or subtractions 
+        /// into a new node to see if there are additional simplifications that can be made
+        /// </summary>
+        /// <param name="node"></param>
+        private void expand(RPN.Node node)
+        {
+            //TODO:
+            //Use internal functions only
+            //Convert - to an addition with a multiplication by negative one
+            //Make a series of additions into +++ or simplify_add(...) or sum()
+            //Make a series of multiplications into ** or product(...) 
+
+            //After expanding we can reorder the additions as follows :
+
+            //After expanding we can reorder the multiplications as follows: 
+            //numbers and constants ought to go out in front
+
+            //We can merge the additions as follows:
+
+            //We can merge the multiplications as follows:
+        }
+
+        /// <summary>
+        /// Converts a series of vardiact multiplications, additions, or subtractions 
+        /// back into a regular AST.
+        /// </summary>
+        /// <param name="node"></param>
+        private void compress(RPN.Node node)
+        {
+            //Convert ++ or simplify_add(...) or sum() to a series of additions 
+
+            //Convert product(...) or ** into a series of multiplications
+
+            //Convert an addition with a multiplication by negative one to a subtraction
         }
 
         private int GenerateNextID()

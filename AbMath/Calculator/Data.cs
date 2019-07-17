@@ -269,6 +269,11 @@ namespace AbMath.Calculator
                 _functions.Add(key, func);
             }
 
+            public void RemoveFunction(string function)
+            {
+                _functions.Remove(function);
+            }
+
             public void AddOperator(string key, Operator ops)
             {
                 _operators.Add(key, ops);
@@ -790,16 +795,7 @@ namespace AbMath.Calculator
                     MinArguments = 2,
                     MaxArguments = 2,
                 });
-
-                //
-                AddFunction("derive", new Function
-                {
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
                 
-
                 AddFunction("integrate", new Function()
                 {
                     Arguments = 4,
