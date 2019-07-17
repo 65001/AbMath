@@ -10,169 +10,84 @@ namespace AbMath.Tests
         [Test]
         public void VariableSimplification()
         {
-            RPN rpn = new RPN("x - x + 2 - 2");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("0 + 2 - 2" != tokens && "0" != tokens)
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("x - x + 2 - 2").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
         }
 
         [Test]
         public void VariableSubtraction()
         {
-            RPN rpn = new RPN("2x - 3x");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
+            RPN rpn = new RPN("2x - 3x").Compute();
+            Assert.AreEqual("-1 x *", rpn.Polish.Print());
 
-            if ("-1 x *" != tokens)
-            {
-                Assert.Fail();
-            }
-        }
-
-        [Test]
-        public void VariableSubtraction2()
-        {
-            RPN rpn = new RPN("2x - x");
-            rpn.Compute();
-
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("x" != tokens)
-            {
-                Assert.Fail();
-            }
+            rpn.SetEquation("2x - x").Compute();
+            Assert.AreEqual("x", rpn.Polish.Print());
         }
 
         [Test]
         public void VariableAddition()
         {
-            RPN rpn = new RPN("2x + 3x");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("5 x *" != tokens)
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("2x + 3x").Compute();
+            Assert.AreEqual("5 x *", rpn.Polish.Print());
         }
 
         [Test]
         public void VariableAdditionExponent()
         {
-            RPN rpn = new RPN("x - x^2");
-            rpn.Compute();
-
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("-1 x 2 ^ * x +" != tokens && "x 2 ^ -1 * x +" != tokens && "x x 2 ^ -" != tokens)
-            {
-                Assert.Fail();
-            }
+            //TODO: Normalize
+            RPN rpn = new RPN("x - x^2").Compute();
+            Assert.AreEqual("x x 2 ^ -", rpn.Polish.Print());
         }
 
         [Test]
         public void VariableAdditionComplexExponent()
         {
-            RPN rpn = new RPN("2x + 3x^2");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("3 x 2 ^ * 2 x * +" != tokens && "2 x * 3 x 2 ^ * +" != tokens)
-            {
-                Assert.Fail();
-            }
+            //TODO: Normalize
+            RPN rpn = new RPN("2x + 3x^2").Compute();
+            Assert.AreEqual("2 x * 3 x 2 ^ * +", rpn.Polish.Print());
         }
 
         [Test]
         public void VariableParanthesisReduction()
         {
-            RPN rpn = new RPN("3(x^2 - x^2)");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("3 ( 0 )" != tokens && "0" != tokens)
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("3(x^2 - x^2)").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
         }
 
         [Test]
         public void VariableExponentVariable()
         {
-            RPN rpn = new RPN("x^@ - x^@");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("0" != tokens)
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("x^@ - x^@").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
         }
 
         [Test]
         public void VariableRaisedToZero()
         {
-            RPN rpn = new RPN("x^0");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("1" != tokens)
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("x^0").Compute();
+            Assert.AreEqual("1", rpn.Polish.Print());
         }
 
         [Test]
         public void Swap()
         {
-            RPN rpn = new RPN("x^@ + x - x^@ - x");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("0 + 0" != tokens && "0 * 2" != tokens && "0" != tokens && "x @ ^ x + x @ ^ - x -" != tokens)
-            {
-                Assert.Fail();
-            }
+            //TODO: Normalize
+            RPN rpn = new RPN("x^@ + x - x^@ - x").Compute();
+            Assert.AreEqual("x @ ^ x + x @ ^ - x -", rpn.Polish.Print());
         }
 
         [Test]
         public void IllegalSwap()
         {
-            RPN rpn = new RPN("x^2 + x^3/x");
-            rpn.Compute();
-            string tokens = rpn.Polish.Print();
-            Console.WriteLine(tokens);
-
-            if ("x 2 ^ x 3 ^ x / +" != tokens)
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("x^2 + x^3/x").Compute();
+            Assert.AreEqual("x 2 ^ x 3 ^ x / +", rpn.Polish.Print());
         }
 
         [Test]
         public void Power()
         {
-            RPN rpn = new RPN("2x(3x^2)");
-            rpn.Compute();
-
-            if ("6 x 3 ^ *" != rpn.Polish.Print() && "x 3 ^ 6 *" != rpn.Polish.Print() && "2 3 * x 3 ^ *" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("2x(3x^2)").Compute();
+            Assert.AreEqual("2 3 * x 3 ^ *", rpn.Polish.Print());
         }
     }
 
@@ -182,75 +97,43 @@ namespace AbMath.Tests
         [Test]
         public void Log_Base_Power()
         {
-            RPN rpn = new RPN("log(b,b)");
-            rpn.Compute();
-
-            if ("1" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("log(b,b)").Compute();
+            Assert.AreEqual("1", rpn.Polish.Print());
         }
 
 
         [Test]
         public void Log_Power()
         {
-            RPN rpn = new RPN("log(b,1)");
-            rpn.Compute();
+            RPN rpn = new RPN("log(b,1)").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
 
-            if ("0" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
-
-            rpn.SetEquation("log(x^2,1)");
-            rpn.Compute();
-
-            if ("0" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
+            rpn.SetEquation("log(x^2,1)").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
         }
 
         [Test]
         public void Exponent_Log_Power()
         {
-            RPN rpn = new RPN("b^log(b,x)");
-            rpn.Compute();
-            if ("x" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("b^log(b,x)").Compute();
+            Assert.AreEqual("x", rpn.Polish.Print());
 
-            rpn.SetEquation("(2x)^log(2x,2)");
-            rpn.Compute();
-            if ("2" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
+            rpn.SetEquation("(2x)^log(2x,2)").Compute();
+            Assert.AreEqual("2", rpn.Polish.Print());
         }
 
         [Test]
         public void ZeroSimplification()
         {
-            RPN rpn = new RPN("0(x)");
-            rpn.Compute();
-            if ("0" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("0(x)").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
         }
 
         [Test]
         public void Sqrt_to_abs()
         {
-            RPN rpn = new RPN("sqrt(x^2)");
-            rpn.Compute();
-            if ("x abs" != rpn.Polish.Print())
-            {
-                Assert.Fail();
-            }
+            RPN rpn = new RPN("sqrt(x^2)").Compute();
+            Assert.AreEqual("x abs", rpn.Polish.Print());
         }
-
     }
 }

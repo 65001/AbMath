@@ -133,6 +133,12 @@ namespace AbMath.Calculator
                     RPN.Node abs = new RPN.Node(GenerateNextID(), new[] { node.Children[0].Children[1] }, new RPN.Token("abs", 1, RPN.Type.Function));
                     Assign(node, abs);
                 }
+                else if (node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber() && node.Children[0].Children[0].GetNumber() % 4 == 0)
+                {
+                    Write("\tsqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
+                    RPN.Node exponent = new RPN.Node(GenerateNextID(), new[] { new RPN.Node(GenerateNextID(), node.Children[0].Children[0].GetNumber() / 2), Clone(node.Children[0].Children[1]) }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    Assign(node, exponent);
+                }
             }
             else if (mode == SimplificationMode.Log)
             {
