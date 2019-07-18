@@ -25,11 +25,11 @@ namespace AbMath.Calculator
         public event EventHandler<string> Logger;
         public event EventHandler<string> Output;
 
+
         public AST(RPN rpn)
         {
             _rpn = rpn;
             _data = rpn.Data;
-            
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -48,14 +48,12 @@ namespace AbMath.Calculator
                     //Due to the nature of PostFix we know that all children
                     //of a function or operator have already been processed before this point
                     //this ensures we do not have any overflows or exceptions.
-                    node.Children = new RPN.Node[node.Token.Arguments];
-
+                    RPN.Node[] range = new RPN.Node[node.Token.Arguments];
                     for (int j = 0; j < node.Token.Arguments; j++)
                     {
-                        RPN.Node temp = stack.Pop();
-                        temp.Parent = node;
-                        node.Children[j] = temp;
+                        range[j] = stack.Pop();
                     }
+                    node.AddChild(range);
                 }
                 stack.Push(node); //Push new tree into the stack 
             }
@@ -86,11 +84,15 @@ namespace AbMath.Calculator
 
             //This should in theory normalize the tree
             //so that exponents etc come first etc
-            _rpn.Data.AddFunction("product", new RPN.Function());
+            _rpn.Data.AddFunction("internal_product", new RPN.Function());
+            _rpn.Data.AddFunction("internal_sum", new RPN.Function());
             expand(Root);
             //Swap(Root);
-            explode(Root);
-            _rpn.Data.RemoveFunction("product");
+            compress(Root);
+
+            _rpn.Data.RemoveFunction("internal_product");
+            _rpn.Data.RemoveFunction("internal_sum");
+
 
             while (hash != Root.GetHash())
             {
@@ -372,12 +374,7 @@ namespace AbMath.Calculator
                 else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches( node.Children[0]) )
                 {
                       Write("\tSimplification Addition Dual Node.");
-
-                     //Clears Children
-                      node.Children[0].Children = new RPN.Node[0];
-                     //Changes child node C0 to a zero number
-                      node.Children[0].Token.Value = "0";
-                      node.Children[0].Token.Type = RPN.Type.Number;
+                      node.Children[0].Remove(new RPN.Node(GenerateNextID(), 0));
 
                       //Changes child node c1:c1 by incrementing it by one.
                       node.Children[1].Children[1].Token.Value = (double.Parse(node.Children[1].Children[1].Token.Value) + 1).ToString();
@@ -485,13 +482,8 @@ namespace AbMath.Calculator
                         Parent = node,
                     };
 
-                    RPN.Node head = new RPN.Node()
-                    {
-                        Children = new RPN.Node[] {two, temp},
-                        ID = GenerateNextID(),
-                        Parent = node.Parent,
-                        Token = new RPN.Token("^",2,RPN.Type.Operator)
-                    };
+                    RPN.Node head = new RPN.Node(GenerateNextID(), new[] { two, temp }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    head.Parent = node.Parent;
 
                     Assign(node, head);
                     Write("\tSimplification: Multiplication -> Exponent");
@@ -600,6 +592,7 @@ namespace AbMath.Calculator
                     Write($"\tComplex Swap: Dual Node Multiplication Swap");
                     RPN.Node temp = node.Children[0].Children[1];
 
+
                     node.Children[0].Children[1] = node.Children[1];
                     node.Children[1] = temp;
                 }
@@ -694,7 +687,7 @@ namespace AbMath.Calculator
             }
 
             //Propagate down the tree
-            for (int i = (node.Children.Length - 1); i >= 0; i--)
+            for (int i = (node.Children.Count - 1); i >= 0; i--)
             {
                 Simplify(node.Children[i], mode);
             }
@@ -756,7 +749,7 @@ namespace AbMath.Calculator
             //Product Swapping
 
             //Propagate down the tree
-            for (int i = (node.Children.Length - 1); i >= 0; i--)
+            for (int i = (node.Children.Count - 1); i >= 0; i--)
             {
                 Swap(node.Children[i]);
             }
@@ -798,7 +791,7 @@ namespace AbMath.Calculator
         private void MetaFunctions(RPN.Node node)
         {
             //Propagate down the tree
-            for (int i = 0; i < node.Children.Length; i++)
+            for (int i = 0; i < node.Children.Count; i++)
             {
                 MetaFunctions(node.Children[i]);
             }
@@ -808,7 +801,7 @@ namespace AbMath.Calculator
                 if (node.Token.Value == "integrate")
                 {
                     double answer = double.NaN;
-                    if (node.Children.Length == 5)
+                    if (node.Children.Count == 5)
                     {
                         answer = MetaCommands.Integrate(_rpn,
                             node.Children[4],
@@ -817,7 +810,7 @@ namespace AbMath.Calculator
                             node.Children[1],
                             node.Children[0]);
                     }
-                    else if (node.Children.Length == 4)
+                    else if (node.Children.Count == 4)
                     {
                         answer = MetaCommands.Integrate(_rpn,
                             node.Children[3],
@@ -833,7 +826,7 @@ namespace AbMath.Calculator
                 else if (node.Token.Value == "table")
                 {
                     string table;
-                    if (node.Children.Length == 5)
+                    if (node.Children.Count == 5)
                     {
                         table = MetaCommands.Table(_rpn,
                             node.Children[4],
@@ -894,7 +887,7 @@ namespace AbMath.Calculator
             }
 
             //Propagate down the tree
-            for (int i = 0; i < node.Children.Length; i++)
+            for (int i = 0; i < node.Children.Count; i++)
             {
                 Solve(node.Children[i]);
             }
@@ -1678,7 +1671,7 @@ namespace AbMath.Calculator
             try
             {
                 //Propagate down the tree
-                for (int i = (node.Children.Length - 1); i >= 0; i--)
+                for (int i = (node.Children.Count - 1); i >= 0; i--)
                 {
                     Derive(node.Children[i], variable);
                 }
@@ -1700,19 +1693,19 @@ namespace AbMath.Calculator
             RPN.Token division = new RPN.Token("/", 2, RPN.Type.Operator);
 
             //convert a sum to a series of additions
-            if (node.IsFunction("sum"))
+            if (node.IsFunction("internal_sum") || node.IsFunction("sum"))
             {
-                if (node.Children.Length == 1)
+                if (node.Children.Count == 1)
                 {
                     node.Remove();
                     return;
                 }
 
-                List<RPN.Token> results = new List<RPN.Token>(node.Children.Length);
+                List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
                 results.AddRange(node.Children[0].ToPostFix());
                 results.AddRange(node.Children[1].ToPostFix());
                 results.Add(add);
-                for (int i = 2; i < node.Children.Length; i++)
+                for (int i = 2; i < node.Children.Count; i++)
                 {
                     results.AddRange(node.Children[i].ToPostFix());
                     results.Add(add);
@@ -1722,21 +1715,21 @@ namespace AbMath.Calculator
             //convert an avg to a series of additions and a division
             else if (node.IsFunction("avg"))
             {
-                if (node.Children.Length == 1)
+                if (node.Children.Count == 1)
                 {
                     node.Remove();
                     return;
                 }
 
-                List<RPN.Token> results = new List<RPN.Token>(node.Children.Length);
+                List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
 
-                for (int i = 0; i < node.Children.Length; i++)
+                for (int i = 0; i < node.Children.Count; i++)
                 {
                     results.AddRange(node.Children[i].ToPostFix());
                 }
 
-                results.Add(new RPN.Token("sum", node.Children.Length, RPN.Type.Function));
-                results.Add(new RPN.Token(node.Children.Length));
+                results.Add(new RPN.Token("sum", node.Children.Count, RPN.Type.Function));
+                results.Add(new RPN.Token(node.Children.Count));
                 results.Add(division);
                 RPN.Node temp = Generate(results.ToArray());
                 explode(temp.Children[1]);
@@ -1761,13 +1754,18 @@ namespace AbMath.Calculator
             //Make a series of additions into +++ or simplify_add(...) or sum()
             if (node.IsAddition())
             {
-                if ((node.isRoot || !node.Parent.IsFunction("sum")) && node.IsAddition())
+                if (node.isRoot || !node.Parent.IsFunction("internal_sum"))
                 {
-
+                    RPN.Node sum = new RPN.Node(GenerateNextID(), node.Children.ToArray(), new RPN.Token("internal_sum", node.Children.Count, RPN.Type.Function));
+                    Assign(node,  sum);
+                    Write($"\tTagging {sum.ID} as compressable. {sum.ToInfix()}");
                 }
-                else if (node.Parent.IsFunction("sum"))
+                else if (node.Parent.IsFunction("internal_sum"))
                 {
-
+                    node.Parent.RemoveChild(node);
+                    node.Parent.AddChild(node.Children[0]);
+                    node.Parent.AddChild(node.Children[1]);
+                    Write($"\tParent node {node.Parent.ID}");
                 }
             }
             else if (node.IsMultiplication())
@@ -1781,7 +1779,10 @@ namespace AbMath.Calculator
             }
 
             //Propogate
-            
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                expand(node.Children[i]);
+            }
             //After expanding we can reorder the additions as follows :
 
             //After expanding we can reorder the multiplications as follows: 
@@ -1792,6 +1793,19 @@ namespace AbMath.Calculator
             //We can merge the multiplications as follows:
         }
 
+        private void compress(RPN.Node node)
+        {
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                compress(node.Children[i]);
+            }
+
+            if (node.IsFunction("internal_sum") || node.IsFunction("internal_product") )
+            {
+                explode(node);
+            }
+        }
+
         private int GenerateNextID()
         {
             count++;
@@ -1800,13 +1814,8 @@ namespace AbMath.Calculator
 
         private void GenerateDerivativeAndReplace(RPN.Node child)
         {
-            RPN.Node temp = new RPN.Node()
-            {
-                Children = new RPN.Node[] {child},
-                ID = GenerateNextID(),
-                Parent = child.Parent,
-                Token = new RPN.Token("derive",1,RPN.Type.Function)
-            };
+            RPN.Node temp = new RPN.Node(GenerateNextID(), new[] { Clone( child ) }, _derive);
+            temp.Parent = child.Parent;
 
             child.Parent?.Replace(child, temp);
 

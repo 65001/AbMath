@@ -76,10 +76,10 @@ namespace AbMath.Tests
         public void GeneralPowerRule()
         {
             RPN test = new RPN("derivative(x^(2x),x)").Compute();
-            Assert.AreEqual("2 x ln * 2 x * x / + x 2 x * ^ *", test.Polish.Print());
+            Assert.AreEqual("2 x * x / 2 x ln * + x 2 x * ^ *", test.Polish.Print());
 
             test.SetEquation("derivative(x^x,x)").Compute();
-            Assert.AreEqual("x ln x x / + x x ^ *", test.Polish.Print());
+            Assert.AreEqual("x x / x ln + x x ^ *", test.Polish.Print());
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace AbMath.Tests
         public void ComplexEquation()
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)").Compute();
-            Assert.AreEqual("x x 1 - * 2 e -1 2 x * / ^ * * 2 x * 2 ^ / e -1 2 x * / ^ x x 1 - + * +", test.Polish.Print());
+            Assert.AreEqual("e -1 2 x * / ^ x 1 - x + * x x 1 - * 2 e -1 2 x * / ^ * * 2 x * 2 ^ / +", test.Polish.Print());
         }
     }
 }

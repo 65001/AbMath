@@ -13,16 +13,20 @@ namespace AbMath.Calculator
             public int ID;
             public Token Token;
             public Node Parent;
-            public Node[] Children;
+
+            public List<Node> Children => children;
+            private List<Node> children;
 
             private MD5 _md5;
 
             public Node()
             {
+                children = new List<Node>();
             }
 
             public Node(int ID, Node[] children, Token token)
             {
+                this.children = new List<Node>();
                 AssignChildren(children);
                 this.ID = ID;
                 Parent = null;
@@ -31,7 +35,7 @@ namespace AbMath.Calculator
 
             public Node(int ID, double number)
             {
-                Children = new RPN.Node[0];
+                children = new List<Node>(0);
                 this.ID = ID;
                 Parent = null;
                 Token = new RPN.Token(number);
@@ -39,7 +43,7 @@ namespace AbMath.Calculator
 
             public Node(int ID, Token token)
             {
-                Children = new RPN.Node[0];
+                children = new List<Node>(0);
                 this.ID = ID;
                 Parent = null;
                 Token = token;
@@ -64,18 +68,19 @@ namespace AbMath.Calculator
             /// <param name="node">The replacement</param>
             public void Replace(int identification, Node node)
             {
-                for (int i = 0; i < Children.Length; i++)
+                for (int i = 0; i < Children.Count; i++)
                 {
                     if (Children[i].ID == identification)
                     {
                         node.Parent = this;
-                        Children[i] = node;
+                        children[i] = node;
                         return;
                     }
                 }
 
+
                 //Propagate down the tree
-                for (int i = 0; i < Children.Length; i++)
+                for (int i = 0; i < Children.Count; i++)
                 {
                     Children[i].Replace(identification, node);
                 }
@@ -88,9 +93,9 @@ namespace AbMath.Calculator
             /// </summary>
             public void Remove()
             {
-                if (Children.Length > 1)
+                if (Children.Count > 1)
                 {
-                    throw new InvalidOperationException($"This node has {Children.Length} children.");
+                    throw new InvalidOperationException($"This node has {Children.Count} children.");
                 }
                 Remove(Children[0]);
             }
@@ -108,7 +113,7 @@ namespace AbMath.Calculator
             public void Delete()
             {
                 Parent = null;
-                Children = new RPN.Node[0];
+                children.Clear();
             }
 
             public override string ToString()
@@ -121,24 +126,47 @@ namespace AbMath.Calculator
                 return MD5(this.ToPostFix().Print());
             }
 
-            public bool isLeaf => Children.Length == 0;
+            public bool isLeaf => Children.Count == 0;
             public bool isRoot => Parent is null;
 
 
             public void AddChild(RPN.Node node)
             {
-                throw new NotImplementedException();
+                Spawn();
+                children.Add(node);
+                node.Parent = this;
+
+                if (Token.Arguments < children.Count)
+                {
+                    Token.Arguments++;
+                }
             }
 
+            public void AddChild(RPN.Node[] nodes)
+            {
+                Spawn();
+                children.AddRange(nodes);
+                validateChildren();
+
+                if (Token?.Arguments < children.Count)
+                {
+                    Token.Arguments = children.Count;
+                }
+            }
+
+            public void RemoveChild(RPN.Node node)
+            {
+                children.Remove(node);
+            }
 
             public bool ChildrenAreIdentical()
             {
-                if (Children.Length <= 1)
+                if (Children.Count <= 1)
                 {
                     return true;
                 }
 
-                for (int i = 0; i < (Children.Length - 1); i++)
+                for (int i = 0; i < (Children.Count - 1); i++)
                 {
                     if(!Children[i].Matches(Children[i + 1]))
                     {
@@ -172,17 +200,24 @@ namespace AbMath.Calculator
 
             private void AssignChildren(Node[] child)
             {
-                if (Children == null || Children.Length < child.Length)
+                Spawn();
+                AddChild(child);
+            }
+
+            private void Spawn()
+            {
+                if (children == null || children.Count == 0)
                 {
-                    Children = new Node[child.Length];
+                    children = new List<Node>();
                 }
+            }
 
-                Children = child;
-
+            private void validateChildren()
+            {
                 //Ensures that all children understand that the current node is their parent
-                for (int i = (child.Length - 1); i >= 0; i--)
+                for (int i = (children.Count - 1); i >= 0; i--)
                 {
-                    Children[i].Parent = this;
+                    children[i].Parent = this;
                 }
             }
 
@@ -204,7 +239,7 @@ namespace AbMath.Calculator
                     Node temp = unvisited.Dequeue();
                     results.Add(temp);
 
-                    for (int i = (temp.Children.Length - 1); i >= 0; i--)
+                    for (int i = (temp.Children.Count - 1); i >= 0; i--)
                     {
                         unvisited.Enqueue(temp.Children[i]);
                     }
@@ -232,17 +267,17 @@ namespace AbMath.Calculator
 
                     //if the contents of the token 
                     //or the number of children this branch has do not match by definition they cannot be the same
-                    if (peter.Token.Value != pan.Token.Value || peter.Children.Length != pan.Children.Length)
+                    if (peter.Token.Value != pan.Token.Value || peter.Children.Count != pan.Children.Count)
                     {
                         return false;
                     }
 
-                    for (int i = (peter.Children.Length - 1); i >= 0; i--)
+                    for (int i = (peter.Children.Count - 1); i >= 0; i--)
                     {
                         home.Enqueue(peter.Children[i]);
                     }
 
-                    for (int i = (pan.Children.Length - 1); i >= 0; i--)
+                    for (int i = (pan.Children.Count - 1); i >= 0; i--)
                     {
                         foreign.Enqueue(pan.Children[i]);
                     }
@@ -424,7 +459,7 @@ namespace AbMath.Calculator
                     RPN.Node temp = first.Pop();
                     second.Push(temp.Token);
 
-                    for (int i = (temp.Children.Length - 1); i >= 0 ; i--)
+                    for (int i = (temp.Children.Count - 1); i >= 0 ; i--)
                     {
                         first.Push(temp.Children[i]);
                     }
@@ -454,7 +489,7 @@ namespace AbMath.Calculator
                 }
 
                 //Operators with left and right
-                if (node.Children.Length == 2 && node.Token.IsOperator())
+                if (node.Children.Count == 2 && node.Token.IsOperator())
                 {
                     infix.Append("(");
                     Infix(node.Children[1], infix);
@@ -465,7 +500,7 @@ namespace AbMath.Calculator
                 }
 
                 //Operators that only have one child
-                if (node.Children.Length == 1 && node.Token.IsOperator())
+                if (node.Children.Count == 1 && node.Token.IsOperator())
                 {
                     infix.Append(node.Token.Value);
                     Infix(node.Children[0], infix);
@@ -474,11 +509,11 @@ namespace AbMath.Calculator
 
                 //Functions
                 //Functions
-                if (node.Children.Length > 0 && node.Token.IsFunction())
+                if (node.Children.Count > 0 && node.Token.IsFunction())
                 {
                     infix.Append(node.Token.Value);
                     infix.Append("(");
-                    for (int i = (node.Children.Length - 1); i >= 0; i--)
+                    for (int i = (node.Children.Count - 1); i >= 0; i--)
                     {
                         Infix(node.Children[i], infix);
                         if (i > 0)

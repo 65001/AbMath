@@ -53,7 +53,7 @@ namespace AbMath.Tests
         public void LogAddOrSub()
         {
             RPN rpn = new RPN("log(b,R) + log(b,S)").Compute();
-            Assert.AreEqual("b R S * log", rpn.Polish.Print());
+            Assert.AreEqual("b S R * log", rpn.Polish.Print());
 
             rpn.SetEquation("log(b,R) - log(b,S)").Compute();
             Assert.AreEqual("b R S / log", rpn.Polish.Print());
