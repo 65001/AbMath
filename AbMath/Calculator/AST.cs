@@ -83,6 +83,15 @@ namespace AbMath.Calculator
             int pass = 0;
             string hash = string.Empty;
 
+
+            //This should in theory normalize the tree
+            //so that exponents etc come first etc
+            _rpn.Data.AddFunction("product", new RPN.Function());
+            expand(Root);
+            //Swap(Root);
+            explode(Root);
+            _rpn.Data.RemoveFunction("product");
+
             while (hash != Root.GetHash())
             {
                 hash = Root.GetHash();
@@ -1682,7 +1691,7 @@ namespace AbMath.Calculator
 
 
         /// <summary>
-        /// converts a vardiac function into a simpler form
+        /// converts a vardiac function into a simpler AST
         /// </summary>
         /// <param name="node"></param>
         private void explode(RPN.Node node)
@@ -1691,7 +1700,7 @@ namespace AbMath.Calculator
             RPN.Token division = new RPN.Token("/", 2, RPN.Type.Operator);
 
             //convert a sum to a series of additions
-            if (node.Token.Value == "sum")
+            if (node.IsFunction("sum"))
             {
                 if (node.Children.Length == 1)
                 {
@@ -1711,7 +1720,7 @@ namespace AbMath.Calculator
                 Assign(node, Generate(results.ToArray()) );
             }
             //convert an avg to a series of additions and a division
-            else if (node.Token.Value == "avg")
+            else if (node.IsFunction("avg"))
             {
                 if (node.Children.Length == 1)
                 {
@@ -1733,6 +1742,10 @@ namespace AbMath.Calculator
                 explode(temp.Children[1]);
                 Assign(node, temp);
             }
+            else if (node.IsFunction("product"))
+            {
+
+            }
         }
 
         /// <summary>
@@ -1743,11 +1756,32 @@ namespace AbMath.Calculator
         private void expand(RPN.Node node)
         {
             //TODO:
-            //Use internal functions only
-            //Convert - to an addition with a multiplication by negative one
+            //Use internal functions only??
+            //Convert - to an addition with a multiplication by negative one?
             //Make a series of additions into +++ or simplify_add(...) or sum()
-            //Make a series of multiplications into ** or product(...) 
+            if (node.IsAddition())
+            {
+                if ((node.isRoot || !node.Parent.IsFunction("sum")) && node.IsAddition())
+                {
 
+                }
+                else if (node.Parent.IsFunction("sum"))
+                {
+
+                }
+            }
+            else if (node.IsMultiplication())
+            {
+                //Make a series of multiplications into ** or product(...) 
+            }
+            else if (node.IsSubtraction())
+            {
+                //Convert a subtraction into an addition with multiplication by negative one ????
+                //We would also need to add a corelating thing in the simplify method
+            }
+
+            //Propogate
+            
             //After expanding we can reorder the additions as follows :
 
             //After expanding we can reorder the multiplications as follows: 
@@ -1756,20 +1790,6 @@ namespace AbMath.Calculator
             //We can merge the additions as follows:
 
             //We can merge the multiplications as follows:
-        }
-
-        /// <summary>
-        /// Converts a series of vardiact multiplications, additions, or subtractions 
-        /// back into a regular AST.
-        /// </summary>
-        /// <param name="node"></param>
-        private void compress(RPN.Node node)
-        {
-            //Convert ++ or simplify_add(...) or sum() to a series of additions 
-
-            //Convert product(...) or ** into a series of multiplications
-
-            //Convert an addition with a multiplication by negative one to a subtraction
         }
 
         private int GenerateNextID()

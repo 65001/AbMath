@@ -124,6 +124,13 @@ namespace AbMath.Calculator
             public bool isLeaf => Children.Length == 0;
             public bool isRoot => Parent is null;
 
+
+            public void AddChild(RPN.Node node)
+            {
+                throw new NotImplementedException();
+            }
+
+
             public bool ChildrenAreIdentical()
             {
                 if (Children.Length <= 1)
