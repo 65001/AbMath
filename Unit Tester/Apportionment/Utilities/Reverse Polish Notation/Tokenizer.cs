@@ -177,7 +177,7 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("v + a * t");
             test.Compute();
-            if ("v a t * +" != test.Polish.Print())
+            if ("a t * v +" != test.Polish.Print())
             {
                 Assert.Fail();
             }

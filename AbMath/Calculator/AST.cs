@@ -78,21 +78,10 @@ namespace AbMath.Calculator
             Stopwatch SW = new Stopwatch();
             SW.Start();
 
+            Normalize();
+
             int pass = 0;
             string hash = string.Empty;
-
-
-            //This should in theory normalize the tree
-            //so that exponents etc come first etc
-            _rpn.Data.AddFunction("internal_product", new RPN.Function());
-            _rpn.Data.AddFunction("internal_sum", new RPN.Function());
-            expand(Root);
-            //Swap(Root);
-            compress(Root);
-
-            _rpn.Data.RemoveFunction("internal_product");
-            _rpn.Data.RemoveFunction("internal_sum");
-
 
             while (hash != Root.GetHash())
             {
@@ -105,6 +94,21 @@ namespace AbMath.Calculator
             SW.Stop();
             _data.AddTimeRecord("AST Simplify", SW);
             return this;
+        }
+
+        private void Normalize()
+        {
+            //This should in theory normalize the tree
+            //so that exponents etc come first etc
+            _rpn.Data.AddFunction("internal_product", new RPN.Function());
+            _rpn.Data.AddFunction("internal_sum", new RPN.Function());
+
+            expand(Root);
+            InternalSwap(Root);
+            compress(Root);
+
+            _rpn.Data.RemoveFunction("internal_product");
+            _rpn.Data.RemoveFunction("internal_sum");
         }
 
         private void Simplify(RPN.Node node)
@@ -733,25 +737,98 @@ namespace AbMath.Calculator
                     node.Children.Swap(1, 0);
                 }
             }
-            else if (node.IsFunction("sum"))
-            {
 
-            }
-            else if (node.IsFunction("product"))
-            {
-
-            }
-            //Sum swapping
-                //1) A constant or number should always be swapped with any other expression if it comes before another expression if 
-                //that expression is not a constant or number. 
-
-                //2)
             //Product Swapping
 
             //Propagate down the tree
             for (int i = (node.Children.Count - 1); i >= 0; i--)
             {
                 Swap(node.Children[i]);
+            }
+        }
+
+        private void InternalSwap(RPN.Node node)
+        {
+            if (node.IsFunction("internal_sum") || node.IsFunction("sum"))
+            {
+                /*
+                1) A constant or number should always be swapped with any other expression if it comes before another expression if 
+                that expression is not a constant or number. 
+                2) An expression that has a multiplication or exponent can only be swapped if it has a higher exponent or coefficient
+
+                Swapping should be done til there are no more changes on the tree.
+                */
+                //x + 2 + 2x -> 2x + x + 2
+                //x + 2 + x^2 -> x^2 + x + 2
+                //5 + x^3 + x + x^2 + 2x + 3x^2
+                node.Children.Reverse();
+                string hash = string.Empty;
+                while (node.GetHash() != hash)
+                {
+                    hash = node.GetHash();
+                    //Swapping code here
+                    for (int i = 0; i < node.Children.Count; i++)
+                    {
+                        if (i - 1 < 0)
+                        {
+                            continue;
+                        }
+
+                        //Constants and numbers should give way.
+                        if ( (node.Children[i - 1].IsNumber() || node.Children[i - 1].IsConstant()) && !(node.Children[i].IsNumber() || node.Children[i].IsConstant())) {
+                            node.Children.Swap(i - 1, i);
+                            Write($"\tConstants and numbers always yield: Swap {i - 1} and {i}. {node.ToInfix()}");
+                        }
+                        //Single variables give way to other expressions that are not constants and numbers 
+                        else if (node.Children[i - 1].IsVariable() && node.Children[i].IsMultiplication() && !node.Children[i].IsSolveable())
+                        {
+                            node.Children.Swap(i - 1, i);
+                            Write($"\tSingle variables yields to generic expression: Swap {i - 1} and {i}. {node.ToInfix()}");
+                        }
+                        //Single variable gives way to exponent 
+                        else if (node.Children[i - 1].IsVariable() && node.Children[i].IsExponent())
+                        {
+                            node.Children.Swap(i - 1, i);
+                            Write($"\tSingle variables yields to exponent: Swap {i - 1} and {i}. {node.ToInfix()}");
+                        }
+                        //Straight multiplication gives way to multiplication with an exponent
+                        else if (node.Children[i - 1].IsMultiplication() && !node.Children[i - 1].Children.Any(n => n.IsExponent()) && node.Children[i].IsMultiplication() && node.Children[i].Children.Any(n => n.IsExponent()))
+                        {
+                            node.Children.Swap(i - 1, i);
+                            Write($"\tStraight multiplication gives way to multiplication with an exponent: Swap {i - 1} and {i}. {node.ToInfix()}");
+                        }
+                        //A straight exponent should give way to a multiplication with an exponent if...
+                        else if (node.Children[i - 1].IsExponent() && node.Children[i].IsMultiplication() && node.Children[i].Children[0].IsExponent())
+                        {
+                            //its degree is higher or equal
+                            if (node.Children[i - 1].Children[0].IsNumberOrConstant() && node.Children[i].Children[0].Children[0].IsNumberOrConstant() )
+                            {
+                                if (node.Children[i].Children[0].Children[0].IsGreaterThanOrEqualToNumber(node.Children[i - 1].Children[0].GetNumber()) )
+                                {
+                                    node.Children.Swap(i - 1, i);
+                                    Write($"\tA straight exponent should give way to a multiplication with an exponent if its degree is higher or equal : Swap {i - 1} and {i}. {node.ToInfix()}");
+                                }
+                            }
+                            //TODO: its degree is an expression and the straight exponent's is not an expression 
+                        }
+                        else if (node.Children[i].IsMultiplication() && node.Children[i].Children[1].IsExponent() && !node.Children[i].Children[0].IsExponent())
+                        {
+                            node.Children[i].Children.Swap(0, 1);
+                            Write("\tSwapping exponent with nonexponent");
+                        }
+                    }
+                }
+                Write(node.Print());
+            }
+            else if (node.IsFunction("product"))
+            {
+
+            }
+
+            //Propagate down the tree
+            for (int i = (node.Children.Count - 1); i >= 0; i--)
+            {
+                InternalSwap(node.Children[i]);
             }
         }
 
@@ -1735,7 +1812,7 @@ namespace AbMath.Calculator
                 explode(temp.Children[1]);
                 Assign(node, temp);
             }
-            else if (node.IsFunction("product"))
+            else if (node.IsFunction("internal_product"))
             {
 
             }
@@ -1757,15 +1834,13 @@ namespace AbMath.Calculator
                 if (node.isRoot || !node.Parent.IsFunction("internal_sum"))
                 {
                     RPN.Node sum = new RPN.Node(GenerateNextID(), node.Children.ToArray(), new RPN.Token("internal_sum", node.Children.Count, RPN.Type.Function));
-                    Assign(node,  sum);
-                    Write($"\tTagging {sum.ID} as compressable. {sum.ToInfix()}");
-                }
+                    Assign(node, sum);
+                }                
                 else if (node.Parent.IsFunction("internal_sum"))
                 {
                     node.Parent.RemoveChild(node);
                     node.Parent.AddChild(node.Children[0]);
                     node.Parent.AddChild(node.Children[1]);
-                    Write($"\tParent node {node.Parent.ID}");
                 }
             }
             else if (node.IsMultiplication())

@@ -292,6 +292,11 @@ namespace AbMath.Calculator
                 return double.Parse(Token.Value);
             }
 
+            public bool IsNumberOrConstant()
+            {
+                return Token.IsNumber() || Token.IsConstant();
+            }
+
             public bool IsNumber()
             {
                 return Token.IsNumber();
@@ -307,9 +312,19 @@ namespace AbMath.Calculator
                 return Token.IsNumber() && double.Parse(Token.Value) < number;
             }
 
+            public bool IsLessThanOrEqualToNumber(double number)
+            {
+                return Token.IsNumber() && double.Parse(Token.Value) <= number;
+            }
+
             public bool IsGreaterThanNumber(double number)
             {
                 return Token.IsNumber() && double.Parse(Token.Value) > number;
+            }
+
+            public bool IsGreaterThanOrEqualToNumber(double number)
+            {
+                return Token.IsNumber() && double.Parse(Token.Value) >= number;
             }
 
             public bool IsFunction()

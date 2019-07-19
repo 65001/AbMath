@@ -37,9 +37,17 @@ namespace AbMath.Calculator
         public struct Operator
         {
             public int Weight;
-            public Assoc Assoc;
             public int Arguments;
+            public Assoc Assoc;
             public Run Compute;
+
+            Operator(int weight, int arguments, Assoc assoc, Run compute )
+            {
+                this.Weight = weight;
+                this.Arguments = arguments;
+                this.Assoc = assoc;
+                this.Compute = compute;
+            }
         }
 
         public struct Function

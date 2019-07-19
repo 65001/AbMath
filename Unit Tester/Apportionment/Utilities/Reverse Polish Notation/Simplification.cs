@@ -42,9 +42,8 @@ namespace AbMath.Tests
         [Test]
         public void VariableAdditionComplexExponent()
         {
-            //TODO: Normalize
             RPN rpn = new RPN("2x + 3x^2").Compute();
-            Assert.AreEqual("2 x * 3 x 2 ^ * +", rpn.Polish.Print());
+            Assert.AreEqual("3 x 2 ^ * 2 x * +", rpn.Polish.Print());
         }
 
         [Test]
