@@ -41,7 +41,7 @@ namespace AbMath.Calculator
             public Assoc Assoc;
             public Run Compute;
 
-            Operator(int weight, int arguments, Assoc assoc, Run compute )
+            public Operator(Assoc assoc, int weight, int arguments, Run compute )
             {
                 this.Weight = weight;
                 this.Arguments = arguments;
@@ -57,6 +57,14 @@ namespace AbMath.Calculator
             public int MinArguments;
 
             public Run Compute;
+
+            public Function(int Min, int Args, int Max, Run compute)
+            {
+                this.MinArguments = Min;
+                this.Arguments = Args;
+                this.MaxArguments = Max;
+                this.Compute = compute;
+            }
         }
 
         public struct TimeRecord

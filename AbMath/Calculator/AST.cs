@@ -339,7 +339,7 @@ namespace AbMath.Calculator
                 //Is root and leafs have the same hash
                 if (node.ChildrenAreIdentical())
                 {
-                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { node.Children[0], new RPN.Node(GenerateNextID(), 2) }, new RPN.Token("*",2,RPN.Type.Operator));
+                    RPN.Node multiply = new RPN.Node(GenerateNextID(), new[] { node.Children[0], new RPN.Node(GenerateNextID(), 2) }, new RPN.Token("*", 2, RPN.Type.Operator));
                     Assign(node, multiply);
                     Write("\tSimplification: Addition -> Multiplication");
                 }
@@ -348,11 +348,11 @@ namespace AbMath.Calculator
                 //Case: 2sin(x) + 3sin(x)
                 else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
                 {
-                    if ( node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
+                    if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
                     {
                         Write("\tSimplification: Addition");
-                        double coef1 = double.Parse( node.Children[0].Children[1].Token.Value);
-                        double coef2 = double.Parse( node.Children[1].Children[1].Token.Value);
+                        double coef1 = double.Parse(node.Children[0].Children[1].Token.Value);
+                        double coef2 = double.Parse(node.Children[1].Children[1].Token.Value);
                         string sum = (coef1 + coef2).ToString();
 
                         node.Children[1].Children[1].Token.Value = sum;
@@ -375,15 +375,21 @@ namespace AbMath.Calculator
                 //7sin(x) + sin(x)
                 //C0: Anything
                 //C1:C0: Compare hash to C0.
-                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches( node.Children[0]) )
+                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches(node.Children[0]))
                 {
-                      Write("\tSimplification Addition Dual Node.");
-                      node.Children[0].Remove(new RPN.Node(GenerateNextID(), 0));
+                    Write("\tSimplification Addition Dual Node.");
+                    node.Children[0].Remove(new RPN.Node(GenerateNextID(), 0));
 
-                      //Changes child node c1:c1 by incrementing it by one.
-                      node.Children[1].Children[1].Token.Value = (double.Parse(node.Children[1].Children[1].Token.Value) + 1).ToString();
+                    //Changes child node c1:c1 by incrementing it by one.
+                    node.Children[1].Children[1].Token.Value = (double.Parse(node.Children[1].Children[1].Token.Value) + 1).ToString();
                 }
-
+                else if (node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                {
+                    //TODO: Replace
+                    Write("\tAddition can be converted to subtraction");
+                    node.Token.Value = "-";
+                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(GenerateNextID(), 1));
+                }
             }
             else if (mode == SimplificationMode.Trig)
             {
@@ -462,6 +468,16 @@ namespace AbMath.Calculator
                     RPN.Node cot = new RPN.Node(GenerateNextID(), new[] { Clone(node.Children[0].Children[0]) }, new RPN.Token("cot", 1, RPN.Type.Function));
                     RPN.Node multiplication = new RPN.Node(GenerateNextID(), new[] { cot, Clone(node.Children[1]) }, new RPN.Token("*", 2, RPN.Type.Operator));
                     Assign(node, multiplication);
+                }
+                else if (node.IsFunction("cos") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                {
+                    Write("\tcos(-f(x)) -> cos(f(x))");
+                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(GenerateNextID(), 1));
+                }
+                else if (node.IsFunction("sec") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                {
+                    Write("\tsec(-f(x)) -> sec(f(x))");
+                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(GenerateNextID(), 1));
                 }
                 //TODO:
                 //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)

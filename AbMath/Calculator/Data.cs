@@ -145,15 +145,14 @@ namespace AbMath.Calculator
                 _aliases = new Dictionary<string, string>();
                 _autoFormat = new Dictionary<double, string>();
 
-                _leftbracket = new List<string>();
-                _rightbracket = new List<string>();
+                _leftbracket = new List<string>() { "(", "{", "[" };
+                _rightbracket = new List<string>() { ")", "}", "]", "," };
                 _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
 
                 DefaultFunctions();
                 DefaultOperators();
                 DefaultAliases();
-                DefaultBrackets();
                 DefaultFormats();
             }
 
@@ -243,10 +242,20 @@ namespace AbMath.Calculator
             {
                 _leftbracket.Add(value);
             }
+            
+            public void AddLeftBracket(string[] value)
+            {
+                _leftbracket.AddRange(value);
+            }
 
             public void AddRightBracket(string value)
             {
                 _rightbracket.Add(value);
+            }
+
+            public void AddRightBracket(string[] value)
+            {
+                _rightbracket.AddRange(value);
             }
 
             public void AddAlias(string key, string value)
@@ -352,35 +361,10 @@ namespace AbMath.Calculator
                 AddAlias("-infinity", "-∞");
             }
 
-            private void DefaultBrackets()
-            {
-                AddLeftBracket("(");
-                AddLeftBracket("{");
-                AddLeftBracket("[");
-
-                AddRightBracket(")");
-                AddRightBracket("}");
-                AddRightBracket("]");
-                AddRightBracket(",");
-            }
-
             private void DefaultOperators()
             {
-                AddOperator("^", new Operator
-                {
-                    Assoc = Assoc.Right,
-                    Weight = 5,
-                    Arguments = 2,
-                    Compute = DoOperators.Power
-                });
-
-                AddOperator("E", new Operator
-                {
-                    Assoc = Assoc.Right,
-                    Weight = 5,
-                    Arguments = 2,
-                    Compute = DoOperators.E
-                });
+                AddOperator("^", new Operator(Assoc.Right, 5, 2, DoOperators.Power));
+                AddOperator("E", new Operator(Assoc.Right, 5, 2, DoOperators.E));
 
                 AddOperator("!", new Operator
                 {

@@ -48,7 +48,7 @@ namespace AbMath.Tests
         public void ProductRule()
         {
             RPN test = new RPN("derivative(sin(x)cos(x),x)").Compute();
-            Assert.AreEqual("x cos 2 ^ -1 x sin 2 ^ * +", test.Polish.Print());
+            Assert.AreEqual("x cos 2 ^ x sin 2 ^ -", test.Polish.Print());
         }
 
         [Test]
