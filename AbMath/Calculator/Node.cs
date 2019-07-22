@@ -338,6 +338,11 @@ namespace AbMath.Calculator
                 return Token.IsConstant();
             }
 
+            public bool IsConstant(string constant)
+            {
+                return Token.IsConstant() && Token.Value == constant;
+            }
+
             public bool IsOperator()
             {
                 return Token.IsOperator();

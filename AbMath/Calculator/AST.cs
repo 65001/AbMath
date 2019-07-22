@@ -302,20 +302,16 @@ namespace AbMath.Calculator
                     {
                         Write("\tSimplification: Subtraction Dual Node");
                         double coefficient = node.Children[1].Children[1].GetNumber() - node.Children[0].Children[1].GetNumber();
-                        node.Children[0].Children[1].Token.Value = "0";
-                        node.Children[1].Children[1].Token.Value = coefficient.ToString();
+                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
+                        node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
                     }
                 }
                 //3sin(x) - sin(x)
                 else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches( node.Children[0]) )
                 {
                     Write("\tSimplification: Subtraction: Dual Node: Sub one.");
-                    RPN.Node temp = new RPN.Node(0)
-                    {
-                        Parent = node,
-                    };
-                    node.Replace( node.Children[0], temp );
-                    node.Children[1].Children[1].Token.Value = (double.Parse(node.Children[1].Children[1].Token.Value) - 1).ToString();
+                    node.Replace( node.Children[0], new RPN.Node(0));
+                    node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(node.Children[1].Children[1].GetNumber() - 1));
                 }
                 //3sin(x) - 0
                 else if (node.Children[0].IsNumber(0))
@@ -351,12 +347,9 @@ namespace AbMath.Calculator
                     if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
                     {
                         Write("\tSimplification: Addition");
-                        double coef1 = double.Parse(node.Children[0].Children[1].Token.Value);
-                        double coef2 = double.Parse(node.Children[1].Children[1].Token.Value);
-                        string sum = (coef1 + coef2).ToString();
-
-                        node.Children[1].Children[1].Token.Value = sum;
-                        node.Children[0].Children[1].Token.Value = "0";
+                        double sum = (node.Children[0].Children[1].GetNumber() + node.Children[1].Children[1].GetNumber());
+                        node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(sum));
+                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
                     }
                 }
                 //Zero addition
@@ -379,9 +372,7 @@ namespace AbMath.Calculator
                 {
                     Write("\tSimplification Addition Dual Node.");
                     node.Children[0].Remove(new RPN.Node(0));
-
-                    //Changes child node c1:c1 by incrementing it by one.
-                    node.Children[1].Children[1].Token.Value = (double.Parse(node.Children[1].Children[1].Token.Value) + 1).ToString();
+                    node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(node.Children[1].Children[1].GetNumber() + 1));
                 }
                 else if (node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
                 {
@@ -523,16 +514,7 @@ namespace AbMath.Calculator
                 //TODO: If one of the leafs is a division and the other a number or variable
                 if (node.ChildrenAreIdentical())
                 {
-                    RPN.Node temp = node.Children[0];
-
-                    RPN.Node two = new RPN.Node(2)
-                    {
-                        Parent = node,
-                    };
-
-                    RPN.Node head = new RPN.Node(new[] { two, temp }, new RPN.Token("^", 2, RPN.Type.Operator));
-                    head.Parent = node.Parent;
-
+                    RPN.Node head = new RPN.Node(new[] { new RPN.Node(2), node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
                     Assign(node, head);
                     Write("\tSimplification: Multiplication -> Exponent");
                 }
@@ -554,20 +536,14 @@ namespace AbMath.Calculator
                 else if ( node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0) )
                 {
                     Write($"\tMultiplication by zero simplification.");
-                    RPN.Node temp = new RPN.Node(0);
-                    Assign(node, temp);
+                    Assign(node, new RPN.Node(0));
                 }
                 //sin(x)sin(x)sin(x) -> sin(x)^3
                 else if (node.Children[1].IsExponent() && node.Children[1].Children[0].IsNumber() && node.Children[0].Matches( node.Children[1].Children[1]) )
                 {
                     Write("\tIncrease Exponent");
-                    RPN.Node one = new RPN.Node(1)
-                    {
-                        Parent = node,
-                    };
-
-                    node.Replace( node.Children[0], one );
-                    node.Children[1].Children[0].Token.Value = (double.Parse(node.Children[1].Children[0].Token.Value) + 1).ToString();
+                    node.Replace(node.Children[0], new RPN.Node(1));
+                    node.Replace(node.Children[1].Children[0], new RPN.Node(node.Children[1].Children[0].GetNumber() + 1));
                 }
                 else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[0].IsGreaterThanNumber(0) && node.Children[1].Children[0].Matches( node.Children[0].Children[1]) )
                 {
@@ -659,7 +635,7 @@ namespace AbMath.Calculator
                     Write($"\tDivision -> Multiplication and exponentiation.");
                     RPN.Node negativeOne = new RPN.Node( -1);
                     RPN.Node exponent = new RPN.Node( new[] { negativeOne, node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
-
+                    //TODO: Replace
                     node.Token.Value = "*";
                     node.Replace(node.Children[0], exponent);
                 }
@@ -714,7 +690,7 @@ namespace AbMath.Calculator
 
                     if (power.IsNumber() && baseNode.Children[0].IsNumber())
                     {
-                        multiply = new RPN.Node( double.Parse( power.Token.Value ) * double.Parse(baseNode.Children[0].Token.Value) );
+                        multiply = new RPN.Node(power.GetNumber() * baseNode.Children[0].GetNumber());
                     }
                     else
                     {
@@ -1258,10 +1234,8 @@ namespace AbMath.Calculator
                             }
                             else
                             {
-                                double temp = double.Parse(powerClone.Token.Value) - 1;
-                                exponent = new RPN.Node( new RPN.Node[] { new RPN.Node( temp), baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
+                                exponent = new RPN.Node( new RPN.Node[] { new RPN.Node( powerClone.GetNumber() - 1 ), baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
                             }
-
 
                             RPN.Node multiplication = new RPN.Node( new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
 
@@ -1303,7 +1277,7 @@ namespace AbMath.Calculator
 
                             Derive(bodyDerive, variable);
                         }
-                        else if (baseNode.IsConstant() && baseNode.Token.Value == "e")
+                        else if (baseNode.IsConstant("e"))
                         {
                             if (debug)
                             {
@@ -1374,7 +1348,7 @@ namespace AbMath.Calculator
                         }
                     }
                     #region Trig
-                    else if (node.Children[0].Token.Value == "sin")
+                    else if (node.Children[0].IsFunction("sin"))
                     {
                         if (debug)
                         {
@@ -1399,7 +1373,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "cos")
+                    else if (node.Children[0].IsFunction("cos"))
                     {
                         if (debug)
                         {
@@ -1423,7 +1397,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "tan")
+                    else if (node.Children[0].IsFunction("tan"))
                     {
                         if (debug)
                         {
@@ -1447,7 +1421,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "sec")
+                    else if (node.Children[0].IsFunction("sec"))
                     {
                         if (debug)
                         {
@@ -1474,7 +1448,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "csc")
+                    else if (node.Children[0].IsFunction("csc"))
                     {
                         if (debug)
                         {
@@ -1501,7 +1475,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "cot")
+                    else if (node.Children[0].IsFunction("cot"))
                     {
                         if (debug)
                         {
@@ -1526,7 +1500,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "arcsin")
+                    else if (node.Children[0].IsFunction("arcsin"))
                     {
                         if (debug)
                         {
@@ -1551,7 +1525,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "arccos")
+                    else if (node.Children[0].IsFunction("arccos"))
                     {
                         if (debug)
                         {
@@ -1578,7 +1552,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "arctan")
+                    else if (node.Children[0].IsFunction("arctan"))
                     {
                         if (debug)
                         {
@@ -1602,7 +1576,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "arccot")
+                    else if (node.Children[0].IsFunction("arccot"))
                     {
                         if (debug)
                         {
@@ -1627,7 +1601,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "arcsec")
+                    else if (node.Children[0].IsFunction("arcsec"))
                     {
                         if (debug)
                         {
@@ -1654,7 +1628,7 @@ namespace AbMath.Calculator
                         //Chain Rule
                         Derive(bodyDerive, variable);
                     }
-                    else if (node.Children[0].Token.Value == "arccsc")
+                    else if (node.Children[0].IsFunction("arccsc"))
                     {
                         if (debug)
                         {
@@ -1766,13 +1740,13 @@ namespace AbMath.Calculator
                         node.Replace(node.Children[0], sqrt);
                         Derive(node, variable);
                     }
-                    else if (node.Children[0].Token.Value == "sum")
+                    else if (node.Children[0].IsFunction("sum"))
                     {
                         Write("\tExploding sum");
                         explode(node.Children[0]);
                         Derive(node, variable);
                     }
-                    else if (node.Children[0].Token.Value == "avg")
+                    else if (node.Children[0].IsFunction("avg"))
                     {
                         Write("\tExploding avg");
                         explode(node.Children[0]);
