@@ -489,6 +489,14 @@ namespace AbMath.Calculator
 
                 //[1 + tan(f(x))^2] -> sec(f(x))^2
                 //[cot(f(x))^2 + 1] -> csc(f(x))^2
+                
+                //We should do this as we have another 
+                //simplification that simplifies f(x) + -1 * g(x) to f(x) - g(x)
+
+                //sin(-f(x)) -> -1 * sin(f(x))
+                //tan(-f(x)) -> -1 * tan(f(x))
+                //csc(-f(x)) -> -1 * csc(f(x))
+                //cot(-f(x)) -> -1 * cot(f(x))
             }
             else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
             {
