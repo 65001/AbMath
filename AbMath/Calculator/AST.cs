@@ -479,6 +479,34 @@ namespace AbMath.Calculator
                     Write("\tsec(-f(x)) -> sec(f(x))");
                     node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
                 }
+                else if (node.IsFunction("sin") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                {
+                    Write("\tsin(-f(x)) -> -1 * sin(f(x))");
+                    RPN.Node sin = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("sin", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(new[] { sin, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsFunction("tan") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                {
+                    Write("\ttan(-f(x)) -> -1 * tan(f(x))");
+                    RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("tan", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(new[] {tan, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsFunction("csc") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                {
+                    Write("\tcsc(-f(x)) -> -1 * csc(f(x))");
+                    RPN.Node csc = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("csc", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(new[] { csc, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
+                else if (node.IsFunction("cot") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                {
+                    Write("\tcot(-f(x)) -> -1 * cot(f(x))");
+                    RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("cot", 1, RPN.Type.Function));
+                    RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    Assign(node, multiplication);
+                }
                 //TODO:
                 //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
                 //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
@@ -489,14 +517,6 @@ namespace AbMath.Calculator
 
                 //[1 + tan(f(x))^2] -> sec(f(x))^2
                 //[cot(f(x))^2 + 1] -> csc(f(x))^2
-                
-                //We should do this as we have another 
-                //simplification that simplifies f(x) + -1 * g(x) to f(x) - g(x)
-
-                //sin(-f(x)) -> -1 * sin(f(x))
-                //tan(-f(x)) -> -1 * tan(f(x))
-                //csc(-f(x)) -> -1 * csc(f(x))
-                //cot(-f(x)) -> -1 * cot(f(x))
             }
             else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
             {
