@@ -18,33 +18,29 @@ namespace AbMath.Calculator
             private List<Node> children;
 
             private MD5 _md5;
+            private static int counter = 0;
 
-            public Node()
-            {
-                children = new List<Node>();
-            }
-
-            public Node(int ID, Node[] children, Token token)
+            public Node(Node[] children, Token token)
             {
                 this.children = new List<Node>();
                 AssignChildren(children);
-                this.ID = ID;
+                this.ID = counter++;
                 Parent = null;
                 Token = token;
             }
 
-            public Node(int ID, double number)
+            public Node(double number)
             {
                 children = new List<Node>(0);
-                this.ID = ID;
+                this.ID = counter++;
                 Parent = null;
                 Token = new RPN.Token(number);
             }
 
-            public Node(int ID, Token token)
+            public Node(Token token)
             {
                 children = new List<Node>(0);
-                this.ID = ID;
+                this.ID = counter++;
                 Parent = null;
                 Token = token;
             }
@@ -544,6 +540,11 @@ namespace AbMath.Calculator
 
                 //Number, Variable, or constant function
                 infix.Append(node.Token.Value);
+            }
+
+            public static void ResetCounter()
+            {
+                counter = 0;
             }
         }
     }
