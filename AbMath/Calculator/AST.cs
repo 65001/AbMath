@@ -717,11 +717,6 @@ namespace AbMath.Calculator
             }
         }
 
-        private void Swap()
-        {
-            Swap(Root);
-        }
-
         private void Swap(RPN.Node node)
         {
             //Addition operator
@@ -840,7 +835,7 @@ namespace AbMath.Calculator
                 }
                 Write(node.Print());
             }
-            else if (node.IsFunction("product"))
+            else if (node.IsFunction("internal_product") || node.IsFunction("product"))
             {
 
             }
