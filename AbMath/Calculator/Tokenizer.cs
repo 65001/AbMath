@@ -223,13 +223,13 @@ namespace AbMath.Calculator
             {
                 if (_dataStore.DebugMode)
                 {
-                    Logger?.Invoke(this, message.Alias());
+                    Logger?.Invoke(this, message);
                 }
             }
 
             private void Log(string message)
             {
-                Logger?.Invoke(this, message.Alias());
+                Logger?.Invoke(this, message);
             }
         }
     }

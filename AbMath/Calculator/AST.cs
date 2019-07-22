@@ -240,7 +240,7 @@ namespace AbMath.Calculator
                 //An imaginary number propagates anyways
                 if (node.Children[0].IsLessThanNumber(0))
                 {
-                    Root = new RPN.Node(double.NaN);
+                    SetRoot(new RPN.Node(double.NaN));
                     Write($"\tSqrt Imaginary Number -> Root.");
                 }
                 //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
@@ -252,7 +252,7 @@ namespace AbMath.Calculator
                 //NaN propagate anyways
                 if (node.Children[0].IsNumber(0))
                 {
-                    Root = new RPN.Node(double.NaN);
+                    SetRoot(new RPN.Node(double.NaN));
                     Write("\tDivision by zero -> Root");
                 }
                 else if (node.Children[0].IsNumber(1))
@@ -1930,21 +1930,19 @@ namespace AbMath.Calculator
             if (node.isRoot)
             {
                 SetRoot(assign);
+                return;
             }
-            else
-            {
-                node.Parent.Replace(node, assign);
-            }
+            node.Parent.Replace(node, assign);
         }
 
         private void Write(string message)
         {
-            Logger?.Invoke(this, message.Alias());
+            Logger?.Invoke(this, message);
         }
 
         private void stdout(string message)
         {
-            Output?.Invoke(this, message.Alias());
+            Output?.Invoke(this, message);
         }
     }
 }

@@ -175,7 +175,7 @@ namespace AbMath.Calculator
 
         private void Write(string message)
         {
-            Logger?.Invoke(this, message.Alias());
+            Logger?.Invoke(this, message);
         }
     }
 }

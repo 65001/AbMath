@@ -257,12 +257,5 @@ namespace AbMath.Calculator
                 return null;
             }
         }
-
-        public static string Alias(this string data)
-        {
-            //TODO: Move all these aliases into RPN.Data.Aliases and convert 
-            //all functions to handle them properley 
-            return data.Replace("pi", "π ");
-        }
     }
 }
