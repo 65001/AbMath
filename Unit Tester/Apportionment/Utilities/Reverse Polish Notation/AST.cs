@@ -22,6 +22,13 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void OneRaisedExponent()
+        {
+            RPN rpn = new RPN("1^x").Compute();
+            Assert.AreEqual("1", rpn.Polish.Print());
+        }
+
+        [Test]
         public void TrigIdentiySinAndCos()
         {
             RPN rpn = new RPN("sin(x)sin(x) + cos(x)cos(x)").Compute();

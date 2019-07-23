@@ -78,7 +78,7 @@ namespace AbMath.Calculator
             Stopwatch SW = new Stopwatch();
             SW.Start();
 
-            Normalize();
+            Normalize();           
 
             int pass = 0;
             string hash = string.Empty;
@@ -180,7 +180,7 @@ namespace AbMath.Calculator
                     RPN.Node baseNode = exponent.Children[1];
                     RPN.Node power = exponent.Children[0];
 
-                    RPN.Node log = new RPN.Node(new[] {Clone(baseNode) ,node.Children[1] }, new RPN.Token("log",2,RPN.Type.Function));
+                    RPN.Node log = new RPN.Node(new[] { Clone(baseNode) ,node.Children[1] }, new RPN.Token("log",2,RPN.Type.Function));
                     RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
                     temp = multiply;
                 }
@@ -275,8 +275,8 @@ namespace AbMath.Calculator
                 else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
                 {
                     Write("\tDivison Flip");
-                    RPN.Node[] numerator = { Clone(node.Children[0].Children[1]), Clone(node.Children[1].Children[1]) };
-                    RPN.Node[] denominator = { Clone(node.Children[0].Children[0]), Clone(node.Children[1].Children[0]) };
+                    RPN.Node[] numerator   = { node.Children[0].Children[1], node.Children[1].Children[1] };
+                    RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
 
                     RPN.Node top = new RPN.Node(new[] { denominator[0] , numerator[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
                     RPN.Node bottom = new RPN.Node(new[] { denominator[1], numerator[0] }, new RPN.Token("*", 2, RPN.Type.Operator));
@@ -954,6 +954,10 @@ namespace AbMath.Calculator
                     //Sec
                     //Sqrt
                 }
+                else if (node.IsFunction("solve"))
+                {
+                    Algebra(node);
+                }
             }
         }
 
@@ -993,14 +997,10 @@ namespace AbMath.Calculator
                 throw new ArgumentException("The variable of deriviation is not a variable!", nameof(variable));
             }
 
-            Stopwatch SW = new Stopwatch();
-            SW.Start();
-
             Write($"Starting to derive ROOT: {Root.ToInfix()}");
             Derive(Root, variable);
             Write("");
-            SW.Stop();
-            _data.AddTimeRecord("AST.Derive", SW);
+            
             return this;
         }
 
@@ -1769,6 +1769,16 @@ namespace AbMath.Calculator
             catch(IndexOutOfRangeException ex)
             {
                 throw new InvalidOperationException("Invalid node access propogation violation", ex);
+            }
+        }
+
+        private void Algebra(RPN.Node node)
+        {
+            if (node.IsFunction("solve"))
+            {
+                //f(x) + c = [Constant or Number or Solveable Expression] 
+                
+
             }
         }
 

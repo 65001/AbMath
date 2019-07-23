@@ -48,13 +48,14 @@ namespace AbMath.Calculator
                 _token = string.Empty;
                 _prevToken = string.Empty;
                 int length = Equation.Length;
-                char[] equation = Equation.ToCharArray();
-
+                ReadOnlySpan<char> equationSpan = Equation.AsSpan();
+                ReadOnlySpan<char> localSpan = null;
                 for (int i = 0; i < length; i++)
                 {
                     //We could convert this into a span?
-                    _readAhead = i < (length - 1) ? equation[i + 1].ToString() : null;
-                    _character = equation[i].ToString();
+                    localSpan = equationSpan.Slice(i);
+                    _character = localSpan[0].ToString();
+                    _readAhead = i < (length - 1) ? localSpan[1].ToString() : null;
 
                     //Alias code
                     if (_dataStore.Aliases.ContainsKey(_token))

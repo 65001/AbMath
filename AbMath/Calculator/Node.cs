@@ -348,6 +348,11 @@ namespace AbMath.Calculator
                 return Token.IsOperator();
             }
 
+            public bool IsOperator(string op)
+            {
+                return Token.IsOperator() && Token.Value == op;
+            }
+
             public bool IsVariable()
             {
                 return Token.IsVariable();

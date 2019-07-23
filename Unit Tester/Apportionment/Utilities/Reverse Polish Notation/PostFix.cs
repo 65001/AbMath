@@ -507,11 +507,5 @@ namespace AbMath.Tests
         }
 
         #endregion
-
-
-        public void Write(object sender,string Event)
-        {
-            Console.WriteLine(Event);
-        }
     }
 }

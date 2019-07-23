@@ -17,12 +17,17 @@
     <Copyright>(C) Abhishek Sathiabalan. 2018.</Copyright>
     <PackageReleaseNotes />
     <PackageTags>reverse polish notation, rpn, shunting yard, calculator, library</PackageTags>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="CLI Table\**" />
     <EmbeddedResource Remove="CLI Table\**" />
     <None Remove="CLI Table\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.3" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

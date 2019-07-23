@@ -239,22 +239,18 @@ namespace CLI
 
         private string Lines(char[] chars) {
             var sb = new StringBuilder();
-            sb.Clear();
             sb.Append(chars[0]);
 
-            string data;
             for (int i = 0; i < schemas.Count; i++)
             {
-                data = string.Empty;
                 if (i == (schemas.Count - 1))
                 {
-                    data = $"{"".PadRight(schemas[i].Width + 2, Sheet.Continue)}";
+                    sb.Append( new string(Sheet.Continue, schemas[i].Width + 2));
                 }
                 else
                 {
-                    data = $"{"".PadRight(schemas[i].Width + ((i == 0) ? 1 : 2), Sheet.Continue)}{chars[1]}";
+                    sb.Append( new string(Sheet.Continue, schemas[i].Width + ((i == 0) ? 1 : 2)) + chars[1]);
                 }
-                sb.Append(data);
             }
             sb.Append($"{chars[2]}");
 

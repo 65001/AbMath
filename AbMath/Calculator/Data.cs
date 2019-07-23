@@ -795,6 +795,13 @@ namespace AbMath.Calculator
                     MaxArguments = 5
                 });
 
+                AddFunction("solve", new Function()
+                {
+                    Arguments = 2,
+                    MinArguments = 2,
+                    MaxArguments = 3
+                });
+
                 /*
                 AddFunction("plot", new Function()
                 {
@@ -808,6 +815,7 @@ namespace AbMath.Calculator
                 _meta_functions.Add("integrate");
                 _meta_functions.Add("table");
                 _meta_functions.Add("plot");
+                _meta_functions.Add("solve");
                 #endregion
             }
             private void DefaultFormats()
