@@ -86,7 +86,7 @@ namespace AbMath.Tests
         public void BaseExponentSimple()
         {
             RPN test = new RPN("derivative(2^x,x)").Compute();
-            Assert.AreEqual("0.693147180559945 2 x ^ *", test.Polish.Print());
+            Assert.AreEqual("2 ln 2 x ^ *", test.Polish.Print());
         }
 
         [Test]
@@ -117,7 +117,7 @@ namespace AbMath.Tests
         public void Log()
         {
             RPN test = new RPN("derivative( log(2,x) , x)").Compute();
-            Assert.AreEqual("1 0.693147180559945 x * /", test.Polish.Print());
+            Assert.AreEqual("1 2 ln x * /", test.Polish.Print());
         }
 
 
@@ -235,7 +235,7 @@ namespace AbMath.Tests
         public void ComplexEquation()
         {
             RPN test = new RPN("derivative( x(x - 1)e^(-1/(2x)), x)").Compute();
-            Assert.AreEqual("e -1 2 x * / ^ x x 1 - + * x x 1 - * 2 e -1 2 x * / ^ * * 2 x * 2 ^ / +", test.Polish.Print());
+            Assert.AreEqual("e -1 2 x * / ^ 2 x * 1 - * x x 1 - * 2 e -1 2 x * / ^ * * 2 x * 2 ^ / +", test.Polish.Print());
         }
     }
 }

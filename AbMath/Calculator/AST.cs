@@ -39,10 +39,9 @@ namespace AbMath.Calculator
 
             Stack<RPN.Node> stack = new Stack<RPN.Node>(5);
 
-            RPN.Node node;
             for (int i = 0; i < input.Length; i++)
             {
-                node = new RPN.Node(input[i]);
+                RPN.Node node = new RPN.Node(input[i]);
                 if (node.IsOperator() || node.IsFunction())
                 {
                     //Due to the nature of PostFix we know that all children
@@ -374,11 +373,25 @@ namespace AbMath.Calculator
                     node.Children[0].Remove(new RPN.Node(0));
                     node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(node.Children[1].Children[1].GetNumber() + 1));
                 }
-                else if (node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
+                else if (node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsLessThanNumber(0))
                 {
                     Write("\tAddition can be converted to subtraction");
                     node.Replace("-");
                     node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
+                }
+                else if (node[0].IsLessThanNumber(0) && node[1].IsMultiplication())
+                {
+                    Write("\tAddition can be converted to subtraction");
+                    node.Replace("-");
+                    node.Replace(node[0], new RPN.Node(Math.Abs( node[0].GetNumber() )) );
+                }
+                else if (node.Children[0].IsSubtraction() && node[1].Matches( node[0, 1]))
+                {
+                    Write("\tf(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
+
+                    node[0].Replace(node[0, 1], new RPN.Node(0));
+                    RPN.Node multiplication = new RPN.Node(new [] {Clone(node[1]),new RPN.Node(2) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    node.Replace(node[1], multiplication);
                 }
             }
             else if (mode == SimplificationMode.Trig)
@@ -592,11 +605,17 @@ namespace AbMath.Calculator
                     node.Children[0].Remove(division);
                     node.Children[1].Remove(new RPN.Node( 1));
                 }
-                else if (node.Children[0].IsLessThanNumber(0) && node.Children[1].IsLessThanNumber(1))
+                else if (node.Children[0].IsLessThanNumber(0) && node.Children[1].IsLessThanNumber(0))
                 {
                     Write("\tA negative times a negative is always positive.");
                     node.Replace(node.Children[0], new RPN.Node( Math.Abs( double.Parse(node.Children[0].Token.Value ))));
                     node.Replace(node.Children[1], new RPN.Node( Math.Abs( double.Parse(node.Children[1].Token.Value ))));
+                }
+                else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0) && node[1].IsLessThanNumber(0))
+                {
+                    Write("\tComplex: A negative times a negative is always positive.");
+                    node.Replace(node[0, 1], new RPN.Node( Math.Abs( node[0,1].GetNumber() ) ) );
+                    node.Replace(node[1], new RPN.Node( Math.Abs( node[1].GetNumber() ) ));
                 }
             }
             else if (mode == SimplificationMode.Swap)
@@ -692,6 +711,11 @@ namespace AbMath.Calculator
                     RPN.Node exponent = new RPN.Node( new[] { multiply, func }, new RPN.Token("^", 2, RPN.Type.Operator));
                     Assign(power.Parent, exponent);
                 }
+                else if (power.IsNumberOrConstant() && baseNode.IsLessThanNumber(0) && power.GetNumber() % 2 == 0)
+                {
+                    Write("c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
+                    node.Replace(baseNode, new RPN.Node(-1 * baseNode.GetNumber()));
+                }
             }
 
             //Propagate down the tree IF there is a root 
@@ -719,7 +743,7 @@ namespace AbMath.Calculator
                 if ( node.Children[1].IsNumber() && !node.Children[0].IsNumber())
                 {
                     node.Children.Swap(0, 1);
-                    Write("\tNode Swap : Add : Number and a nonnumber");
+                    Write("\tNode Swap : Add : Number and a non-number");
                 }
                 //Number,variable, or constant and an exponent
                 else if ( node.Children[0].IsExponent() && !(node.Children[1].IsExponent() || node.Children[1].IsAddition()) )
@@ -828,7 +852,7 @@ namespace AbMath.Calculator
             }
             else if (node.IsFunction("internal_product") || node.IsFunction("product"))
             {
-
+                node.Children.Reverse();
             }
 
             //Propagate down the tree
@@ -937,7 +961,7 @@ namespace AbMath.Calculator
                     Derive(node.Children[0]);
                     Assign(node, node.Children[1]);
                     node.Delete();
-                    Solve(Root);
+                    //Solve(Root);
                     //TODO: Remove solve
                     //Tests that fail afterwards :
                     //Constant Multiplications
@@ -1246,9 +1270,17 @@ namespace AbMath.Calculator
                             RPN.Node bodyDerive = new RPN.Node( new[] { Clone(baseNode) }, _derive);
 
                             RPN.Node powerClone = Clone(power);
-                            RPN.Node one = new RPN.Node( 1);
 
-                            RPN.Node subtraction = new RPN.Node( new[] { one, powerClone }, new RPN.Token("-", 2, RPN.Type.Operator));
+                            RPN.Node subtraction;
+                            if (power.IsConstant())
+                            {
+                                RPN.Node one = new RPN.Node(1);
+                                subtraction = new RPN.Node(new[] {one, powerClone}, new RPN.Token("-", 2, RPN.Type.Operator));
+                            }
+                            else
+                            {
+                                subtraction = new RPN.Node(power.GetNumber() - 1);
+                            }
 
                             //Replace n with (n - 1) 
                             RPN.Node exponent = new RPN.Node( new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
@@ -1867,7 +1899,20 @@ namespace AbMath.Calculator
             }
             else if (node.IsMultiplication())
             {
-                //Make a series of multiplications into ** or product(...) 
+                //Make a series of multiplications into ** or product(...)
+                /*
+                if (node.isRoot || !node.Parent.IsFunction("internal_product"))
+                {
+                    RPN.Node product = new RPN.Node(node.Children.ToArray(), new RPN.Token("internal_product", node.Children.Count, RPN.Type.Function));
+                    Assign(node, product);
+                }
+                else if (node.Parent.IsFunction("internal_product"))
+                {
+                    node.Parent.RemoveChild(node);
+                    node.Parent.AddChild(node.Children[0]);
+                    node.Parent.AddChild(node.Children[1]);
+                }
+                */
             }
             else if (node.IsSubtraction())
             {
