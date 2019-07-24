@@ -75,8 +75,8 @@ namespace AbMath.Calculator
         /// <returns></returns>
         public AST Simplify()
         {
-            Stopwatch SW = new Stopwatch();
-            SW.Start();
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
             Normalize();           
 
@@ -91,8 +91,8 @@ namespace AbMath.Calculator
                 pass++;
             }
 
-            SW.Stop();
-            _data.AddTimeRecord("AST Simplify", SW);
+            sw.Stop();
+            _data.AddTimeRecord("AST Simplify", sw);
             return this;
         }
 
@@ -376,9 +376,8 @@ namespace AbMath.Calculator
                 }
                 else if (node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
                 {
-                    //TODO: Replace
                     Write("\tAddition can be converted to subtraction");
-                    node.Token.Value = "-";
+                    node.Replace("-");
                     node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
                 }
             }
@@ -520,16 +519,7 @@ namespace AbMath.Calculator
                 }
                 else if ( node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1) )
                 {
-                    RPN.Node temp;
-
-                    if (node.Children[1].IsNumber(1))
-                    {
-                        temp = node.Children[0];
-                    }
-                    else 
-                    {
-                        temp = node.Children[1];
-                    }
+                    RPN.Node temp = node.Children[1].IsNumber(1) ? node.Children[0] : node.Children[1];
                     Assign(node, temp);
                     Write($"\tMultiplication by one simplification.");
                 }
@@ -548,18 +538,19 @@ namespace AbMath.Calculator
                 else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[0].IsGreaterThanNumber(0) && node.Children[1].Children[0].Matches( node.Children[0].Children[1]) )
                 {
                     Write($"\tIncrease Exponent 2:");
-                    node.Children[0].Children[0].Token.Value = (double.Parse(node.Children[0].Children[0].Token.Value) + 1).ToString();
+                    RPN.Node temp = node.Children[0].Children[0];
+                    temp.Replace(temp.GetNumber() + 1);
                     node.Children[1].Children[0].Remove(new RPN.Node(1));
                 }
                 else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[1].Matches(node.Children[1]))
                 {
                     Write("\tIncrease Exponent 3");
-                    node.Children[0].Children[0].Token.Value = (double.Parse(node.Children[0].Children[0].Token.Value) + 1).ToString();
+                    RPN.Node temp = node.Children[0].Children[0];
+                    temp.Replace(temp.GetNumber() + 1);
                     node.Children[1].Remove(new RPN.Node(1));
                 }
                 else if (node.Children[1].IsNumber() && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber() && !node.Children[0].Children[0].IsNumber())
                 {
-
                     Write($"\tDual Node Multiplication.");
                     double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
                     double num2 = double.Parse(node.Children[1].Token.Value);
@@ -569,7 +560,7 @@ namespace AbMath.Calculator
                 }
                 else if ( (node.Children[0].IsDivision() || node.Children[1].IsDivision()) && !(node.Children[0].IsDivision() && node.Children[1].IsDivision()) )
                 {
-                    Write($"\tExpression times a divison -> Division ");
+                    Write($"\tExpression times a division -> Division ");
                     RPN.Node division;
                     RPN.Node expression; 
                     if (node.Children[0].IsDivision())
@@ -1791,26 +1782,16 @@ namespace AbMath.Calculator
         {
             RPN.Token add = new RPN.Token("+", 2, RPN.Type.Operator);
             RPN.Token division = new RPN.Token("/", 2, RPN.Type.Operator);
+            RPN.Token multiplication = new RPN.Token("*", 2, RPN.Type.Operator);
 
             //convert a sum to a series of additions
             if (node.IsFunction("internal_sum") || node.IsFunction("sum"))
             {
-                if (node.Children.Count == 1)
-                {
-                    node.Remove();
-                    return;
-                }
-
-                List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
-                results.AddRange(node.Children[0].ToPostFix());
-                results.AddRange(node.Children[1].ToPostFix());
-                results.Add(add);
-                for (int i = 2; i < node.Children.Count; i++)
-                {
-                    results.AddRange(node.Children[i].ToPostFix());
-                    results.Add(add);
-                }
-                Assign(node, Generate(results.ToArray()) );
+                Assign(node, gen(add) );
+            }
+            else if (node.IsFunction("internal_product"))
+            {
+                Assign(node, gen(multiplication));
             }
             //convert an avg to a series of additions and a division
             else if (node.IsFunction("avg"))
@@ -1835,11 +1816,29 @@ namespace AbMath.Calculator
                 explode(temp.Children[1]);
                 Assign(node, temp);
             }
-            else if (node.IsFunction("internal_product"))
+
+            RPN.Node gen(RPN.Token token)
             {
+                if (node.Children.Count == 1)
+                {
+                    node.Remove();
+                    return null;
+                }
+
+                List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
+                results.AddRange(node.Children[0].ToPostFix());
+                results.AddRange(node.Children[1].ToPostFix());
+                results.Add(add);
+                for (int i = 2; i < node.Children.Count; i++)
+                {
+                    results.AddRange(node.Children[i].ToPostFix());
+                    results.Add(add);
+                }
+                return Generate(results.ToArray());
 
             }
         }
+
 
         /// <summary>
         /// Converts a series of multiplications, additions, or subtractions 
@@ -1932,11 +1931,17 @@ namespace AbMath.Calculator
 
         private void Assign(RPN.Node node, RPN.Node assign)
         {
+            if (node is null || assign is null)
+            {
+                return;
+            }
+
             if (node.isRoot)
             {
                 SetRoot(assign);
                 return;
             }
+
             node.Parent.Replace(node, assign);
         }
 

@@ -14,15 +14,15 @@ namespace AbMath.Calculator
             public Token Token;
             public Node Parent;
 
-            public List<Node> Children => children;
-            private List<Node> children;
+            public List<Node> Children => _children;
+            private List<Node> _children;
 
             private MD5 _md5;
             private static int counter = 0;
 
             public Node(Node[] children, Token token)
             {
-                this.children = new List<Node>();
+                this._children = new List<Node>();
                 AssignChildren(children);
                 this.ID = counter++;
                 Parent = null;
@@ -31,7 +31,7 @@ namespace AbMath.Calculator
 
             public Node(double number)
             {
-                children = new List<Node>(0);
+                _children = new List<Node>(0);
                 this.ID = counter++;
                 Parent = null;
                 Token = new RPN.Token(number);
@@ -39,11 +39,24 @@ namespace AbMath.Calculator
 
             public Node(Token token)
             {
-                children = new List<Node>(0);
+                _children = new List<Node>(0);
                 this.ID = counter++;
                 Parent = null;
                 Token = token;
             }
+
+            public Node this[int i]
+            {
+                get { return _children[i];  }
+                set { _children[i] = value; }
+            }
+
+            public Node this[int i, int j]
+            {
+                get { return _children[i].Children[j];}
+                set { _children[i]._children[j] = value; }
+            }
+
 
             /// <summary>
             /// Replaces in the tree the node with 
@@ -69,7 +82,7 @@ namespace AbMath.Calculator
                     if (Children[i].ID == identification)
                     {
                         node.Parent = this;
-                        children[i] = node;
+                        _children[i] = node;
                         return;
                     }
                 }
@@ -80,6 +93,45 @@ namespace AbMath.Calculator
                 {
                     Children[i].Replace(identification, node);
                 }
+            }
+
+            /// <summary>
+            /// If the current node is a number, 
+            /// replaces the current number and 
+            /// changes the ID of the node.
+            /// </summary>
+            /// <param name="number"></param>
+            public void Replace(double number)
+            {
+                if (!this.IsNumber())
+                {
+                    throw new InvalidOperationException();
+                }
+
+                this.ID = counter++;
+                this.Token.Value = number.ToString();
+            }
+
+            /// <summary>
+            /// Replaces the token of the current node 
+            /// and changes its number.
+            /// </summary>
+            /// <param name="token"></param>
+            public void Replace(RPN.Token token)
+            {
+                this.ID = counter++;
+                this.Token = token;
+            }
+
+            /// <summary>
+            /// Modifies the token value of the Node and 
+            /// changes the ID of the node. 
+            /// </summary>
+            /// <param name="token"></param>
+            public void Replace(string token)
+            {
+                this.ID = counter++;
+                this.Token.Value = token;
             }
 
             /// <summary>
@@ -109,7 +161,7 @@ namespace AbMath.Calculator
             public void Delete()
             {
                 Parent = null;
-                children.Clear();
+                _children.Clear();
             }
 
             public override string ToString()
@@ -129,10 +181,10 @@ namespace AbMath.Calculator
             public void AddChild(RPN.Node node)
             {
                 Spawn();
-                children.Add(node);
+                _children.Add(node);
                 node.Parent = this;
 
-                if (Token.Arguments < children.Count)
+                if (Token.Arguments < _children.Count)
                 {
                     Token.Arguments++;
                 }
@@ -141,18 +193,18 @@ namespace AbMath.Calculator
             public void AddChild(RPN.Node[] nodes)
             {
                 Spawn();
-                children.AddRange(nodes);
+                _children.AddRange(nodes);
                 validateChildren();
 
-                if (Token?.Arguments < children.Count)
+                if (Token?.Arguments < _children.Count)
                 {
-                    Token.Arguments = children.Count;
+                    Token.Arguments = _children.Count;
                 }
             }
 
             public void RemoveChild(RPN.Node node)
             {
-                children.Remove(node);
+                _children.Remove(node);
             }
 
             public bool ChildrenAreIdentical()
@@ -202,18 +254,18 @@ namespace AbMath.Calculator
 
             private void Spawn()
             {
-                if (children == null || children.Count == 0)
+                if (_children == null || _children.Count == 0)
                 {
-                    children = new List<Node>();
+                    _children = new List<Node>();
                 }
             }
 
             private void validateChildren()
             {
                 //Ensures that all children understand that the current node is their parent
-                for (int i = (children.Count - 1); i >= 0; i--)
+                for (int i = (_children.Count - 1); i >= 0; i--)
                 {
-                    children[i].Parent = this;
+                    _children[i].Parent = this;
                 }
             }
 
