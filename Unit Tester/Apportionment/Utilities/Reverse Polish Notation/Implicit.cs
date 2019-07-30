@@ -32,7 +32,7 @@ namespace AbMath.Tests
         public void LeftVariable()
         {
             RPN test = new RPN("x2").Compute();
-            Assert.AreEqual("x 2 *", test.Polish.Print());
+            Assert.AreEqual("2 x *", test.Polish.Print());
         }
 
         [Test]
@@ -74,7 +74,7 @@ namespace AbMath.Tests
         public void MultipleFunctions()
         {
             RPN test = new RPN("sin(x)cos(x)").Compute();
-            Assert.AreEqual("x sin x cos *", test.Polish.Print());
+            Assert.AreEqual("x cos x sin *", test.Polish.Print());
         }
 
         [Test]

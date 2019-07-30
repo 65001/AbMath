@@ -47,14 +47,20 @@ namespace AbMath.Calculator
 
             public Node this[int i]
             {
-                get { return _children[i];  }
-                set { _children[i] = value; }
+                get => _children[i];
+                set => _children[i] = value;
             }
 
             public Node this[int i, int j]
             {
-                get { return _children[i].Children[j];}
-                set { _children[i]._children[j] = value; }
+                get => _children[i]._children[j];
+                set => _children[i]._children[j] = value;
+            }
+
+            public Node this[int i, int j, int k]
+            {
+                get => _children[i]._children[j]._children[k];
+                set => _children[i]._children[j]._children[k] = value;
             }
 
 
@@ -79,7 +85,7 @@ namespace AbMath.Calculator
             {
                 for (int i = 0; i < Children.Count; i++)
                 {
-                    if (Children[i].ID == identification)
+                    if (_children[i].ID == identification)
                     {
                         node.Parent = this;
                         _children[i] = node;

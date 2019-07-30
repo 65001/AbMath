@@ -45,7 +45,7 @@ namespace AbMath.Tests
         public void MultiTermMultiply()
         {
             RPN test = new RPN("(30.1)2.5(278)").Compute();
-            Assert.AreEqual("278 30.1 2.5 * *", test.Polish.Print());
+            Assert.AreEqual("30.1 2.5 * 278 *", test.Polish.Print());
         }
 
         [Test]
@@ -136,7 +136,7 @@ namespace AbMath.Tests
         public void VariableChainMultiplication()
         {
             RPN test = new RPN("x2sin(x) + x3sin(x)").Compute();
-            Assert.AreEqual("x 2 * x sin * x 3 * x sin * +", test.Polish.Print());
+            Assert.AreEqual("2 x * x sin * 3 x * x sin * +", test.Polish.Print());
         }
 
         [Test]
@@ -171,7 +171,7 @@ namespace AbMath.Tests
         public void VariableContains()
         {
             RPN test = new RPN("x * 2").Compute();
-            Assert.AreEqual("x 2 *", test.Polish.Print());
+            Assert.AreEqual("2 x *", test.Polish.Print());
             Assert.AreEqual(true, test.Data.ContainsVariables);
         }
 
@@ -179,7 +179,7 @@ namespace AbMath.Tests
         public void DoubleTokenize()
         {
             RPN test = new RPN("x * 2").Compute();
-            Assert.AreEqual("x 2 *", test.Polish.Print());
+            Assert.AreEqual("2 x *", test.Polish.Print());
             Assert.AreEqual(true, test.Data.ContainsVariables);
 
             test.SetEquation("2x + 2").Compute();

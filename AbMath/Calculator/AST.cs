@@ -77,8 +77,7 @@ namespace AbMath.Calculator
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            Normalize();           
-
+            Normalize();
             int pass = 0;
             string hash = string.Empty;
 
@@ -90,6 +89,8 @@ namespace AbMath.Calculator
                 pass++;
             }
 
+            Normalize();
+
             sw.Stop();
             _data.AddTimeRecord("AST Simplify", sw);
             return this;
@@ -99,15 +100,21 @@ namespace AbMath.Calculator
         {
             //This should in theory normalize the tree
             //so that exponents etc come first etc
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             _rpn.Data.AddFunction("internal_product", new RPN.Function());
             _rpn.Data.AddFunction("internal_sum", new RPN.Function());
 
             expand(Root);
             InternalSwap(Root);
+            //Optimize Step?
             compress(Root);
 
             _rpn.Data.RemoveFunction("internal_product");
             _rpn.Data.RemoveFunction("internal_sum");
+            sw.Stop();
+            this._rpn.Data.AddTimeRecord("AST.Normalize", sw);
         }
 
         private void Simplify(RPN.Node node)
@@ -617,6 +624,18 @@ namespace AbMath.Calculator
                     node.Replace(node[0, 1], new RPN.Node( Math.Abs( node[0,1].GetNumber() ) ) );
                     node.Replace(node[1], new RPN.Node( Math.Abs( node[1].GetNumber() ) ));
                 }
+                else if (node[0].IsNumber(-1) && node[1].IsNumber())
+                {
+                    Write("\t-1 * c -> -c");
+                    node.Replace(node[0], new RPN.Node(1));
+                    node.Replace(node[1], new RPN.Node(node[1].GetNumber() * -1) );
+                }
+                else if (node[0].IsNumber() && node[1].IsNumber(-1))
+                {
+                    Write("\tc * -1 -> -c");
+                    node.Replace(node[1], new RPN.Node(1));
+                    node.Replace(node[0], new RPN.Node(node[0].GetNumber() * -1));
+                }
             }
             else if (mode == SimplificationMode.Swap)
             {
@@ -734,6 +753,9 @@ namespace AbMath.Calculator
 
         private void Swap(RPN.Node node)
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             //Addition operator
             if (node.IsAddition())
             {
@@ -768,13 +790,18 @@ namespace AbMath.Calculator
                 }
             }
 
+            sw.Stop();
+            this._rpn.Data.AddTimeRecord("AST.Swap", sw);
+
             //Product Swapping
 
+            sw.Restart();
             //Propagate down the tree
             for (int i = (node.Children.Count - 1); i >= 0; i--)
             {
                 Swap(node.Children[i]);
             }
+            this._rpn.Data.AddTimeRecord("AST.Swap Propagate", sw);
         }
 
         private void InternalSwap(RPN.Node node)
@@ -810,7 +837,7 @@ namespace AbMath.Calculator
                             Write($"\tConstants and numbers always yield: Swap {i - 1} and {i}. {node.ToInfix()}");
                         }
                         //Single variables give way to other expressions that are not constants and numbers 
-                        else if (node.Children[i - 1].IsVariable() && node.Children[i].IsMultiplication() && !node.Children[i].IsSolveable())
+                        else if (node.Children[i - 1].IsVariable() && (node.Children[i].IsMultiplication() || node.Children[i].IsFunction("internal_product") ) && !node.Children[i].IsSolveable())
                         {
                             node.Children.Swap(i - 1, i);
                             Write($"\tSingle variables yields to generic expression: Swap {i - 1} and {i}. {node.ToInfix()}");
@@ -822,13 +849,13 @@ namespace AbMath.Calculator
                             Write($"\tSingle variables yields to exponent: Swap {i - 1} and {i}. {node.ToInfix()}");
                         }
                         //Straight multiplication gives way to multiplication with an exponent
-                        else if (node.Children[i - 1].IsMultiplication() && !node.Children[i - 1].Children.Any(n => n.IsExponent()) && node.Children[i].IsMultiplication() && node.Children[i].Children.Any(n => n.IsExponent()))
+                        else if ( (node.Children[i - 1].IsMultiplication() || node.Children[i].IsFunction("internal_product")) && !node.Children[i - 1].Children.Any(n => n.IsExponent()) && (node.Children[i].IsMultiplication() || node.Children[i].IsFunction("internal_product")) && node.Children[i].Children.Any(n => n.IsExponent()))
                         {
                             node.Children.Swap(i - 1, i);
                             Write($"\tStraight multiplication gives way to multiplication with an exponent: Swap {i - 1} and {i}. {node.ToInfix()}");
                         }
                         //A straight exponent should give way to a multiplication with an exponent if...
-                        else if (node.Children[i - 1].IsExponent() && node.Children[i].IsMultiplication() && node.Children[i].Children[0].IsExponent())
+                        else if (node.Children[i - 1].IsExponent() && ( node.Children[i].IsMultiplication() || node.Children[i].IsFunction("internal_product")) && node.Children[i].Children[0].IsExponent())
                         {
                             //its degree is higher or equal
                             if (node.Children[i - 1].Children[0].IsNumberOrConstant() && node.Children[i].Children[0].Children[0].IsNumberOrConstant() )
@@ -841,7 +868,7 @@ namespace AbMath.Calculator
                             }
                             //TODO: its degree is an expression and the straight exponent's is not an expression 
                         }
-                        else if (node.Children[i].IsMultiplication() && node.Children[i].Children[1].IsExponent() && !node.Children[i].Children[0].IsExponent())
+                        else if ( (node.Children[i].IsMultiplication() || node.Children[i].IsFunction("internal_product")) && node.Children[i].Children[1].IsExponent() && !node.Children[i].Children[0].IsExponent())
                         {
                             node.Children[i].Children.Swap(0, 1);
                             Write("\tSwapping exponent with nonexponent");
@@ -853,6 +880,58 @@ namespace AbMath.Calculator
             else if (node.IsFunction("internal_product") || node.IsFunction("product"))
             {
                 node.Children.Reverse();
+                string hash = string.Empty;
+                while (node.GetHash() != hash)
+                {
+                    hash = node.GetHash();
+                    for (int i = 0; i < node.Children.Count; i++)
+                    {
+                        if (i - 1 < 0)
+                        {
+                            continue;
+                        }
+
+                        //Numbers and constants take way
+                        if (!node.Children[i - 1].IsNumberOrConstant() && node.Children[i].IsNumberOrConstant())
+                        {
+                            node.Children.Swap(i - 1, i);
+                            Write("\tNumbers and constants take way.");
+                        }
+                        else if (node[i - 1].Matches(node.Children[i]))
+                        {
+
+                            Write("\tIP: f(x) * f(x) -> f(x) ^ 2");
+
+                            RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2),  node[i] }, new RPN.Token("^", 2, RPN.Type.Operator));
+                            node.Replace(node[i], exponent);
+                            node.Replace(node[i - 1], new RPN.Node(1));
+                        }
+                        //Sort functions alphabetically
+                        else if (node[i - 1].IsFunction() && node[i].IsFunction() && !node[i - 1].IsConstant() && !node[i].IsConstant())
+                        {
+                            StringComparison foo = StringComparison.CurrentCulture;
+
+                            int comparison = string.Compare(node.Children[i].Token.Value, node.Children[i - 1].Token.Value
+                                , foo);
+                            if (comparison == -1)
+                            {
+                                node.Children.Swap(i - 1, i);
+                            }
+                        }
+                        else if ( !(node.Children[i - 1].IsExponent() || node.Children[i - 1].IsNumberOrConstant() || node.Children[i - 1].IsSolveable()) && node.Children[i].IsExponent())
+                        {
+                            Write("\tExponents take way");
+                            node.Children.Swap(i - 1, i);
+                        }
+                        else if (node[i - 1].IsVariable() && node[i].IsExponent())
+                        {
+                            Write("\tVariable yields to Exponent");
+                            node.Children.Swap(i - 1, i);
+                        }
+                        //TODO: Exponents and other expressions right of way
+                    }
+                }
+                Write(node.Print());
             }
 
             //Propagate down the tree
@@ -890,7 +969,7 @@ namespace AbMath.Calculator
 
             _data.AddTimeRecord("AST MetaFunctions", SW);
 
-            Simplify();
+
 
             return this;
         }
@@ -905,7 +984,7 @@ namespace AbMath.Calculator
 
             if (node.IsFunction() && _data.MetaFunctions.Contains(node.Token.Value))
             {
-                if (node.Token.Value == "integrate")
+                if (node.IsFunction("integrate"))
                 {
                     double answer = double.NaN;
                     if (node.Children.Count == 5)
@@ -930,7 +1009,7 @@ namespace AbMath.Calculator
                     RPN.Node temp = new RPN.Node( answer);
                     Assign(node, temp);
                 }
-                else if (node.Token.Value == "table")
+                else if (node.IsFunction("table"))
                 {
                     string table;
                     if (node.Children.Count == 5)
@@ -955,24 +1034,19 @@ namespace AbMath.Calculator
                     stdout(table);
                     SetRoot(new RPN.Node( double.NaN));
                 }
-                else if (node.Token.Value == "derivative")
+                else if (node.IsFunction("derivative"))
                 {
                     GenerateDerivativeAndReplace(node.Children[1]);
                     Derive(node.Children[0]);
                     Assign(node, node.Children[1]);
                     node.Delete();
-                    //Solve(Root);
-                    //TODO: Remove solve
-                    //Tests that fail afterwards :
-                    //Constant Multiplications
-                    //Power Chain Rule
-                    //Sec
-                    //Sqrt
                 }
                 else if (node.IsFunction("solve"))
                 {
                     Algebra(node);
                 }
+
+                Simplify();
             }
         }
 
@@ -1026,760 +1100,6 @@ namespace AbMath.Calculator
             //and given a big enough expression the current recursion 
             //is more likley to fail compared to an itterative approach.
 
-            try
-            {
-                if (node.Token.Value == "derive")
-                {
-                    string v = variable.ToInfix();
-
-                    if (node.Children[0].IsAddition() || node.Children[0].IsSubtraction())
-                    {
-                        if (debug)
-                        {
-                            string f_x = node.Children[0].Children[0].ToInfix();
-                            string g_x = node.Children[0].Children[1].ToInfix();
-                            Write($"\td/d{v}[ {f_x} ± {g_x} ] -> d/d{v}( {f_x} ) ± d/d{v}( {g_x} )");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ f(x) ± g(x) ] -> d/dx( f(x) ) ± d/dx( g(x) )");
-                        }
-
-                        GenerateDerivativeAndReplace(node.Children[0].Children[0]);
-                        GenerateDerivativeAndReplace(node.Children[0].Children[1]);
-                        //Recurse explicitly down these branches
-                        Derive(node.Children[0].Children[0], variable);
-                        Derive(node.Children[0].Children[1], variable);
-                        //Delete myself from the tree
-                        node.Remove();
-                    }
-                    else if (node.Children[0].IsNumber() || node.Children[0].IsConstant() || (node.Children[0].IsVariable() && node.Children[0].Token.Value != variable.Token.Value) || node.IsSolveable())
-                    {
-                        if (debug)
-                        {
-                            Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 0");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ c ] -> 0");
-                        }
-                        node.Children[0].Parent = null;
-                        RPN.Node temp = new RPN.Node( 0);
-                        //Remove myself from the tree
-                        node.Remove(temp);
-                    }
-                    else if (node.Children[0].IsVariable() && node.Children[0].Token.Value == variable.Token.Value)
-                    {
-                        if (debug)
-                        {
-                            Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 1");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ x ] -> 1");
-                        }
-                        node.Children[0].Parent = null;
-                        RPN.Node temp = new RPN.Node( 1);
-                        //Remove myself from the tree
-                        node.Remove(temp);
-                    }
-                    else if (node.Children[0].IsMultiplication())
-                    {
-                        //Both numbers
-                        if ((node.Children[0].Children[0].IsNumber() || node.Children[0].Children[0].IsConstant()) && (node.Children[0].Children[1].IsNumber() || node.Children[0].Children[1].IsConstant()))
-                        {
-                            if (debug)
-                            {
-                                Write($"\td/d{v}[ {node.Children[0].Children[0].ToInfix()} * {node.Children[0].Children[1].ToInfix()} ] -> 0");
-                            }
-                            else
-                            {
-                                Write("\td/dx[ c_0 * c_1 ] -> 0");
-                            }
-                            RPN.Node temp = new RPN.Node( 0);
-                            //Remove myself from the tree
-                            node.Remove(temp);
-                        }
-                        //Constant multiplication - 0
-                        else if ((node.Children[0].Children[0].IsNumber() || node.Children[0].Children[0].IsConstant()) && node.Children[0].Children[1].IsExpression())
-                        {
-                            if (debug)
-                            {
-                                Write($"\td/d{v}[ {node.Children[0].Children[1].ToInfix()} * {node.Children[0].Children[0].ToInfix()}] -> d/d{v}[ {node.Children[0].Children[1].ToInfix()} ] * {node.Children[0].Children[0].ToInfix()}");
-                            }
-                            else
-                            {
-                                Write("\td/dx[ f(x) * c] -> d/dx[ f(x) ] * c");
-                            }
-                            GenerateDerivativeAndReplace(node.Children[0].Children[1]);
-                            //Recurse explicitly down these branches
-                            Derive(node.Children[0].Children[1], variable);
-                            //Remove myself from the tree
-                            node.Remove();
-                        }
-                        //Constant multiplication - 1
-                        else if ((node.Children[0].Children[1].IsNumber() || node.Children[0].Children[1].IsConstant()))
-                        {
-                            if (debug)
-                            {
-                                string constant = node.Children[0].Children[1].ToInfix();
-                                string expr = node.Children[0].Children[0].ToInfix();
-                                Write($"\td/d{v}[ {constant} * {expr}] -> {constant} * d/d{v}[ {expr} ]");
-                            }
-                            else
-                            {
-                                Write("\td/dx[ c * f(x)] -> c * d/dx[ f(x) ]");
-                            }
-                            GenerateDerivativeAndReplace(node.Children[0].Children[0]);
-                            //Recurse explicitly down these branches
-                            Derive(node.Children[0].Children[0], variable);
-
-                            //Remove myself from the tree
-                            node.Remove();
-                        }
-                        //Product Rule [Two expressions] 
-                        else
-                        {
-                            RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
-
-                            RPN.Node fNode = node.Children[0].Children[0];
-                            RPN.Node gNode = node.Children[0].Children[1];
-
-                            if (debug)
-                            {
-                                string f = fNode.ToInfix();
-                                string g = gNode.ToInfix();
-                                Write($"\td/d{v}[ {f} * {g} ] -> {f} * d/d{v}[ {g} ] + d/d{v}[ {f} ] * {g}");
-                            }
-                            else
-                            {
-                                Write($"\td/dx[ f(x) * g(x) ] -> f(x) * d/dx[ g(x) ] + d/dx[ f(x) ] * g(x)");
-                            }
-
-                            RPN.Node fDerivative = new RPN.Node( new[] { Clone(fNode) }, _derive);
-                            RPN.Node gDerivative = new RPN.Node( new[] { Clone(gNode) }, _derive);
-
-                            RPN.Node multiply1 = new RPN.Node( new[] { gDerivative, fNode }, multiply);
-                            RPN.Node multiply2 = new RPN.Node( new[] { fDerivative, gNode }, multiply);
-
-                            RPN.Node add = new RPN.Node( new[] { multiply1, multiply2 }, new RPN.Token("+", 2, RPN.Type.Operator));
-
-                            //Remove myself from the tree
-                            node.Remove(add);
-
-                            //Explicit recursion
-                            Derive(fDerivative, variable);
-                            Derive(gDerivative, variable);
-                        }
-                    }
-                    else if (node.Children[0].IsDivision())
-                    {
-                        //Quotient Rule
-                        RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
-
-                        RPN.Node numerator = node.Children[0].Children[1];
-                        RPN.Node denominator = node.Children[0].Children[0];
-
-                        RPN.Node numeratorDerivative = new RPN.Node( new[] { Clone(numerator) }, _derive);
-                        RPN.Node denominatorDerivative = new RPN.Node( new[] { Clone(denominator) }, _derive);
-
-                        RPN.Node multiplicationOne = new RPN.Node( new[] { numeratorDerivative, denominator }, multiply);
-                        RPN.Node multiplicationTwo = new RPN.Node( new[] { denominatorDerivative, numerator }, multiply);
-
-                        RPN.Node subtraction = new RPN.Node( new[] { multiplicationTwo, multiplicationOne }, new RPN.Token("-", 2, RPN.Type.Operator));
-
-                        RPN.Node denominatorSquared = new RPN.Node( new[] { new RPN.Node( 2), Clone(denominator) }, new RPN.Token("^", 2, RPN.Type.Operator));
-
-                        if (debug)
-                        {
-                            string n = numerator.ToInfix();
-                            string d = denominator.ToInfix();
-                            Write($"\td/d{v}[ {n} / {d} ] -> [ d/d{v}( {n} ) * {d} - {d} * d/d{v}( {n} ) ]/{d}^2");
-                        }
-                        else
-                        {
-                            Write($"\td/dx[ f(x) / g(x) ] -> [ d/dx( f(x) ) * g(x) - g(x) * d/dx( f(x) ) ]/g(x)^2");
-                        }
-
-                        //Replace in tree
-                        node.Children[0].Replace(numerator, subtraction);
-                        node.Children[0].Replace(denominator, denominatorSquared);
-                        //Delete myself from the tree
-                        node.Remove();
-
-                        //Explicitly recurse down these branches
-                        Derive(subtraction, variable);
-                    }
-                    //Exponents! 
-                    else if (node.Children[0].IsExponent())
-                    {
-                        RPN.Node baseNode = node.Children[0].Children[1];
-                        RPN.Node power = node.Children[0].Children[0];
-                        if ((baseNode.IsVariable() || baseNode.IsFunction() || baseNode.IsExpression()) && (power.IsConstant() || power.IsNumber()) && baseNode.Token.Value == variable.Token.Value)
-                        {
-                            if (debug)
-                            {
-                                string b = baseNode.ToInfix();
-                                string p = power.ToInfix();
-                                Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1)");
-                            }
-                            else
-                            {
-                                Write("\td/dx[ x^n ] -> n * x^(n - 1)");
-                            }
-
-                            RPN.Node powerClone = Clone(power);
-                            RPN.Node exponent;
-
-                            if (!powerClone.Token.IsNumber())
-                            {
-                                //1
-                                RPN.Node one = new RPN.Node( 1);
-
-                                //(n - 1)
-                                RPN.Node subtraction = new RPN.Node( new[] { one, powerClone }, new RPN.Token("-", 2, RPN.Type.Operator));
-
-                                //x^(n - 1) 
-                                exponent = new RPN.Node( new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
-                            }
-                            else
-                            {
-                                exponent = new RPN.Node( new RPN.Node[] { new RPN.Node( powerClone.GetNumber() - 1 ), baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
-                            }
-
-                            RPN.Node multiplication = new RPN.Node( new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                            node.Replace(node.Children[0], multiplication);
-
-                            //Delete self from the tree
-                            node.Remove();
-                        }
-                        else if ( (baseNode.IsFunction() || baseNode.IsExpression()) && (power.IsConstant() || power.IsNumber()))
-                        {
-                            if (debug)
-                            {
-                                string b = baseNode.ToInfix();
-                                string p = power.ToInfix();
-                                Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1) * d/d{v}[ {b} ]");
-                            }
-                            else
-                            {
-                                Write("\td/dx[ f(x)^n ] -> n * f(x)^(n - 1) * d/dx[ f(x) ]");
-                            }
-
-                            RPN.Node bodyDerive = new RPN.Node( new[] { Clone(baseNode) }, _derive);
-
-                            RPN.Node powerClone = Clone(power);
-
-                            RPN.Node subtraction;
-                            if (power.IsConstant())
-                            {
-                                RPN.Node one = new RPN.Node(1);
-                                subtraction = new RPN.Node(new[] {one, powerClone}, new RPN.Token("-", 2, RPN.Type.Operator));
-                            }
-                            else
-                            {
-                                subtraction = new RPN.Node(power.GetNumber() - 1);
-                            }
-
-                            //Replace n with (n - 1) 
-                            RPN.Node exponent = new RPN.Node( new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
-
-                            RPN.Node temp = new RPN.Node( new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-                            RPN.Node multiply = new RPN.Node( new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                            node.Replace(node.Children[0], multiply);
-
-                            //Delete self from the tree
-                            node.Remove();
-
-                            Derive(bodyDerive, variable);
-                        }
-                        else if (baseNode.IsConstant("e"))
-                        {
-                            if (debug)
-                            {
-                                string p = power.ToInfix();
-                                Write($"\td/d{v}[ e^{p} ] -> d/d{v}[ {p} ] * e^{p}");
-                            }
-                            else
-                            {
-                                Write("\td/dx[ e^g(x) ] -> d/dx[ g(x) ] * e^g(x)");
-                            }
-                            RPN.Node exponent = baseNode.Parent;
-                            RPN.Node powerDerivative = new RPN.Node( new[] { Clone(power) }, _derive);
-                            RPN.Node multiply = new RPN.Node( new[] { powerDerivative, exponent }, new RPN.Token("*", 2, RPN.Type.Operator));
-                            node.Replace(power.Parent, multiply);
-                            //Delete self from the tree
-                            node.Remove();
-
-                            Derive(powerDerivative, variable);
-                        }
-                        else if ((baseNode.IsConstant() || baseNode.IsNumber()) && (power.IsExpression() || power.IsVariable()))
-                        {
-                            if (debug)
-                            {
-                                string b = baseNode.ToInfix();
-                                string p = power.ToInfix();
-                                Write($"\td/d{v}[ {b}^{p} ] -> ln({b}) * {b}^{p} * d/d{v}[ {p} ]");
-                            }
-                            else
-                            {
-                                Write($"\td/dx[ b^g(x) ] -> ln(b) * b^g(x) * d/dx[ g(x) ]");
-                            }
-
-                            RPN.Node exponent = baseNode.Parent;
-                            RPN.Node ln = new RPN.Node( new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
-                            RPN.Node powerDerivative = new RPN.Node( new[] { Clone(power) }, _derive);
-                            RPN.Node temp = new RPN.Node( new[] { exponent, ln }, new RPN.Token("*", 2, RPN.Type.Operator));
-                            RPN.Node multiply = new RPN.Node( new[] { temp, powerDerivative }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                            node.Replace(power.Parent, multiply);
-                            //Delete self from the tree
-                            node.Remove();
-
-                            Derive(powerDerivative, variable);
-                        }
-                        else
-                        {
-                            if (debug)
-                            {
-                                string b = baseNode.ToInfix();
-                                string p = power.ToInfix();
-                                Write($"\td/d{v}[ {b}^{p} ] -> {b}^{p} * d/d{v}[ {b} * ln( {p} ) ]");
-                            }
-                            else
-                            {
-                                Write("\td/dx[ f(x)^g(x) ] -> f(x)^g(x) * d/dx[ g(x) * ln( f(x) ) ]");
-                            }
-                            RPN.Node exponent = Clone(baseNode.Parent);
-                            RPN.Node ln = new RPN.Node( new[] { Clone( baseNode ) }, new RPN.Token("ln", 1, RPN.Type.Function));
-                            RPN.Node temp = new RPN.Node( new[] { Clone(power), ln }, new RPN.Token("*", 2, RPN.Type.Operator));
-                            RPN.Node derive = new RPN.Node( new[] { temp }, _derive);
-                            RPN.Node multiply = new RPN.Node( new[] { exponent, derive }, new RPN.Token("*",2,RPN.Type.Operator));
-
-                            node.Replace(power.Parent, multiply);
-                            //Delete self from the tree
-                            node.Remove();
-
-                            Derive(derive, variable);
-                        }
-                    }
-                    #region Trig
-                    else if (node.Children[0].IsFunction("sin"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ sin({expr}) ] -> cos({expr}) * d/d{v}[ {expr} ]");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ sin(g(x)) ] -> cos(g(x)) * d/dx[ g(x) ]");
-                        }
-                        RPN.Node body = node.Children[0].Children[0];
-
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node cos = new RPN.Node( new[] { body }, new RPN.Token("cos", 1, RPN.Type.Function));
-
-                        RPN.Node multiply = new RPN.Node( new[] { cos, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], multiply);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("cos"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ cos({expr}) ] -> -sin({expr}) * d/d{v}[ {expr} ]");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ cos(g(x)) ] -> -sin(g(x)) * d/dx[ g(x) ]");
-                        }
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node sin = new RPN.Node( new[] { body }, new RPN.Token("sin", 1, RPN.Type.Function));
-                        RPN.Node negativeOneMultiply = new RPN.Node( new[] { new RPN.Node( -1), sin }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node multiply = new RPN.Node( new[] { negativeOneMultiply, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], multiply);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("tan"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ tan({expr}) ] -> sec({expr})^2 * d/d{v}[ {expr} ]");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ tan(g(x)) ] -> sec(g(x))^2 * d/dx[ g(x) ]");
-                        }
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node sec = new RPN.Node( new[] { body }, new RPN.Token("sec", 1, RPN.Type.Function));
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), sec }, new RPN.Token("^", 2, RPN.Type.Operator));
-
-                        RPN.Node multiply = new RPN.Node( new[] { exponent, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        node.Replace(node.Children[0], multiply);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("sec"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ sec({expr}) ] -> tan({expr}) * sec({expr}) * d/d{v}[ {expr} ]");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ sec(g(x)) ] -> tan(g(x)) * sec(g(x)) * d/dx[ g(x) ]");
-                        }
-                        RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
-
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node sec = node.Children[0];
-                        RPN.Node tan = new RPN.Node( new[] { Clone(body) }, new RPN.Token("tan", 1, RPN.Type.Function));
-                        RPN.Node temp = new RPN.Node( new[] { sec, tan }, multiplyToken);
-                        RPN.Node multiply = new RPN.Node( new[] { bodyDerive, temp }, multiplyToken);
-
-                        node.Replace(node.Children[0], multiply);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("csc"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ csc({expr}) ] -> - cot({expr}) * csc({expr}) * d/d{v}[ {expr} ] ");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ csc(g(x)) ] -> - cot(g(x)) * csc(g(x)) * d/dx[ g(x) ] ");
-                        }
-                        RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
-
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-                        RPN.Node csc = node.Children[0];
-                        RPN.Node cot = new RPN.Node( new[] { Clone(body) }, new RPN.Token("cot", 1, RPN.Type.Function));
-
-                        RPN.Node temp = new RPN.Node( new[] { csc, cot }, multiplyToken);
-                        RPN.Node multiply = new RPN.Node( new[] { temp, bodyDerive }, multiplyToken);
-
-                        node.Replace(node.Children[0], new RPN.Node( new[] { new RPN.Node( -1), multiply }, multiplyToken));
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("cot"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ cot({expr}) ] -> -csc({expr})^2 * d/d{v}[ {expr} ]");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ cot(g(x)) ] -> -csc(g(x))^2 * d/dx[ g(x) ]");
-                        }
-
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-                        RPN.Node csc = new RPN.Node( new[] { body }, new RPN.Token("csc", 1, RPN.Type.Function));
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), csc }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node temp = new RPN.Node( new[] { new RPN.Node( -1), exponent }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node multiply = new RPN.Node( new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], multiply);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("arcsin"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ arcsin({expr}) ] -> d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ arcsin(g(x)) ] -> d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
-                        }
-                        RPN.Node body = Clone(node.Children[0].Children[0]);
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node subtraction = new RPN.Node( new[] { exponent, new RPN.Node( 1) }, new RPN.Token("-", 2, RPN.Type.Operator));
-                        RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
-                        RPN.Node division = new RPN.Node( new[] { sqrt, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], division);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("arccos"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ arccos({expr}) ] -> -1 * d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ arccos(g(x)) ] -> -1 * d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
-                        }
-                        RPN.Node body = Clone(node.Children[0].Children[0]);
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node subtraction = new RPN.Node( new[] { exponent, new RPN.Node( 1) }, new RPN.Token("-", 2, RPN.Type.Operator));
-                        RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
-                        RPN.Node division = new RPN.Node( new[] { sqrt, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        RPN.Node multiplication = new RPN.Node( new[] { new RPN.Node( -1), division }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], multiplication);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("arctan"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ arctan({expr}) ] -> d/d{v}[ {expr} ]/(1 + {expr}^2)");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ arctan(g(x)) ] -> d/dx[ g(x) ]/(1 + g(x)^2)");
-                        }
-                        RPN.Node body = Clone(node.Children[0].Children[0]);
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node add = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("+", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node( new[] { add, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], division);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("arccot"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ arccot({expr}) ] -> -1 * d/d{v}[ {expr} ]/(1 + {expr}^2)");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ arccot(g(x)) ] -> -1 * d/dx[ g(x) ]/(1 + g(x)^2)");
-                        }
-                        RPN.Node body = Clone(node.Children[0].Children[0]);
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node add = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("+", 2, RPN.Type.Operator));
-                        RPN.Node multiplication = new RPN.Node( new[] { new RPN.Node( -1) , bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node( new[] { add, multiplication }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], division);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("arcsec"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ arcsec({expr}) ] -> d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ arcsec(g(x)) ] -> d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
-                        }
-                        RPN.Node body = Clone(node.Children[0].Children[0]);
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node subtraction = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("-", 2, RPN.Type.Operator));
-                        RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
-                        RPN.Node denominator = new RPN.Node( new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
-
-                        RPN.Node division = new RPN.Node( new[] { denominator, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], division);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsFunction("arccsc"))
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ arccsc({expr}) ] -> -1 * d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ arccsc(g(x)) ] -> -1 * d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
-                        }
-                        RPN.Node body = Clone(node.Children[0].Children[0]);
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node subtraction = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("-", 2, RPN.Type.Operator));
-                        RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
-                        RPN.Node denominator = new RPN.Node( new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node multiplication = new RPN.Node( new[] { new RPN.Node( -1), bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node( new[] { denominator, multiplication }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], division);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    #endregion
-                    else if (node.Children[0].IsSqrt())
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\tsqrt({expr}) -> {expr}^0.5");
-                        }
-                        else
-                        {
-                            Write("\tsqrt(g(x)) -> g(x)^0.5");
-                        }
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( .5), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        node.Replace(node.Children[0], exponent);
-                        Derive(node, variable);
-                    }
-                    else if (node.Children[0].IsLn())
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\td/d{v}[ ln({expr}) ] -> d/d{v}[ {expr} ]/{expr}");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ ln(g(x)) ] -> d/dx[ g(x) ]/g(x)");
-                        }
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-                        RPN.Node division = new RPN.Node( new[] { body, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], division);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsLog())
-                    {
-                        RPN.Token ln = new RPN.Token("ln", 1, RPN.Type.Function);
-
-                        RPN.Node power = node.Children[0].Children[1];
-                        RPN.Node body = node.Children[0].Children[0];
-
-                        if (debug)
-                        {
-                            string b = body.ToInfix();
-                            string p = power.ToInfix();
-                            Write($"\td/d{v}[ log({b},{p}) ] -> d/d{v}[ {p} ]/({p} * ln({b}))");
-                        }
-                        else
-                        {
-                            Write("\td/dx[ log(b,g(x)) ] -> d/dx[ g(x) ]/(g(x) * ln(b))");
-                        }
-
-                        RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
-                        RPN.Node multiply = new RPN.Node( new[] { body, new RPN.Node( new[] { power }, ln) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node( new[] { multiply, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Replace(node.Children[0], division);
-                        //Delete self from the tree
-                        node.Remove();
-                        //Chain Rule
-                        Derive(bodyDerive, variable);
-                    }
-                    else if (node.Children[0].IsAbs())
-                    {
-                        if (debug)
-                        {
-                            string expr = node.Children[0].Children[0].ToInfix();
-                            Write($"\tabs({expr}) -> sqrt( {expr}^2 )");
-                        }
-                        else
-                        {
-                            Write("\tabs(g(x)) -> sqrt( g(x)^2 )");
-                        }
-
-                        RPN.Node body = node.Children[0].Children[0];
-                        RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node sqrt = new RPN.Node( new[] { exponent }, new RPN.Token("sqrt", 1, RPN.Type.Function));
-
-                        node.Replace(node.Children[0], sqrt);
-                        Derive(node, variable);
-                    }
-                    else if (node.Children[0].IsFunction("sum"))
-                    {
-                        Write("\tExploding sum");
-                        explode(node.Children[0]);
-                        Derive(node, variable);
-                    }
-                    else if (node.Children[0].IsFunction("avg"))
-                    {
-                        Write("\tExploding avg");
-                        explode(node.Children[0]);
-                        Derive(node, variable);
-                    }
-                    else
-                    {
-                        throw new NotImplementedException($"Derivative of {node.Children[0].ToInfix()} not known at this time.");
-                    }
-                }
-            }
-            catch(IndexOutOfRangeException ex)
-            {
-                throw new InvalidOperationException("Invalid node child access violation", ex);
-            }
 
             try
             {
@@ -1789,9 +1109,759 @@ namespace AbMath.Calculator
                     Derive(node.Children[i], variable);
                 }
             }
-            catch(IndexOutOfRangeException ex)
+            catch (IndexOutOfRangeException ex)
             {
-                throw new InvalidOperationException("Invalid node access propogation violation", ex);
+                throw new InvalidOperationException("Invalid node access prorogation violation", ex);
+            }
+
+            if (node.Token.Value != "derive")
+            {
+                return;
+            }
+
+            string v = variable.ToInfix();
+
+            if (node.Children[0].IsAddition() || node.Children[0].IsSubtraction())
+            {
+                if (debug)
+                {
+                    string f_x = node.Children[0].Children[0].ToInfix();
+                    string g_x = node.Children[0].Children[1].ToInfix();
+                    Write($"\td/d{v}[ {f_x} ± {g_x} ] -> d/d{v}( {f_x} ) ± d/d{v}( {g_x} )");
+                }
+                else
+                {
+                    Write("\td/dx[ f(x) ± g(x) ] -> d/dx( f(x) ) ± d/dx( g(x) )");
+                }
+
+                GenerateDerivativeAndReplace(node.Children[0].Children[0]);
+                GenerateDerivativeAndReplace(node.Children[0].Children[1]);
+                //Recurse explicitly down these branches
+                Derive(node.Children[0].Children[0], variable);
+                Derive(node.Children[0].Children[1], variable);
+                //Delete myself from the tree
+                node.Remove();
+            }
+            else if (node.Children[0].IsNumber() || node.Children[0].IsConstant() || (node.Children[0].IsVariable() && node.Children[0].Token.Value != variable.Token.Value) || node.IsSolveable())
+            {
+                if (debug)
+                {
+                    Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 0");
+                }
+                else
+                {
+                    Write("\td/dx[ c ] -> 0");
+                }
+                node.Children[0].Parent = null;
+                RPN.Node temp = new RPN.Node( 0);
+                //Remove myself from the tree
+                node.Remove(temp);
+            }
+            else if (node.Children[0].IsVariable() && node.Children[0].Token.Value == variable.Token.Value)
+            {
+                if (debug)
+                {
+                    Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 1");
+                }
+                else
+                {
+                    Write("\td/dx[ x ] -> 1");
+                }
+                node.Children[0].Parent = null;
+                RPN.Node temp = new RPN.Node( 1);
+                //Remove myself from the tree
+                node.Remove(temp);
+            }
+            else if (node.Children[0].IsMultiplication())
+            {
+                //Both numbers
+                if (node.Children[0].Children[0].IsNumberOrConstant()  && node.Children[0].Children[1].IsNumberOrConstant())
+                {
+                    if (debug)
+                    {
+                        Write($"\td/d{v}[ {node.Children[0].Children[0].ToInfix()} * {node.Children[0].Children[1].ToInfix()} ] -> 0");
+                    }
+                    else
+                    {
+                        Write("\td/dx[ c_0 * c_1 ] -> 0");
+                    }
+                    RPN.Node temp = new RPN.Node( 0);
+                    //Remove myself from the tree
+                    node.Remove(temp);
+                }
+                //Constant multiplication - 0
+                else if (node.Children[0].Children[0].IsNumberOrConstant() && node.Children[0].Children[1].IsExpression())
+                {
+                    if (debug)
+                    {
+                        Write($"\td/d{v}[ {node.Children[0].Children[1].ToInfix()} * {node.Children[0].Children[0].ToInfix()}] -> d/d{v}[ {node.Children[0].Children[1].ToInfix()} ] * {node.Children[0].Children[0].ToInfix()}");
+                    }
+                    else
+                    {
+                        Write("\td/dx[ f(x) * c] -> d/dx[ f(x) ] * c");
+                    }
+                    GenerateDerivativeAndReplace(node.Children[0].Children[1]);
+                    //Recurse explicitly down these branches
+                    Derive(node.Children[0].Children[1], variable);
+                    //Remove myself from the tree
+                    node.Remove();
+                }
+                //Constant multiplication - 1
+                else if (node.Children[0].Children[1].IsNumberOrConstant())
+                {
+                    if (debug)
+                    {
+                        string constant = node.Children[0].Children[1].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix();
+                        Write($"\td/d{v}[ {constant} * {expr}] -> {constant} * d/d{v}[ {expr} ]");
+                    }
+                    else
+                    {
+                        Write("\td/dx[ c * f(x)] -> c * d/dx[ f(x) ]");
+                    }
+                    GenerateDerivativeAndReplace(node.Children[0].Children[0]);
+                    //Recurse explicitly down these branches
+                    Derive(node.Children[0].Children[0], variable);
+
+                    //Remove myself from the tree
+                    node.Remove();
+                }
+                //Product Rule [Two expressions] 
+                else
+                {
+                    RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
+
+                    RPN.Node fNode = node.Children[0].Children[0];
+                    RPN.Node gNode = node.Children[0].Children[1];
+
+                    if (debug)
+                    {
+                        string f = fNode.ToInfix();
+                        string g = gNode.ToInfix();
+                        Write($"\td/d{v}[ {f} * {g} ] -> {f} * d/d{v}[ {g} ] + d/d{v}[ {f} ] * {g}");
+                    }
+                    else
+                    {
+                        Write($"\td/dx[ f(x) * g(x) ] -> f(x) * d/dx[ g(x) ] + d/dx[ f(x) ] * g(x)");
+                    }
+
+                    RPN.Node fDerivative = new RPN.Node( new[] { Clone(fNode) }, _derive);
+                    RPN.Node gDerivative = new RPN.Node( new[] { Clone(gNode) }, _derive);
+
+                    RPN.Node multiply1 = new RPN.Node( new[] { gDerivative, fNode }, multiply);
+                    RPN.Node multiply2 = new RPN.Node( new[] { fDerivative, gNode }, multiply);
+
+                    RPN.Node add = new RPN.Node( new[] { multiply1, multiply2 }, new RPN.Token("+", 2, RPN.Type.Operator));
+
+                    //Remove myself from the tree
+                    node.Remove(add);
+
+                    //Explicit recursion
+                    Derive(fDerivative, variable);
+                    Derive(gDerivative, variable);
+                }
+            }
+            else if (node.Children[0].IsDivision())
+            {
+                //Quotient Rule
+                RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
+
+                RPN.Node numerator = node.Children[0].Children[1];
+                RPN.Node denominator = node.Children[0].Children[0];
+
+                RPN.Node numeratorDerivative = new RPN.Node( new[] { Clone(numerator) }, _derive);
+                RPN.Node denominatorDerivative = new RPN.Node( new[] { Clone(denominator) }, _derive);
+
+                RPN.Node multiplicationOne = new RPN.Node( new[] { numeratorDerivative, denominator }, multiply);
+                RPN.Node multiplicationTwo = new RPN.Node( new[] { denominatorDerivative, numerator }, multiply);
+
+                RPN.Node subtraction = new RPN.Node( new[] { multiplicationTwo, multiplicationOne }, new RPN.Token("-", 2, RPN.Type.Operator));
+
+                RPN.Node denominatorSquared = new RPN.Node( new[] { new RPN.Node( 2), Clone(denominator) }, new RPN.Token("^", 2, RPN.Type.Operator));
+
+                if (debug)
+                {
+                    string n = numerator.ToInfix();
+                    string d = denominator.ToInfix();
+                    Write($"\td/d{v}[ {n} / {d} ] -> [ d/d{v}( {n} ) * {d} - {d} * d/d{v}( {n} ) ]/{d}^2");
+                }
+                else
+                {
+                    Write($"\td/dx[ f(x) / g(x) ] -> [ d/dx( f(x) ) * g(x) - g(x) * d/dx( f(x) ) ]/g(x)^2");
+                }
+
+                //Replace in tree
+                node.Children[0].Replace(numerator, subtraction);
+                node.Children[0].Replace(denominator, denominatorSquared);
+                //Delete myself from the tree
+                node.Remove();
+
+                //Explicitly recurse down these branches
+                Derive(subtraction, variable);
+            }
+            //Exponents! 
+            else if (node.Children[0].IsExponent())
+            {
+                RPN.Node baseNode = node.Children[0].Children[1];
+                RPN.Node power = node.Children[0].Children[0];
+                if ((baseNode.IsVariable() || baseNode.IsFunction() || baseNode.IsExpression()) && power.IsNumberOrConstant() && baseNode.Token.Value == variable.Token.Value)
+                {
+                    if (debug)
+                    {
+                        string b = baseNode.ToInfix();
+                        string p = power.ToInfix();
+                        Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1)");
+                    }
+                    else
+                    {
+                        Write("\td/dx[ x^n ] -> n * x^(n - 1)");
+                    }
+
+                    RPN.Node powerClone = Clone(power);
+                    RPN.Node exponent;
+
+                    if (!powerClone.IsNumber())
+                    {
+                        //1
+                        RPN.Node one = new RPN.Node( 1);
+
+                        //(n - 1)
+                        RPN.Node subtraction = new RPN.Node( new[] { one, powerClone }, new RPN.Token("-", 2, RPN.Type.Operator));
+
+                        //x^(n - 1) 
+                        exponent = new RPN.Node( new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    }
+                    else
+                    {
+                        exponent = new RPN.Node( new RPN.Node[] { new RPN.Node( powerClone.GetNumber() - 1 ), baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
+                    }
+
+                    RPN.Node multiplication = new RPN.Node( new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                    node.Replace(node.Children[0], multiplication);
+
+                    //Delete self from the tree
+                    node.Remove();
+                }
+                else if ( (baseNode.IsFunction() || baseNode.IsExpression()) && power.IsNumberOrConstant())
+                {
+                    if (debug)
+                    {
+                        string b = baseNode.ToInfix();
+                        string p = power.ToInfix();
+                        Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1) * d/d{v}[ {b} ]");
+                    }
+                    else
+                    {
+                        Write("\td/dx[ f(x)^n ] -> n * f(x)^(n - 1) * d/dx[ f(x) ]");
+                    }
+
+                    RPN.Node bodyDerive = new RPN.Node( new[] { Clone(baseNode) }, _derive);
+
+                    RPN.Node powerClone = Clone(power);
+
+                    RPN.Node subtraction;
+                    if (power.IsConstant())
+                    {
+                        RPN.Node one = new RPN.Node(1);
+                        subtraction = new RPN.Node(new[] {one, powerClone}, new RPN.Token("-", 2, RPN.Type.Operator));
+                    }
+                    else
+                    {
+                        subtraction = new RPN.Node(power.GetNumber() - 1);
+                    }
+
+                    //Replace n with (n - 1) 
+                    RPN.Node exponent = new RPN.Node( new RPN.Node[] { subtraction, baseNode }, new RPN.Token("^", 2, RPN.Type.Operator));
+
+                    RPN.Node temp = new RPN.Node( new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node multiply = new RPN.Node( new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                    node.Replace(node.Children[0], multiply);
+
+                    //Delete self from the tree
+                    node.Remove();
+
+                    Derive(bodyDerive, variable);
+                }
+                else if (baseNode.IsConstant("e"))
+                {
+                    if (debug)
+                    {
+                        string p = power.ToInfix();
+                        Write($"\td/d{v}[ e^{p} ] -> d/d{v}[ {p} ] * e^{p}");
+                    }
+                    else
+                    {
+                        Write("\td/dx[ e^g(x) ] -> d/dx[ g(x) ] * e^g(x)");
+                    }
+                    RPN.Node exponent = baseNode.Parent;
+                    RPN.Node powerDerivative = new RPN.Node( new[] { Clone(power) }, _derive);
+                    RPN.Node multiply = new RPN.Node( new[] { powerDerivative, exponent }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    node.Replace(power.Parent, multiply);
+                    //Delete self from the tree
+                    node.Remove();
+
+                    Derive(powerDerivative, variable);
+                }
+                else if (baseNode.IsNumberOrConstant() && (power.IsExpression() || power.IsVariable()))
+                {
+                    if (debug)
+                    {
+                        string b = baseNode.ToInfix();
+                        string p = power.ToInfix();
+                        Write($"\td/d{v}[ {b}^{p} ] -> ln({b}) * {b}^{p} * d/d{v}[ {p} ]");
+                    }
+                    else
+                    {
+                        Write($"\td/dx[ b^g(x) ] -> ln(b) * b^g(x) * d/dx[ g(x) ]");
+                    }
+
+                    RPN.Node exponent = baseNode.Parent;
+                    RPN.Node ln = new RPN.Node( new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
+                    RPN.Node powerDerivative = new RPN.Node( new[] { Clone(power) }, _derive);
+                    RPN.Node temp = new RPN.Node( new[] { exponent, ln }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node multiply = new RPN.Node( new[] { temp, powerDerivative }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                    node.Replace(power.Parent, multiply);
+                    //Delete self from the tree
+                    node.Remove();
+
+                    Derive(powerDerivative, variable);
+                }
+                else
+                {
+                    if (debug)
+                    {
+                        string b = baseNode.ToInfix();
+                        string p = power.ToInfix();
+                        Write($"\td/d{v}[ {b}^{p} ] -> {b}^{p} * d/d{v}[ {b} * ln( {p} ) ]");
+                    }
+                    else
+                    {
+                        Write("\td/dx[ f(x)^g(x) ] -> f(x)^g(x) * d/dx[ g(x) * ln( f(x) ) ]");
+                    }
+                    RPN.Node exponent = Clone(baseNode.Parent);
+                    RPN.Node ln = new RPN.Node( new[] { Clone( baseNode ) }, new RPN.Token("ln", 1, RPN.Type.Function));
+                    RPN.Node temp = new RPN.Node( new[] { Clone(power), ln }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node derive = new RPN.Node( new[] { temp }, _derive);
+                    RPN.Node multiply = new RPN.Node( new[] { exponent, derive }, new RPN.Token("*",2,RPN.Type.Operator));
+
+                    node.Replace(power.Parent, multiply);
+                    //Delete self from the tree
+                    node.Remove();
+
+                    Derive(derive, variable);
+                }
+            }
+            #region Trig
+            else if (node.Children[0].IsFunction("sin"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ sin({expr}) ] -> cos({expr}) * d/d{v}[ {expr} ]");
+                }
+                else
+                {
+                    Write("\td/dx[ sin(g(x)) ] -> cos(g(x)) * d/dx[ g(x) ]");
+                }
+                RPN.Node body = node.Children[0].Children[0];
+
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node cos = new RPN.Node( new[] { body }, new RPN.Token("cos", 1, RPN.Type.Function));
+
+                RPN.Node multiply = new RPN.Node( new[] { cos, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], multiply);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("cos"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ cos({expr}) ] -> -sin({expr}) * d/d{v}[ {expr} ]");
+                }
+                else
+                {
+                    Write("\td/dx[ cos(g(x)) ] -> -sin(g(x)) * d/dx[ g(x) ]");
+                }
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node sin = new RPN.Node( new[] { body }, new RPN.Token("sin", 1, RPN.Type.Function));
+                RPN.Node negativeOneMultiply = new RPN.Node( new[] { new RPN.Node( -1), sin }, new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node multiply = new RPN.Node( new[] { negativeOneMultiply, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], multiply);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("tan"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ tan({expr}) ] -> sec({expr})^2 * d/d{v}[ {expr} ]");
+                }
+                else
+                {
+                    Write("\td/dx[ tan(g(x)) ] -> sec(g(x))^2 * d/dx[ g(x) ]");
+                }
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node sec = new RPN.Node( new[] { body }, new RPN.Token("sec", 1, RPN.Type.Function));
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), sec }, new RPN.Token("^", 2, RPN.Type.Operator));
+
+                RPN.Node multiply = new RPN.Node( new[] { exponent, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+                node.Replace(node.Children[0], multiply);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("sec"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ sec({expr}) ] -> tan({expr}) * sec({expr}) * d/d{v}[ {expr} ]");
+                }
+                else
+                {
+                    Write("\td/dx[ sec(g(x)) ] -> tan(g(x)) * sec(g(x)) * d/dx[ g(x) ]");
+                }
+                RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
+
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node sec = node.Children[0];
+                RPN.Node tan = new RPN.Node( new[] { Clone(body) }, new RPN.Token("tan", 1, RPN.Type.Function));
+                RPN.Node temp = new RPN.Node( new[] { sec, tan }, multiplyToken);
+                RPN.Node multiply = new RPN.Node( new[] { bodyDerive, temp }, multiplyToken);
+
+                node.Replace(node.Children[0], multiply);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("csc"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ csc({expr}) ] -> - cot({expr}) * csc({expr}) * d/d{v}[ {expr} ] ");
+                }
+                else
+                {
+                    Write("\td/dx[ csc(g(x)) ] -> - cot(g(x)) * csc(g(x)) * d/dx[ g(x) ] ");
+                }
+                RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
+
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+                RPN.Node csc = node.Children[0];
+                RPN.Node cot = new RPN.Node( new[] { Clone(body) }, new RPN.Token("cot", 1, RPN.Type.Function));
+
+                RPN.Node temp = new RPN.Node( new[] { csc, cot }, multiplyToken);
+                RPN.Node multiply = new RPN.Node( new[] { temp, bodyDerive }, multiplyToken);
+
+                node.Replace(node.Children[0], new RPN.Node( new[] { new RPN.Node( -1), multiply }, multiplyToken));
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("cot"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ cot({expr}) ] -> -csc({expr})^2 * d/d{v}[ {expr} ]");
+                }
+                else
+                {
+                    Write("\td/dx[ cot(g(x)) ] -> -csc(g(x))^2 * d/dx[ g(x) ]");
+                }
+
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+                RPN.Node csc = new RPN.Node( new[] { body }, new RPN.Token("csc", 1, RPN.Type.Function));
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), csc }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node temp = new RPN.Node( new[] { new RPN.Node( -1), exponent }, new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node multiply = new RPN.Node( new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], multiply);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("arcsin"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ arcsin({expr}) ] -> d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
+                }
+                else
+                {
+                    Write("\td/dx[ arcsin(g(x)) ] -> d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
+                }
+                RPN.Node body = Clone(node.Children[0].Children[0]);
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node subtraction = new RPN.Node( new[] { exponent, new RPN.Node( 1) }, new RPN.Token("-", 2, RPN.Type.Operator));
+                RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                RPN.Node division = new RPN.Node( new[] { sqrt, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], division);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("arccos"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ arccos({expr}) ] -> -1 * d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
+                }
+                else
+                {
+                    Write("\td/dx[ arccos(g(x)) ] -> -1 * d/dx[ g(x) ]/sqrt(1 - g(x)^2)");
+                }
+                RPN.Node body = Clone(node.Children[0].Children[0]);
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node subtraction = new RPN.Node( new[] { exponent, new RPN.Node( 1) }, new RPN.Token("-", 2, RPN.Type.Operator));
+                RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                RPN.Node division = new RPN.Node( new[] { sqrt, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                RPN.Node multiplication = new RPN.Node( new[] { new RPN.Node( -1), division }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], multiplication);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("arctan"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ arctan({expr}) ] -> d/d{v}[ {expr} ]/(1 + {expr}^2)");
+                }
+                else
+                {
+                    Write("\td/dx[ arctan(g(x)) ] -> d/dx[ g(x) ]/(1 + g(x)^2)");
+                }
+                RPN.Node body = Clone(node.Children[0].Children[0]);
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node add = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("+", 2, RPN.Type.Operator));
+                RPN.Node division = new RPN.Node( new[] { add, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], division);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("arccot"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ arccot({expr}) ] -> -1 * d/d{v}[ {expr} ]/(1 + {expr}^2)");
+                }
+                else
+                {
+                    Write("\td/dx[ arccot(g(x)) ] -> -1 * d/dx[ g(x) ]/(1 + g(x)^2)");
+                }
+                RPN.Node body = Clone(node.Children[0].Children[0]);
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node add = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("+", 2, RPN.Type.Operator));
+                RPN.Node multiplication = new RPN.Node( new[] { new RPN.Node( -1) , bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node division = new RPN.Node( new[] { add, multiplication }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], division);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("arcsec"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ arcsec({expr}) ] -> d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
+                }
+                else
+                {
+                    Write("\td/dx[ arcsec(g(x)) ] -> d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
+                }
+                RPN.Node body = Clone(node.Children[0].Children[0]);
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node subtraction = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("-", 2, RPN.Type.Operator));
+                RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                RPN.Node denominator = new RPN.Node( new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
+
+                RPN.Node division = new RPN.Node( new[] { denominator, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], division);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsFunction("arccsc"))
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ arccsc({expr}) ] -> -1 * d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
+                }
+                else
+                {
+                    Write("\td/dx[ arccsc(g(x)) ] -> -1 * d/dx[ g(x) ]/( g(x) * sqrt(g(x)^2 - 1 ) )");
+                }
+                RPN.Node body = Clone(node.Children[0].Children[0]);
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node subtraction = new RPN.Node( new[] { new RPN.Node( 1), exponent }, new RPN.Token("-", 2, RPN.Type.Operator));
+                RPN.Node sqrt = new RPN.Node( new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                RPN.Node denominator = new RPN.Node( new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node multiplication = new RPN.Node( new[] { new RPN.Node( -1), bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node division = new RPN.Node( new[] { denominator, multiplication }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], division);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            #endregion
+            else if (node.Children[0].IsSqrt())
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\tsqrt({expr}) -> {expr}^0.5");
+                }
+                else
+                {
+                    Write("\tsqrt(g(x)) -> g(x)^0.5");
+                }
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( .5), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                node.Replace(node.Children[0], exponent);
+                Derive(node, variable);
+            }
+            else if (node.Children[0].IsLn())
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\td/d{v}[ ln({expr}) ] -> d/d{v}[ {expr} ]/{expr}");
+                }
+                else
+                {
+                    Write("\td/dx[ ln(g(x)) ] -> d/dx[ g(x) ]/g(x)");
+                }
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+                RPN.Node division = new RPN.Node( new[] { body, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], division);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsLog())
+            {
+                RPN.Token ln = new RPN.Token("ln", 1, RPN.Type.Function);
+
+                RPN.Node power = node.Children[0].Children[1];
+                RPN.Node body = node.Children[0].Children[0];
+
+                if (debug)
+                {
+                    string b = body.ToInfix();
+                    string p = power.ToInfix();
+                    Write($"\td/d{v}[ log({b},{p}) ] -> d/d{v}[ {p} ]/({p} * ln({b}))");
+                }
+                else
+                {
+                    Write("\td/dx[ log(b,g(x)) ] -> d/dx[ g(x) ]/(g(x) * ln(b))");
+                }
+
+                RPN.Node bodyDerive = new RPN.Node( new[] { Clone(body) }, _derive);
+                RPN.Node multiply = new RPN.Node( new[] { body, new RPN.Node( new[] { power }, ln) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node division = new RPN.Node( new[] { multiply, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                node.Replace(node.Children[0], division);
+                //Delete self from the tree
+                node.Remove();
+                //Chain Rule
+                Derive(bodyDerive, variable);
+            }
+            else if (node.Children[0].IsAbs())
+            {
+                if (debug)
+                {
+                    string expr = node.Children[0].Children[0].ToInfix();
+                    Write($"\tabs({expr}) -> sqrt( {expr}^2 )");
+                }
+                else
+                {
+                    Write("\tabs(g(x)) -> sqrt( g(x)^2 )");
+                }
+
+                RPN.Node body = node.Children[0].Children[0];
+                RPN.Node exponent = new RPN.Node( new[] { new RPN.Node( 2), body }, new RPN.Token("^", 2, RPN.Type.Operator));
+                RPN.Node sqrt = new RPN.Node( new[] { exponent }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+
+                node.Replace(node.Children[0], sqrt);
+                Derive(node, variable);
+            }
+            else if (node.Children[0].IsFunction("sum"))
+            {
+                Write("\tExploding sum");
+                explode(node.Children[0]);
+                Derive(node, variable);
+            }
+            else if (node.Children[0].IsFunction("avg"))
+            {
+                Write("\tExploding avg");
+                explode(node.Children[0]);
+                Derive(node, variable);
+            }
+            else
+            {
+                throw new NotImplementedException($"Derivative of {node.Children[0].ToInfix()} not known at this time.");
             }
         }
 
@@ -1819,11 +1889,27 @@ namespace AbMath.Calculator
             //convert a sum to a series of additions
             if (node.IsFunction("internal_sum") || node.IsFunction("sum"))
             {
-                Assign(node, gen(add) );
+                if (node.Children.Count == 2)
+                {
+                    node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
+                    node.Children.Reverse();
+                }
+                else
+                { 
+                    Assign(node, gen(add));
+                }
             }
             else if (node.IsFunction("internal_product"))
             {
-                Assign(node, gen(multiplication));
+                if (node.Children.Count == 2)
+                {
+                    node.Replace(new RPN.Token("*", 2, RPN.Type.Operator));
+                    node.Children.Reverse();
+                }
+                else
+                {
+                    Assign(node, gen(multiplication));
+                }
             }
             //convert an avg to a series of additions and a division
             else if (node.IsFunction("avg"))
@@ -1860,12 +1946,19 @@ namespace AbMath.Calculator
                 List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
                 results.AddRange(node.Children[0].ToPostFix());
                 results.AddRange(node.Children[1].ToPostFix());
-                results.Add(add);
-                for (int i = 2; i < node.Children.Count; i++)
+                results.Add(token);
+
+                for (int i = 2; i < node.Children.Count; i += 2)
                 {
                     results.AddRange(node.Children[i].ToPostFix());
-                    results.Add(add);
+                    if ((i + 1) < node.Children.Count)
+                    {
+                        results.AddRange(node.Children[i + 1].ToPostFix());
+                        results.Add(token);
+                    }
+                    results.Add(token);
                 }
+
                 return Generate(results.ToArray());
 
             }
@@ -1900,7 +1993,7 @@ namespace AbMath.Calculator
             else if (node.IsMultiplication())
             {
                 //Make a series of multiplications into ** or product(...)
-                /*
+                
                 if (node.isRoot || !node.Parent.IsFunction("internal_product"))
                 {
                     RPN.Node product = new RPN.Node(node.Children.ToArray(), new RPN.Token("internal_product", node.Children.Count, RPN.Type.Function));
@@ -1912,7 +2005,6 @@ namespace AbMath.Calculator
                     node.Parent.AddChild(node.Children[0]);
                     node.Parent.AddChild(node.Children[1]);
                 }
-                */
             }
             else if (node.IsSubtraction())
             {

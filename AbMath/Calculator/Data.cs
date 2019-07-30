@@ -191,7 +191,6 @@ namespace AbMath.Calculator
                     TimeRecord prev = _time.Find(t => t.Type == time.Type);
                     prev.ElapsedMilliseconds += time.ElapsedMilliseconds;
                     prev.ElapsedTicks += time.ElapsedTicks;
-                    //_time.Add(time);
                 }
                 else
                 {
