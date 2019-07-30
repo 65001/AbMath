@@ -86,7 +86,7 @@ namespace AbMath.Tests
         public void BaseExponentSimple()
         {
             RPN test = new RPN("derivative(2^x,x)").Compute();
-            Assert.AreEqual("2 ln 2 x ^ *", test.Polish.Print());
+            Assert.AreEqual("2 x ^ 2 ln *", test.Polish.Print());
         }
 
         [Test]
@@ -103,7 +103,7 @@ namespace AbMath.Tests
         public void Abs()
         {
             RPN test = new RPN("derivative( abs(x^2), x)").Compute();
-            Assert.AreEqual("0.5 2 2 ^ * x 3 ^ * x 2 ^ /", test.Polish.Print());
+            Assert.AreEqual("x 3 ^ 0.5 2 2 ^ * * x 2 ^ /", test.Polish.Print());
         }
 
         [Test]

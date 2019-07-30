@@ -45,7 +45,7 @@ namespace AbMath.Tests
         public void MultiTermMultiply()
         {
             RPN test = new RPN("(30.1)2.5(278)").Compute();
-            Assert.AreEqual("30.1 2.5 * 278 *", test.Polish.Print());
+            Assert.AreEqual("278 30.1 2.5 * *", test.Polish.Print());
         }
 
         [Test]

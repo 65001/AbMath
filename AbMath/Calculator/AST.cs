@@ -812,6 +812,7 @@ namespace AbMath.Calculator
                     Write("\tNode Swap: Variable yields to Exponent");
                     node.Children.Swap(0, 1);
                 }
+
                 //a number and a expression
                 else if (node.Children[0].IsNumber() && !(node.Children[1].IsNumber() || node.Children[1].IsVariable()))
                 {
@@ -985,7 +986,7 @@ namespace AbMath.Calculator
                 _rpn.Data.AddFunction("derive", new RPN.Function { Arguments = 1, MaxArguments = 1, MinArguments = 1 });
             }
 
-            MetaFunctions(Root);
+            bool go = MetaFunctions(Root);
 
             if (_rpn.Data.Functions.ContainsKey("derive"))
             {
@@ -996,12 +997,16 @@ namespace AbMath.Calculator
 
             _data.AddTimeRecord("AST MetaFunctions", SW);
 
+            if (go)
+            {
+                Simplify();
+            }
 
 
             return this;
         }
 
-        private void MetaFunctions(RPN.Node node)
+        private bool MetaFunctions(RPN.Node node)
         {
             //Propagate down the tree
             for (int i = 0; i < node.Children.Count; i++)
@@ -1073,8 +1078,10 @@ namespace AbMath.Calculator
                     Algebra(node);
                 }
 
-                Simplify();
+                return true;
             }
+
+            return false;
         }
 
         private void Solve(RPN.Node node)
@@ -1969,6 +1976,40 @@ namespace AbMath.Calculator
                     node.Remove();
                     return null;
                 }
+
+                //TODO: Convert this from using ToPostFix to automatically
+                //generating a new correct tree!
+
+                //Prep stage
+                Queue<RPN.Node> additions = new Queue<RPN.Node>();
+                additions.Enqueue(new RPN.Node(new [] {node[0], node[1]}, token));
+                for (int i = 2; i + 1< node.Children.Count; i += 2)
+                {
+                    additions.Enqueue(new RPN.Node(new[] { node[i], node[i + 1] }, token));
+                }
+
+                if (node.Children.Count % 2 == 1 && node.Children.Count > 2)
+                {
+                    additions.Enqueue(node.Children.Last());
+                }
+
+                Write(additions.Print());
+
+                while (additions.Count > 1)
+                {
+                    RPN.Node[] temp = new[] {additions.Dequeue(), additions.Dequeue()};
+                    temp.Reverse();
+                    additions.Enqueue(new RPN.Node(temp, token));
+                }
+
+                if (additions.Count == 1)
+                {
+                    additions.Peek().Children.Reverse();
+                    Swap(additions.Peek());
+                    Write(additions.Peek().Print());
+                    return additions.Dequeue();
+                }
+
 
                 List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
                 results.AddRange(node.Children[0].ToPostFix());
