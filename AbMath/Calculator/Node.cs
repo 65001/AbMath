@@ -105,13 +105,16 @@ namespace AbMath.Calculator
             /// If the current node is a number, 
             /// replaces the current number and 
             /// changes the ID of the node.
+            /// Otherwise allocate a new token
+            /// and change the ID of the node.
             /// </summary>
             /// <param name="number"></param>
             public void Replace(double number)
             {
                 if (!this.IsNumber())
                 {
-                    throw new InvalidOperationException();
+                    Replace(new Token(number));
+                    return;
                 }
 
                 this.ID = counter++;
@@ -138,6 +141,16 @@ namespace AbMath.Calculator
             {
                 this.ID = counter++;
                 this.Token.Value = token;
+            }
+
+            public void Swap(RPN.Node index, RPN.Node index2)
+            {
+                _children.Swap( _children.IndexOf(index), _children.IndexOf(index2) );
+            }
+
+            public void Swap(int index, int index2)
+            {
+                _children.Swap(index, index2);
             }
 
             /// <summary>

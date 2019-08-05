@@ -165,6 +165,9 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("1/2x").Compute();
             Assert.AreEqual("1 2 x * /", test.Polish.Print());
+
+            test.SetEquation("8/2(2 + 2)").Compute();
+            Assert.AreEqual("8 2 2 2 ^ * /", test.Polish.Print());
         }
 
         [Test]

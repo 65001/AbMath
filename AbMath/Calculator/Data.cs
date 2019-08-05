@@ -147,6 +147,7 @@ namespace AbMath.Calculator
 
                 _leftbracket = new List<string>() { "(", "{", "[" };
                 _rightbracket = new List<string>() { ")", "}", "]", "," };
+
                 _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
 
@@ -295,11 +296,6 @@ namespace AbMath.Calculator
             public bool IsOperator(string value)
             {
                 return Operators.ContainsKey(value);
-            }
-
-            public bool IsOperator(Token token)
-            {
-                return token.Type == Type.Operator;
             }
 
             public bool IsUnary(string value)

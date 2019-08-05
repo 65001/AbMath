@@ -72,6 +72,7 @@ namespace AbMath.Calculator
                     tables.Add(new Schema {Column = "Arity", Width = 5});
                     tables.Add(new Schema {Column = "Arity Peek", Width = 11});
                     tables.Add(new Schema {Column = "Type", Width = 12});
+                    tables.Add(new Schema {Column = "Left | Right", Width = 10});
                     tables.Add(new Schema {Column = "RPN", Width = 20});
                     tables.Add(new Schema {Column = "Action", Width = 7});
                 }
@@ -106,7 +107,6 @@ namespace AbMath.Calculator
 
                     bool Left = LeftImplicit();
                     bool Right = RightImplicit();
-                    
 
                     //Unary Input at the start of the input or 
                     if ( i == 0 && _ahead != null && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
@@ -124,17 +124,16 @@ namespace AbMath.Calculator
                         //Left
                         OperatorRule(_multiply);
                     }
-                    else if (_prev != null && _ahead != null && _prev.IsOperator() && _prev.IsDivision() && _token.IsNumber() && _ahead.IsVariable() )
+                    else if ( _prev != null && _prev.IsDivision() && (Left || Right))
                     {
-                        //Case for 1/2x -> 1/(2x)
-                        //Postfix : 1 2 x * /
-                        //Prev : Operator : /
-                        //Current : Number
-                        //Ahead : Variable 
+                        //Case for 8/2(2 + 2)
+                        //Case of 1/2x
                         type = "Mixed division and multiplication";
+
                         OperatorPop();
                         _output.Add(_token);
 
+                        //Implicit Multiplication supersedes division
                         _operator.Push(_division);
                         _operator.Push(_multiply);
                     }
@@ -223,7 +222,8 @@ namespace AbMath.Calculator
                         {
                             i.ToString(), _token.Value, _operator.Count.ToString(),
                             _operator.Print() ?? string.Empty, _arity.Print(), _arity.SafePeek().ToString(),
-                            type, _output.Print(), action
+                            type, $"{Left} | {Right}",
+                            _output.Print(), action
                         };
                         tables.Add(print);
                     }

@@ -774,24 +774,24 @@ namespace AbMath.Calculator
                     if (node[1].IsNumberOrConstant() && !node[0].IsNumberOrConstant())
                     {
                         Write("\tNode Swap: Constants and numbers always yield.");
-                        node.Children.Swap(0, 1);
+                        node.Swap(0, 1);
                     }
                     else if (node[1].IsVariable() && node[0].IsMultiplication() && !node[0].IsSolveable())
                     {
                         Write($"\tNode Swap: Single variables yields to generic expression");
-                        node.Children.Swap(0, 1);
+                        node.Swap(0, 1);
                     }
                     else if (node[1].IsVariable() && node[0].IsExponent())
                     {
                         Write("\tNode Swap: Single variables yields to exponent");
-                        node.Children.Swap(0, 1);
+                        node.Swap(0, 1);
                     }
                     else if (node[1].IsMultiplication() && node[0].IsMultiplication() &&
                              !node.Children[1].Children.Any(n => n.IsExponent()) &&
                              node.Children[0].Children.Any(n => n.IsExponent()))
                     {
                         Write("\tNode Swap:Straight multiplication gives way to multiplication with an exponent");
-                        node.Children.Swap(0, 1);
+                        node.Swap(0, 1);
                     }
 
                     //TODO: A straight exponent should give way to a multiplication with an exponent if...
@@ -803,7 +803,7 @@ namespace AbMath.Calculator
                     //Numbers and constants take way
                     if (!node.Children[1].IsNumberOrConstant() && node.Children[0].IsNumberOrConstant())
                     {
-                        node.Children.Swap(0, 1);
+                        node.Swap(0, 1);
                         Write("\tNode Swap: Numbers and constants take way.");
                     }
                     //Sort functions alphabetically
@@ -816,19 +816,19 @@ namespace AbMath.Calculator
                             , foo);
                         if (comparison == -1)
                         {
-                            node.Children.Swap(0, 1);
+                            node.Swap(0, 1);
                         }
                     }
                     else if (!(node.Children[1].IsExponent() || node.Children[1].IsNumberOrConstant() ||
                                node.Children[1].IsSolveable()) && node.Children[0].IsExponent())
                     {
                         Write("\tNode Swap: Exponents take way");
-                        node.Children.Swap(0, 1);
+                        node.Swap(0, 1);
                     }
                     else if (node[1].IsVariable() && node[0].IsExponent())
                     {
                         Write("\tNode Swap: Variable yields to Exponent");
-                        node.Children.Swap(0, 1);
+                        node.Swap(0, 1);
                     }
 
                     //a number and a expression
@@ -836,7 +836,7 @@ namespace AbMath.Calculator
                              !(node.Children[1].IsNumber() || node.Children[1].IsVariable()))
                     {
                         Write($"\tMultiplication Swap.");
-                        node.Children.Swap(1, 0);
+                        node.Swap(1, 0);
                     }
                 }
             }
@@ -888,7 +888,7 @@ namespace AbMath.Calculator
                             if ((node.Children[i - 1].IsNumber() || node.Children[i - 1].IsConstant()) &&
                                 !(node.Children[i].IsNumber() || node.Children[i].IsConstant()))
                             {
-                                node.Children.Swap(i - 1, i);
+                                node.Swap(i - 1, i);
                                 Write($"\tConstants and numbers always yield: Swap {i - 1} and {i}. {node.ToInfix()}");
                             }
                             //Single variables give way to other expressions that are not constants and numbers 
@@ -897,7 +897,7 @@ namespace AbMath.Calculator
                                       node.Children[i].IsFunction("internal_product")) &&
                                      !node.Children[i].IsSolveable())
                             {
-                                node.Children.Swap(i - 1, i);
+                                node.Swap(i - 1, i);
                                 Write(
                                     $"\tSingle variables yields to generic expression: Swap {i - 1} and {i}. {node.ToInfix()}");
                             }
