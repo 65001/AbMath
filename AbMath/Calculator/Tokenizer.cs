@@ -16,6 +16,7 @@ namespace AbMath.Calculator
             private string _character;
             private string _prevToken;
             private string _readAhead;
+
             private Tables<string> _tables;
 
             private List<Token> _tokens;
@@ -49,11 +50,11 @@ namespace AbMath.Calculator
                 _prevToken = string.Empty;
                 int length = Equation.Length;
                 ReadOnlySpan<char> equationSpan = Equation.AsSpan();
-                ReadOnlySpan<char> localSpan = null;
+
                 for (int i = 0; i < length; i++)
                 {
                     //We could convert this into a span?
-                    localSpan = equationSpan.Slice(i);
+                    var localSpan = equationSpan.Slice(i);
                     _character = localSpan[0].ToString();
                     _readAhead = i < (length - 1) ? localSpan[1].ToString() : null;
 
@@ -87,12 +88,14 @@ namespace AbMath.Calculator
                                 WriteToken("Unary");
                             }
                         }
-                        else if (_dataStore.IsNumber(_character) && _token == "-.")
+                        else if (_token == "-." && _dataStore.IsNumber(_character))
                         {
                             _rule = "Decimal Append";
                             _token += _character;
                         }
-                        else if ((_dataStore.IsNumber(_token)) && (_dataStore.IsVariable(_character) || _dataStore.IsLeftBracket(_character) || _dataStore.IsFunction(_character)))
+                        //Token is a number 
+                        //Character is [LB, FUNC, Variable]
+                        else if ( _dataStore.IsNumber(_token) && (_dataStore.IsLeftBracket(_character) || _dataStore.IsFunction(_character) || _dataStore.IsVariable(_character)))
                         {
                             WriteToken("Left Implicit");
                             _token = _character;
@@ -101,7 +104,9 @@ namespace AbMath.Calculator
                                 WriteToken("Left Implicit");
                             }
                         }
-                        else if (_dataStore.IsVariable(_token) && _dataStore.IsNumber(_character))
+                        //Token is a variable
+                        //Character is a number
+                        else if (_dataStore.IsNumber(_character) && _dataStore.IsVariable(_token))
                         {
                             WriteToken("Left Implicit 2");
                             _token = _character;
@@ -204,6 +209,9 @@ namespace AbMath.Calculator
                 Token token;
                 switch (_dataStore.Resolve(_token))
                 {
+                    case Type.Number:
+                        token = new Token(_token, 0, Type.Number);
+                        break;
                     case Type.Function:
                         token = new Token(_token, _dataStore.Functions[_token].Arguments, Type.Function);
                         break;

@@ -315,7 +315,7 @@ namespace AbMath.Calculator
 
             public bool IsVariable(string value)
             {
-                return value != "." &&  !(IsNumber(value) || IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value));
+                return value != "." &&  !(IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value) || IsNumber(value));
             }
 
             public bool IsLeftBracket(string value)
