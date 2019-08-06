@@ -131,14 +131,36 @@ namespace AbMath.Calculator
                     {
                         //Case for 8/2(2 + 2)
                         //Case of 1/2x
-                        type = "Mixed division and multiplication";
+                        
+                        if (_dataStore.ImplicitMultiplicationPriority)
+                        {
+                            type = "Mixed division and multiplication. Implicit Multiplication has priority.";
 
-                        OperatorPop();
-                        _output.Add(_token);
+                            OperatorPop();
+                            _output.Add(_token);
 
-                        //Implicit Multiplication supersedes division
-                        _operator.Push(_division);
-                        _operator.Push(_multiply);
+                            //Implicit Multiplication supersedes division
+                            _operator.Push(_division);
+                            _operator.Push(_multiply);
+                        }
+                        else
+                        {
+                            type = "Mixed division and multiplication";
+                            _output.Add(_token);
+
+                            if (Left)
+                            {
+                                OperatorRule(_multiply);
+                            }
+
+                            if (Right)
+                            {
+                                Implicit();
+                            }
+
+                            _operator.Push(_division);
+                            OperatorPop();
+                        }
                     }
                     //2 x (
                     //2 x sin

@@ -110,23 +110,12 @@ namespace AbMath.Calculator
             public bool DebugMode;
 
             /// <summary>
-            /// This type of optimization can remove some
-            /// variables entirely or combine them to optimize
-            /// the calculation over many iterations.
-            /// These optimizations cannot optimize across a grouping symbols.
+            /// Implicit multiplication in some interpretations
+            /// of order of operations has a higher priority
+            /// compared to that of division.
+            /// Set this to true to enable that feature.
             /// </summary>
-            public bool PreOptimization = true;
-
-            /// <summary>
-            /// This type of optimizations can remove
-            /// variables entirely or combine them to
-            /// optimize the calculations over many iterations.
-            /// Log simplification rules and other similar rules are implemented
-            /// here.
-            /// These optimizations happen on the Reverse Polish Notation and
-            /// hence can optimize across a traditional grouping symbol. 
-            /// </summary>
-            public bool PostOptimization = true;
+            public bool ImplicitMultiplicationPriority;
             #endregion
 
 

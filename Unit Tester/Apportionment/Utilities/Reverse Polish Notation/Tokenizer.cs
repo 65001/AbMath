@@ -163,11 +163,22 @@ namespace AbMath.Tests
         [Test]
         public void MixedDivisionMultiplication()
         {
-            RPN test = new RPN("1/2x").Compute();
+            RPN test = new RPN("1/2x");
+            test.Data.ImplicitMultiplicationPriority = true;
+            test.Compute();
+
             Assert.AreEqual("1 2 x * /", test.Polish.Print());
 
             test.SetEquation("8/2(2 + 2)").Compute();
             Assert.AreEqual("8 2 2 2 ^ * /", test.Polish.Print());
+
+            test.Data.ImplicitMultiplicationPriority = false;
+
+            test.SetEquation("1/2x").Compute();
+            Assert.AreEqual("x 2 /", test.Polish.Print());
+
+            test.SetEquation("8/2(2 + 2)").Compute();
+            Assert.AreEqual("4 2 2 ^ *", test.Polish.Print());
         }
 
         [Test]
