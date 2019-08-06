@@ -173,7 +173,8 @@ namespace AbMath.Calculator
                 {
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     ElapsedTicks = stopwatch.ElapsedTicks,
-                    Type = type
+                    Type = type,
+                    Count = 1
                 });
             }
 
@@ -182,16 +183,24 @@ namespace AbMath.Calculator
                 if (_time.Count > 0 && _time[_time.Count - 1].Type == time.Type)
                 {
                     TimeRecord prev = _time[_time.Count - 1];
+
                     prev.ElapsedMilliseconds += time.ElapsedMilliseconds;
                     prev.ElapsedTicks += time.ElapsedTicks;
+                    prev.Count += 1;
+
                     _time[_time.Count - 1] = prev;
                 }
                 //If a Type contains a period it denotes that it should always be merged.
                 else if (time.Type.Contains(".") && _time.Any(t => t.Type == time.Type) )
                 {
-                    TimeRecord prev = _time.Find(t => t.Type == time.Type);
+                    int index = _time.FindIndex(t => t.Type == time.Type);
+                    TimeRecord prev = _time[index];
+
                     prev.ElapsedMilliseconds += time.ElapsedMilliseconds;
                     prev.ElapsedTicks += time.ElapsedTicks;
+                    prev.Count += 1;
+
+                    _time[index] = prev;
                 }
                 else
                 {
@@ -208,7 +217,9 @@ namespace AbMath.Calculator
                 });
 
                 times.Add(new Schema() { Column = "Type", Width = 30 });
+                times.Add(new Schema() {Column = "# Calls", Width = 8});
                 times.Add(new Schema() { Column = "Time (ms)", Width = 10 });
+
                 times.Add(new Schema() { Column = "Ticks", Width = 8 });
                 times.Add(new Schema() { Column = "% Milliseconds", Width = 16 });
                 times.Add(new Schema() { Column = "% Ticks", Width = 9 });
@@ -222,7 +233,10 @@ namespace AbMath.Calculator
 
                     times.Add(new string[]
                     {
-                        TR.Type, TR.ElapsedMilliseconds.ToString(), TR.ElapsedTicks.ToString("N0"),
+                        TR.Type,
+                        TR.Count.ToString(),
+                        TR.ElapsedMilliseconds.ToString(),
+                        TR.ElapsedTicks.ToString("N0"),
                         Math.Round((100 * TR.ElapsedMilliseconds / miliseconds), 2).ToString(),
                         (100 * TR.ElapsedTicks / steps).ToString("N0")
                     });
@@ -230,10 +244,10 @@ namespace AbMath.Calculator
 
                 times.Add(new string[]
                 {
-                    "Total", miliseconds.ToString("N0") , steps.ToString("N0"), " ", " "
+                    "Total", "", miliseconds.ToString("N0") , steps.ToString("N0"), " ", " "
                 });
 
-                times.Add(new string[] {Equation, "", "", "", "" });
+                times.Add(new string[] {Equation, "", "", "", "", "" });
 
                 return times;
             }

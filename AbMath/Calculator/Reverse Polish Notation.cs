@@ -72,6 +72,7 @@ namespace AbMath.Calculator
             public string Type;
             public double ElapsedMilliseconds;
             public double ElapsedTicks;
+            public int Count;
         }
 
         public string Equation { get; private set; }

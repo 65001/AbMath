@@ -104,12 +104,7 @@ namespace AbMath.Calculator
 
             _stopwatch.Stop();
 
-            _dataStore.AddTimeRecord(new RPN.TimeRecord()
-            {
-                Type = "Evaluation",
-                ElapsedMilliseconds = _stopwatch.ElapsedMilliseconds,
-                ElapsedTicks = _stopwatch.ElapsedTicks
-            });
+            _dataStore.AddTimeRecord("Evaluation", _stopwatch);
 
             if (_dataStore.DebugMode)
             {
