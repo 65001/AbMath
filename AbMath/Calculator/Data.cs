@@ -91,8 +91,8 @@ namespace AbMath.Calculator
             public bool ContainsEquation => 
                 Equation.Contains("=") || Equation.Contains(">") || Equation.Contains("<") ;
 
-            public double TotalMilliseconds => this.Time.Sum(t => t.ElapsedMilliseconds);
-            public double TotalSteps => this.Time.Sum(t => t.ElapsedTicks);
+            public double TotalMilliseconds => this.Time.Where(t => !t.Type.Contains(".")).Sum(t => t.ElapsedMilliseconds);
+            public double TotalSteps => this.Time.Where(t => !t.Type.Contains(".")).Sum(t => t.ElapsedTicks);
 
             #region Config
             /// <summary>
@@ -112,7 +112,7 @@ namespace AbMath.Calculator
             /// <summary>
             /// Implicit multiplication in some interpretations
             /// of order of operations has a higher priority
-            /// compared to that of division.
+            /// compared to that of division. 
             /// Set this to true to enable that feature.
             /// </summary>
             public bool ImplicitMultiplicationPriority;

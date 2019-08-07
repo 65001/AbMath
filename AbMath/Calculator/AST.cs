@@ -83,8 +83,16 @@ namespace AbMath.Calculator
 
             while (hash != Root.GetHash())
             {
+                Stopwatch sw1 = new Stopwatch();
+                sw1.Start();
                 hash = Root.GetHash();
-                Write($"{pass}. {Root.ToInfix()}.");
+                _data.AddTimeRecord("AST.GetHash", sw1);
+
+                if (debug)
+                {
+                    Write($"{pass}. {Root.ToInfix()}.");
+                }
+
                 Simplify(Root);
                 pass++;
             }
@@ -113,7 +121,7 @@ namespace AbMath.Calculator
             _rpn.Data.RemoveFunction("internal_product");
             _rpn.Data.RemoveFunction("internal_sum");
             sw.Stop();
-            this._rpn.Data.AddTimeRecord("AST.Normalize", sw);
+            this._rpn.Data.AddTimeRecord("AST.Normalize :: AST Simplify", sw);
         }
 
         private void Simplify(RPN.Node node)
@@ -134,6 +142,9 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node, SimplificationMode mode)
         {
+            Stopwatch SW = new Stopwatch();
+            SW.Start();
+
             //If Root is a number abort. 
             if (Root.IsNumber() || node.IsNumber() || node.IsConstant() )
             {
@@ -144,18 +155,30 @@ namespace AbMath.Calculator
             {
                 if (node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt())
                 {
-                    Write("\tsqrt(g(x))^2 -> g(x)");
+                    if (debug)
+                    {
+                        Write("\tsqrt(g(x))^2 -> g(x)");
+                    }
+
                     Assign(node, node.Children[1].Children[0]);
                 }
                 else if (node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber(2))
                 {
-                    Write("\tsqrt(g(x)^2) -> abs(g(x))");
+                    if (debug)
+                    {
+                        Write("\tsqrt(g(x)^2) -> abs(g(x))");
+                    }
+
                     RPN.Node abs = new RPN.Node(new[] { node.Children[0].Children[1] }, new RPN.Token("abs", 1, RPN.Type.Function));
                     Assign(node, abs);
                 }
                 else if (node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber() && node.Children[0].Children[0].GetNumber() % 4 == 0)
                 {
-                    Write("\tsqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
+                    if (debug)
+                    {
+                        Write("\tsqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
+                    }
+
                     RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(node.Children[0].Children[0].GetNumber() / 2), node.Children[0].Children[1] }, new RPN.Token("^", 2, RPN.Type.Operator));
                     Assign(node, exponent);
                 }
@@ -165,22 +188,38 @@ namespace AbMath.Calculator
                 RPN.Node temp = null;
                 if (node.Token.IsLog() && node.Children[0].IsNumber(1))
                 {
-                    Write("\tlog(b,1) -> 0");
+                    if (debug)
+                    {
+                        Write("\tlog(b,1) -> 0");
+                    }
+
                     temp = new RPN.Node(0);
                 }
                 else if (node.Token.IsLog() && node.ChildrenAreIdentical())
                 {
-                    Write("\tlog(b,b) -> 1");
+                    if (debug)
+                    {
+                        Write("\tlog(b,b) -> 1");
+                    }
+
                     temp = new RPN.Node(1);
                 }
                 else if (node.IsExponent() && node.Children[0].IsLog() && node.Children[0].Children[1].Matches(node.Children[1]) )
                 {
-                    Write($"\tb^log(b,x) -> x");
+                    if (debug)
+                    {
+                        Write($"\tb^log(b,x) -> x");
+                    }
+
                     temp = node.Children[0].Children[0];
                 }
                 else if (node.IsLog() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
                 {
-                    Write("\tlog(b,R^c) -> c * log(b,R)");
+                    if (debug)
+                    {
+                        Write("\tlog(b,R^c) -> c * log(b,R)");
+                    }
+
                     RPN.Node exponent = node.Children[0];
                     RPN.Node baseNode = exponent.Children[1];
                     RPN.Node power = exponent.Children[0];
@@ -191,7 +230,11 @@ namespace AbMath.Calculator
                 }
                 else if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
                 {
-                    Write("\tln(R^c) -> log(e,R^c) -> c * ln(R)");
+                    if (debug)
+                    {
+                        Write("\tln(R^c) -> log(e,R^c) -> c * ln(R)");
+                    }
+
                     RPN.Node exponent = node.Children[0];
                     RPN.Node power = exponent.Children[0];
 
@@ -743,11 +786,16 @@ namespace AbMath.Calculator
                 return;
             }
 
+            SW.Stop();
+            _data.AddTimeRecord("AST.Simplify:Compute", SW);
+
+            SW.Restart();
             //Propagate down the tree
             for (int i = (node.Children.Count - 1); i >= 0; i--)
             {
                 Simplify(node.Children[i], mode);
             }
+            _data.AddTimeRecord("AST.Simplify:Propogate", SW);
         }
 
         private void Swap(RPN.Node node)
@@ -842,7 +890,7 @@ namespace AbMath.Calculator
             }
 
             sw.Stop();
-            this._rpn.Data.AddTimeRecord("AST.Swap", sw);
+            this._rpn.Data.AddTimeRecord("AST.Swap :: AST Simplify", sw);
         }
 
         private void InternalSwap(RPN.Node node)
