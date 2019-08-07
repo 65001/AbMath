@@ -12,8 +12,8 @@ namespace AbMath.Calculator
         {
             private readonly List<string> _meta_functions;
 
-            private readonly Dictionary<string,Function> _functions;
-            private readonly Dictionary<string,Operator> _operators;
+            private readonly Dictionary<string, Function> _functions;
+            private readonly Dictionary<string, Operator> _operators;
 
             private readonly Dictionary<string, string> _aliases;
 
