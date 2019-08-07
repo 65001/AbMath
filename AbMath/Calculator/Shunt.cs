@@ -110,7 +110,7 @@ namespace AbMath.Calculator
 
                     bool Left = LeftImplicit();
                     bool Right = RightImplicit();
-
+                    
                     //Unary Input at the start of the input or 
                     if ( i == 0 && _ahead != null && _dataStore.IsUnary(_token.Value) && _ahead.IsNumber())
                     {

@@ -21,6 +21,7 @@ namespace AbMath.Calculator
 
             private readonly List<string> _leftbracket;
             private readonly List<string> _rightbracket;
+
             private List<TimeRecord> _time;
             private readonly Dictionary<string, string> _variableStore;
 
@@ -344,8 +345,8 @@ namespace AbMath.Calculator
             private void DefaultAliases()
             {
                 AddAlias("÷", "/");
-                AddAlias("Γ","gamma");
-                AddAlias("π", "pi");
+                AddAlias("gamma", "Γ");
+                AddAlias("pi","π");
                 AddAlias("≠", "!=");
                 AddAlias("≥", ">=");
                 AddAlias("≤", "<=");
@@ -685,7 +686,7 @@ namespace AbMath.Calculator
                 });
 
 #region Constants
-                AddFunction("pi", new Function
+                AddFunction("π", new Function
                 {
                     Arguments = 0,
                     MinArguments = 0,
@@ -761,7 +762,7 @@ namespace AbMath.Calculator
                     MinArguments = 1
                 });
 
-                AddFunction("gamma", new Function()
+                AddFunction("Γ", new Function()
                 {
                     Arguments = 1,
                     Compute = DoFunctions.Gamma,

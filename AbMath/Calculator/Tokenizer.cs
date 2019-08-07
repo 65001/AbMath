@@ -205,6 +205,11 @@ namespace AbMath.Calculator
                     return;
                 }
 
+                if (_dataStore.Aliases.ContainsKey(tokens))
+                {
+                    tokens = _dataStore.Aliases[tokens];
+                }
+
                 _rule = rule;
 
                 Token token;

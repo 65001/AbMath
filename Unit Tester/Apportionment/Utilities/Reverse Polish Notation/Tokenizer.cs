@@ -17,14 +17,14 @@ namespace AbMath.Tests
         public void UnaryFunction()
         {
             RPN test = new RPN("-pi").Compute();
-            Assert.AreEqual("-1 pi *", test.Polish.Print());
+            Assert.AreEqual("-1 π *", test.Polish.Print());
         }
 
         [Test]
         public void ComplexFunction()
         {
             RPN test = new RPN("sin(16pi)").Compute();
-            Assert.AreEqual("16 pi * sin", test.Polish.Print());
+            Assert.AreEqual("16 π * sin", test.Polish.Print());
         }
 
         [Test]
@@ -38,7 +38,7 @@ namespace AbMath.Tests
         public void ConstantFunctionRight()
         {
             RPN test = new RPN("pi(2)").Compute();
-            Assert.AreEqual("2 pi *", test.Polish.Print());
+            Assert.AreEqual("2 π *", test.Polish.Print());
         }
 
         [Test]
@@ -122,7 +122,7 @@ namespace AbMath.Tests
         public void ArityConstantMax()
         {
             RPN test = new RPN("max(1, pi)").Compute();
-            Assert.AreEqual("1 pi max", test.Polish.Print());
+            Assert.AreEqual("1 π max", test.Polish.Print());
         }
 
         [Test]
