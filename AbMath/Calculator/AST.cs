@@ -1157,10 +1157,30 @@ namespace AbMath.Calculator
                 }
                 else if (node.IsFunction("derivative"))
                 {
-                    GenerateDerivativeAndReplace(node.Children[1]);
-                    Derive(node.Children[0]);
-                    Assign(node, node.Children[1]);
-                    node.Delete();
+                    if (node.Children.Count == 2)
+                    {
+                        GenerateDerivativeAndReplace(node.Children[1]);
+                        Derive(node.Children[0]);
+                        Assign(node, node.Children[1]);
+                        node.Delete();
+                    }
+                    else if (node.Children.Count == 3)
+                    {
+                        if (!node[0].IsNumberOrConstant() && (int)node[0].GetNumber() == node[0].GetNumber())
+                        {
+                            throw new Exception("Expected a number or constant");
+                        }
+
+                        int count = (int)node[0].GetNumber();
+                        node.RemoveChild(node[0]);
+                        for (int i = 0; i < count; i++)
+                        {
+                            GenerateDerivativeAndReplace(node.Children[1]);
+                            Derive(node.Children[0]);
+                        }
+                        Assign(node, node.Children[1]);
+                        node.Delete();
+                    }
                 }
                 else if (node.IsFunction("solve"))
                 {

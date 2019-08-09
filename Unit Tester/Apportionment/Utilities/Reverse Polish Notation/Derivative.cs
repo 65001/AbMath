@@ -133,6 +133,9 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative( derivative(x^3,x),x)").Compute();
             Assert.AreEqual("2 3 * x *", test.Polish.Print());
+
+            test.SetEquation("derivative(x^3,x,2)").Compute();
+            Assert.AreEqual("2 3 * x *", test.Polish.Print());
         }
 
         [Test]
