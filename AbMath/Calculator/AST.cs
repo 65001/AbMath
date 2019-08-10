@@ -1184,7 +1184,37 @@ namespace AbMath.Calculator
                 }
                 else if (node.IsFunction("solve"))
                 {
-                    Algebra(node);
+                    if (node.Children.Count == 2)
+                    {
+                        node.AddChild(new RPN.Node(new RPN.Token("=", 2, RPN.Type.Operator)));
+                    }
+                    else
+                    {
+                        node.Swap(0, 2);
+                        node[2].Children.Clear();
+                    }
+
+                    Write(node.Print());
+
+                    RPN.Node temp = node[2];
+                    node.RemoveChild(temp);
+
+                    Algebra(node, ref temp );
+
+                    temp.AddChild(new [] {node[0], node[1]});
+
+                    //This is done to fix a bug
+                    if (!temp.IsOperator("="))
+                    {
+                        temp.Swap(0, 1);
+                    }
+
+                    node.AddChild(temp);
+                    Write($"{node[1].ToInfix()} {node[2].ToInfix()} {node[0].ToInfix()}");
+                    node.RemoveChild(temp);
+
+                    Write(temp.ToInfix());
+                    Assign(node, temp);
                 }
 
                 return true;
@@ -2008,13 +2038,85 @@ namespace AbMath.Calculator
             }
         }
 
-        private void Algebra(RPN.Node node)
+        private void Algebra(RPN.Node node, ref RPN.Node equality)
         {
-            if (node.IsFunction("solve"))
-            {
-                //f(x) + c = [Constant or Number or Solveable Expression] 
-                
+            if (!node.IsFunction("solve")) return;
 
+            string hash = string.Empty;
+
+            while (hash != node.GetHash()) {
+                hash = node.GetHash();
+                if (!node[0].IsNumberOrConstant() && node[0].IsSolveable())
+            {
+                Write("\tSolving for one Side.");
+                Solve(node[0]);
+            }
+
+                if (!node[1].IsNumberOrConstant() && node[1].IsSolveable())
+            {
+                Write("\tSolving for one Side.");
+                Solve(node[1]);
+            }
+
+
+                if (node[0].IsNumberOrConstant() || node[0].IsSolveable())
+                {
+                    if (node[1].IsAddition())
+                    {
+                        RPN.Node temp = null;
+
+                        if (node[1, 0].IsNumberOrConstant())
+                        {
+                            Write("\tf(x) + c = c_1 -> f(x) = c_1 - c");
+                            temp = node[1, 0];
+                        }
+                        else if (node[1, 1].IsNumberOrConstant())
+                        {
+                            Write("\tc + f(x) = c_1 -> f(x) = c_1 - c");
+                            temp = node[1, 1];
+                        }
+
+                        if (temp is null)
+                        {
+                            return;
+                        }
+
+                        node[1].Replace(temp, new RPN.Node(0));
+                        RPN.Node subtraction = new RPN.Node(new [] {temp, node[0]}, new RPN.Token("-", 2, RPN.Type.Operator));
+                        node.Replace(node[0], subtraction);
+
+                        Simplify(node[1], SimplificationMode.Addition);
+                    }
+                    else if (node[1].IsSubtraction())
+                    {
+
+                    }
+
+                    //TODO: f(x) - c = [Constant or Number or Solveable Expression]
+                }
+
+
+                //TODO: c * f(x) = g(x) -> f(x) = g(x)/c
+                //TODO: Make this equality 
+                //This might mean swapping after the equality is completed! 
+
+                //f(x)^2 = g(x)
+                if (node[1].IsExponent() && node[1, 0].IsNumber(2))
+                {
+                    Write("\tf(x)^2 = g(x) -> abs(f(x)) = sqrt(g(x))");
+
+                    RPN.Node abs = new RPN.Node(new [] {node[1, 1]}, new RPN.Token("abs", 1, RPN.Type.Function));
+                    RPN.Node sqrt = new RPN.Node(new[] {node[0]}, new RPN.Token("sqrt", 1, RPN.Type.Function));
+
+                    node.Replace(node[1], abs);
+                    node.Replace(node[0], sqrt);
+                }
+
+
+                //Quadratic Formula Stuff 
+
+
+                //TODO: ln(f(x)) = g(x) -> e^ln(f(x)) = e^g(x) -> f(x) = e^g(x)
             }
         }
 
@@ -2086,8 +2188,7 @@ namespace AbMath.Calculator
                     return null;
                 }
 
-                //TODO: Convert this from using ToPostFix to automatically
-                //generating a new correct tree!
+                //TODO: Convert this from using ToPostFix to automatically generating a new correct tree!
 
                 //Prep stage
                 Queue<RPN.Node> additions = new Queue<RPN.Node>();

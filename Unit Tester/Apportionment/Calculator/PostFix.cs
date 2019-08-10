@@ -504,6 +504,11 @@ namespace AbMath.Tests
 
             math = new PostFix(test);
             Assert.AreEqual(0, math.Compute());
+
+            //TODO:
+            //5 <= 5
+            //5 <= 6
+            //6 <= 5
         }
 
         #endregion

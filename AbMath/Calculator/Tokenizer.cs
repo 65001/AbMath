@@ -82,7 +82,7 @@ namespace AbMath.Calculator
                             WriteToken("Operator", ref token);
                             token = _character + _readAhead;
                             WriteToken("Operator", ref token);
-                            i = i + 1;
+                            i += 1;
                         }
                         //Unary Input at the start of the input or after another operator or left parenthesis
                         else if ((i == 0 && _dataStore.IsUnary(_character)) || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken == ",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(token)))
@@ -213,7 +213,6 @@ namespace AbMath.Calculator
                 _rule = rule;
 
                 Token token;
-
                 switch (_dataStore.Resolve(tokens))
                 {
                     case Type.Number:
@@ -224,6 +223,18 @@ namespace AbMath.Calculator
                         break;
                     case Type.Operator:
                         token = new Token(tokens, _dataStore.Operators[tokens].Arguments, Type.Operator);
+                        break;
+                    case Type.LParen:
+                        token = new Token(tokens, 0, Type.LParen);
+                        break;
+                    case Type.RParen:
+                        token = new Token(tokens, 0, Type.RParen);
+                        break;
+                    case Type.Variable:
+                        token = new Token(tokens, 0, Type.Variable);
+                        break;
+                    case Type.Null:
+                        token = new Token(tokens, 0, Type.Null);
                         break;
                     default:
                         token = new Token(tokens, 0, _dataStore.Resolve(tokens));
