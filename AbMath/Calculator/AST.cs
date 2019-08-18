@@ -2191,7 +2191,7 @@ namespace AbMath.Calculator
                 //TODO: Convert this from using ToPostFix to automatically generating a new correct tree!
 
                 //Prep stage
-                Queue<RPN.Node> additions = new Queue<RPN.Node>();
+                Queue<RPN.Node> additions = new Queue<RPN.Node>(node.Children.Count);
                 additions.Enqueue(new RPN.Node(new [] {node[0], node[1]}, token));
                 for (int i = 2; i + 1< node.Children.Count; i += 2)
                 {
@@ -2200,17 +2200,18 @@ namespace AbMath.Calculator
 
                 if (node.Children.Count % 2 == 1 && node.Children.Count > 2)
                 {
-                    additions.Enqueue(node.Children.Last());
+                    additions.Enqueue(node.Children[node.Children.Count - 1]);
                 }
-
 
                 while (additions.Count > 1)
                 {
+
                     RPN.Node[] temp = new[] {additions.Dequeue(), additions.Dequeue()};
                     temp.Reverse();
                     additions.Enqueue(new RPN.Node(temp, token));
                 }
 
+                //This should nearly always result in a return 
                 if (additions.Count == 1)
                 {
                     additions.Peek().Children.Reverse();
@@ -2218,7 +2219,7 @@ namespace AbMath.Calculator
                     return additions.Dequeue();
                 }
 
-
+                //This is fall back code! 
                 List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
                 results.AddRange(node.Children[0].ToPostFix());
                 results.AddRange(node.Children[1].ToPostFix());
@@ -2300,11 +2301,8 @@ namespace AbMath.Calculator
                         node.Parent.AddChild(node.Children[1]);
                     }
                 }
-                else if (node.IsSubtraction())
-                {
-                    //Convert a subtraction into an addition with multiplication by negative one ????
-                    //We would also need to add a corelating thing in the simplify method
-                }
+                //Convert a subtraction into an addition with multiplication by negative one ????
+                //We would also need to add a corelating thing in the simplify method
             }
         }
 

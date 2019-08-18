@@ -20,6 +20,14 @@ namespace AbMath.Calculator
             return array;
         }
 
+        public static T[] Swap<T>(this T[] array, int index, int index2)
+        {
+            T temp = array[index];
+            array[index] = array[index2];
+            array[index2] = temp;
+            return array;
+        }
+
         public static string Print<T>(this Queue<T> queue)
         {
             int length = queue.Count;

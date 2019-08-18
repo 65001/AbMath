@@ -209,6 +209,18 @@ namespace AbMath.Calculator
                 }
             }
 
+            public void AddChild(List<RPN.Node> nodes)
+            {
+                Spawn();
+                _children.AddRange(nodes);
+                validateChildren();
+
+                if (Token?.Arguments < _children.Count)
+                {
+                    Token.Arguments = _children.Count;
+                }
+            }
+
             public void AddChild(RPN.Node[] nodes)
             {
                 Spawn();
