@@ -310,8 +310,9 @@ namespace AbMath.Calculator
                 }
                 //gcd if the leafs are both numbers since the values of the leafs themselves are changed
                 //we don't have to worry about if the node is the root or not
-                else if (node.Children[0].IsNumber() && node.Children[1].IsNumber())
+                else if (node.Children[0].IsInteger() && node.Children[1].IsInteger())
                 {
+                    
                     double num1 = node.Children[0].GetNumber();
                     double num2 = node.Children[1].GetNumber();
                     double gcd = RPN.DoFunctions.Gcd(new double[] { num1, num2 });

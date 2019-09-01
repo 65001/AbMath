@@ -386,6 +386,11 @@ namespace AbMath.Calculator
                 return Token.IsNumber() && double.Parse(Token.Value) == number;
             }
 
+            public bool IsInteger()
+            {
+                return IsNumber() && ((int)GetNumber()) == GetNumber();
+            }
+
             public bool IsLessThanNumber(double number)
             {
                 return Token.IsNumber() && double.Parse(Token.Value) < number;
