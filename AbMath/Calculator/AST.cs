@@ -80,12 +80,30 @@ namespace AbMath.Calculator
             sw.Start();
             int pass = 0;
             string hash = string.Empty;
+            Dictionary<string, OptimizationTracker> tracker = new Dictionary<string, OptimizationTracker>();
 
             while (hash != Root.GetHash())
             {
                 Stopwatch sw1 = new Stopwatch();
                 sw1.Start();
                 hash = Root.GetHash();
+                if (tracker.ContainsKey(hash))
+                {
+                    if (tracker[hash].count > 10)
+                    {
+                        stdout("An infinite optimization loop may be occuring. Terminating optimization.");
+                        return this;
+                    }
+
+                    var foo = tracker[hash];
+                    foo.count++;
+                    tracker[hash] = foo;
+                }
+                else
+                {
+                    tracker.Add(hash, new OptimizationTracker() {count = 1, Hash = hash});
+                }
+
                 _data.AddTimeRecord("AST.GetHash", sw1);
 
                 if (debug)
@@ -1457,11 +1475,12 @@ namespace AbMath.Calculator
                 {
                     string n = numerator.ToInfix();
                     string d = denominator.ToInfix();
-                    Write($"\td/d{v}[ {n} / {d} ] -> [ d/d{v}( {n} ) * {d} - {d} * d/d{v}( {n} ) ]/{d}^2");
+                    Write($"\td/d{v}[ {n} / {d} ] -> [ d/d{v}( {n} ) * {d} - {n} * d/d{v}( {d} ) ]/{d}^2");
                 }
                 else
                 {
-                    Write($"\td/dx[ f(x) / g(x) ] -> [ d/dx( f(x) ) * g(x) - g(x) * d/dx( f(x) ) ]/g(x)^2");
+                    //d/dx[ f(x)/g(x) ] = [ g(x) * d/dx( f(x)) - f(x) * d/dx( g(x) )]/ g(x)^2
+                    Write($"\td/dx[ f(x) / g(x) ] -> [ d/dx( f(x) ) * g(x) - f(x) * d/dx( g(x) ) ]/g(x)^2");
                 }
 
                 //Replace in tree
@@ -2378,5 +2397,12 @@ namespace AbMath.Calculator
         {
             Output?.Invoke(this, message);
         }
+    }
+
+
+    public struct OptimizationTracker
+    {
+        public string Hash;
+        public int count;
     }
 }
