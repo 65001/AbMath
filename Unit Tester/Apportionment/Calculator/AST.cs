@@ -95,6 +95,19 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("(5/x)/(x/3)").Compute();
             Assert.AreEqual("5 3 * x 2 ^ /", rpn.Polish.Print());
+
+            rpn.SetEquation("[f/g]/h").Compute();
+            Assert.AreEqual("f g h * /", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void DivisionConstantShared()
+        {
+            RPN rpn = new RPN("(3x^3)/3").Compute();
+            Assert.AreEqual("x 3 ^", rpn.Polish.Print());
+
+            rpn.SetEquation("( (x^3) 3)/3 ").Compute();
+            Assert.AreEqual("x 3 ^", rpn.Polish.Print());
         }
 
         [Test]

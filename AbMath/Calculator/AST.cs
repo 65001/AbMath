@@ -330,7 +330,6 @@ namespace AbMath.Calculator
                 //we don't have to worry about if the node is the root or not
                 else if (node.Children[0].IsInteger() && node.Children[1].IsInteger())
                 {
-                    
                     double num1 = node.Children[0].GetNumber();
                     double num2 = node.Children[1].GetNumber();
                     double gcd = RPN.DoFunctions.Gcd(new double[] { num1, num2 });
@@ -350,8 +349,23 @@ namespace AbMath.Calculator
                     RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
                     Assign(node, division);
                 }
-                //TODO:
-                // [f(x)/g(x)]/h(x) - > f(x)/[g(x) * h(x)]
+                else if (node[1].IsMultiplication() && node[0].IsNumberOrConstant() && node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0))
+                {
+                    Write("\t(c * f(x))/c -> f(x) where c is not 0");
+                    Assign(node, node[1, 0]);
+                }
+                else if (node[1].IsDivision())
+                {
+                    Write("\t[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
+                    RPN.Node numerator = node[1, 1];
+                    RPN.Node denominator = new RPN.Node(new[] {node[0], node[1,0]  }, new RPN.Token("*", 2, RPN.Type.Operator) );
+                    RPN.Node division = new RPN.Node(new[] {denominator, numerator}, new RPN.Token("/", 2, RPN.Type.Operator));
+                    Assign(node, division);
+                }
+                //TODO: (c_0 * f(x))/c_1 where c_0, c_1 are integers? 
+                //TODO: (4x^3)/( 2x^2) -> (2x^3)/x^2
+                //TODO: x^10/x^5 -> x^6/x
+                //TODO: (4x^3)/2
             }
             //Subtraction
             else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
