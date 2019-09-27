@@ -2099,6 +2099,8 @@ namespace AbMath.Calculator
                     Solve(node[1]);
                 }   
 
+                //TODO: Quadratic Formula
+
 
                 if (node[0].IsNumberOrConstant() || node[0].IsSolveable())
                 {
@@ -2153,10 +2155,42 @@ namespace AbMath.Calculator
 
                         Simplify(node, SimplificationMode.Subtraction);
                     }
+                    else if (node[1].IsMultiplication())
+                    {
+                        RPN.Node temp = null;
+                        if (node[1, 0].IsNumberOrConstant())
+                        {
+                            temp = node[1, 0];
+                            Write("\tf(x)c = g(x) -> f(x) = g(x)/c");
+                        }
+                        else if (node[1, 1].IsNumberOrConstant())
+                        {
+                            temp = node[1, 1];
+                            Write("\tcf(x) = g(x) -> f(x) = g(x)/c");
+;                       }
+
+                        if (temp != null)
+                        {
+                            node[1].Replace(temp, new RPN.Node(1));
+                            RPN.Node division = new RPN.Node(new [] {temp, node[0]}, new RPN.Token("/", 2, RPN.Type.Operator));
+                            node.Replace(node[0], division);
+                        }
+                    }
+                    else if (node[1].IsDivision())
+                    {
+                        //TODO: f(x)/c = g(x) -> f(x) = c * g(x)
+                        if (node[1, 0].IsNumberOrConstant())
+                        {
+                            RPN.Node temp = node[1, 0];
+
+                            node[1].Replace(temp, new RPN.Node(1));
+                            RPN.Node multiplication = new RPN.Node(new [] {temp, node[0]}, new RPN.Token("*", 2, RPN.Type.Operator));
+                            node.Replace(node[0], multiplication);
+                            Simplify(node, SimplificationMode.Division);
+                        }
+                    }
                 }
 
-
-                //TODO: c * f(x) = g(x) -> f(x) = g(x)/c
                 //TODO: Make this equality 
                 //This might mean swapping after the equality is completed! 
 
@@ -2171,10 +2205,6 @@ namespace AbMath.Calculator
                     node.Replace(node[1], abs);
                     node.Replace(node[0], sqrt);
                 }
-
-
-                //Quadratic Formula Stuff 
-
 
                 //TODO: ln(f(x)) = g(x) -> e^ln(f(x)) = e^g(x) -> f(x) = e^g(x)
             }
