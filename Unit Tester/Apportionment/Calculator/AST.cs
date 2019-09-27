@@ -126,5 +126,12 @@ namespace AbMath.Tests
             RPN rpn = new RPN("sin(x^2)/cos(x^2)").Compute();
             Assert.AreEqual("x 2 ^ tan", rpn.Polish.Print());
         }
+
+        [Test]
+        public void PowerReduction()
+        {
+            RPN rpn = new RPN("x^10/x^5").Compute();
+            Assert.AreEqual("x 6 ^ x /", rpn.Polish.Print());
+        }
     }
 }

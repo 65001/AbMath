@@ -354,6 +354,13 @@ namespace AbMath.Calculator
                     Write("\t(c * f(x))/c -> f(x) where c is not 0");
                     Assign(node, node[1, 0]);
                 }
+                else if (node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() && node[1,0].IsInteger() && node[0, 1].Matches(node[1, 1]))
+                {
+                    int reduction = Math.Min((int)node[0, 0].GetNumber(), (int)node[1, 0].GetNumber()) - 1;
+                    node[0, 0].Replace( node[0,0].GetNumber() - reduction);
+                    node[1, 0].Replace(node[1,0].GetNumber() - reduction);
+                    Write("\tPower Reduction");
+                }
                 else if (node[1].IsDivision())
                 {
                     Write("\t[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
@@ -362,10 +369,8 @@ namespace AbMath.Calculator
                     RPN.Node division = new RPN.Node(new[] {denominator, numerator}, new RPN.Token("/", 2, RPN.Type.Operator));
                     Assign(node, division);
                 }
-                //TODO: (c_0 * f(x))/c_1 where c_0, c_1 are integers? 
-                //TODO: (4x^3)/( 2x^2) -> (2x^3)/x^2
-                //TODO: x^10/x^5 -> x^6/x
-                //TODO: (4x^3)/2
+                //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
+                //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
             }
             //Subtraction
             else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
@@ -594,6 +599,7 @@ namespace AbMath.Calculator
                 }
                 //TODO:
                 //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
+                //cos(x)/[sin(x) * f(x)] 
                 //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
 
                 //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
@@ -2080,17 +2086,18 @@ namespace AbMath.Calculator
 
             while (hash != node.GetHash()) {
                 hash = node.GetHash();
+
                 if (!node[0].IsNumberOrConstant() && node[0].IsSolveable())
-            {
-                Write("\tSolving for one Side.");
-                Solve(node[0]);
-            }
+                {
+                    Write("\tSolving for one Side.");
+                    Solve(node[0]);
+                }
 
                 if (!node[1].IsNumberOrConstant() && node[1].IsSolveable())
-            {
-                Write("\tSolving for one Side.");
-                Solve(node[1]);
-            }
+                {
+                    Write("\tSolving for one Side.");
+                    Solve(node[1]);
+                }   
 
 
                 if (node[0].IsNumberOrConstant() || node[0].IsSolveable())
@@ -2123,10 +2130,29 @@ namespace AbMath.Calculator
                     }
                     else if (node[1].IsSubtraction())
                     {
+                        RPN.Node temp = null;
 
+                        if (node[1, 0].IsNumberOrConstant())
+                        {
+                            Write("\t[f(x) - c = c_1] -> [f(x) = c_1 - c]");
+                            temp = node[1, 0];
+
+                            node[1].Replace(temp, new RPN.Node(0));
+                            RPN.Node addition = new RPN.Node(new[] { temp, node[0] }, new RPN.Token("+", 2, RPN.Type.Operator));
+                            node.Replace(node[0], addition);
+                        }
+                        else if (node[1, 1].IsNumberOrConstant())
+                        {
+                            Write("\t[c - f(x) = c_1] -> [- f(x) = c_1 - c]");
+                            temp = node[1, 1];
+
+                            node[1].Replace(temp, new RPN.Node(0));
+                            RPN.Node subtraction = new RPN.Node(new[] { temp, node[0] }, new RPN.Token("-", 2, RPN.Type.Operator));
+                            node.Replace(node[0], subtraction);
+                        }
+
+                        Simplify(node, SimplificationMode.Subtraction);
                     }
-
-                    //TODO: f(x) - c = [Constant or Number or Solveable Expression]
                 }
 
 
