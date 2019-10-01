@@ -411,6 +411,14 @@ namespace AbMath.Calculator
                     Write($"\tSubtraction by zero. Case 2.");
                     Assign(node, multiply);
                 }
+                else if (node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]))
+                {
+                    Write("\tf(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
+                    RPN.Node subtraction = new RPN.Node(new[] {node[0,1], node[1, 1] }, new RPN.Token("-",2,RPN.Type.Operator));
+                    RPN.Node division = new RPN.Node(new [] {node[0,0], subtraction}, new RPN.Token("/", 2, RPN.Type.Operator));
+                    Assign(node, division);
+                }
+                //TODO: f(x)/g(x) - i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) - i(x)g(x)/g(x)j(x) -> [f(x)j(x) - g(x)i(x)]/[g(x)j(x)]
             }
             else if (mode == SimplificationMode.Addition && node.IsAddition())
             {
@@ -476,6 +484,8 @@ namespace AbMath.Calculator
                     RPN.Node multiplication = new RPN.Node(new [] {node[1], new RPN.Node(2) }, new RPN.Token("*", 2, RPN.Type.Operator));
                     node.Replace(node[1], multiplication);
                 }
+                //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
+                //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
             }
             else if (mode == SimplificationMode.Trig)
             {

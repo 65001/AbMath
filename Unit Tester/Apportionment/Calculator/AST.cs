@@ -272,7 +272,7 @@ namespace AbMath.Tests
         public void SubtractionDivision()
         {
             RPN rpn = new RPN("cos(x)/z - cos(x)/z").Compute();
-            Assert.AreNotEqual("0", rpn.Polish.Print());
+            Assert.AreEqual("0 z /", rpn.Polish.Print());
         }
     }
 }
