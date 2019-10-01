@@ -253,7 +253,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacStressTest()
         {
-            RPN test = new RPN("sum( sqrt(16), min(0,1), max(1,2,3), avg(10,5,7,9) )").Compute();
+            RPN test = new RPN("total( sqrt(16), min(0,1), max(1,2,3), avg(10,5,7,9) )").Compute();
 
             PostFix math = new PostFix(test);
             Assert.AreEqual(14.75, math.Compute());
@@ -423,7 +423,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacImplicitMultiplication()
         {
-            RPN test = new RPN("3sum(1,4,5)").Compute();
+            RPN test = new RPN("3total(1,4,5)").Compute();
 
             PostFix math = new PostFix(test);
             Assert.AreEqual(30, math.Compute());
@@ -432,7 +432,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacUltimateStressTest()
         {
-            RPN test = new RPN("sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) ) - sum( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) )").Compute();
+            RPN test = new RPN("total( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) ) - total( sqrt(16), min(0,1), pi, sin(2pi), max(1,2,3), avg(10,5,7,9) )").Compute();
 
             PostFix math = new PostFix(test);
             Assert.AreEqual(0, math.Compute());
@@ -441,7 +441,7 @@ namespace AbMath.Tests
         [Test]
         public void VardiacImplicitMultiplication2()
         {
-            RPN test = new RPN("sum(1,4,5)3").Compute();
+            RPN test = new RPN("total(1,4,5)3").Compute();
 
             PostFix math = new PostFix(test);
             Assert.AreEqual(30, math.Compute());

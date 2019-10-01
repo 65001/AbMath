@@ -169,7 +169,7 @@ namespace AbMath.Calculator
                 return;
             }
 
-            if (mode == SimplificationMode.Sqrt)
+            else if (mode == SimplificationMode.Sqrt)
             {
                 if (node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt())
                 {
@@ -1147,6 +1147,11 @@ namespace AbMath.Calculator
                 if (node.IsFunction("integrate"))
                 {
                     double answer = double.NaN;
+                    if (node.Children.Count == 4)
+                    {
+                        node.Children.Insert(0, new RPN.Node(0.001));
+                    }
+
                     if (node.Children.Count == 5)
                     {
                         answer = MetaCommands.Integrate(_rpn,
@@ -1155,15 +1160,6 @@ namespace AbMath.Calculator
                             node.Children[2],
                             node.Children[1],
                             node.Children[0]);
-                    }
-                    else if (node.Children.Count == 4)
-                    {
-                        answer = MetaCommands.Integrate(_rpn,
-                            node.Children[3],
-                            node.Children[2],
-                            node.Children[1],
-                            node.Children[0],
-                            new RPN.Node( 0.001));
                     }
 
                     RPN.Node temp = new RPN.Node( answer);
@@ -1172,25 +1168,19 @@ namespace AbMath.Calculator
                 else if (node.IsFunction("table"))
                 {
                     string table;
-                    if (node.Children.Count == 5)
+
+                    if (node.Children.Count == 4)
                     {
-                        table = MetaCommands.Table(_rpn,
-                            node.Children[4],
-                            node.Children[3],
-                            node.Children[2],
-                            node.Children[1],
-                            node.Children[0]);
+                        node.Children.Insert(0, new RPN.Node(0.001));
                     }
-                    else
-                    {
-                        table = MetaCommands.Table(_rpn,
-                            node.Children[3],
-                            node.Children[2],
-                            node.Children[1],
-                            node.Children[0],
-                            new RPN.Node( 0.001));
-                    }
-                    //Write("Table Write: " + table);
+
+                    table = MetaCommands.Table(_rpn,
+                        node.Children[4],
+                        node.Children[3],
+                        node.Children[2],
+                        node.Children[1],
+                        node.Children[0]);
+                    
                     stdout(table);
                     SetRoot(new RPN.Node( double.NaN));
                 }
@@ -1254,6 +1244,10 @@ namespace AbMath.Calculator
 
                     Write(temp.ToInfix());
                     Assign(node, temp);
+                }
+                else if (node.IsFunction("sum"))
+                {
+
                 }
 
                 return true;

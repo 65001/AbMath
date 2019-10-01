@@ -712,7 +712,7 @@ namespace AbMath.Calculator
                 }
                 );
 
-                AddFunction("sum", new Function()
+                AddFunction("total", new Function()
                 {
                     Arguments = 1,
                     MinArguments = 1,
@@ -720,6 +720,13 @@ namespace AbMath.Calculator
                     Compute = DoFunctions.Sum
                 }
                 );
+
+                AddFunction("sum", new Function()
+                {
+                    Arguments = 1,
+                    MinArguments = 4,
+                    MaxArguments = 5
+                });
 
                 AddFunction("avg", new Function()
                 {
@@ -815,6 +822,7 @@ namespace AbMath.Calculator
                 _meta_functions.Add("table");
                 _meta_functions.Add("plot");
                 _meta_functions.Add("solve");
+                _meta_functions.Add("sum");
                 #endregion
             }
             private void DefaultFormats()

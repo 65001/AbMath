@@ -292,8 +292,15 @@ namespace AbMath.Calculator
                     if (token.IsFunction() && !token.IsConstant())
                     {
                         Function function = _dataStore.Functions[token.Value];
+                        //See if we can apply casting
+                        //Cast sum to total if it has more than the possible arguments since thats what the user probably wanted
+                        if (token.Value == "sum" && token.Arguments > function.MinArguments)
+                        {
+                            Write("Casting sum to total since it exceeds max arguments for sum");
+                            _output[i] = new Token("total", token.Arguments, RPN.Type.Function);
+                        }
                         //The function has an incorrect number of arguments!
-                        if (function.MinArguments > token.Arguments || token.Arguments > function.MaxArguments)
+                        else if (function.MinArguments > token.Arguments || token.Arguments > function.MaxArguments)
                         {
                             throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.");
                         }
