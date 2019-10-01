@@ -740,15 +740,6 @@ namespace AbMath.Calculator
                         node.Children[0].Children[1].Remove(new RPN.Node(1));
                     }
                 }
-                else if (node.IsDivision() && node.Children[0].IsVariable() && node.Children[1].IsNumber())
-                {
-                    Write($"\tDivision -> Multiplication and exponentiation.");
-                    RPN.Node negativeOne = new RPN.Node( -1);
-                    RPN.Node exponent = new RPN.Node( new[] { negativeOne, node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
-                    //TODO: Replace
-                    node.Token.Value = "*";
-                    node.Replace(node.Children[0], exponent);
-                }
             }
             else if (mode == SimplificationMode.Exponent && node.IsExponent())
             {
