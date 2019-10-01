@@ -149,7 +149,7 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Imaginary);
             Simplify(node, SimplificationMode.Division);
 
-            Simplify(node, SimplificationMode.Exponent);
+            Simplify(node, SimplificationMode.Exponent); //This will make all negative exponennts into divisions
             Simplify(node, SimplificationMode.Subtraction);
             Simplify(node, SimplificationMode.Addition);
             Simplify(node, SimplificationMode.Trig);
@@ -169,7 +169,7 @@ namespace AbMath.Calculator
                 return;
             }
 
-            else if (mode == SimplificationMode.Sqrt)
+            if (mode == SimplificationMode.Sqrt)
             {
                 if (node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt())
                 {
@@ -299,7 +299,6 @@ namespace AbMath.Calculator
                     Assign(node, temp);
                 }
             }
-            //Imaginary
             else if (mode == SimplificationMode.Imaginary && node.IsSqrt())
             {
                 //Any sqrt function with a negative number -> Imaginary number to the root node
@@ -311,7 +310,6 @@ namespace AbMath.Calculator
                 }
                 //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
             }
-            //Division
             else if (mode == SimplificationMode.Division && node.IsDivision())
             {
                 //if there are any divide by zero exceptions -> NaN to the root node
@@ -372,11 +370,10 @@ namespace AbMath.Calculator
                 //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
                 //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
             }
-            //Subtraction
             else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
             {
                 //3sin(x) - 3sin(x)
-                if ( node.ChildrenAreIdentical())
+                if ( node.ChildrenAreIdentical() && !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
                 {
                     Write("\tSimplification: Subtraction");
                     Assign(node, new RPN.Node(0));
@@ -415,7 +412,6 @@ namespace AbMath.Calculator
                     Assign(node, multiply);
                 }
             }
-            //Addition
             else if (mode == SimplificationMode.Addition && node.IsAddition())
             {
                 //Is root and leafs have the same hash
