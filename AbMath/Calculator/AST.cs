@@ -620,7 +620,9 @@ namespace AbMath.Calculator
                     Assign(node, temp);
                     Write($"\tMultiplication by one simplification.");
                 }
-                else if ( node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0) )
+                //TODO: Replace the requirement that we cannot do a simplification when a division is present to 
+                //that we cannot do a simplification when a division has a variable in the denominator!
+                else if ( (node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)) )
                 {
                     Write($"\tMultiplication by zero simplification.");
                     Assign(node, new RPN.Node(0));
