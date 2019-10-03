@@ -12,7 +12,7 @@ namespace AbMath.Calculator
 
         private enum SimplificationMode
         {
-            Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap, Trig, Compress, COUNT
+            Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap, Trig, Constants, Compress, COUNT
         }
 
         private RPN _rpn;
@@ -144,6 +144,10 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
+            #if DEBUG
+                Write(Root.ToInfix());       
+            #endif
+
             Simplify(node, SimplificationMode.Sqrt);
             Simplify(node, SimplificationMode.Log);
             Simplify(node, SimplificationMode.Imaginary);
@@ -155,7 +159,11 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Trig);
             Simplify(node, SimplificationMode.Multiplication);
             Simplify(node, SimplificationMode.Swap);
+
             Swap(node);
+            #if DEBUG
+                Write(Root.ToInfix());
+            #endif
         }
 
         private void Simplify(RPN.Node node, SimplificationMode mode)
@@ -165,12 +173,15 @@ namespace AbMath.Calculator
 
             Stack<RPN.Node> stack = new Stack<RPN.Node>();
             stack.Push(node);
-
             while (stack.Count > 0)
             {
                 node = stack.Pop();
-                Write(Root.Print());
-                Write(node.GetHash());
+                //Write(node.GetHash());
+
+                if (node.IsExponent() && node.Children.Count == 0)
+                {
+                    throw  new Exception("Invalid Node");
+                }
                 //If Root is a number abort. 
                 if (Root.IsNumber())
                 {
@@ -477,6 +488,11 @@ namespace AbMath.Calculator
                         node[0,1].Replace(1);
                         node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
                     }
+                    //TODO: ((-2*(cos(x)^2))+(2*(sin(x)^2)))
+                    else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0))
+                    {
+                        //f(x) - (-c * g(x)) -> f(x) + c *g(x)
+                    }
                     else if (node[0].IsNumber() && node[0].IsLessThanNumber(0))
                     {
                         Write("\tf(x) - (-c) -> f(x) + c");
@@ -565,6 +581,8 @@ namespace AbMath.Calculator
                         node.Swap(0, 1);
                         node.Replace(new RPN.Token("-", 2, RPN.Type.Operator));
                     }
+
+                    //TODO: -c * f(x) + g(x) -> g(x) - c * f(x)
 
                     //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
                     //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
@@ -907,20 +925,14 @@ namespace AbMath.Calculator
                     else if (power.IsNumber(0))
                     {
                         Write("\tf(x)^0 -> 1");
-                        Assign(node, new RPN.Node(1));
-
-                        baseNode.Delete();
-                        power.Delete();
-                        node.Delete();
+                        node.Replace(1);
+                        node.Children.Clear();
                     }
                     else if (baseNode.IsNumber(1))
                     {
                         Write("\t1^(fx) -> 1");
-                        Assign(node, new RPN.Node(1));
-
-                        baseNode.Delete();
-                        power.Delete();
-                        node.Delete();
+                        node.Replace(1);
+                        node.Children.Clear();
                     }
                     else if (power.IsLessThanNumber(0))
                     {
@@ -967,6 +979,29 @@ namespace AbMath.Calculator
                         node.Replace(baseNode, new RPN.Node(-1 * baseNode.GetNumber()));
                     }
                 }
+                else if (mode == SimplificationMode.Constants)
+                {
+                    if (node.IsMultiplication())
+                    {
+                        if (node[0].IsInteger() && node[1].IsInteger())
+                        {
+                            Solve(node);
+                        }
+                        else if (node[0].IsNumber() && node[1].IsNumber())
+                        {
+                            if ((int) (node[0].GetNumber() * node[1].GetNumber()) ==
+                                node[0].GetNumber() * node[1].GetNumber())
+                            {
+                                Solve(node);
+                            }
+                        }
+                        
+                    }
+                    else if (node.IsExponent() && node[0].IsInteger() && node[1].IsInteger())
+                    {
+                        Solve(node);
+                    }
+                }
 
                 //Propagate down the tree IF there is a root 
                 //which value is not NaN or a number
@@ -988,6 +1023,7 @@ namespace AbMath.Calculator
 
                 _data.AddTimeRecord("AST.Simplify:Propogate", SW);
             }
+
         }
 
         private void Swap(RPN.Node node)
@@ -1186,6 +1222,7 @@ namespace AbMath.Calculator
                             }
                         }
                     }
+                    //Write(node.Print()); //TODO
                 }
                 else if (node.IsFunction("internal_product") || node.IsFunction("product"))
                 {
@@ -1246,6 +1283,7 @@ namespace AbMath.Calculator
                             //TODO: Exponents and other expressions right of way
                         }
                     }
+                    Write(node.Print());
                 }
             }
         }
@@ -1363,6 +1401,7 @@ namespace AbMath.Calculator
                         {
                             GenerateDerivativeAndReplace(node.Children[1]);
                             Derive(node.Children[0]);
+                            Simplify(node);
                         }
                         Assign(node, node.Children[1]);
                         node.Delete();
@@ -1451,11 +1490,15 @@ namespace AbMath.Calculator
                 throw new ArgumentException("The variable of deriviation is not a variable!", nameof(variable));
             }
 
+            Simplify(Root);
+            //Simplify(Root, SimplificationMode.Constants);
+
             Write($"Starting to derive ROOT: {Root.ToInfix()}");
             Derive(Root, variable);
 
             Write("\tSimplifying Post!\n");
             Simplify(Root);
+            //Simplify(Root, SimplificationMode.Constants);
             Write("");
             
             return this;
