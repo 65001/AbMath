@@ -163,677 +163,803 @@ namespace AbMath.Calculator
             Stopwatch SW = new Stopwatch();
             SW.Start();
 
-            //If Root is a number abort. 
-            if (Root.IsNumber() || node.IsNumber() || node.IsConstant() )
+            Stack<RPN.Node> stack = new Stack<RPN.Node>();
+            stack.Push(node);
+
+            while (stack.Count > 0)
             {
-                return;
+                node = stack.Pop();
+
+                //If Root is a number abort. 
+                if (Root.IsNumber())
+                {
+                    return;
+                }
+
+                if (node.IsNumber() || node.IsConstant())
+                {
+                    continue;
+                }
+
+                if (mode == SimplificationMode.Sqrt)
+                {
+                    if (node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt())
+                    {
+                        if (debug)
+                        {
+                            Write("\tsqrt(g(x))^2 -> g(x)");
+                        }
+
+                        Assign(node, node.Children[1].Children[0]);
+                    }
+                    else if (node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber(2))
+                    {
+                        if (debug)
+                        {
+                            Write("\tsqrt(g(x)^2) -> abs(g(x))");
+                        }
+
+                        RPN.Node abs = new RPN.Node(new[] {node.Children[0].Children[1]},
+                            new RPN.Token("abs", 1, RPN.Type.Function));
+                        Assign(node, abs);
+                    }
+                    else if (node.IsSqrt() && node.Children[0].IsExponent() &&
+                             node.Children[0].Children[0].IsNumber() &&
+                             node.Children[0].Children[0].GetNumber() % 4 == 0)
+                    {
+                        if (debug)
+                        {
+                            Write("\tsqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
+                        }
+
+                        RPN.Node exponent =
+                            new RPN.Node(
+                                new[]
+                                {
+                                    new RPN.Node(node.Children[0].Children[0].GetNumber() / 2),
+                                    node.Children[0].Children[1]
+                                }, new RPN.Token("^", 2, RPN.Type.Operator));
+                        Assign(node, exponent);
+                    }
+                }
+                else if (mode == SimplificationMode.Log)
+                {
+                    RPN.Node temp = null;
+                    if (node.Token.IsLog() && node.Children[0].IsNumber(1))
+                    {
+                        if (debug)
+                        {
+                            Write("\tlog(b,1) -> 0");
+                        }
+
+                        temp = new RPN.Node(0);
+                    }
+                    else if (node.Token.IsLog() && node.ChildrenAreIdentical())
+                    {
+                        if (debug)
+                        {
+                            Write("\tlog(b,b) -> 1");
+                        }
+
+                        temp = new RPN.Node(1);
+                    }
+                    else if (node.IsExponent() && node.Children[0].IsLog() &&
+                             node.Children[0].Children[1].Matches(node.Children[1]))
+                    {
+                        if (debug)
+                        {
+                            Write($"\tb^log(b,x) -> x");
+                        }
+
+                        temp = node.Children[0].Children[0];
+                    }
+                    else if (node.IsLog() && node.Children[0].IsExponent() &&
+                             !node.Children[0].Children[1].IsVariable())
+                    {
+                        if (debug)
+                        {
+                            Write("\tlog(b,R^c) -> c * log(b,R)");
+                        }
+
+                        RPN.Node exponent = node.Children[0];
+                        RPN.Node baseNode = exponent.Children[1];
+                        RPN.Node power = exponent.Children[0];
+
+                        RPN.Node log = new RPN.Node(new[] {Clone(baseNode), node.Children[1]},
+                            new RPN.Token("log", 2, RPN.Type.Function));
+                        RPN.Node multiply = new RPN.Node(new[] {log, power}, new RPN.Token("*", 2, RPN.Type.Operator));
+                        temp = multiply;
+                    }
+                    else if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
+                    {
+                        if (debug)
+                        {
+                            Write("\tln(R^c) -> log(e,R^c) -> c * ln(R)");
+                        }
+
+                        RPN.Node exponent = node.Children[0];
+                        RPN.Node power = exponent.Children[0];
+
+                        RPN.Node log = new RPN.Node(new[] {exponent.Children[1]},
+                            new RPN.Token("ln", 1, RPN.Type.Function));
+                        RPN.Node multiply = new RPN.Node(new[] {log, power}, new RPN.Token("*", 2, RPN.Type.Operator));
+                        temp = multiply;
+                    }
+                    else if ((node.IsAddition() || node.IsSubtraction()) && node.Children[0].IsLog() &&
+                             node.Children[1].IsLog() &&
+                             node.Children[0].Children[1].Matches(node.Children[1].Children[1]))
+                    {
+                        RPN.Node parameter;
+                        if (node.IsAddition())
+                        {
+                            Write("\tlog(b,R) + log(b,S) -> log(b,R*S)");
+                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                                new RPN.Token("*", 2, RPN.Type.Operator));
+                        }
+                        else
+                        {
+                            Write("\tlog(b,R) - log(b,S) -> log(b,R/S)");
+                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                                new RPN.Token("/", 2, RPN.Type.Operator));
+                        }
+
+                        RPN.Node baseNode = node.Children[0].Children[1];
+                        RPN.Node log = new RPN.Node(new[] {parameter, baseNode},
+                            new RPN.Token("log", 2, RPN.Type.Function));
+                        temp = log;
+                    }
+                    else if ((node.IsAddition() || node.IsSubtraction()) && node.Children[0].IsLn() &&
+                             node.Children[1].IsLn())
+                    {
+                        RPN.Node parameter;
+                        if (node.IsAddition())
+                        {
+                            Write("\tln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
+                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                                new RPN.Token("*", 2, RPN.Type.Operator));
+                        }
+                        else
+                        {
+                            Write("\tln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
+                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                                new RPN.Token("/", 2, RPN.Type.Operator));
+                        }
+
+                        RPN.Node ln = new RPN.Node(new[] {parameter}, new RPN.Token("ln", 1, RPN.Type.Function));
+                        temp = ln;
+                    }
+
+                    if (temp != null)
+                    {
+                        Assign(node, temp);
+                    }
+                }
+                else if (mode == SimplificationMode.Imaginary && node.IsSqrt())
+                {
+                    //Any sqrt function with a negative number -> Imaginary number to the root node
+                    //An imaginary number propagates anyways
+                    if (node.Children[0].IsLessThanNumber(0))
+                    {
+                        SetRoot(new RPN.Node(double.NaN));
+                        Write($"\tSqrt Imaginary Number -> Root.");
+                    }
+
+                    //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
+                }
+                else if (mode == SimplificationMode.Division && node.IsDivision())
+                {
+                    //if there are any divide by zero exceptions -> NaN to the root node
+                    //NaN propagate anyways
+                    if (node.Children[0].IsNumber(0))
+                    {
+                        SetRoot(new RPN.Node(double.NaN));
+                        Write("\tDivision by zero -> Root");
+                    }
+                    else if (node.Children[0].IsNumber(1))
+                    {
+                        Write("\tDivision by one");
+                        Assign(node, node.Children[1]);
+                    }
+                    //gcd if the leafs are both numbers since the values of the leafs themselves are changed
+                    //we don't have to worry about if the node is the root or not
+                    else if (node.Children[0].IsInteger() && node.Children[1].IsInteger())
+                    {
+                        double num1 = node.Children[0].GetNumber();
+                        double num2 = node.Children[1].GetNumber();
+                        double gcd = RPN.DoFunctions.Gcd(new double[] {num1, num2});
+
+                        node.Replace(node.Children[0], new RPN.Node((num1 / gcd)));
+                        node.Replace(node.Children[1], new RPN.Node((num2 / gcd)));
+                        Write("\tDivision GCD.");
+                    }
+                    else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
+                    {
+                        Write("\tDivison Flip");
+                        RPN.Node[] numerator = {node.Children[0].Children[1], node.Children[1].Children[1]};
+                        RPN.Node[] denominator = {node.Children[0].Children[0], node.Children[1].Children[0]};
+
+                        RPN.Node top = new RPN.Node(new[] {denominator[0], numerator[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node bottom = new RPN.Node(new[] {denominator[1], numerator[0]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(new[] {bottom, top}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        Assign(node, division);
+                    }
+                    else if (node[1].IsMultiplication() && node[0].IsNumberOrConstant() &&
+                             node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0))
+                    {
+                        Write("\t(c * f(x))/c -> f(x) where c is not 0");
+                        Assign(node, node[1, 0]);
+                    }
+                    else if (node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() &&
+                             node[1, 0].IsInteger() && node[0, 1].Matches(node[1, 1]))
+                    {
+                        int reduction = Math.Min((int) node[0, 0].GetNumber(), (int) node[1, 0].GetNumber()) - 1;
+                        node[0, 0].Replace(node[0, 0].GetNumber() - reduction);
+                        node[1, 0].Replace(node[1, 0].GetNumber() - reduction);
+                        Write("\tPower Reduction");
+                    }
+                    else if (node[1].IsDivision())
+                    {
+                        Write("\t[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
+                        RPN.Node numerator = node[1, 1];
+                        RPN.Node denominator = new RPN.Node(new[] {node[0], node[1, 0]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(new[] {denominator, numerator},
+                            new RPN.Token("/", 2, RPN.Type.Operator));
+                        Assign(node, division);
+                    }
+
+                    //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
+                    //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
+                }
+                else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
+                {
+                    //3sin(x) - 3sin(x)
+                    if (node.ChildrenAreIdentical() &&
+                        !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
+                    {
+                        Write("\tSimplification: Subtraction");
+                        Assign(node, new RPN.Node(0));
+                    }
+                    //3sin(x) - 2sin(x)
+                    else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
+                    {
+                        if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() &&
+                            node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
+                        {
+                            Write("\tSimplification: Subtraction Dual Node");
+                            double coefficient = node.Children[1].Children[1].GetNumber() -
+                                                 node.Children[0].Children[1].GetNumber();
+                            node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
+                            node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
+                        }
+                    }
+                    //3sin(x) - sin(x)
+                    else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() &&
+                             node.Children[1].Children[0].Matches(node.Children[0]))
+                    {
+                        Write("\tSimplification: Subtraction: Dual Node: Sub one.");
+                        node.Replace(node.Children[0], new RPN.Node(0));
+                        node.Children[1].Replace(node.Children[1].Children[1],
+                            new RPN.Node(node.Children[1].Children[1].GetNumber() - 1));
+                    }
+                    //3sin(x) - 0
+                    else if (node.Children[0].IsNumber(0))
+                    {
+                        //Root case
+                        Assign(node, node.Children[1]);
+                        Write("\tSubtraction by zero.");
+                    }
+                    //0 - 3sin(x)
+                    else if (node.Children[1].IsNumber(0))
+                    {
+                        RPN.Node multiply = new RPN.Node(new[] {new RPN.Node(-1), node.Children[0]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+
+                        Write($"\tSubtraction by zero. Case 2.");
+                        Assign(node, multiply);
+                    }
+                    else if (node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]))
+                    {
+                        Write("\tf(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
+                        RPN.Node subtraction = new RPN.Node(new[] {node[0, 1], node[1, 1]},
+                            new RPN.Token("-", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(new[] {node[0, 0], subtraction},
+                            new RPN.Token("/", 2, RPN.Type.Operator));
+                        Assign(node, division);
+                    }
+
+                    //TODO: f(x)/g(x) - i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) - i(x)g(x)/g(x)j(x) -> [f(x)j(x) - g(x)i(x)]/[g(x)j(x)]
+                }
+                else if (mode == SimplificationMode.Addition && node.IsAddition())
+                {
+                    //Is root and leafs have the same hash
+                    if (node.ChildrenAreIdentical())
+                    {
+                        RPN.Node multiply = new RPN.Node(new[] {node.Children[0], new RPN.Node(2)},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiply);
+                        Write("\tSimplification: Addition -> Multiplication");
+                    }
+                    //Both nodes are multiplications with 
+                    //the parent node being addition
+                    //Case: 2sin(x) + 3sin(x)
+                    else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
+                    {
+                        if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() &&
+                            node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
+                        {
+                            Write("\tSimplification: Addition");
+                            double sum = (node.Children[0].Children[1].GetNumber() +
+                                          node.Children[1].Children[1].GetNumber());
+                            node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(sum));
+                            node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
+                        }
+                    }
+                    //Zero addition
+                    else if (node.Children[0].IsNumber(0))
+                    {
+                        Write("\tZero Addition.");
+                        Assign(node, node.Children[1]);
+                    }
+                    //Case: 0 + sin(x)
+                    else if (node.Children[1].IsNumber(0))
+                    {
+                        //Child 1 is the expression in this case.
+                        Write("\tZero Addition. Case 2.");
+                        Assign(node, node.Children[0]);
+                    }
+                    //7sin(x) + sin(x)
+                    //C0: Anything
+                    //C1:C0: Compare hash to C0.
+                    else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() &&
+                             node.Children[1].Children[0].Matches(node.Children[0]))
+                    {
+                        Write("\tSimplification Addition Dual Node.");
+                        node.Children[0].Remove(new RPN.Node(0));
+                        node.Children[1].Replace(node.Children[1].Children[1],
+                            new RPN.Node(node.Children[1].Children[1].GetNumber() + 1));
+                    }
+                    else if (node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsLessThanNumber(0))
+                    {
+                        Write("\tAddition can be converted to subtraction");
+                        node.Replace("-");
+                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
+                    }
+                    else if (node[0].IsLessThanNumber(0) && node[1].IsMultiplication())
+                    {
+                        Write("\tAddition can be converted to subtraction");
+                        node.Replace("-");
+                        node.Replace(node[0], new RPN.Node(Math.Abs(node[0].GetNumber())));
+                    }
+                    else if (node.Children[0].IsSubtraction() && node[1].Matches(node[0, 1]))
+                    {
+                        Write("\tf(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
+
+                        node[0].Replace(node[0, 1], new RPN.Node(0));
+                        RPN.Node multiplication = new RPN.Node(new[] {node[1], new RPN.Node(2)},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        node.Replace(node[1], multiplication);
+                    }
+
+                    //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
+                    //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
+                }
+                else if (mode == SimplificationMode.Trig)
+                {
+                    if (node.IsAddition() &&
+                        node.Children[0].IsExponent() &&
+                        node.Children[1].IsExponent() &&
+                        node.Children[0].Children[0].IsNumber(2) &&
+                        node.Children[1].Children[0].IsNumber(2) &&
+                        (node.Children[0].Children[1].IsFunction("cos") ||
+                         node.Children[0].Children[1].IsFunction("sin")) &&
+                        (node.Children[1].Children[1].IsFunction("sin") ||
+                         node.Children[1].Children[1].IsFunction("cos")) &&
+                        !node.ChildrenAreIdentical() &&
+                        node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0])
+                    )
+                    {
+                        RPN.Node head = new RPN.Node(1);
+                        Write("\tsin²(x) + cos²(x) -> 1");
+                        Assign(node, head);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("sin") &&
+                             node.Children[1].IsFunction("cos") &&
+                             node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
+                    {
+                        Write("\tcos(x)/sin(x) -> cot(x)");
+                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("cot", 1, RPN.Type.Function));
+                        Assign(node, cot);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("cos") &&
+                             node.Children[1].IsFunction("sin") &&
+                             node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
+                    {
+                        Write("\tsin(x)/cos(x) -> tan(x)");
+                        RPN.Node tan = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("tan", 1, RPN.Type.Function));
+                        Assign(node, tan);
+                    }
+                    else if (node.IsDivision() && node.Children[1].IsMultiplication() &&
+                             node.Children[0].IsFunction("sin") && node.Children[1].Children[0].IsFunction("cos") &&
+                             node.Children[0].Children[0].Matches(node.Children[1].Children[0].Children[0]))
+                    {
+                        Write("\t[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
+                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("cot", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {cot, node.Children[1].Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("sec"))
+                    {
+                        Write("\tf(x)/sec(g(x)) -> f(x)cos(g(x))");
+                        RPN.Node cos = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("cos", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {cos, node.Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("csc"))
+                    {
+                        Write("\tf(x)/csc(g(x)) -> f(x)sin(g(x))");
+                        RPN.Node sin = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("sin", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {sin, node.Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("cot"))
+                    {
+                        Write("\tf(x)/cot(g(x)) -> f(x)tan(g(x))");
+                        RPN.Node tan = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("tan", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {tan, node.Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("cos"))
+                    {
+                        Write("\tf(x)/cos(g(x)) -> f(x)sec(g(x))");
+                        RPN.Node sec = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("sec", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {sec, node.Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("sin"))
+                    {
+                        Write("\tf(x)/sin(g(x)) -> f(x)csc(g(x))");
+                        RPN.Node csc = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("csc", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {csc, node.Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsDivision() && node.Children[0].IsFunction("tan"))
+                    {
+                        Write("\tf(x)/tan(g(x)) -> f(x)cot(g(x))");
+                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("cot", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {cot, node.Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsFunction("cos") && node.Children[0].IsMultiplication() &&
+                             node.Children[0].Children[1].IsNumber(-1))
+                    {
+                        Write("\tcos(-f(x)) -> cos(f(x))");
+                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
+                    }
+                    else if (node.IsFunction("sec") && node.Children[0].IsMultiplication() &&
+                             node.Children[0].Children[1].IsNumber(-1))
+                    {
+                        Write("\tsec(-f(x)) -> sec(f(x))");
+                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
+                    }
+                    else if (node.IsFunction("sin") && node.Children[0].IsMultiplication() &&
+                             node.Children[0].Children[1].IsNumber(-1))
+                    {
+                        Write("\tsin(-f(x)) -> -1 * sin(f(x))");
+                        RPN.Node sin = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("sin", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {sin, node.Children[0].Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsFunction("tan") && node.Children[0].IsMultiplication() &&
+                             node.Children[0].Children[1].IsNumber(-1))
+                    {
+                        Write("\ttan(-f(x)) -> -1 * tan(f(x))");
+                        RPN.Node tan = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("tan", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {tan, node.Children[0].Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsFunction("csc") && node.Children[0].IsMultiplication() &&
+                             node.Children[0].Children[1].IsNumber(-1))
+                    {
+                        Write("\tcsc(-f(x)) -> -1 * csc(f(x))");
+                        RPN.Node csc = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("csc", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {csc, node.Children[0].Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    else if (node.IsFunction("cot") && node.Children[0].IsMultiplication() &&
+                             node.Children[0].Children[1].IsNumber(-1))
+                    {
+                        Write("\tcot(-f(x)) -> -1 * cot(f(x))");
+                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                            new RPN.Token("cot", 1, RPN.Type.Function));
+                        RPN.Node multiplication = new RPN.Node(new[] {cot, node.Children[0].Children[1]},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        Assign(node, multiplication);
+                    }
+                    //TODO:
+                    //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
+                    //cos(x)/[sin(x) * f(x)] 
+                    //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
+
+                    //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
+                    //sin(x)/[f(x) * cos(x)] -> tan(x)/f(x)
+                    //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x) 
+
+                    //[1 + tan(f(x))^2] -> sec(f(x))^2
+                    //[cot(f(x))^2 + 1] -> csc(f(x))^2
+                }
+                else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
+                {
+                    //TODO: If one of the leafs is a division and the other a number or variable
+                    if (node.ChildrenAreIdentical())
+                    {
+                        RPN.Node head = new RPN.Node(new[] {new RPN.Node(2), node.Children[0]},
+                            new RPN.Token("^", 2, RPN.Type.Operator));
+                        Assign(node, head);
+                        Write("\tSimplification: Multiplication -> Exponent");
+                    }
+                    else if (node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1))
+                    {
+                        RPN.Node temp = node.Children[1].IsNumber(1) ? node.Children[0] : node.Children[1];
+                        Assign(node, temp);
+                        Write($"\tMultiplication by one simplification.");
+                    }
+                    //TODO: Replace the requirement that we cannot do a simplification when a division is present to 
+                    //that we cannot do a simplification when a division has a variable in the denominator!
+                    else if ((node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) &&
+                             !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
+                    {
+                        Write($"\tMultiplication by zero simplification.");
+                        Assign(node, new RPN.Node(0));
+                    }
+                    //sin(x)sin(x)sin(x) -> sin(x)^3
+                    else if (node.Children[1].IsExponent() && node.Children[1].Children[0].IsNumber() &&
+                             node.Children[0].Matches(node.Children[1].Children[1]))
+                    {
+                        Write("\tIncrease Exponent");
+                        node.Replace(node.Children[0], new RPN.Node(1));
+                        node.Replace(node.Children[1].Children[0],
+                            new RPN.Node(node.Children[1].Children[0].GetNumber() + 1));
+                    }
+                    else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() &&
+                             node.Children[0].Children[0].IsGreaterThanNumber(0) && node.Children[1].Children[0]
+                                 .Matches(node.Children[0].Children[1]))
+                    {
+                        Write($"\tIncrease Exponent 2:");
+                        RPN.Node temp = node.Children[0].Children[0];
+                        temp.Replace(temp.GetNumber() + 1);
+                        node.Children[1].Children[0].Remove(new RPN.Node(1));
+                    }
+                    else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() &&
+                             node.Children[0].Children[1].Matches(node.Children[1]))
+                    {
+                        Write("\tIncrease Exponent 3");
+                        RPN.Node temp = node.Children[0].Children[0];
+                        temp.Replace(temp.GetNumber() + 1);
+                        node.Children[1].Remove(new RPN.Node(1));
+                    }
+                    else if (node.Children[1].IsNumber() && node.Children[0].IsMultiplication() &&
+                             node.Children[0].Children[1].IsNumber() && !node.Children[0].Children[0].IsNumber())
+                    {
+                        Write($"\tDual Node Multiplication.");
+                        double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
+                        double num2 = double.Parse(node.Children[1].Token.Value);
+
+                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
+                        node.Replace(node.Children[1], new RPN.Node(num1 * num2));
+                    }
+                    else if ((node.Children[0].IsDivision() || node.Children[1].IsDivision()) &&
+                             !(node.Children[0].IsDivision() && node.Children[1].IsDivision()))
+                    {
+                        Write($"\tExpression times a division -> Division ");
+                        RPN.Node division;
+                        RPN.Node expression;
+                        if (node.Children[0].IsDivision())
+                        {
+                            division = node.Children[0];
+                            expression = node.Children[1];
+                        }
+                        else
+                        {
+                            division = node.Children[1];
+                            expression = node.Children[0];
+                        }
+
+                        RPN.Node numerator = division.Children[1];
+                        RPN.Node multiply = new RPN.Node(new[] {Clone(numerator), Clone(expression)},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        numerator.Remove(multiply);
+                        expression.Remove(new RPN.Node(1));
+                    }
+                    else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
+                    {
+                        Write($"\tDivision times a division -> Division");
+                        RPN.Node[] numerator = {node.Children[0].Children[1], node.Children[1].Children[1]};
+                        RPN.Node[] denominator = {node.Children[0].Children[0], node.Children[1].Children[0]};
+                        RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
+
+                        RPN.Node top = new RPN.Node(numerator, multiply);
+                        RPN.Node bottom = new RPN.Node(denominator, multiply);
+                        RPN.Node division = new RPN.Node(new[] {bottom, top}, new RPN.Token("/", 2, RPN.Type.Operator));
+
+                        node.Children[0].Remove(division);
+                        node.Children[1].Remove(new RPN.Node(1));
+                    }
+                    else if (node.Children[0].IsLessThanNumber(0) && node.Children[1].IsLessThanNumber(0))
+                    {
+                        Write("\tA negative times a negative is always positive.");
+                        node.Replace(node.Children[0],
+                            new RPN.Node(Math.Abs(double.Parse(node.Children[0].Token.Value))));
+                        node.Replace(node.Children[1],
+                            new RPN.Node(Math.Abs(double.Parse(node.Children[1].Token.Value))));
+                    }
+                    else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0) &&
+                             node[1].IsLessThanNumber(0))
+                    {
+                        Write("\tComplex: A negative times a negative is always positive.");
+                        node.Replace(node[0, 1], new RPN.Node(Math.Abs(node[0, 1].GetNumber())));
+                        node.Replace(node[1], new RPN.Node(Math.Abs(node[1].GetNumber())));
+                    }
+                    else if (node[0].IsNumber(-1) && node[1].IsNumber())
+                    {
+                        Write("\t-1 * c -> -c");
+                        node.Replace(node[0], new RPN.Node(1));
+                        node.Replace(node[1], new RPN.Node(node[1].GetNumber() * -1));
+                    }
+                    else if (node[0].IsNumber() && node[1].IsNumber(-1))
+                    {
+                        Write("\tc * -1 -> -c");
+                        node.Replace(node[1], new RPN.Node(1));
+                        node.Replace(node[0], new RPN.Node(node[0].GetNumber() * -1));
+                    }
+                }
+                else if (mode == SimplificationMode.Swap)
+                {
+                    //We can do complex swapping in here
+                    if (node.IsMultiplication() && node.Children[0].IsMultiplication() &&
+                        node.Children[0].Children[0].Matches(node.Children[1]))
+                    {
+                        Write($"\tComplex Swap: Dual Node Multiplication Swap");
+                        RPN.Node temp = node.Children[0].Children[1];
+
+
+                        node.Children[0].Children[1] = node.Children[1];
+                        node.Children[1] = temp;
+                    }
+                    else if (node.IsMultiplication() && node.Children[0].IsMultiplication() &&
+                             node.Children[1].IsMultiplication())
+                    {
+                        if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber())
+                        {
+                            Write($"\tComplex Swap: Tri Node Multiplication Swap");
+                            RPN.Node multiply =
+                                new RPN.Node(
+                                    new[] {Clone(node.Children[0].Children[1]), Clone(node.Children[1].Children[1])},
+                                    new RPN.Token("*", 2, RPN.Type.Operator));
+                            node.Children[1].Children[1].Remove(multiply);
+                            node.Children[0].Children[1].Remove(new RPN.Node(1));
+                        }
+                    }
+                }
+                else if (mode == SimplificationMode.Exponent && node.IsExponent())
+                {
+                    RPN.Node baseNode = node.Children[1];
+                    RPN.Node power = node.Children[0];
+                    if (power.IsNumber(1))
+                    {
+                        Write("\tf(x)^1 -> f(x)");
+                        Assign(node, baseNode);
+                        power.Delete();
+                        node.Delete();
+                    }
+                    else if (power.IsNumber(0))
+                    {
+                        Write("\tf(x)^0 -> 1");
+                        Assign(node, new RPN.Node(1));
+
+                        baseNode.Delete();
+                        power.Delete();
+                        node.Delete();
+                    }
+                    else if (baseNode.IsNumber(1))
+                    {
+                        Write("\t1^(fx) -> 1");
+                        Assign(node, new RPN.Node(1));
+
+                        baseNode.Delete();
+                        power.Delete();
+                        node.Delete();
+                    }
+                    else if (power.IsLessThanNumber(0))
+                    {
+                        RPN.Node powerClone = new RPN.Node(new[] {new RPN.Node(-1), Clone(power)},
+                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node exponent = new RPN.Node(new[] {powerClone, Clone(baseNode)},
+                            new RPN.Token("^", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(new[] {exponent, new RPN.Node(1)},
+                            new RPN.Token("/", 2, RPN.Type.Operator));
+                        Assign(power.Parent, division);
+                        Write($"\tf(x)^-c -> 1/f(x)^c");
+                    }
+                    else if (power.IsNumber(0.5))
+                    {
+                        RPN.Node sqrt = new RPN.Node(new[] {Clone(baseNode)},
+                            new RPN.Token("sqrt", 1, RPN.Type.Function));
+                        Assign(power.Parent, sqrt);
+                        Write("\tf(x)^0.5 -> sqrt( f(x) )");
+                    }
+                    else if ((power.IsNumber() || power.IsConstant()) && baseNode.IsExponent() &&
+                             (baseNode.Children[0].IsNumber() || baseNode.Children[0].IsConstant()))
+                    {
+                        Write("\t(f(x)^c)^a -> f(x)^[c * a]");
+                        RPN.Node multiply;
+
+                        if (power.IsNumber() && baseNode.Children[0].IsNumber())
+                        {
+                            multiply = new RPN.Node(power.GetNumber() * baseNode.Children[0].GetNumber());
+                        }
+                        else
+                        {
+                            multiply = new RPN.Node(new[] {Clone(power), Clone(baseNode.Children[0])},
+                                new RPN.Token("*", 2, RPN.Type.Operator));
+                        }
+
+                        RPN.Node func = Clone(baseNode.Children[1]);
+                        RPN.Node exponent = new RPN.Node(new[] {multiply, func},
+                            new RPN.Token("^", 2, RPN.Type.Operator));
+                        Assign(power.Parent, exponent);
+                    }
+                    else if (power.IsNumberOrConstant() && baseNode.IsLessThanNumber(0) && power.GetNumber() % 2 == 0)
+                    {
+                        Write("c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
+                        node.Replace(baseNode, new RPN.Node(-1 * baseNode.GetNumber()));
+                    }
+                }
+
+                //Propagate down the tree IF there is a root 
+                //which value is not NaN or a number
+                if (Root == null || Root.IsNumber() || Root.IsNumber(double.NaN))
+                {
+                    return;
+                }
+
+                SW.Stop();
+                _data.AddTimeRecord("AST.Simplify:Compute", SW);
+
+                SW.Restart();
+                //Propagate down the tree
+                for (int i = (node.Children.Count - 1); i >= 0; i--)
+                {
+                    stack.Push(node.Children[i]);
+                    //Simplify(node.Children[i], mode);
+                }
+
+                _data.AddTimeRecord("AST.Simplify:Propogate", SW);
             }
-
-            if (mode == SimplificationMode.Sqrt)
-            {
-                if (node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt())
-                {
-                    if (debug)
-                    {
-                        Write("\tsqrt(g(x))^2 -> g(x)");
-                    }
-
-                    Assign(node, node.Children[1].Children[0]);
-                }
-                else if (node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber(2))
-                {
-                    if (debug)
-                    {
-                        Write("\tsqrt(g(x)^2) -> abs(g(x))");
-                    }
-
-                    RPN.Node abs = new RPN.Node(new[] { node.Children[0].Children[1] }, new RPN.Token("abs", 1, RPN.Type.Function));
-                    Assign(node, abs);
-                }
-                else if (node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber() && node.Children[0].Children[0].GetNumber() % 4 == 0)
-                {
-                    if (debug)
-                    {
-                        Write("\tsqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
-                    }
-
-                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(node.Children[0].Children[0].GetNumber() / 2), node.Children[0].Children[1] }, new RPN.Token("^", 2, RPN.Type.Operator));
-                    Assign(node, exponent);
-                }
-            }
-            else if (mode == SimplificationMode.Log)
-            {
-                RPN.Node temp = null;
-                if (node.Token.IsLog() && node.Children[0].IsNumber(1))
-                {
-                    if (debug)
-                    {
-                        Write("\tlog(b,1) -> 0");
-                    }
-
-                    temp = new RPN.Node(0);
-                }
-                else if (node.Token.IsLog() && node.ChildrenAreIdentical())
-                {
-                    if (debug)
-                    {
-                        Write("\tlog(b,b) -> 1");
-                    }
-
-                    temp = new RPN.Node(1);
-                }
-                else if (node.IsExponent() && node.Children[0].IsLog() && node.Children[0].Children[1].Matches(node.Children[1]) )
-                {
-                    if (debug)
-                    {
-                        Write($"\tb^log(b,x) -> x");
-                    }
-
-                    temp = node.Children[0].Children[0];
-                }
-                else if (node.IsLog() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
-                {
-                    if (debug)
-                    {
-                        Write("\tlog(b,R^c) -> c * log(b,R)");
-                    }
-
-                    RPN.Node exponent = node.Children[0];
-                    RPN.Node baseNode = exponent.Children[1];
-                    RPN.Node power = exponent.Children[0];
-
-                    RPN.Node log = new RPN.Node(new[] { Clone(baseNode) ,node.Children[1] }, new RPN.Token("log",2,RPN.Type.Function));
-                    RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    temp = multiply;
-                }
-                else if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
-                {
-                    if (debug)
-                    {
-                        Write("\tln(R^c) -> log(e,R^c) -> c * ln(R)");
-                    }
-
-                    RPN.Node exponent = node.Children[0];
-                    RPN.Node power = exponent.Children[0];
-
-                    RPN.Node log = new RPN.Node(new[] { exponent.Children[1] }, new RPN.Token("ln", 1, RPN.Type.Function));
-                    RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    temp = multiply;
-                }
-                else if ( (node.IsAddition() || node.IsSubtraction()) &&  node.Children[0].IsLog() && node.Children[1].IsLog() && node.Children[0].Children[1].Matches( node.Children[1].Children[1] ))
-                {
-                    RPN.Node parameter;
-                    if (node.IsAddition())
-                    {
-                        Write("\tlog(b,R) + log(b,S) -> log(b,R*S)");
-                        parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    }
-                    else
-                    {
-                        Write("\tlog(b,R) - log(b,S) -> log(b,R/S)");
-                        parameter = new RPN.Node(new[] {  node.Children[0].Children[0], node.Children[1].Children[0] }, new RPN.Token("/", 2, RPN.Type.Operator));
-                    }
-                    RPN.Node baseNode = node.Children[0].Children[1];
-                    RPN.Node log = new RPN.Node(new[] {parameter, baseNode }, new RPN.Token("log", 2, RPN.Type.Function));
-                    temp = log;
-                }
-                else if ( (node.IsAddition() || node.IsSubtraction()) && node.Children[0].IsLn() && node.Children[1].IsLn())
-                {
-                    RPN.Node parameter;
-                    if (node.IsAddition())
-                    {
-                        Write("\tln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
-                        parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    }
-                    else
-                    {
-                        Write("\tln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
-                        parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] }, new RPN.Token("/", 2, RPN.Type.Operator));
-                    }
-                    RPN.Node ln = new RPN.Node(new[] { parameter }, new RPN.Token("ln", 1, RPN.Type.Function));
-                    temp = ln;
-                }
-
-                if (temp != null)
-                {
-                    Assign(node, temp);
-                }
-            }
-            else if (mode == SimplificationMode.Imaginary && node.IsSqrt())
-            {
-                //Any sqrt function with a negative number -> Imaginary number to the root node
-                //An imaginary number propagates anyways
-                if (node.Children[0].IsLessThanNumber(0))
-                {
-                    SetRoot(new RPN.Node(double.NaN));
-                    Write($"\tSqrt Imaginary Number -> Root.");
-                }
-                //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
-            }
-            else if (mode == SimplificationMode.Division && node.IsDivision())
-            {
-                //if there are any divide by zero exceptions -> NaN to the root node
-                //NaN propagate anyways
-                if (node.Children[0].IsNumber(0))
-                {
-                    SetRoot(new RPN.Node(double.NaN));
-                    Write("\tDivision by zero -> Root");
-                }
-                else if (node.Children[0].IsNumber(1))
-                {
-                    Write("\tDivision by one");
-                    Assign(node, node.Children[1]);
-                }
-                //gcd if the leafs are both numbers since the values of the leafs themselves are changed
-                //we don't have to worry about if the node is the root or not
-                else if (node.Children[0].IsInteger() && node.Children[1].IsInteger())
-                {
-                    double num1 = node.Children[0].GetNumber();
-                    double num2 = node.Children[1].GetNumber();
-                    double gcd = RPN.DoFunctions.Gcd(new double[] { num1, num2 });
-
-                    node.Replace(node.Children[0], new RPN.Node((num1 / gcd)));
-                    node.Replace(node.Children[1], new RPN.Node((num2 / gcd)));
-                    Write("\tDivision GCD.");
-                }
-                else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
-                {
-                    Write("\tDivison Flip");
-                    RPN.Node[] numerator   = { node.Children[0].Children[1], node.Children[1].Children[1] };
-                    RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
-
-                    RPN.Node top = new RPN.Node(new[] { denominator[0] , numerator[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node bottom = new RPN.Node(new[] { denominator[1], numerator[0] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
-                    Assign(node, division);
-                }
-                else if (node[1].IsMultiplication() && node[0].IsNumberOrConstant() && node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0))
-                {
-                    Write("\t(c * f(x))/c -> f(x) where c is not 0");
-                    Assign(node, node[1, 0]);
-                }
-                else if (node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() && node[1,0].IsInteger() && node[0, 1].Matches(node[1, 1]))
-                {
-                    int reduction = Math.Min((int)node[0, 0].GetNumber(), (int)node[1, 0].GetNumber()) - 1;
-                    node[0, 0].Replace( node[0,0].GetNumber() - reduction);
-                    node[1, 0].Replace(node[1,0].GetNumber() - reduction);
-                    Write("\tPower Reduction");
-                }
-                else if (node[1].IsDivision())
-                {
-                    Write("\t[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
-                    RPN.Node numerator = node[1, 1];
-                    RPN.Node denominator = new RPN.Node(new[] {node[0], node[1,0]  }, new RPN.Token("*", 2, RPN.Type.Operator) );
-                    RPN.Node division = new RPN.Node(new[] {denominator, numerator}, new RPN.Token("/", 2, RPN.Type.Operator));
-                    Assign(node, division);
-                }
-                //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
-                //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
-            }
-            else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
-            {
-                //3sin(x) - 3sin(x)
-                if ( node.ChildrenAreIdentical() && !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
-                {
-                    Write("\tSimplification: Subtraction");
-                    Assign(node, new RPN.Node(0));
-                }
-                //3sin(x) - 2sin(x)
-                else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
-                {
-                    if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
-                    {
-                        Write("\tSimplification: Subtraction Dual Node");
-                        double coefficient = node.Children[1].Children[1].GetNumber() - node.Children[0].Children[1].GetNumber();
-                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
-                        node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
-                    }
-                }
-                //3sin(x) - sin(x)
-                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches( node.Children[0]) )
-                {
-                    Write("\tSimplification: Subtraction: Dual Node: Sub one.");
-                    node.Replace( node.Children[0], new RPN.Node(0));
-                    node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(node.Children[1].Children[1].GetNumber() - 1));
-                }
-                //3sin(x) - 0
-                else if (node.Children[0].IsNumber(0))
-                {
-                    //Root case
-                    Assign(node, node.Children[1]);
-                    Write("\tSubtraction by zero.");
-                }
-                //0 - 3sin(x)
-                else if (node.Children[1].IsNumber(0))
-                {
-                    RPN.Node multiply = new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] }, new RPN.Token("*",2,RPN.Type.Operator));
-
-                    Write($"\tSubtraction by zero. Case 2.");
-                    Assign(node, multiply);
-                }
-                else if (node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]))
-                {
-                    Write("\tf(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
-                    RPN.Node subtraction = new RPN.Node(new[] {node[0,1], node[1, 1] }, new RPN.Token("-",2,RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node(new [] {node[0,0], subtraction}, new RPN.Token("/", 2, RPN.Type.Operator));
-                    Assign(node, division);
-                }
-                //TODO: f(x)/g(x) - i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) - i(x)g(x)/g(x)j(x) -> [f(x)j(x) - g(x)i(x)]/[g(x)j(x)]
-            }
-            else if (mode == SimplificationMode.Addition && node.IsAddition())
-            {
-                //Is root and leafs have the same hash
-                if (node.ChildrenAreIdentical())
-                {
-                    RPN.Node multiply = new RPN.Node(new[] { node.Children[0], new RPN.Node(2) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiply);
-                    Write("\tSimplification: Addition -> Multiplication");
-                }
-                //Both nodes are multiplications with 
-                //the parent node being addition
-                //Case: 2sin(x) + 3sin(x)
-                else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
-                {
-                    if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
-                    {
-                        Write("\tSimplification: Addition");
-                        double sum = (node.Children[0].Children[1].GetNumber() + node.Children[1].Children[1].GetNumber());
-                        node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(sum));
-                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
-                    }
-                }
-                //Zero addition
-                else if (node.Children[0].IsNumber(0))
-                {
-                    Write("\tZero Addition.");
-                    Assign(node, node.Children[1]);
-                }
-                //Case: 0 + sin(x)
-                else if (node.Children[1].IsNumber(0))
-                {
-                    //Child 1 is the expression in this case.
-                    Write("\tZero Addition. Case 2.");
-                    Assign(node, node.Children[0]);
-                }
-                //7sin(x) + sin(x)
-                //C0: Anything
-                //C1:C0: Compare hash to C0.
-                else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() && node.Children[1].Children[0].Matches(node.Children[0]))
-                {
-                    Write("\tSimplification Addition Dual Node.");
-                    node.Children[0].Remove(new RPN.Node(0));
-                    node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(node.Children[1].Children[1].GetNumber() + 1));
-                }
-                else if (node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsLessThanNumber(0))
-                {
-                    Write("\tAddition can be converted to subtraction");
-                    node.Replace("-");
-                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
-                }
-                else if (node[0].IsLessThanNumber(0) && node[1].IsMultiplication())
-                {
-                    Write("\tAddition can be converted to subtraction");
-                    node.Replace("-");
-                    node.Replace(node[0], new RPN.Node(Math.Abs( node[0].GetNumber() )) );
-                }
-                else if (node.Children[0].IsSubtraction() && node[1].Matches( node[0, 1]))
-                {
-                    Write("\tf(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
-
-                    node[0].Replace(node[0, 1], new RPN.Node(0));
-                    RPN.Node multiplication = new RPN.Node(new [] {node[1], new RPN.Node(2) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    node.Replace(node[1], multiplication);
-                }
-                //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
-                //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
-            }
-            else if (mode == SimplificationMode.Trig)
-            {
-                if (node.IsAddition() &&
-                    node.Children[0].IsExponent() &&
-                    node.Children[1].IsExponent() &&
-                    node.Children[0].Children[0].IsNumber(2) &&
-                    node.Children[1].Children[0].IsNumber(2) &&
-                    (node.Children[0].Children[1].IsFunction("cos") || node.Children[0].Children[1].IsFunction("sin")) &&
-                    (node.Children[1].Children[1].IsFunction("sin") || node.Children[1].Children[1].IsFunction("cos")) &&
-                    !node.ChildrenAreIdentical() &&
-                    node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0])
-                )
-                {
-                    RPN.Node head = new RPN.Node(1);
-                    Write("\tsin²(x) + cos²(x) -> 1");
-                    Assign(node, head);
-                }
-                else if ( node.IsDivision() && node.Children[0].IsFunction("sin") && node.Children[1].IsFunction("cos") && node.Children[0].Children[0].Matches( node.Children[1].Children[0] ) )
-                {
-                    Write("\tcos(x)/sin(x) -> cot(x)");
-                    RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("cot", 1, RPN.Type.Function));
-                    Assign(node, cot);
-                }
-                else if (node.IsDivision() && node.Children[0].IsFunction("cos") && node.Children[1].IsFunction("sin") && node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
-                {
-                    Write("\tsin(x)/cos(x) -> tan(x)");
-                    RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("tan", 1, RPN.Type.Function));
-                    Assign(node, tan);
-                }
-                else if (node.IsDivision() && node.Children[1].IsMultiplication() && node.Children[0].IsFunction("sin") && node.Children[1].Children[0].IsFunction("cos") && node.Children[0].Children[0].Matches( node.Children[1].Children[0].Children[0] ) )
-                {
-                    Write("\t[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
-                    RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("cot", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsDivision() && node.Children[0].IsFunction("sec"))
-                {
-                    Write("\tf(x)/sec(g(x)) -> f(x)cos(g(x))");
-                    RPN.Node cos = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("cos", 1, RPN.Type.Function) );
-                    RPN.Node multiplication = new RPN.Node(new[] { cos, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsDivision() && node.Children[0].IsFunction("csc"))
-                {
-                    Write("\tf(x)/csc(g(x)) -> f(x)sin(g(x))");
-                    RPN.Node sin = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("sin", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { sin, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsDivision() && node.Children[0].IsFunction("cot"))
-                {
-                    Write("\tf(x)/cot(g(x)) -> f(x)tan(g(x))");
-                    RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("tan", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { tan, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsDivision() && node.Children[0].IsFunction("cos"))
-                {
-                    Write("\tf(x)/cos(g(x)) -> f(x)sec(g(x))");
-                    RPN.Node sec = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("sec", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { sec, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsDivision() && node.Children[0].IsFunction("sin"))
-                {
-                    Write("\tf(x)/sin(g(x)) -> f(x)csc(g(x))");
-                    RPN.Node csc = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("csc", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { csc, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsDivision() && node.Children[0].IsFunction("tan"))
-                {
-                    Write("\tf(x)/tan(g(x)) -> f(x)cot(g(x))");
-                    RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("cot", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsFunction("cos") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
-                {
-                    Write("\tcos(-f(x)) -> cos(f(x))");
-                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
-                }
-                else if (node.IsFunction("sec") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
-                {
-                    Write("\tsec(-f(x)) -> sec(f(x))");
-                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
-                }
-                else if (node.IsFunction("sin") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
-                {
-                    Write("\tsin(-f(x)) -> -1 * sin(f(x))");
-                    RPN.Node sin = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("sin", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { sin, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsFunction("tan") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
-                {
-                    Write("\ttan(-f(x)) -> -1 * tan(f(x))");
-                    RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("tan", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] {tan, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsFunction("csc") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
-                {
-                    Write("\tcsc(-f(x)) -> -1 * csc(f(x))");
-                    RPN.Node csc = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("csc", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { csc, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                else if (node.IsFunction("cot") && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber(-1))
-                {
-                    Write("\tcot(-f(x)) -> -1 * cot(f(x))");
-                    RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] }, new RPN.Token("cot", 1, RPN.Type.Function));
-                    RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[0].Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    Assign(node, multiplication);
-                }
-                //TODO:
-                //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
-                //cos(x)/[sin(x) * f(x)] 
-                //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
-
-                //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
-                //sin(x)/[f(x) * cos(x)] -> tan(x)/f(x)
-                //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x) 
-
-                //[1 + tan(f(x))^2] -> sec(f(x))^2
-                //[cot(f(x))^2 + 1] -> csc(f(x))^2
-            }
-            else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
-            {
-                //TODO: If one of the leafs is a division and the other a number or variable
-                if (node.ChildrenAreIdentical())
-                {
-                    RPN.Node head = new RPN.Node(new[] { new RPN.Node(2), node.Children[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
-                    Assign(node, head);
-                    Write("\tSimplification: Multiplication -> Exponent");
-                }
-                else if ( node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1) )
-                {
-                    RPN.Node temp = node.Children[1].IsNumber(1) ? node.Children[0] : node.Children[1];
-                    Assign(node, temp);
-                    Write($"\tMultiplication by one simplification.");
-                }
-                //TODO: Replace the requirement that we cannot do a simplification when a division is present to 
-                //that we cannot do a simplification when a division has a variable in the denominator!
-                else if ( (node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)) )
-                {
-                    Write($"\tMultiplication by zero simplification.");
-                    Assign(node, new RPN.Node(0));
-                }
-                //sin(x)sin(x)sin(x) -> sin(x)^3
-                else if (node.Children[1].IsExponent() && node.Children[1].Children[0].IsNumber() && node.Children[0].Matches( node.Children[1].Children[1]) )
-                {
-                    Write("\tIncrease Exponent");
-                    node.Replace(node.Children[0], new RPN.Node(1));
-                    node.Replace(node.Children[1].Children[0], new RPN.Node(node.Children[1].Children[0].GetNumber() + 1));
-                }
-                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[0].IsGreaterThanNumber(0) && node.Children[1].Children[0].Matches( node.Children[0].Children[1]) )
-                {
-                    Write($"\tIncrease Exponent 2:");
-                    RPN.Node temp = node.Children[0].Children[0];
-                    temp.Replace(temp.GetNumber() + 1);
-                    node.Children[1].Children[0].Remove(new RPN.Node(1));
-                }
-                else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() && node.Children[0].Children[1].Matches(node.Children[1]))
-                {
-                    Write("\tIncrease Exponent 3");
-                    RPN.Node temp = node.Children[0].Children[0];
-                    temp.Replace(temp.GetNumber() + 1);
-                    node.Children[1].Remove(new RPN.Node(1));
-                }
-                else if (node.Children[1].IsNumber() && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsNumber() && !node.Children[0].Children[0].IsNumber())
-                {
-                    Write($"\tDual Node Multiplication.");
-                    double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
-                    double num2 = double.Parse(node.Children[1].Token.Value);
-
-                    node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
-                    node.Replace(node.Children[1], new RPN.Node(num1 * num2));
-                }
-                else if ( (node.Children[0].IsDivision() || node.Children[1].IsDivision()) && !(node.Children[0].IsDivision() && node.Children[1].IsDivision()) )
-                {
-                    Write($"\tExpression times a division -> Division ");
-                    RPN.Node division;
-                    RPN.Node expression; 
-                    if (node.Children[0].IsDivision())
-                    {
-                        division = node.Children[0];
-                        expression = node.Children[1];
-                    }
-                    else
-                    {
-                        division = node.Children[1];
-                        expression = node.Children[0];
-                    }
-                    RPN.Node numerator = division.Children[1];
-                    RPN.Node multiply = new RPN.Node( new[] {Clone(numerator), Clone(expression) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    numerator.Remove(multiply);
-                    expression.Remove(new RPN.Node( 1));
-                }
-                else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
-                {
-                    Write($"\tDivision times a division -> Division");
-                    RPN.Node[] numerator  =  {  node.Children[0].Children[1] ,  node.Children[1].Children[1] };
-                    RPN.Node[] denominator = {  node.Children[0].Children[0] ,  node.Children[1].Children[0] };
-                    RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
-
-                    RPN.Node top = new RPN.Node( numerator, multiply);
-                    RPN.Node bottom = new RPN.Node( denominator, multiply);
-                    RPN.Node division = new RPN.Node( new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                    node.Children[0].Remove(division);
-                    node.Children[1].Remove(new RPN.Node( 1));
-                }
-                else if (node.Children[0].IsLessThanNumber(0) && node.Children[1].IsLessThanNumber(0))
-                {
-                    Write("\tA negative times a negative is always positive.");
-                    node.Replace(node.Children[0], new RPN.Node( Math.Abs( double.Parse(node.Children[0].Token.Value ))));
-                    node.Replace(node.Children[1], new RPN.Node( Math.Abs( double.Parse(node.Children[1].Token.Value ))));
-                }
-                else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0) && node[1].IsLessThanNumber(0))
-                {
-                    Write("\tComplex: A negative times a negative is always positive.");
-                    node.Replace(node[0, 1], new RPN.Node( Math.Abs( node[0,1].GetNumber() ) ) );
-                    node.Replace(node[1], new RPN.Node( Math.Abs( node[1].GetNumber() ) ));
-                }
-                else if (node[0].IsNumber(-1) && node[1].IsNumber())
-                {
-                    Write("\t-1 * c -> -c");
-                    node.Replace(node[0], new RPN.Node(1));
-                    node.Replace(node[1], new RPN.Node(node[1].GetNumber() * -1) );
-                }
-                else if (node[0].IsNumber() && node[1].IsNumber(-1))
-                {
-                    Write("\tc * -1 -> -c");
-                    node.Replace(node[1], new RPN.Node(1));
-                    node.Replace(node[0], new RPN.Node(node[0].GetNumber() * -1));
-                }
-            }
-            else if (mode == SimplificationMode.Swap)
-            {
-                //We can do complex swapping in here
-                if (node.IsMultiplication() && node.Children[0].IsMultiplication() && node.Children[0].Children[0].Matches( node.Children[1]) )
-                {
-                    Write($"\tComplex Swap: Dual Node Multiplication Swap");
-                    RPN.Node temp = node.Children[0].Children[1];
-
-
-                    node.Children[0].Children[1] = node.Children[1];
-                    node.Children[1] = temp;
-                }
-                else if (node.IsMultiplication() && node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication() )
-                {
-                    if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber())
-                    {
-                        Write($"\tComplex Swap: Tri Node Multiplication Swap");
-                        RPN.Node multiply = new RPN.Node( new[] { Clone( node.Children[0].Children[1] ), Clone( node.Children[1].Children[1] ) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        node.Children[1].Children[1].Remove(multiply);
-                        node.Children[0].Children[1].Remove(new RPN.Node(1));
-                    }
-                }
-            }
-            else if (mode == SimplificationMode.Exponent && node.IsExponent())
-            {
-                RPN.Node baseNode = node.Children[1];
-                RPN.Node power = node.Children[0];
-                if (power.IsNumber(1))
-                {
-                    Write("\tf(x)^1 -> f(x)");
-                    Assign(node, baseNode);
-                    power.Delete();
-                    node.Delete();
-                }
-                else if (power.IsNumber(0))
-                {
-                    Write("\tf(x)^0 -> 1");
-                    Assign(node, new RPN.Node( 1));
-
-                    baseNode.Delete();
-                    power.Delete();
-                    node.Delete();
-                }
-                else if (baseNode.IsNumber(1))
-                {
-                    Write("\t1^(fx) -> 1");
-                    Assign(node, new RPN.Node( 1));
-
-                    baseNode.Delete();
-                    power.Delete();
-                    node.Delete();
-                }
-                else if (power.IsLessThanNumber(0))
-                {
-                    RPN.Node powerClone = new RPN.Node( new[] { new RPN.Node( -1), Clone(power) } , new RPN.Token("*", 2, RPN.Type.Operator) );
-                    RPN.Node exponent = new RPN.Node( new[] { powerClone, Clone(baseNode) }, new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node( new[] { exponent, new RPN.Node( 1) }, new RPN.Token("/", 2, RPN.Type.Operator) );
-                    Assign(power.Parent, division);
-                    Write($"\tf(x)^-c -> 1/f(x)^c");
-                }
-                else if (power.IsNumber(0.5))
-                {
-                    RPN.Node sqrt = new RPN.Node( new[] { Clone(baseNode) }, new RPN.Token("sqrt", 1, RPN.Type.Function));
-                    Assign(power.Parent, sqrt);
-                    Write("\tf(x)^0.5 -> sqrt( f(x) )");
-                }
-                else if ( ( power.IsNumber() || power.IsConstant() ) && baseNode.IsExponent() && (baseNode.Children[0].IsNumber() || baseNode.Children[0].IsConstant()) )
-                {
-                    Write("\t(f(x)^c)^a -> f(x)^[c * a]");
-                    RPN.Node multiply;
-
-                    if (power.IsNumber() && baseNode.Children[0].IsNumber())
-                    {
-                        multiply = new RPN.Node(power.GetNumber() * baseNode.Children[0].GetNumber());
-                    }
-                    else
-                    {
-                        multiply = new RPN.Node( new[] { Clone(power), Clone(baseNode.Children[0]) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                    }
-
-                    RPN.Node func = Clone(baseNode.Children[1]);
-                    RPN.Node exponent = new RPN.Node( new[] { multiply, func }, new RPN.Token("^", 2, RPN.Type.Operator));
-                    Assign(power.Parent, exponent);
-                }
-                else if (power.IsNumberOrConstant() && baseNode.IsLessThanNumber(0) && power.GetNumber() % 2 == 0)
-                {
-                    Write("c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
-                    node.Replace(baseNode, new RPN.Node(-1 * baseNode.GetNumber()));
-                }
-            }
-
-            //Propagate down the tree IF there is a root 
-            //which value is not NaN or a number
-            if (Root == null || Root.IsNumber() || Root.IsNumber(double.NaN))
-            {
-                return;
-            }
-
-            SW.Stop();
-            _data.AddTimeRecord("AST.Simplify:Compute", SW);
-
-            SW.Restart();
-            //Propagate down the tree
-            for (int i = (node.Children.Count - 1); i >= 0; i--)
-            {
-                Simplify(node.Children[i], mode);
-            }
-            _data.AddTimeRecord("AST.Simplify:Propogate", SW);
         }
 
         private void Swap(RPN.Node node)
