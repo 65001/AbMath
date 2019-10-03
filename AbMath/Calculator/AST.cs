@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 
@@ -133,7 +134,6 @@ namespace AbMath.Calculator
 
             expand(Root);
             InternalSwap(Root);
-            //Optimize Step?
             compress(Root);
 
             _rpn.Data.RemoveFunction("internal_product");
@@ -169,7 +169,8 @@ namespace AbMath.Calculator
             while (stack.Count > 0)
             {
                 node = stack.Pop();
-
+                Write(Root.Print());
+                Write(node.GetHash());
                 //If Root is a number abort. 
                 if (Root.IsNumber())
                 {
@@ -469,7 +470,22 @@ namespace AbMath.Calculator
                             new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(node, division);
                     }
-
+                    else if (node[0].IsMultiplication() && node[0, 1].IsNumber(-1))
+                    {
+                        //(cos(x)^2)-(-1*(sin(x)^2)) 
+                        Write("\tf(x) - (-1 * g(x)) -> f(x) + g(x)");
+                        node[0,1].Replace(1);
+                        node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
+                    }
+                    else if (node[0].IsNumber() && node[0].IsLessThanNumber(0))
+                    {
+                        Write("\tf(x) - (-c) -> f(x) + c");
+                        RPN.Node multiplication = new RPN.Node(new [] { Clone(node[0]), new RPN.Node(-1)  }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node addition = new RPN.Node(new [] {multiplication, node[1]}, new RPN.Token("+", 2, RPN.Type.Operator));
+                        Assign(node, addition);
+                        Simplify(multiplication, SimplificationMode.Multiplication);
+                    }
+                    
                     //TODO: f(x)/g(x) - i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) - i(x)g(x)/g(x)j(x) -> [f(x)j(x) - g(x)i(x)]/[g(x)j(x)]
                 }
                 else if (mode == SimplificationMode.Addition && node.IsAddition())
@@ -541,6 +557,13 @@ namespace AbMath.Calculator
                         RPN.Node multiplication = new RPN.Node(new[] {node[1], new RPN.Node(2)},
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         node.Replace(node[1], multiplication);
+                    }
+                    else if (node[1].IsMultiplication() && node[1, 1].IsNumber(-1))
+                    {
+                        Write("\t-f(x) + g(x) -> g(x) - f(x)");
+                        node[1, 1].Replace(1);
+                        node.Swap(0, 1);
+                        node.Replace(new RPN.Token("-", 2, RPN.Type.Operator));
                     }
 
                     //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
@@ -730,8 +753,7 @@ namespace AbMath.Calculator
                     }
                     //TODO: Replace the requirement that we cannot do a simplification when a division is present to 
                     //that we cannot do a simplification when a division has a variable in the denominator!
-                    else if ((node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) &&
-                             !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
+                    else if ((node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
                     {
                         Write($"\tMultiplication by zero simplification.");
                         Assign(node, new RPN.Node(0));
@@ -835,6 +857,12 @@ namespace AbMath.Calculator
                         Write("\tc * -1 -> -c");
                         node.Replace(node[1], new RPN.Node(1));
                         node.Replace(node[0], new RPN.Node(node[0].GetNumber() * -1));
+                    }
+                    else if (node[0].IsSubtraction() && node[1].IsNumber(-1))
+                    {
+                        Write("\t-1[f(x) - g(x)] -> -f(x) + g(x) -> g(x) - f(x)");
+                        node[0].Swap(0, 1);
+                        node[1].Replace(1);
                     }
                 }
                 else if (mode == SimplificationMode.Swap)
@@ -947,6 +975,7 @@ namespace AbMath.Calculator
                     return;
                 }
 
+                
                 SW.Stop();
                 _data.AddTimeRecord("AST.Simplify:Compute", SW);
 
@@ -955,7 +984,6 @@ namespace AbMath.Calculator
                 for (int i = (node.Children.Count - 1); i >= 0; i--)
                 {
                     stack.Push(node.Children[i]);
-                    //Simplify(node.Children[i], mode);
                 }
 
                 _data.AddTimeRecord("AST.Simplify:Propogate", SW);
@@ -1325,8 +1353,12 @@ namespace AbMath.Calculator
                             throw new Exception("Expected a number or constant");
                         }
 
+                        //This code is suspect!
                         int count = (int)node[0].GetNumber();
+
                         node.RemoveChild(node[0]);
+
+                        
                         for (int i = 0; i < count; i++)
                         {
                             GenerateDerivativeAndReplace(node.Children[1]);
@@ -1334,6 +1366,8 @@ namespace AbMath.Calculator
                         }
                         Assign(node, node.Children[1]);
                         node.Delete();
+                        
+
                     }
                 }
                 else if (node.IsFunction("solve"))
@@ -1419,6 +1453,9 @@ namespace AbMath.Calculator
 
             Write($"Starting to derive ROOT: {Root.ToInfix()}");
             Derive(Root, variable);
+
+            Write("\tSimplifying Post!\n");
+            Simplify(Root);
             Write("");
             
             return this;
@@ -2643,18 +2680,25 @@ namespace AbMath.Calculator
 
         private void Assign(RPN.Node node, RPN.Node assign)
         {
-            if (node is null || assign is null)
+            try
             {
-                return;
-            }
+                if (node is null || assign is null)
+                {
+                    return;
+                }
 
-            if (node.isRoot)
+                if (node.isRoot)
+                {
+                    SetRoot(assign);
+                    return;
+                }
+
+                node.Parent.Replace(node, assign);
+            }
+            catch (IndexOutOfRangeException ex)
             {
-                SetRoot(assign);
-                return;
+                throw new Exception($"node: {node.ToInfix()}, assign: {assign.ToInfix()}", ex);
             }
-
-            node.Parent.Replace(node, assign);
         }
 
         private void Write(string message)

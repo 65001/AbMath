@@ -86,7 +86,7 @@ namespace AbMath.Tests
         public void BaseExponentSimple()
         {
             RPN test = new RPN("derivative(2^x,x)").Compute();
-            Assert.AreEqual("2 x ^ 2 ln *", test.Polish.Print());
+            Assert.AreEqual("2 ln 2 x ^ *", test.Polish.Print());
         }
 
         [Test]
@@ -103,7 +103,8 @@ namespace AbMath.Tests
         public void Abs()
         {
             RPN test = new RPN("derivative( abs(x^2), x)").Compute();
-            Assert.AreEqual("0.5 x 2 ^ * 2 2 ^ x * * x 2 ^ /", test.Polish.Print());
+            //Assert.AreEqual("0.5 x 2 ^ * 2 2 ^ x * * x 2 ^ /", test.Polish.Print());
+            Assert.AreEqual("2 2 ^ 0.5 x 3 ^ * * x 2 ^ /", test.Polish.Print());
         }
 
         [Test]
@@ -132,10 +133,10 @@ namespace AbMath.Tests
         public void DoubleDerivative()
         {
             RPN test = new RPN("derivative( derivative(x^3,x),x)").Compute();
-            Assert.AreEqual("2 3 * x *", test.Polish.Print());
+            Assert.AreEqual("6 x *", test.Polish.Print());
 
             test.SetEquation("derivative(x^3,x,2)").Compute();
-            Assert.AreEqual("2 3 * x *", test.Polish.Print());
+            Assert.AreEqual("6 x *", test.Polish.Print());
         }
 
         [Test]
@@ -152,7 +153,7 @@ namespace AbMath.Tests
         public void Cos()
         {
             RPN test = new RPN("derivative(cos(x^2),x)").Compute();
-            Assert.AreEqual("-2 x * x 2 ^ sin *", test.Polish.Print() );
+            Assert.AreEqual("-2 x 2 ^ sin * x *", test.Polish.Print() );
         }
 
         [Test]
@@ -173,7 +174,7 @@ namespace AbMath.Tests
         public void Csc()
         {
             RPN test = new RPN("derivative(csc(x^2),x)").Compute();
-            Assert.AreEqual("-2 x * x 2 ^ cot x 2 ^ csc * *", test.Polish.Print());
+            Assert.AreEqual("-2 x 2 ^ cot * x 2 ^ csc x * *", test.Polish.Print());
         }
 
         [Test]
