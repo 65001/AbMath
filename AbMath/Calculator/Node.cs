@@ -371,6 +371,11 @@ namespace AbMath.Calculator
                 return double.Parse(Token.Value);
             }
 
+            public bool containsDomainViolation()
+            {
+                return this.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator));
+            }
+
             public bool IsNumberOrConstant()
             {
                 return Token.IsNumber() || Token.IsConstant();

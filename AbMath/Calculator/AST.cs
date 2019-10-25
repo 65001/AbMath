@@ -10,9 +10,32 @@ namespace AbMath.Calculator
     {
         public RPN.Node Root { get; private set; }
 
+        /// <summary>
+        ///  Sqrt -
+        ///  Log -
+        ///  Imaginary -
+        ///  Division -
+        ///  Exponent -
+        ///  Subtraction -
+        ///  Addition -
+        ///  Multiplication -
+        ///  Swap - 
+        ///  Trig - 
+        ///  Trig Half Angle - Converts fractions to trig functions when appropriate
+        ///  Trig Half Angle Expansion - Converts trig functions to fractions
+        ///  Power Reduction -  Converts trig functions to fractions
+        ///  Power Expansion - Converts fractions to trig functions
+        ///  Double Angle - Converts double angles to trig functions
+        ///  Double Angle Reduction - Converts trig functions to double angles
+        ///  Constants - 
+        /// </summary>
         private enum SimplificationMode
         {
-            Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap, Trig, Constants, Compress, COUNT
+            Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap,
+            Trig, TrigHalfAngle, TrigHalfAngleExpansion,
+            TrigPowerReduction, TrigPowerExpansion,
+            TrigDoubleAngle, TrigDoubleAngleReduction,
+            Constants, Compress, COUNT
         }
 
         private RPN _rpn;
@@ -428,8 +451,7 @@ namespace AbMath.Calculator
                 else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
                 {
                     //3sin(x) - 3sin(x)
-                    if (node.ChildrenAreIdentical() &&
-                        !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
+                    if (node.ChildrenAreIdentical() && !node.containsDomainViolation())
                     {
                         Write("\tSimplification: Subtraction");
                         Assign(node, new RPN.Node(0));
@@ -589,6 +611,7 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Trig)
                 {
+                    
                     if (node.IsAddition() &&
                         node.Children[0].IsExponent() &&
                         node.Children[1].IsExponent() &&
@@ -599,6 +622,7 @@ namespace AbMath.Calculator
                         (node.Children[1].Children[1].IsFunction("sin") ||
                          node.Children[1].Children[1].IsFunction("cos")) &&
                         !node.ChildrenAreIdentical() &&
+                        !node.containsDomainViolation() &&
                         node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0])
                     )
                     {
@@ -741,17 +765,52 @@ namespace AbMath.Calculator
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
+                    else if (node.IsSubtraction() && node[0].IsExponent() && node[1].IsNumber(1) && node[0, 0].IsNumber(2) && node[0, 1].IsFunction("sin"))
+                    {
+                        Write("\t1 - sin(x)^2 -> cos(x)^2");
+                        RPN.Node cos = new RPN.Node(new[] { node[0,1,0] }, new RPN.Token("cos",1, RPN.Type.Function));
+                        RPN.Node exponent = new RPN.Node(new [] {node[0,0], cos}, new RPN.Token("^",2, RPN.Type.Operator));
+                        Assign(node, exponent);
+                    }
+                    else if (node.IsSubtraction() && node[0].IsExponent() && node[1].IsNumber(1) && node[0, 0].IsNumber(2) && node[0, 1].IsFunction("cos"))
+                    {
+                        Write("\t1 - cos(x)^2 -> sin(x)^2");
+                        RPN.Node sin = new RPN.Node(new[] { node[0, 1, 0] }, new RPN.Token("sin", 1, RPN.Type.Function));
+                        RPN.Node exponent = new RPN.Node(new[] { node[0, 0], sin }, new RPN.Token("^", 2, RPN.Type.Operator));
+                        Assign(node, exponent);
+                    }
+
                     //TODO:
                     //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
                     //cos(x)/[sin(x) * f(x)] 
+
                     //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
 
                     //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
                     //sin(x)/[f(x) * cos(x)] -> tan(x)/f(x)
                     //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x) 
 
-                    //[1 + tan(f(x))^2] -> sec(f(x))^2
-                    //[cot(f(x))^2 + 1] -> csc(f(x))^2
+                    //TODO: [1 + tan(f(x))^2] -> sec(f(x))^2
+                    //TODO: [cot(f(x))^2 + 1] -> csc(f(x))^2
+
+                    //These will probably violate domain constraints ?
+                    //TODO: sec(x)^2 - tan(x)^2 = 1
+                    //TODO: cot(x)^2 + 1 = csc(x)^2 
+                    //TODO: csc(x)^2 - cot(x)^2 = 1
+
+                    //TODO: Double Angle
+                    //[cos(x)^2 - sin(x)^2] = cos(2x)
+                    //1 - 2sin(x)^2 = cos(2x)
+                    //2cos(x)^2 - 1 = cos(2x) 
+                    //2sin(x)cos(x) = sin(2x)
+                    //[2tan(x)]/1 - tan(x)^2] = tan(2x) 
+
+                    //TODO: Power Reducing 
+                    //[1 - cos(2x)]/2 = sin(x)^2
+                    //[1 + cos(2x)]/2 = cos(x)^2
+                    //[1 - cos(2x)]/[1 + cos(2x)] = tan(x)^2 
+
+
                 }
                 else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
                 {
@@ -771,7 +830,7 @@ namespace AbMath.Calculator
                     }
                     //TODO: Replace the requirement that we cannot do a simplification when a division is present to 
                     //that we cannot do a simplification when a division has a variable in the denominator!
-                    else if ((node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator)))
+                    else if ((node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.containsDomainViolation())
                     {
                         Write($"\tMultiplication by zero simplification.");
                         Assign(node, new RPN.Node(0));

@@ -274,5 +274,15 @@ namespace AbMath.Tests
             RPN rpn = new RPN("cos(x)/z - cos(x)/z").Compute();
             Assert.AreEqual("0 z /", rpn.Polish.Print());
         }
+
+        [Test]
+        public void SubtractionCancelation()
+        {
+            RPN rpn = new RPN("(cos(x)^2)-(-1*(sin(x)^2)) ").Compute();
+            Assert.AreEqual("1", rpn.Polish.Print());
+
+            rpn.SetEquation("sin(x) - (-2)").Compute();
+            Assert.AreEqual("x sin 2 +", rpn.Polish.Print());
+        }
     }
 }
