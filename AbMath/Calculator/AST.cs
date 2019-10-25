@@ -779,11 +779,16 @@ namespace AbMath.Calculator
                         RPN.Node exponent = new RPN.Node(new[] { node[0, 0], sin }, new RPN.Token("^", 2, RPN.Type.Operator));
                         Assign(node, exponent);
                     }
+                    else if (node.IsDivision() && node[0].IsMultiplication() && node[1].IsFunction("cos") && node[0, 0].IsFunction("sin") && node[0, 0, 0].Matches(node[1, 0]))
+                    {
+                        Write("\tcos(x)/(f(x) * sin(x)) -> cot(x)/f(x)");
+                        //cos(x)/[sin(x) * f(x)] -> cot(x)/f(x) is also implemented due to swapping rules. 
 
+                        RPN.Node cot = new RPN.Node(new [] {node[1,0]}, new RPN.Token("cot", 1, RPN.Type.Function));
+                        RPN.Node division = new RPN.Node(new [] {node[0,1], cot}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        Assign(node, division);
+                    }
                     //TODO:
-                    //cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)
-                    //cos(x)/[sin(x) * f(x)] 
-
                     //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
 
                     //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)

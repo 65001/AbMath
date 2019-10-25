@@ -284,5 +284,14 @@ namespace AbMath.Tests
             rpn.SetEquation("sin(x) - (-2)").Compute();
             Assert.AreEqual("x sin 2 +", rpn.Polish.Print());
         }
+
+        [Test]
+        public void CosSinToCot() { 
+            RPN rpn = new RPN("cos(x^3)/(x^2 * sin(x^3))").Compute();
+            Assert.AreEqual("x 3 ^ cot x 2 ^ /", rpn.Polish.Print());
+
+            rpn.SetEquation("cos(x^3)/(sin(x^3) * x^2)").Compute();
+            Assert.AreEqual("x 3 ^ cot x 2 ^ /", rpn.Polish.Print());
+        }
     }
 }
