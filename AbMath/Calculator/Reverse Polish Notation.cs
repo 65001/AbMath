@@ -16,7 +16,7 @@ namespace AbMath.Calculator
     /// </summary>
     public partial class RPN
     {
-        public enum Type {LParen,RParen,Number,Variable,Function,Operator,Store, Null,Arity };
+        public enum Type {LParen,RParen,Number,Variable,Function,Operator,Null};
         public delegate double Run(params double[] arguments);
         public delegate void Store(ref DataStore dataStore,params string[] arguments);
 
@@ -37,9 +37,17 @@ namespace AbMath.Calculator
         public struct Operator
         {
             public int Weight;
-            public Assoc Assoc;
             public int Arguments;
+            public Assoc Assoc;
             public Run Compute;
+
+            public Operator(Assoc assoc, int weight, int arguments, Run compute )
+            {
+                this.Weight = weight;
+                this.Arguments = arguments;
+                this.Assoc = assoc;
+                this.Compute = compute;
+            }
         }
 
         public struct Function
@@ -49,6 +57,14 @@ namespace AbMath.Calculator
             public int MinArguments;
 
             public Run Compute;
+
+            public Function(int Min, int Args, int Max, Run compute)
+            {
+                this.MinArguments = Min;
+                this.Arguments = Args;
+                this.MaxArguments = Max;
+                this.Compute = compute;
+            }
         }
 
         public struct TimeRecord
@@ -56,6 +72,7 @@ namespace AbMath.Calculator
             public string Type;
             public double ElapsedMilliseconds;
             public double ElapsedTicks;
+            public int Count;
         }
 
         public string Equation { get; private set; }
@@ -159,7 +176,7 @@ namespace AbMath.Calculator
 
         private void Write(string message)
         {
-            Logger?.Invoke(this, message.Alias());
+            Logger?.Invoke(this, message);
         }
     }
 }

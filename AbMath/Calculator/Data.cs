@@ -12,8 +12,8 @@ namespace AbMath.Calculator
         {
             private readonly List<string> _meta_functions;
 
-            private readonly Dictionary<string,Function> _functions;
-            private readonly Dictionary<string,Operator> _operators;
+            private readonly Dictionary<string, Function> _functions;
+            private readonly Dictionary<string, Operator> _operators;
 
             private readonly Dictionary<string, string> _aliases;
 
@@ -21,6 +21,7 @@ namespace AbMath.Calculator
 
             private readonly List<string> _leftbracket;
             private readonly List<string> _rightbracket;
+
             private List<TimeRecord> _time;
             private readonly Dictionary<string, string> _variableStore;
 
@@ -91,8 +92,8 @@ namespace AbMath.Calculator
             public bool ContainsEquation => 
                 Equation.Contains("=") || Equation.Contains(">") || Equation.Contains("<") ;
 
-            public double TotalMilliseconds => this.Time.Sum(t => t.ElapsedMilliseconds);
-            public double TotalSteps => this.Time.Sum(t => t.ElapsedTicks);
+            public double TotalMilliseconds => this.Time.Where(t => !t.Type.Contains(".")).Sum(t => t.ElapsedMilliseconds);
+            public double TotalSteps => this.Time.Where(t => !t.Type.Contains(".")).Sum(t => t.ElapsedTicks);
 
             #region Config
             /// <summary>
@@ -110,23 +111,12 @@ namespace AbMath.Calculator
             public bool DebugMode;
 
             /// <summary>
-            /// This type of optimization can remove some
-            /// variables entirely or combine them to optimize
-            /// the calculation over many iterations.
-            /// These optimizations cannot optimize across a grouping symbols.
+            /// Implicit multiplication in some interpretations
+            /// of order of operations has a higher priority
+            /// compared to that of division. 
+            /// Set this to true to enable that feature.
             /// </summary>
-            public bool PreOptimization = true;
-
-            /// <summary>
-            /// This type of optimizations can remove
-            /// variables entirely or combine them to
-            /// optimize the calculations over many iterations.
-            /// Log simplification rules and other similar rules are implemented
-            /// here.
-            /// These optimizations happen on the Reverse Polish Notation and
-            /// hence can optimize across a traditional grouping symbol. 
-            /// </summary>
-            public bool PostOptimization = true;
+            public bool ImplicitMultiplicationPriority;
             #endregion
 
 
@@ -145,15 +135,15 @@ namespace AbMath.Calculator
                 _aliases = new Dictionary<string, string>();
                 _autoFormat = new Dictionary<double, string>();
 
-                _leftbracket = new List<string>();
-                _rightbracket = new List<string>();
+                _leftbracket = new List<string>() { "(", "{", "[" };
+                _rightbracket = new List<string>() { ")", "}", "]", "," };
+
                 _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
 
                 DefaultFunctions();
                 DefaultOperators();
                 DefaultAliases();
-                DefaultBrackets();
                 DefaultFormats();
             }
 
@@ -173,7 +163,8 @@ namespace AbMath.Calculator
                 {
                     ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                     ElapsedTicks = stopwatch.ElapsedTicks,
-                    Type = type
+                    Type = type,
+                    Count = 1
                 });
             }
 
@@ -182,17 +173,24 @@ namespace AbMath.Calculator
                 if (_time.Count > 0 && _time[_time.Count - 1].Type == time.Type)
                 {
                     TimeRecord prev = _time[_time.Count - 1];
+
                     prev.ElapsedMilliseconds += time.ElapsedMilliseconds;
                     prev.ElapsedTicks += time.ElapsedTicks;
+                    prev.Count += 1;
+
                     _time[_time.Count - 1] = prev;
                 }
                 //If a Type contains a period it denotes that it should always be merged.
                 else if (time.Type.Contains(".") && _time.Any(t => t.Type == time.Type) )
                 {
-                    TimeRecord prev = _time.Find(t => t.Type == time.Type);
+                    int index = _time.FindIndex(t => t.Type == time.Type);
+                    TimeRecord prev = _time[index];
+
                     prev.ElapsedMilliseconds += time.ElapsedMilliseconds;
                     prev.ElapsedTicks += time.ElapsedTicks;
-                    //_time.Add(time);
+                    prev.Count += 1;
+
+                    _time[index] = prev;
                 }
                 else
                 {
@@ -209,7 +207,9 @@ namespace AbMath.Calculator
                 });
 
                 times.Add(new Schema() { Column = "Type", Width = 30 });
+                times.Add(new Schema() {Column = "# Calls", Width = 8});
                 times.Add(new Schema() { Column = "Time (ms)", Width = 10 });
+
                 times.Add(new Schema() { Column = "Ticks", Width = 8 });
                 times.Add(new Schema() { Column = "% Milliseconds", Width = 16 });
                 times.Add(new Schema() { Column = "% Ticks", Width = 9 });
@@ -223,7 +223,10 @@ namespace AbMath.Calculator
 
                     times.Add(new string[]
                     {
-                        TR.Type, TR.ElapsedMilliseconds.ToString(), TR.ElapsedTicks.ToString("N0"),
+                        TR.Type,
+                        TR.Count.ToString(),
+                        TR.ElapsedMilliseconds.ToString(),
+                        TR.ElapsedTicks.ToString("N0"),
                         Math.Round((100 * TR.ElapsedMilliseconds / miliseconds), 2).ToString(),
                         (100 * TR.ElapsedTicks / steps).ToString("N0")
                     });
@@ -231,10 +234,10 @@ namespace AbMath.Calculator
 
                 times.Add(new string[]
                 {
-                    "Total", miliseconds.ToString("N0") , steps.ToString("N0"), " ", " "
+                    "Total", "", miliseconds.ToString("N0") , steps.ToString("N0"), " ", " "
                 });
 
-                times.Add(new string[] {Equation, "", "", "", "" });
+                times.Add(new string[] {Equation, "", "", "", "", "" });
 
                 return times;
             }
@@ -243,10 +246,20 @@ namespace AbMath.Calculator
             {
                 _leftbracket.Add(value);
             }
+            
+            public void AddLeftBracket(string[] value)
+            {
+                _leftbracket.AddRange(value);
+            }
 
             public void AddRightBracket(string value)
             {
                 _rightbracket.Add(value);
+            }
+
+            public void AddRightBracket(string[] value)
+            {
+                _rightbracket.AddRange(value);
             }
 
             public void AddAlias(string key, string value)
@@ -269,6 +282,11 @@ namespace AbMath.Calculator
                 _functions.Add(key, func);
             }
 
+            public void RemoveFunction(string function)
+            {
+                _functions.Remove(function);
+            }
+
             public void AddOperator(string key, Operator ops)
             {
                 _operators.Add(key, ops);
@@ -282,11 +300,6 @@ namespace AbMath.Calculator
             public bool IsOperator(string value)
             {
                 return Operators.ContainsKey(value);
-            }
-
-            public bool IsOperator(Token token)
-            {
-                return token.Type == Type.Operator;
             }
 
             public bool IsUnary(string value)
@@ -306,7 +319,7 @@ namespace AbMath.Calculator
 
             public bool IsVariable(string value)
             {
-                return value != "." &&  !(IsNumber(value) || IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value));
+                return value != "." &&  !(IsOperator(value) || IsFunction(value) || IsLeftBracket(value) || IsRightBracket(value) || IsNumber(value));
             }
 
             public bool IsLeftBracket(string value)
@@ -332,8 +345,8 @@ namespace AbMath.Calculator
             private void DefaultAliases()
             {
                 AddAlias("÷", "/");
-                AddAlias("Γ","gamma");
-                AddAlias("π", "pi");
+                AddAlias("gamma", "Γ");
+                AddAlias("pi","π");
                 AddAlias("≠", "!=");
                 AddAlias("≥", ">=");
                 AddAlias("≤", "<=");
@@ -347,35 +360,10 @@ namespace AbMath.Calculator
                 AddAlias("-infinity", "-∞");
             }
 
-            private void DefaultBrackets()
-            {
-                AddLeftBracket("(");
-                AddLeftBracket("{");
-                AddLeftBracket("[");
-
-                AddRightBracket(")");
-                AddRightBracket("}");
-                AddRightBracket("]");
-                AddRightBracket(",");
-            }
-
             private void DefaultOperators()
             {
-                AddOperator("^", new Operator
-                {
-                    Assoc = Assoc.Right,
-                    Weight = 5,
-                    Arguments = 2,
-                    Compute = DoOperators.Power
-                });
-
-                AddOperator("E", new Operator
-                {
-                    Assoc = Assoc.Right,
-                    Weight = 5,
-                    Arguments = 2,
-                    Compute = DoOperators.E
-                });
+                AddOperator("^", new Operator(Assoc.Right, 5, 2, DoOperators.Power));
+                AddOperator("E", new Operator(Assoc.Right, 5, 2, DoOperators.E));
 
                 AddOperator("!", new Operator
                 {
@@ -698,7 +686,7 @@ namespace AbMath.Calculator
                 });
 
 #region Constants
-                AddFunction("pi", new Function
+                AddFunction("π", new Function
                 {
                     Arguments = 0,
                     MinArguments = 0,
@@ -724,7 +712,7 @@ namespace AbMath.Calculator
                 }
                 );
 
-                AddFunction("sum", new Function()
+                AddFunction("total", new Function()
                 {
                     Arguments = 1,
                     MinArguments = 1,
@@ -732,6 +720,13 @@ namespace AbMath.Calculator
                     Compute = DoFunctions.Sum
                 }
                 );
+
+                AddFunction("sum", new Function()
+                {
+                    Arguments = 1,
+                    MinArguments = 4,
+                    MaxArguments = 5
+                });
 
                 AddFunction("avg", new Function()
                 {
@@ -774,7 +769,7 @@ namespace AbMath.Calculator
                     MinArguments = 1
                 });
 
-                AddFunction("gamma", new Function()
+                AddFunction("Γ", new Function()
                 {
                     Arguments = 1,
                     Compute = DoFunctions.Gamma,
@@ -788,18 +783,9 @@ namespace AbMath.Calculator
                 {
                     Arguments = 2,
                     MinArguments = 2,
-                    MaxArguments = 2,
-                });
-
-                //
-                AddFunction("derive", new Function
-                {
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    MinArguments = 1
+                    MaxArguments = 3,
                 });
                 
-
                 AddFunction("integrate", new Function()
                 {
                     Arguments = 4,
@@ -815,6 +801,13 @@ namespace AbMath.Calculator
                     MaxArguments = 5
                 });
 
+                AddFunction("solve", new Function()
+                {
+                    Arguments = 2,
+                    MinArguments = 2,
+                    MaxArguments = 3
+                });
+
                 /*
                 AddFunction("plot", new Function()
                 {
@@ -828,6 +821,8 @@ namespace AbMath.Calculator
                 _meta_functions.Add("integrate");
                 _meta_functions.Add("table");
                 _meta_functions.Add("plot");
+                _meta_functions.Add("solve");
+                _meta_functions.Add("sum");
                 #endregion
             }
             private void DefaultFormats()

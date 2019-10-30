@@ -12,6 +12,14 @@ namespace AbMath.Calculator
         const string _space = "   ";
 
         //Code: https://stackoverflow.com/questions/2094239/swap-two-items-in-listt
+        public static List<T> Swap<T>(this List<T> array, int index, int index2)
+        {
+            T temp = array[index];
+            array[index] = array[index2];
+            array[index2] = temp;
+            return array;
+        }
+
         public static T[] Swap<T>(this T[] array, int index, int index2)
         {
             T temp = array[index];
@@ -96,11 +104,11 @@ namespace AbMath.Calculator
         static void PrintNode(RPN.Node node, string indent, ref StringBuilder sb)
         {
             //node [Hash] ID:[$ID] Children:[$#]
-            sb.AppendLine($"{node} [{node.ID}| {node.Children.Length} | {node.Token.Type} | {node.isRoot} | {node.GetHash()}]");
+            sb.AppendLine($"{node} [{node.ID} | {node.Children.Count} | {node.Token.Type} | {node.isRoot} | {node.GetHash()}]");
 
             // Loop through the children recursively, passing in the
             // indent, and the isLast parameter
-            var numberOfChildren = node.Children.Length;
+            var numberOfChildren = node.Children.Count;
             for (var i = 0; i < numberOfChildren; i++)
             {
                 var child = node.Children[i];
@@ -256,13 +264,6 @@ namespace AbMath.Calculator
             {
                 return null;
             }
-        }
-
-        public static string Alias(this string data)
-        {
-            //TODO: Move all these aliases into RPN.Data.Aliases and convert 
-            //all functions to handle them properley 
-            return data.Replace("pi", "π ");
         }
     }
 }

@@ -33,12 +33,12 @@ namespace AbMath.Calculator
             _stopwatch = new Stopwatch();
         }
 
-        public void SetVariable(string variable, double number)
+        public PostFix SetVariable(string variable, double number)
         {
-            SetVariable(variable, number.ToString());
+            return SetVariable(variable, number.ToString());
         }
 
-        public void SetVariable(string variable,string number)
+        public PostFix SetVariable(string variable, string number)
         {
             int length = _input.Length;
             
@@ -50,6 +50,7 @@ namespace AbMath.Calculator
                     _input[i] = new RPN.Token(number,0,RPN.Type.Number);
                 }
             }
+            return this;
         }
 
         public void SetPolish(RPN.Token[] polish)
@@ -103,12 +104,7 @@ namespace AbMath.Calculator
 
             _stopwatch.Stop();
 
-            _dataStore.AddTimeRecord(new RPN.TimeRecord()
-            {
-                Type = "Evaluation",
-                ElapsedMilliseconds = _stopwatch.ElapsedMilliseconds,
-                ElapsedTicks = _stopwatch.ElapsedTicks
-            });
+            _dataStore.AddTimeRecord("Evaluation", _stopwatch);
 
             if (_dataStore.DebugMode)
             {
@@ -143,16 +139,17 @@ namespace AbMath.Calculator
             return arguments;
         }
 
-        public void Reset()
+        public PostFix Reset()
         {
             _input = new RPN.Token[_original.Length];
             _original.CopyTo(_input,0);
             _stack = new Stack<double>();
+            return this;
         }
 
         void Write(string message)
         {
-            Logger?.Invoke(this, message.Alias());
+            Logger?.Invoke(this, message);
         }
     }
 }

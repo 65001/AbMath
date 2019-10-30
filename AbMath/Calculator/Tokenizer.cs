@@ -12,10 +12,10 @@ namespace AbMath.Calculator
             private readonly DataStore _dataStore;
             private string Equation => _dataStore.Equation; 
 
-            private string _token;
             private string _character;
             private string _prevToken;
             private string _readAhead;
+
             private Tables<string> _tables;
 
             private List<Token> _tokens;
@@ -33,7 +33,6 @@ namespace AbMath.Calculator
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
                 _tokens = new List<Token>();
-
                 if (_dataStore.DebugMode)
                 {
                     _tables = new Tables<string>(new Config {Title = "Tokenizer", Format = _dataStore.DefaultFormat});
@@ -45,21 +44,24 @@ namespace AbMath.Calculator
                     _tables.Add(new Schema {Column = "Action", Width = 16});
                 }
 
-                _token = string.Empty;
+                string token = string.Empty;
                 _prevToken = string.Empty;
+
                 int length = Equation.Length;
-                char[] equation = Equation.ToCharArray();
+
+                ReadOnlySpan<char> equationSpan = Equation.AsSpan();
+                ReadOnlySpan<char> localSpan = null;
 
                 for (int i = 0; i < length; i++)
                 {
-                    //We could convert this into a span?
-                    _readAhead = i < (length - 1) ? equation[i + 1].ToString() : null;
-                    _character = equation[i].ToString();
+                    localSpan = equationSpan.Slice(i);
+                    _character = localSpan[0].ToString();
+                    _readAhead = i < (length - 1) ? localSpan[1].ToString() : null;
 
                     //Alias code
-                    if (_dataStore.Aliases.ContainsKey(_token))
+                    if (_dataStore.Aliases.ContainsKey(token))
                     {
-                        _token = _dataStore.Aliases[_token];
+                        token = _dataStore.Aliases[token];
                     }
 
                     if (_dataStore.Aliases.ContainsKey(_character))
@@ -67,102 +69,107 @@ namespace AbMath.Calculator
                         _character = _dataStore.Aliases[_character];
                     }
 
-                    
                     //WhiteSpace Rule
                     if (string.IsNullOrWhiteSpace(_character) && _character != ",")
                     {
-                        WriteToken("WhiteSpace");
+                        WriteToken("WhiteSpace", ref token);
                     }
                     else
                     {
+
+                        if (_dataStore.IsOperator(_character + _readAhead))
+                        {
+                            WriteToken("Operator", ref token);
+                            token = _character + _readAhead;
+                            WriteToken("Operator", ref token);
+                            i += 1;
+                        }
                         //Unary Input at the start of the input or after another operator or left parenthesis
-                        if ((i == 0 && _dataStore.IsUnary(_character)) || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken == ",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(_token) && !_dataStore.IsOperator(_character + _readAhead)))
+                        else if ((i == 0 && _dataStore.IsUnary(_character)) || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken == ",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(token)))
                         {
                             _rule = "Unary";
-                            _token += _character;
+                            token += _character;
                             if (!(string.IsNullOrWhiteSpace(_readAhead)) && (_dataStore.IsVariable(_readAhead) || _dataStore.IsLeftBracket(_readAhead)))
                             {
-                                _token += "1";
-                                WriteToken("Unary");
+                                token += "1";
+                                WriteToken("Unary", ref token);
                             }
                         }
-                        else if (_dataStore.IsNumber(_character) && _token == "-.")
+                        else if (token == "-." && _dataStore.IsNumber(_character))
                         {
                             _rule = "Decimal Append";
-                            _token += _character;
+                            token += _character;
                         }
-                        else if ((_dataStore.IsNumber(_token)) && (_dataStore.IsVariable(_character) || _dataStore.IsLeftBracket(_character) || _dataStore.IsFunction(_character)))
+                        //Token is a number 
+                        //Character is [LB, FUNC, Variable]
+                        else if ( _dataStore.IsNumber(token) && (_dataStore.IsLeftBracket(_character) || _dataStore.IsFunction(_character) || _dataStore.IsVariable(_character)))
                         {
-                            WriteToken("Left Implicit");
-                            _token = _character;
+                            WriteToken("Left Implicit", ref token);
+                            token = _character;
                             if (_dataStore.IsLeftBracket(_character) || (i == (Equation.Length - 1)))
                             {
-                                WriteToken("Left Implicit");
+                                WriteToken("Left Implicit", ref token);
                             }
                         }
-                        else if (_dataStore.IsVariable(_token) && _dataStore.IsNumber(_character))
+                        //Token is a variable
+                        //Character is a number
+                        else if (_dataStore.IsNumber(_character) && _dataStore.IsVariable(token))
                         {
-                            WriteToken("Left Implicit 2");
-                            _token = _character;
+                            WriteToken("Left Implicit 2", ref token);
+                            token = _character;
                             if (_dataStore.IsLeftBracket(_character) || (i == (Equation.Length - 1)))
                             {
-                                WriteToken("Left Implicit 2");
+                                WriteToken("Left Implicit 2", ref token);
                             }
                         }
-                        else if (_dataStore.IsFunction(_token) && _dataStore.IsLeftBracket(_character))
+                        else if (_dataStore.IsFunction(token) && _dataStore.IsLeftBracket(_character))
                         {
-                            WriteToken("Function Start");
-                            _token = _character;
-                            WriteToken("Function Start");
+                            WriteToken("Function Start", ref token);
+                            token = _character;
+                            WriteToken("Function Start", ref token);
                         }
-                        else if (_dataStore.IsFunction(_token) && (_dataStore.IsRightBracket(_character) || _dataStore.IsOperator(_character)))
+                        else if (_dataStore.IsFunction(token) && (_dataStore.IsRightBracket(_character) || _dataStore.IsOperator(_character)))
                         {
-                            WriteToken("Function End");
-                            _token = _character;
-                            WriteToken("Function End");
+                            WriteToken("Function End", ref token);
+                            token = _character;
+                            WriteToken("Function End", ref token);
                         }
-                        else if (_dataStore.IsOperator(_character + _readAhead))
+
+                        else if ( ( _dataStore.IsNumber(token) || _dataStore.IsVariable(token) ) && (_dataStore.IsLeftBracket(_character) || _dataStore.IsRightBracket(_character) || _dataStore.IsOperator(_character)))
                         {
-                            WriteToken("Operator");
-                            _token = _character + _readAhead;
-                            WriteToken("Operator");
-                            i = i + 1;
-                        }
-                        else if ( ( _dataStore.IsNumber(_token) || _dataStore.IsVariable(_token) ) && (_dataStore.IsLeftBracket(_character) || _dataStore.IsRightBracket(_character) || _dataStore.IsOperator(_character)))
-                        {
-                            WriteToken("Edge Case 1");
-                            _token = _character;
-                            WriteToken("Edge Case 1");
+                            WriteToken("Edge Case 1", ref token);
+                            token = _character;
+                            WriteToken("Edge Case 1", ref token);
                         }
                         else if (_dataStore.IsOperator(_character))
                         {
-                            _token += _character;
-                            WriteToken("Operator");
+                            token += _character;
+                            WriteToken("Operator", ref token);
                         }
                         else if (_dataStore.IsLeftBracket(_character) || _dataStore.IsRightBracket(_character))
                         {
-                            _token += _character;
-                            WriteToken("Bracket");
+                            token += _character;
+                            WriteToken("Bracket", ref token);
                         }
                         else if (i == (Equation.Length - 1))
                         {
-                            _token += _character;
-                            WriteToken("End of String");
+                            token += _character;
+                            WriteToken("End of String", ref token);
                         }
                         else
                         {
                             _rule = "Append";
-                            _token += _character;
+                            token += _character;
                         }
 
-                        if (i == (Equation.Length - 1) && _token.Length > 0)
+                        if (i == (Equation.Length - 1) && token.Length > 0)
                         {
-                            WriteToken("End of String");
+                            WriteToken("End of String", ref token);
                         }
 
                         if (_dataStore.DebugMode)
                         {
-                            _tables.Add(new string[] { i.ToString(), _character, ((int)_character[0]).ToString(), _token, _tokens.Count.ToString(), _rule ?? string.Empty });
+                            _tables.Add(new string[] { i.ToString(), _character, ((int)_character[0]).ToString(), token, _tokens.Count.ToString(), _rule ?? string.Empty });
                         }
                     }
                 }
@@ -191,45 +198,65 @@ namespace AbMath.Calculator
             /// and sets the previous token.
             /// </summary>
             /// <param name="rule"></param>
-            private void WriteToken(string rule)
+            private void WriteToken(string rule,ref string tokens)
             {
-                if (string.IsNullOrWhiteSpace(_token) && _token != ",")
+                if (string.IsNullOrWhiteSpace(tokens) && tokens != ",")
                 {
                     return;
+                }
+
+                if (_dataStore.Aliases.ContainsKey(tokens))
+                {
+                    tokens = _dataStore.Aliases[tokens];
                 }
 
                 _rule = rule;
 
                 Token token;
-                switch (_dataStore.Resolve(_token))
+                switch (_dataStore.Resolve(tokens))
                 {
+                    case Type.Number:
+                        token = new Token(tokens, 0, Type.Number);
+                        break;
                     case Type.Function:
-                        token = new Token(_token, _dataStore.Functions[_token].Arguments, Type.Function);
+                        token = new Token(tokens, _dataStore.Functions[tokens].Arguments, Type.Function);
                         break;
                     case Type.Operator:
-                        token = new Token(_token, _dataStore.Operators[_token].Arguments, Type.Operator);
+                        token = new Token(tokens, _dataStore.Operators[tokens].Arguments, Type.Operator);
+                        break;
+                    case Type.LParen:
+                        token = new Token(tokens, 0, Type.LParen);
+                        break;
+                    case Type.RParen:
+                        token = new Token(tokens, 0, Type.RParen);
+                        break;
+                    case Type.Variable:
+                        token = new Token(tokens, 0, Type.Variable);
+                        break;
+                    case Type.Null:
+                        token = new Token(tokens, 0, Type.Null);
                         break;
                     default:
-                        token = new Token(_token, 0, _dataStore.Resolve(_token));
+                        token = new Token(tokens, 0, _dataStore.Resolve(tokens));
                         break;
                 }
                 _tokens.Add(token);
 
-                _prevToken = _token;
-                _token = string.Empty;
+                _prevToken = tokens;
+                tokens = string.Empty;
             }
 
             private void Write(string message)
             {
                 if (_dataStore.DebugMode)
                 {
-                    Logger?.Invoke(this, message.Alias());
+                    Logger?.Invoke(this, message);
                 }
             }
 
             private void Log(string message)
             {
-                Logger?.Invoke(this, message.Alias());
+                Logger?.Invoke(this, message);
             }
         }
     }

@@ -29,10 +29,7 @@ namespace AbMath.Calculator
                 Type = type;
             }
 
-            public override string ToString()
-            {
-                return Value;
-            }
+            
 
             public bool IsNumber()
             {
@@ -117,6 +114,42 @@ namespace AbMath.Calculator
             public bool IsAbs()
             {
                 return Value == "abs";
+            }
+
+            public override string ToString()
+            {
+                return Value;
+            }
+
+            public override bool Equals(Object obj)
+            {
+                if (obj == null)
+                {
+                    return false;
+                }
+
+                if (obj == this)
+                {
+                    return true;
+                }
+
+                if (obj.GetType() != this.GetType())
+                {
+                    return false;
+                }
+
+                Token token = (Token) obj;
+                return this.Type == token.Type && this.Arguments == token.Arguments && this.Value == token.Value;
+            }
+
+            public override int GetHashCode()
+            {
+                int hash = 17;
+                hash = hash * 23 + Type.GetHashCode();
+                hash = hash * 23 + Arguments.GetHashCode();
+                hash = hash * 23 + Value.GetHashCode();
+                return hash; 
+
             }
         }
     }

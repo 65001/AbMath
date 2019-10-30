@@ -71,6 +71,9 @@ namespace Test_Console
                 }
 
                 Console.WriteLine();
+                Console.WriteLine(RPN.Data.TimeRecords().ToString());
+
+                Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("Press any key to continue...");
                 Console.ReadKey(true);
