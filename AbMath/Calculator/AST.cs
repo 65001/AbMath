@@ -201,10 +201,6 @@ namespace AbMath.Calculator
                 node = stack.Pop();
                 //Write(node.GetHash());
 
-                if (node.IsExponent() && node.Children.Count == 0)
-                {
-                    throw  new Exception("Invalid Node");
-                }
                 //If Root is a number abort. 
                 if (Root.IsNumber())
                 {

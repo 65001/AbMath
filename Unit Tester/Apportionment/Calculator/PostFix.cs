@@ -337,6 +337,14 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void powerOperator()
+        {
+            RPN test = new RPN("(2/2)^1").Compute();
+            PostFix math = new PostFix(test);
+            Assert.AreEqual(1, math.Compute());
+        }
+
+        [Test]
         public void Substract()
         {
             RPN test = new RPN("5 - 2").Compute();
