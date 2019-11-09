@@ -29,7 +29,7 @@ namespace AbMath.Calculator
         ///  Double Angle Reduction - Converts trig functions to double angles
         ///  Constants - 
         /// </summary>
-        private enum SimplificationMode
+        public enum SimplificationMode
         {
             Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap,
             Trig, TrigHalfAngle, TrigHalfAngleExpansion,
@@ -48,11 +48,16 @@ namespace AbMath.Calculator
         public event EventHandler<string> Logger;
         public event EventHandler<string> Output;
 
+        private OptimizerRuleSet ruleManager;
 
         public AST(RPN rpn)
         {
             _rpn = rpn;
             _data = rpn.Data;
+
+            ruleManager = new OptimizerRuleSet();
+            //Let us generate the rules here if not already creates 
+
             RPN.Node.ResetCounter();
         }
 
@@ -125,7 +130,7 @@ namespace AbMath.Calculator
                 }
                 else
                 {
-                    tracker.Add(hash, new OptimizationTracker() {count = 1, Hash = hash});
+                    tracker.Add(hash, new OptimizationTracker() { count = 1, Hash = hash });
                 }
 
                 _data.AddTimeRecord("AST.GetHash", sw1);
@@ -167,9 +172,9 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
-            #if DEBUG
+#if DEBUG
                 Write(Root.ToInfix());       
-            #endif
+#endif
 
             Simplify(node, SimplificationMode.Sqrt);
             Simplify(node, SimplificationMode.Log);
@@ -184,9 +189,9 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Swap);
 
             Swap(node);
-            #if DEBUG
+#if DEBUG
                 Write(Root.ToInfix());
-            #endif
+#endif
         }
 
         private void Simplify(RPN.Node node, SimplificationMode mode)
@@ -230,7 +235,7 @@ namespace AbMath.Calculator
                             Write("\tsqrt(g(x)^2) -> abs(g(x))");
                         }
 
-                        RPN.Node abs = new RPN.Node(new[] {node.Children[0].Children[1]},
+                        RPN.Node abs = new RPN.Node(new[] { node.Children[0].Children[1] },
                             new RPN.Token("abs", 1, RPN.Type.Function));
                         Assign(node, abs);
                     }
@@ -296,9 +301,9 @@ namespace AbMath.Calculator
                         RPN.Node baseNode = exponent.Children[1];
                         RPN.Node power = exponent.Children[0];
 
-                        RPN.Node log = new RPN.Node(new[] {Clone(baseNode), node.Children[1]},
+                        RPN.Node log = new RPN.Node(new[] { Clone(baseNode), node.Children[1] },
                             new RPN.Token("log", 2, RPN.Type.Function));
-                        RPN.Node multiply = new RPN.Node(new[] {log, power}, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
                         temp = multiply;
                     }
                     else if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
@@ -311,9 +316,9 @@ namespace AbMath.Calculator
                         RPN.Node exponent = node.Children[0];
                         RPN.Node power = exponent.Children[0];
 
-                        RPN.Node log = new RPN.Node(new[] {exponent.Children[1]},
+                        RPN.Node log = new RPN.Node(new[] { exponent.Children[1] },
                             new RPN.Token("ln", 1, RPN.Type.Function));
-                        RPN.Node multiply = new RPN.Node(new[] {log, power}, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
                         temp = multiply;
                     }
                     else if ((node.IsAddition() || node.IsSubtraction()) && node.Children[0].IsLog() &&
@@ -324,18 +329,18 @@ namespace AbMath.Calculator
                         if (node.IsAddition())
                         {
                             Write("\tlog(b,R) + log(b,S) -> log(b,R*S)");
-                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
                                 new RPN.Token("*", 2, RPN.Type.Operator));
                         }
                         else
                         {
                             Write("\tlog(b,R) - log(b,S) -> log(b,R/S)");
-                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
                                 new RPN.Token("/", 2, RPN.Type.Operator));
                         }
 
                         RPN.Node baseNode = node.Children[0].Children[1];
-                        RPN.Node log = new RPN.Node(new[] {parameter, baseNode},
+                        RPN.Node log = new RPN.Node(new[] { parameter, baseNode },
                             new RPN.Token("log", 2, RPN.Type.Function));
                         temp = log;
                     }
@@ -346,17 +351,17 @@ namespace AbMath.Calculator
                         if (node.IsAddition())
                         {
                             Write("\tln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
-                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
                                 new RPN.Token("*", 2, RPN.Type.Operator));
                         }
                         else
                         {
                             Write("\tln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
-                            parameter = new RPN.Node(new[] {node.Children[0].Children[0], node.Children[1].Children[0]},
+                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
                                 new RPN.Token("/", 2, RPN.Type.Operator));
                         }
 
-                        RPN.Node ln = new RPN.Node(new[] {parameter}, new RPN.Token("ln", 1, RPN.Type.Function));
+                        RPN.Node ln = new RPN.Node(new[] { parameter }, new RPN.Token("ln", 1, RPN.Type.Function));
                         temp = ln;
                     }
 
@@ -397,7 +402,7 @@ namespace AbMath.Calculator
                     {
                         double num1 = node.Children[0].GetNumber();
                         double num2 = node.Children[1].GetNumber();
-                        double gcd = RPN.DoFunctions.Gcd(new double[] {num1, num2});
+                        double gcd = RPN.DoFunctions.Gcd(new double[] { num1, num2 });
 
                         node.Replace(node.Children[0], new RPN.Node((num1 / gcd)));
                         node.Replace(node.Children[1], new RPN.Node((num2 / gcd)));
@@ -406,14 +411,14 @@ namespace AbMath.Calculator
                     else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
                     {
                         Write("\tDivison Flip");
-                        RPN.Node[] numerator = {node.Children[0].Children[1], node.Children[1].Children[1]};
-                        RPN.Node[] denominator = {node.Children[0].Children[0], node.Children[1].Children[0]};
+                        RPN.Node[] numerator = { node.Children[0].Children[1], node.Children[1].Children[1] };
+                        RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
 
-                        RPN.Node top = new RPN.Node(new[] {denominator[0], numerator[1]},
+                        RPN.Node top = new RPN.Node(new[] { denominator[0], numerator[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node bottom = new RPN.Node(new[] {denominator[1], numerator[0]},
+                        RPN.Node bottom = new RPN.Node(new[] { denominator[1], numerator[0] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] {bottom, top}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(node, division);
                     }
                     else if (node[1].IsMultiplication() && node[0].IsNumberOrConstant() &&
@@ -425,7 +430,7 @@ namespace AbMath.Calculator
                     else if (node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() &&
                              node[1, 0].IsInteger() && node[0, 1].Matches(node[1, 1]))
                     {
-                        int reduction = Math.Min((int) node[0, 0].GetNumber(), (int) node[1, 0].GetNumber()) - 1;
+                        int reduction = Math.Min((int)node[0, 0].GetNumber(), (int)node[1, 0].GetNumber()) - 1;
                         node[0, 0].Replace(node[0, 0].GetNumber() - reduction);
                         node[1, 0].Replace(node[1, 0].GetNumber() - reduction);
                         Write("\tPower Reduction");
@@ -434,9 +439,9 @@ namespace AbMath.Calculator
                     {
                         Write("\t[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
                         RPN.Node numerator = node[1, 1];
-                        RPN.Node denominator = new RPN.Node(new[] {node[0], node[1, 0]},
+                        RPN.Node denominator = new RPN.Node(new[] { node[0], node[1, 0] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] {denominator, numerator},
+                        RPN.Node division = new RPN.Node(new[] { denominator, numerator },
                             new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(node, division);
                     }
@@ -484,7 +489,7 @@ namespace AbMath.Calculator
                     //0 - 3sin(x)
                     else if (node.Children[1].IsNumber(0))
                     {
-                        RPN.Node multiply = new RPN.Node(new[] {new RPN.Node(-1), node.Children[0]},
+                        RPN.Node multiply = new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
 
                         Write($"\tSubtraction by zero. Case 2.");
@@ -493,9 +498,9 @@ namespace AbMath.Calculator
                     else if (node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]))
                     {
                         Write("\tf(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
-                        RPN.Node subtraction = new RPN.Node(new[] {node[0, 1], node[1, 1]},
+                        RPN.Node subtraction = new RPN.Node(new[] { node[0, 1], node[1, 1] },
                             new RPN.Token("-", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] {node[0, 0], subtraction},
+                        RPN.Node division = new RPN.Node(new[] { node[0, 0], subtraction },
                             new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(node, division);
                     }
@@ -503,7 +508,7 @@ namespace AbMath.Calculator
                     {
                         //(cos(x)^2)-(-1*(sin(x)^2)) 
                         Write("\tf(x) - (-1 * g(x)) -> f(x) + g(x)");
-                        node[0,1].Replace(1);
+                        node[0, 1].Replace(1);
                         node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
                     }
                     //TODO: ((-2*(cos(x)^2))+(2*(sin(x)^2)))
@@ -514,12 +519,12 @@ namespace AbMath.Calculator
                     else if (node[0].IsNumber() && node[0].IsLessThanNumber(0))
                     {
                         Write("\tf(x) - (-c) -> f(x) + c");
-                        RPN.Node multiplication = new RPN.Node(new [] { Clone(node[0]), new RPN.Node(-1)  }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node addition = new RPN.Node(new [] {multiplication, node[1]}, new RPN.Token("+", 2, RPN.Type.Operator));
+                        RPN.Node multiplication = new RPN.Node(new[] { Clone(node[0]), new RPN.Node(-1) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node addition = new RPN.Node(new[] { multiplication, node[1] }, new RPN.Token("+", 2, RPN.Type.Operator));
                         Assign(node, addition);
                         Simplify(multiplication, SimplificationMode.Multiplication);
                     }
-                    
+
                     //TODO: f(x)/g(x) - i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) - i(x)g(x)/g(x)j(x) -> [f(x)j(x) - g(x)i(x)]/[g(x)j(x)]
                 }
                 else if (mode == SimplificationMode.Addition && node.IsAddition())
@@ -527,7 +532,7 @@ namespace AbMath.Calculator
                     //Is root and leafs have the same hash
                     if (node.ChildrenAreIdentical())
                     {
-                        RPN.Node multiply = new RPN.Node(new[] {node.Children[0], new RPN.Node(2)},
+                        RPN.Node multiply = new RPN.Node(new[] { node.Children[0], new RPN.Node(2) },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiply);
                         Write("\tSimplification: Addition -> Multiplication");
@@ -588,7 +593,7 @@ namespace AbMath.Calculator
                         Write("\tf(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
 
                         node[0].Replace(node[0, 1], new RPN.Node(0));
-                        RPN.Node multiplication = new RPN.Node(new[] {node[1], new RPN.Node(2)},
+                        RPN.Node multiplication = new RPN.Node(new[] { node[1], new RPN.Node(2) },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         node.Replace(node[1], multiplication);
                     }
@@ -607,7 +612,7 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Trig)
                 {
-                    
+
                     if (node.IsAddition() &&
                         node.Children[0].IsExponent() &&
                         node.Children[1].IsExponent() &&
@@ -631,7 +636,7 @@ namespace AbMath.Calculator
                              node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
                     {
                         Write("\tcos(x)/sin(x) -> cot(x)");
-                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("cot", 1, RPN.Type.Function));
                         Assign(node, cot);
                     }
@@ -640,7 +645,7 @@ namespace AbMath.Calculator
                              node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
                     {
                         Write("\tsin(x)/cos(x) -> tan(x)");
-                        RPN.Node tan = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("tan", 1, RPN.Type.Function));
                         Assign(node, tan);
                     }
@@ -649,63 +654,63 @@ namespace AbMath.Calculator
                              node.Children[0].Children[0].Matches(node.Children[1].Children[0].Children[0]))
                     {
                         Write("\t[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
-                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("cot", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {cot, node.Children[1].Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1].Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
                     else if (node.IsDivision() && node.Children[0].IsFunction("sec"))
                     {
                         Write("\tf(x)/sec(g(x)) -> f(x)cos(g(x))");
-                        RPN.Node cos = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node cos = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("cos", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {cos, node.Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { cos, node.Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
                     else if (node.IsDivision() && node.Children[0].IsFunction("csc"))
                     {
                         Write("\tf(x)/csc(g(x)) -> f(x)sin(g(x))");
-                        RPN.Node sin = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node sin = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("sin", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {sin, node.Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { sin, node.Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
                     else if (node.IsDivision() && node.Children[0].IsFunction("cot"))
                     {
                         Write("\tf(x)/cot(g(x)) -> f(x)tan(g(x))");
-                        RPN.Node tan = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("tan", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {tan, node.Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { tan, node.Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
                     else if (node.IsDivision() && node.Children[0].IsFunction("cos"))
                     {
                         Write("\tf(x)/cos(g(x)) -> f(x)sec(g(x))");
-                        RPN.Node sec = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node sec = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("sec", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {sec, node.Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { sec, node.Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
                     else if (node.IsDivision() && node.Children[0].IsFunction("sin"))
                     {
                         Write("\tf(x)/sin(g(x)) -> f(x)csc(g(x))");
-                        RPN.Node csc = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node csc = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("csc", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {csc, node.Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { csc, node.Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
                     else if (node.IsDivision() && node.Children[0].IsFunction("tan"))
                     {
                         Write("\tf(x)/tan(g(x)) -> f(x)cot(g(x))");
-                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("cot", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {cot, node.Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
@@ -725,9 +730,9 @@ namespace AbMath.Calculator
                              node.Children[0].Children[1].IsNumber(-1))
                     {
                         Write("\tsin(-f(x)) -> -1 * sin(f(x))");
-                        RPN.Node sin = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node sin = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("sin", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {sin, node.Children[0].Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { sin, node.Children[0].Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
@@ -735,9 +740,9 @@ namespace AbMath.Calculator
                              node.Children[0].Children[1].IsNumber(-1))
                     {
                         Write("\ttan(-f(x)) -> -1 * tan(f(x))");
-                        RPN.Node tan = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("tan", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {tan, node.Children[0].Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { tan, node.Children[0].Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
@@ -745,9 +750,9 @@ namespace AbMath.Calculator
                              node.Children[0].Children[1].IsNumber(-1))
                     {
                         Write("\tcsc(-f(x)) -> -1 * csc(f(x))");
-                        RPN.Node csc = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node csc = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("csc", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {csc, node.Children[0].Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { csc, node.Children[0].Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
@@ -755,17 +760,17 @@ namespace AbMath.Calculator
                              node.Children[0].Children[1].IsNumber(-1))
                     {
                         Write("\tcot(-f(x)) -> -1 * cot(f(x))");
-                        RPN.Node cot = new RPN.Node(new[] {node.Children[0].Children[0]},
+                        RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("cot", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] {cot, node.Children[0].Children[1]},
+                        RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[0].Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
                     }
                     else if (node.IsSubtraction() && node[0].IsExponent() && node[1].IsNumber(1) && node[0, 0].IsNumber(2) && node[0, 1].IsFunction("sin"))
                     {
                         Write("\t1 - sin(x)^2 -> cos(x)^2");
-                        RPN.Node cos = new RPN.Node(new[] { node[0,1,0] }, new RPN.Token("cos",1, RPN.Type.Function));
-                        RPN.Node exponent = new RPN.Node(new [] {node[0,0], cos}, new RPN.Token("^",2, RPN.Type.Operator));
+                        RPN.Node cos = new RPN.Node(new[] { node[0, 1, 0] }, new RPN.Token("cos", 1, RPN.Type.Function));
+                        RPN.Node exponent = new RPN.Node(new[] { node[0, 0], cos }, new RPN.Token("^", 2, RPN.Type.Operator));
                         Assign(node, exponent);
                     }
                     else if (node.IsSubtraction() && node[0].IsExponent() && node[1].IsNumber(1) && node[0, 0].IsNumber(2) && node[0, 1].IsFunction("cos"))
@@ -780,8 +785,8 @@ namespace AbMath.Calculator
                         Write("\tcos(x)/(f(x) * sin(x)) -> cot(x)/f(x)");
                         //cos(x)/[sin(x) * f(x)] -> cot(x)/f(x) is also implemented due to swapping rules. 
 
-                        RPN.Node cot = new RPN.Node(new [] {node[1,0]}, new RPN.Token("cot", 1, RPN.Type.Function));
-                        RPN.Node division = new RPN.Node(new [] {node[0,1], cot}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        RPN.Node cot = new RPN.Node(new[] { node[1, 0] }, new RPN.Token("cot", 1, RPN.Type.Function));
+                        RPN.Node division = new RPN.Node(new[] { node[0, 1], cot }, new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(node, division);
                     }
                     //TODO:
@@ -818,7 +823,7 @@ namespace AbMath.Calculator
                     //TODO: If one of the leafs is a division and the other a number or variable
                     if (node.ChildrenAreIdentical())
                     {
-                        RPN.Node head = new RPN.Node(new[] {new RPN.Node(2), node.Children[0]},
+                        RPN.Node head = new RPN.Node(new[] { new RPN.Node(2), node.Children[0] },
                             new RPN.Token("^", 2, RPN.Type.Operator));
                         Assign(node, head);
                         Write("\tSimplification: Multiplication -> Exponent");
@@ -890,7 +895,7 @@ namespace AbMath.Calculator
                         }
 
                         RPN.Node numerator = division.Children[1];
-                        RPN.Node multiply = new RPN.Node(new[] {Clone(numerator), Clone(expression)},
+                        RPN.Node multiply = new RPN.Node(new[] { Clone(numerator), Clone(expression) },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         numerator.Remove(multiply);
                         expression.Remove(new RPN.Node(1));
@@ -898,13 +903,13 @@ namespace AbMath.Calculator
                     else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
                     {
                         Write($"\tDivision times a division -> Division");
-                        RPN.Node[] numerator = {node.Children[0].Children[1], node.Children[1].Children[1]};
-                        RPN.Node[] denominator = {node.Children[0].Children[0], node.Children[1].Children[0]};
+                        RPN.Node[] numerator = { node.Children[0].Children[1], node.Children[1].Children[1] };
+                        RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
                         RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
 
                         RPN.Node top = new RPN.Node(numerator, multiply);
                         RPN.Node bottom = new RPN.Node(denominator, multiply);
-                        RPN.Node division = new RPN.Node(new[] {bottom, top}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
 
                         node.Children[0].Remove(division);
                         node.Children[1].Remove(new RPN.Node(1));
@@ -964,7 +969,7 @@ namespace AbMath.Calculator
                             Write($"\tComplex Swap: Tri Node Multiplication Swap");
                             RPN.Node multiply =
                                 new RPN.Node(
-                                    new[] {Clone(node.Children[0].Children[1]), Clone(node.Children[1].Children[1])},
+                                    new[] { Clone(node.Children[0].Children[1]), Clone(node.Children[1].Children[1]) },
                                     new RPN.Token("*", 2, RPN.Type.Operator));
                             node.Children[1].Children[1].Remove(multiply);
                             node.Children[0].Children[1].Remove(new RPN.Node(1));
@@ -996,18 +1001,18 @@ namespace AbMath.Calculator
                     }
                     else if (power.IsLessThanNumber(0))
                     {
-                        RPN.Node powerClone = new RPN.Node(new[] {new RPN.Node(-1), Clone(power)},
+                        RPN.Node powerClone = new RPN.Node(new[] { new RPN.Node(-1), Clone(power) },
                             new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node exponent = new RPN.Node(new[] {powerClone, Clone(baseNode)},
+                        RPN.Node exponent = new RPN.Node(new[] { powerClone, Clone(baseNode) },
                             new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] {exponent, new RPN.Node(1)},
+                        RPN.Node division = new RPN.Node(new[] { exponent, new RPN.Node(1) },
                             new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(power.Parent, division);
                         Write($"\tf(x)^-c -> 1/f(x)^c");
                     }
                     else if (power.IsNumber(0.5))
                     {
-                        RPN.Node sqrt = new RPN.Node(new[] {Clone(baseNode)},
+                        RPN.Node sqrt = new RPN.Node(new[] { Clone(baseNode) },
                             new RPN.Token("sqrt", 1, RPN.Type.Function));
                         Assign(power.Parent, sqrt);
                         Write("\tf(x)^0.5 -> sqrt( f(x) )");
@@ -1024,12 +1029,12 @@ namespace AbMath.Calculator
                         }
                         else
                         {
-                            multiply = new RPN.Node(new[] {Clone(power), Clone(baseNode.Children[0])},
+                            multiply = new RPN.Node(new[] { Clone(power), Clone(baseNode.Children[0]) },
                                 new RPN.Token("*", 2, RPN.Type.Operator));
                         }
 
                         RPN.Node func = Clone(baseNode.Children[1]);
-                        RPN.Node exponent = new RPN.Node(new[] {multiply, func},
+                        RPN.Node exponent = new RPN.Node(new[] { multiply, func },
                             new RPN.Token("^", 2, RPN.Type.Operator));
                         Assign(power.Parent, exponent);
                     }
@@ -1049,13 +1054,13 @@ namespace AbMath.Calculator
                         }
                         else if (node[0].IsNumber() && node[1].IsNumber())
                         {
-                            if ((int) (node[0].GetNumber() * node[1].GetNumber()) ==
+                            if ((int)(node[0].GetNumber() * node[1].GetNumber()) ==
                                 node[0].GetNumber() * node[1].GetNumber())
                             {
                                 Solve(node);
                             }
                         }
-                        
+
                     }
                     else if (node.IsExponent() && node[0].IsInteger() && node[1].IsInteger())
                     {
@@ -1070,7 +1075,7 @@ namespace AbMath.Calculator
                     return;
                 }
 
-                
+
                 SW.Stop();
                 _data.AddTimeRecord("AST.Simplify:Compute", SW);
 
@@ -1309,7 +1314,7 @@ namespace AbMath.Calculator
 
                                 Write("\tIP: f(x) * f(x) -> f(x) ^ 2");
 
-                                RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), node[i]},
+                                RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), node[i] },
                                     new RPN.Token("^", 2, RPN.Type.Operator));
                                 node.Replace(node[i], exponent);
                                 node.Replace(node[i - 1], new RPN.Node(1));
@@ -1413,7 +1418,7 @@ namespace AbMath.Calculator
                             node.Children[0]);
                     }
 
-                    RPN.Node temp = new RPN.Node( answer);
+                    RPN.Node temp = new RPN.Node(answer);
                     Assign(node, temp);
                 }
                 else if (node.IsFunction("table"))
@@ -1431,9 +1436,9 @@ namespace AbMath.Calculator
                         node.Children[2],
                         node.Children[1],
                         node.Children[0]);
-                    
+
                     stdout(table);
-                    SetRoot(new RPN.Node( double.NaN));
+                    SetRoot(new RPN.Node(double.NaN));
                 }
                 else if (node.IsFunction("derivative"))
                 {
@@ -1456,7 +1461,7 @@ namespace AbMath.Calculator
 
                         node.RemoveChild(node[0]);
 
-                        
+
                         for (int i = 0; i < count; i++)
                         {
                             GenerateDerivativeAndReplace(node.Children[1]);
@@ -1465,7 +1470,7 @@ namespace AbMath.Calculator
                         }
                         Assign(node, node.Children[1]);
                         node.Delete();
-                        
+
 
                     }
                 }
@@ -1486,9 +1491,9 @@ namespace AbMath.Calculator
                     RPN.Node temp = node[2];
                     node.RemoveChild(temp);
 
-                    Algebra(node, ref temp );
+                    Algebra(node, ref temp);
 
-                    temp.AddChild(new [] {node[0], node[1]});
+                    temp.AddChild(new[] { node[0], node[1] });
 
                     //This is done to fix a bug
                     if (!temp.IsOperator("="))
@@ -1525,11 +1530,11 @@ namespace AbMath.Calculator
             bool isSolveable = node.IsSolveable();
 
             //Functions that are not constants and/or meta functions 
-            if ( (node.IsFunction() && ! (node.IsConstant() || _data.MetaFunctions.Contains(node.Token.Value)) || node.IsOperator()) && isSolveable)
+            if ((node.IsFunction() && !(node.IsConstant() || _data.MetaFunctions.Contains(node.Token.Value)) || node.IsOperator()) && isSolveable)
             {
                 PostFix math = new PostFix(_rpn);
                 double answer = math.Compute(node.ToPostFix().ToArray());
-                Assign(node, new RPN.Node( answer));
+                Assign(node, new RPN.Node(answer));
                 //Since we solved something lower in the tree we may be now able 
                 //to solve something higher up in the tree!
                 Solve(node.Parent);
@@ -1560,7 +1565,7 @@ namespace AbMath.Calculator
             Simplify(Root);
             //Simplify(Root, SimplificationMode.Constants);
             Write("");
-            
+
             return this;
         }
 
@@ -1586,7 +1591,7 @@ namespace AbMath.Calculator
                     //Write($"Pushing {node.Children[i]} {stack.Count}");
                 }
 
-                
+
                 if (node.Token.Value != "derive")
                 {
                     //Write($"Skipping Node: {node.ToInfix()}");
@@ -1728,13 +1733,13 @@ namespace AbMath.Calculator
                             Write($"\td/dx[ f(x) * g(x) ] -> f(x) * d/dx[ g(x) ] + d/dx[ f(x) ] * g(x)");
                         }
 
-                        RPN.Node fDerivative = new RPN.Node(new[] {Clone(fNode)}, _derive);
-                        RPN.Node gDerivative = new RPN.Node(new[] {Clone(gNode)}, _derive);
+                        RPN.Node fDerivative = new RPN.Node(new[] { Clone(fNode) }, _derive);
+                        RPN.Node gDerivative = new RPN.Node(new[] { Clone(gNode) }, _derive);
 
-                        RPN.Node multiply1 = new RPN.Node(new[] {gDerivative, fNode}, multiply);
-                        RPN.Node multiply2 = new RPN.Node(new[] {fDerivative, gNode}, multiply);
+                        RPN.Node multiply1 = new RPN.Node(new[] { gDerivative, fNode }, multiply);
+                        RPN.Node multiply2 = new RPN.Node(new[] { fDerivative, gNode }, multiply);
 
-                        RPN.Node add = new RPN.Node(new[] {multiply1, multiply2},
+                        RPN.Node add = new RPN.Node(new[] { multiply1, multiply2 },
                             new RPN.Token("+", 2, RPN.Type.Operator));
 
                         //Remove myself from the tree
@@ -1753,16 +1758,16 @@ namespace AbMath.Calculator
                     RPN.Node numerator = node.Children[0].Children[1];
                     RPN.Node denominator = node.Children[0].Children[0];
 
-                    RPN.Node numeratorDerivative = new RPN.Node(new[] {Clone(numerator)}, _derive);
-                    RPN.Node denominatorDerivative = new RPN.Node(new[] {Clone(denominator)}, _derive);
+                    RPN.Node numeratorDerivative = new RPN.Node(new[] { Clone(numerator) }, _derive);
+                    RPN.Node denominatorDerivative = new RPN.Node(new[] { Clone(denominator) }, _derive);
 
-                    RPN.Node multiplicationOne = new RPN.Node(new[] {numeratorDerivative, denominator}, multiply);
-                    RPN.Node multiplicationTwo = new RPN.Node(new[] {denominatorDerivative, numerator}, multiply);
+                    RPN.Node multiplicationOne = new RPN.Node(new[] { numeratorDerivative, denominator }, multiply);
+                    RPN.Node multiplicationTwo = new RPN.Node(new[] { denominatorDerivative, numerator }, multiply);
 
-                    RPN.Node subtraction = new RPN.Node(new[] {multiplicationTwo, multiplicationOne},
+                    RPN.Node subtraction = new RPN.Node(new[] { multiplicationTwo, multiplicationOne },
                         new RPN.Token("-", 2, RPN.Type.Operator));
 
-                    RPN.Node denominatorSquared = new RPN.Node(new[] {new RPN.Node(2), Clone(denominator)},
+                    RPN.Node denominatorSquared = new RPN.Node(new[] { new RPN.Node(2), Clone(denominator) },
                         new RPN.Token("^", 2, RPN.Type.Operator));
 
                     if (debug)
@@ -1814,20 +1819,20 @@ namespace AbMath.Calculator
                             RPN.Node one = new RPN.Node(1);
 
                             //(n - 1)
-                            RPN.Node subtraction = new RPN.Node(new[] {one, powerClone},
+                            RPN.Node subtraction = new RPN.Node(new[] { one, powerClone },
                                 new RPN.Token("-", 2, RPN.Type.Operator));
 
                             //x^(n - 1) 
-                            exponent = new RPN.Node(new RPN.Node[] {subtraction, baseNode},
+                            exponent = new RPN.Node(new RPN.Node[] { subtraction, baseNode },
                                 new RPN.Token("^", 2, RPN.Type.Operator));
                         }
                         else
                         {
-                            exponent = new RPN.Node(new RPN.Node[] {new RPN.Node(powerClone.GetNumber() - 1), baseNode},
+                            exponent = new RPN.Node(new RPN.Node[] { new RPN.Node(powerClone.GetNumber() - 1), baseNode },
                                 new RPN.Token("^", 2, RPN.Type.Operator));
                         }
 
-                        RPN.Node multiplication = new RPN.Node(new[] {exponent, power},
+                        RPN.Node multiplication = new RPN.Node(new[] { exponent, power },
                             new RPN.Token("*", 2, RPN.Type.Operator));
 
                         node.Replace(node.Children[0], multiplication);
@@ -1848,7 +1853,7 @@ namespace AbMath.Calculator
                             Write("\td/dx[ f(x)^n ] -> n * f(x)^(n - 1) * d/dx[ f(x) ]");
                         }
 
-                        RPN.Node bodyDerive = new RPN.Node(new[] {Clone(baseNode)}, _derive);
+                        RPN.Node bodyDerive = new RPN.Node(new[] { Clone(baseNode) }, _derive);
 
                         RPN.Node powerClone = Clone(power);
 
@@ -1856,7 +1861,7 @@ namespace AbMath.Calculator
                         if (power.IsConstant())
                         {
                             RPN.Node one = new RPN.Node(1);
-                            subtraction = new RPN.Node(new[] {one, powerClone},
+                            subtraction = new RPN.Node(new[] { one, powerClone },
                                 new RPN.Token("-", 2, RPN.Type.Operator));
                         }
                         else
@@ -1865,11 +1870,11 @@ namespace AbMath.Calculator
                         }
 
                         //Replace n with (n - 1) 
-                        RPN.Node exponent = new RPN.Node(new RPN.Node[] {subtraction, baseNode},
+                        RPN.Node exponent = new RPN.Node(new RPN.Node[] { subtraction, baseNode },
                             new RPN.Token("^", 2, RPN.Type.Operator));
 
-                        RPN.Node temp = new RPN.Node(new[] {exponent, power}, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node multiply = new RPN.Node(new[] {bodyDerive, temp},
+                        RPN.Node temp = new RPN.Node(new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new RPN.Node(new[] { bodyDerive, temp },
                             new RPN.Token("*", 2, RPN.Type.Operator));
 
                         node.Replace(node.Children[0], multiply);
@@ -1891,8 +1896,8 @@ namespace AbMath.Calculator
                         }
 
                         RPN.Node exponent = baseNode.Parent;
-                        RPN.Node powerDerivative = new RPN.Node(new[] {Clone(power)}, _derive);
-                        RPN.Node multiply = new RPN.Node(new[] {powerDerivative, exponent},
+                        RPN.Node powerDerivative = new RPN.Node(new[] { Clone(power) }, _derive);
+                        RPN.Node multiply = new RPN.Node(new[] { powerDerivative, exponent },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         node.Replace(power.Parent, multiply);
                         //Delete self from the tree
@@ -1913,10 +1918,10 @@ namespace AbMath.Calculator
                         }
 
                         RPN.Node exponent = baseNode.Parent;
-                        RPN.Node ln = new RPN.Node(new[] {Clone(baseNode)}, new RPN.Token("ln", 1, RPN.Type.Function));
-                        RPN.Node powerDerivative = new RPN.Node(new[] {Clone(power)}, _derive);
-                        RPN.Node temp = new RPN.Node(new[] {exponent, ln}, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node multiply = new RPN.Node(new[] {temp, powerDerivative},
+                        RPN.Node ln = new RPN.Node(new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
+                        RPN.Node powerDerivative = new RPN.Node(new[] { Clone(power) }, _derive);
+                        RPN.Node temp = new RPN.Node(new[] { exponent, ln }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new RPN.Node(new[] { temp, powerDerivative },
                             new RPN.Token("*", 2, RPN.Type.Operator));
 
                         node.Replace(power.Parent, multiply);
@@ -1938,11 +1943,11 @@ namespace AbMath.Calculator
                         }
 
                         RPN.Node exponent = Clone(baseNode.Parent);
-                        RPN.Node ln = new RPN.Node(new[] {Clone(baseNode)}, new RPN.Token("ln", 1, RPN.Type.Function));
-                        RPN.Node temp = new RPN.Node(new[] {Clone(power), ln},
+                        RPN.Node ln = new RPN.Node(new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
+                        RPN.Node temp = new RPN.Node(new[] { Clone(power), ln },
                             new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node derive = new RPN.Node(new[] {temp}, _derive);
-                        RPN.Node multiply = new RPN.Node(new[] {exponent, derive},
+                        RPN.Node derive = new RPN.Node(new[] { temp }, _derive);
+                        RPN.Node multiply = new RPN.Node(new[] { exponent, derive },
                             new RPN.Token("*", 2, RPN.Type.Operator));
 
                         node.Replace(power.Parent, multiply);
@@ -1969,11 +1974,11 @@ namespace AbMath.Calculator
 
                     RPN.Node body = node.Children[0].Children[0];
 
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node cos = new RPN.Node(new[] {body}, new RPN.Token("cos", 1, RPN.Type.Function));
+                    RPN.Node cos = new RPN.Node(new[] { body }, new RPN.Token("cos", 1, RPN.Type.Function));
 
-                    RPN.Node multiply = new RPN.Node(new[] {cos, bodyDerive}, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node multiply = new RPN.Node(new[] { cos, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -1994,12 +1999,12 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node sin = new RPN.Node(new[] {body}, new RPN.Token("sin", 1, RPN.Type.Function));
-                    RPN.Node negativeOneMultiply = new RPN.Node(new[] {new RPN.Node(-1), sin},
+                    RPN.Node sin = new RPN.Node(new[] { body }, new RPN.Token("sin", 1, RPN.Type.Function));
+                    RPN.Node negativeOneMultiply = new RPN.Node(new[] { new RPN.Node(-1), sin },
                         new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node multiply = new RPN.Node(new[] {negativeOneMultiply, bodyDerive},
+                    RPN.Node multiply = new RPN.Node(new[] { negativeOneMultiply, bodyDerive },
                         new RPN.Token("*", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], multiply);
@@ -2021,13 +2026,13 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node sec = new RPN.Node(new[] {body}, new RPN.Token("sec", 1, RPN.Type.Function));
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), sec},
+                    RPN.Node sec = new RPN.Node(new[] { body }, new RPN.Token("sec", 1, RPN.Type.Function));
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), sec },
                         new RPN.Token("^", 2, RPN.Type.Operator));
 
-                    RPN.Node multiply = new RPN.Node(new[] {exponent, bodyDerive},
+                    RPN.Node multiply = new RPN.Node(new[] { exponent, bodyDerive },
                         new RPN.Token("*", 2, RPN.Type.Operator));
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -2050,12 +2055,12 @@ namespace AbMath.Calculator
                     RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
                     RPN.Node sec = node.Children[0];
-                    RPN.Node tan = new RPN.Node(new[] {Clone(body)}, new RPN.Token("tan", 1, RPN.Type.Function));
-                    RPN.Node temp = new RPN.Node(new[] {sec, tan}, multiplyToken);
-                    RPN.Node multiply = new RPN.Node(new[] {bodyDerive, temp}, multiplyToken);
+                    RPN.Node tan = new RPN.Node(new[] { Clone(body) }, new RPN.Token("tan", 1, RPN.Type.Function));
+                    RPN.Node temp = new RPN.Node(new[] { sec, tan }, multiplyToken);
+                    RPN.Node multiply = new RPN.Node(new[] { bodyDerive, temp }, multiplyToken);
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -2078,14 +2083,14 @@ namespace AbMath.Calculator
                     RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
                     RPN.Node csc = node.Children[0];
-                    RPN.Node cot = new RPN.Node(new[] {Clone(body)}, new RPN.Token("cot", 1, RPN.Type.Function));
+                    RPN.Node cot = new RPN.Node(new[] { Clone(body) }, new RPN.Token("cot", 1, RPN.Type.Function));
 
-                    RPN.Node temp = new RPN.Node(new[] {csc, cot}, multiplyToken);
-                    RPN.Node multiply = new RPN.Node(new[] {temp, bodyDerive}, multiplyToken);
+                    RPN.Node temp = new RPN.Node(new[] { csc, cot }, multiplyToken);
+                    RPN.Node multiply = new RPN.Node(new[] { temp, bodyDerive }, multiplyToken);
 
-                    node.Replace(node.Children[0], new RPN.Node(new[] {new RPN.Node(-1), multiply}, multiplyToken));
+                    node.Replace(node.Children[0], new RPN.Node(new[] { new RPN.Node(-1), multiply }, multiplyToken));
                     //Delete self from the tree
                     node.Remove();
                     //Chain Rule
@@ -2104,14 +2109,14 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
-                    RPN.Node csc = new RPN.Node(new[] {body}, new RPN.Token("csc", 1, RPN.Type.Function));
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), csc},
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
+                    RPN.Node csc = new RPN.Node(new[] { body }, new RPN.Token("csc", 1, RPN.Type.Function));
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), csc },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node temp = new RPN.Node(new[] {new RPN.Node(-1), exponent},
+                    RPN.Node temp = new RPN.Node(new[] { new RPN.Node(-1), exponent },
                         new RPN.Token("*", 2, RPN.Type.Operator));
                     RPN.Node multiply =
-                        new RPN.Node(new[] {bodyDerive, temp}, new RPN.Token("*", 2, RPN.Type.Operator));
+                        new RPN.Node(new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -2132,15 +2137,15 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = Clone(node.Children[0].Children[0]);
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node subtraction = new RPN.Node(new[] {exponent, new RPN.Node(1)},
+                    RPN.Node subtraction = new RPN.Node(new[] { exponent, new RPN.Node(1) },
                         new RPN.Token("-", 2, RPN.Type.Operator));
-                    RPN.Node sqrt = new RPN.Node(new[] {subtraction}, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node sqrt = new RPN.Node(new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
                     RPN.Node division =
-                        new RPN.Node(new[] {sqrt, bodyDerive}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        new RPN.Node(new[] { sqrt, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], division);
                     //Delete self from the tree
@@ -2161,17 +2166,17 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = Clone(node.Children[0].Children[0]);
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node subtraction = new RPN.Node(new[] {exponent, new RPN.Node(1)},
+                    RPN.Node subtraction = new RPN.Node(new[] { exponent, new RPN.Node(1) },
                         new RPN.Token("-", 2, RPN.Type.Operator));
-                    RPN.Node sqrt = new RPN.Node(new[] {subtraction}, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node sqrt = new RPN.Node(new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
                     RPN.Node division =
-                        new RPN.Node(new[] {sqrt, bodyDerive}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        new RPN.Node(new[] { sqrt, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
 
-                    RPN.Node multiplication = new RPN.Node(new[] {new RPN.Node(-1), division},
+                    RPN.Node multiplication = new RPN.Node(new[] { new RPN.Node(-1), division },
                         new RPN.Token("*", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], multiplication);
@@ -2193,13 +2198,13 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = Clone(node.Children[0].Children[0]);
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node add = new RPN.Node(new[] {new RPN.Node(1), exponent},
+                    RPN.Node add = new RPN.Node(new[] { new RPN.Node(1), exponent },
                         new RPN.Token("+", 2, RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node(new[] {add, bodyDerive}, new RPN.Token("/", 2, RPN.Type.Operator));
+                    RPN.Node division = new RPN.Node(new[] { add, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], division);
                     //Delete self from the tree
@@ -2220,15 +2225,15 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = Clone(node.Children[0].Children[0]);
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node add = new RPN.Node(new[] {new RPN.Node(1), exponent},
+                    RPN.Node add = new RPN.Node(new[] { new RPN.Node(1), exponent },
                         new RPN.Token("+", 2, RPN.Type.Operator));
-                    RPN.Node multiplication = new RPN.Node(new[] {new RPN.Node(-1), bodyDerive},
+                    RPN.Node multiplication = new RPN.Node(new[] { new RPN.Node(-1), bodyDerive },
                         new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node(new[] {add, multiplication},
+                    RPN.Node division = new RPN.Node(new[] { add, multiplication },
                         new RPN.Token("/", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], division);
@@ -2250,17 +2255,17 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = Clone(node.Children[0].Children[0]);
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node subtraction = new RPN.Node(new[] {new RPN.Node(1), exponent},
+                    RPN.Node subtraction = new RPN.Node(new[] { new RPN.Node(1), exponent },
                         new RPN.Token("-", 2, RPN.Type.Operator));
-                    RPN.Node sqrt = new RPN.Node(new[] {subtraction}, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node sqrt = new RPN.Node(new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
                     RPN.Node denominator =
-                        new RPN.Node(new[] {sqrt, Clone(body)}, new RPN.Token("*", 2, RPN.Type.Operator));
+                        new RPN.Node(new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
 
-                    RPN.Node division = new RPN.Node(new[] {denominator, bodyDerive},
+                    RPN.Node division = new RPN.Node(new[] { denominator, bodyDerive },
                         new RPN.Token("/", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], division);
@@ -2282,18 +2287,18 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = Clone(node.Children[0].Children[0]);
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node subtraction = new RPN.Node(new[] {new RPN.Node(1), exponent},
+                    RPN.Node subtraction = new RPN.Node(new[] { new RPN.Node(1), exponent },
                         new RPN.Token("-", 2, RPN.Type.Operator));
-                    RPN.Node sqrt = new RPN.Node(new[] {subtraction}, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node sqrt = new RPN.Node(new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
                     RPN.Node denominator =
-                        new RPN.Node(new[] {sqrt, Clone(body)}, new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node multiplication = new RPN.Node(new[] {new RPN.Node(-1), bodyDerive},
+                        new RPN.Node(new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node multiplication = new RPN.Node(new[] { new RPN.Node(-1), bodyDerive },
                         new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node(new[] {denominator, multiplication},
+                    RPN.Node division = new RPN.Node(new[] { denominator, multiplication },
                         new RPN.Token("/", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], division);
@@ -2318,7 +2323,7 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(.5), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(.5), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
                     node.Replace(node.Children[0], exponent);
                     stack.Push(node);
@@ -2336,9 +2341,9 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
                     RPN.Node division =
-                        new RPN.Node(new[] {body, bodyDerive}, new RPN.Token("/", 2, RPN.Type.Operator));
+                        new RPN.Node(new[] { body, bodyDerive }, new RPN.Token("/", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], division);
                     //Delete self from the tree
@@ -2364,10 +2369,10 @@ namespace AbMath.Calculator
                         Write("\td/dx[ log(b,g(x)) ] -> d/dx[ g(x) ]/(g(x) * ln(b))");
                     }
 
-                    RPN.Node bodyDerive = new RPN.Node(new[] {Clone(body)}, _derive);
-                    RPN.Node multiply = new RPN.Node(new[] {body, new RPN.Node(new[] {power}, ln)},
+                    RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
+                    RPN.Node multiply = new RPN.Node(new[] { body, new RPN.Node(new[] { power }, ln) },
                         new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node(new[] {multiply, bodyDerive},
+                    RPN.Node division = new RPN.Node(new[] { multiply, bodyDerive },
                         new RPN.Token("/", 2, RPN.Type.Operator));
 
                     node.Replace(node.Children[0], division);
@@ -2389,9 +2394,9 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node exponent = new RPN.Node(new[] {new RPN.Node(2), body},
+                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node sqrt = new RPN.Node(new[] {exponent}, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node sqrt = new RPN.Node(new[] { exponent }, new RPN.Token("sqrt", 1, RPN.Type.Function));
 
                     node.Replace(node.Children[0], sqrt);
                     stack.Push(node);
@@ -2436,7 +2441,7 @@ namespace AbMath.Calculator
                 {
                     Write("\tSolving for one Side.");
                     Solve(node[1]);
-                }   
+                }
 
                 //TODO: Quadratic Formula
 
@@ -2464,7 +2469,7 @@ namespace AbMath.Calculator
                         }
 
                         node[1].Replace(temp, new RPN.Node(0));
-                        RPN.Node subtraction = new RPN.Node(new [] {temp, node[0]}, new RPN.Token("-", 2, RPN.Type.Operator));
+                        RPN.Node subtraction = new RPN.Node(new[] { temp, node[0] }, new RPN.Token("-", 2, RPN.Type.Operator));
                         node.Replace(node[0], subtraction);
 
                         Simplify(node[1], SimplificationMode.Addition);
@@ -2506,12 +2511,12 @@ namespace AbMath.Calculator
                         {
                             temp = node[1, 1];
                             Write("\tcf(x) = g(x) -> f(x) = g(x)/c");
-;                       }
+                            ; }
 
                         if (temp != null)
                         {
                             node[1].Replace(temp, new RPN.Node(1));
-                            RPN.Node division = new RPN.Node(new [] {temp, node[0]}, new RPN.Token("/", 2, RPN.Type.Operator));
+                            RPN.Node division = new RPN.Node(new[] { temp, node[0] }, new RPN.Token("/", 2, RPN.Type.Operator));
                             node.Replace(node[0], division);
                         }
                     }
@@ -2523,7 +2528,7 @@ namespace AbMath.Calculator
                             RPN.Node temp = node[1, 0];
 
                             node[1].Replace(temp, new RPN.Node(1));
-                            RPN.Node multiplication = new RPN.Node(new [] {temp, node[0]}, new RPN.Token("*", 2, RPN.Type.Operator));
+                            RPN.Node multiplication = new RPN.Node(new[] { temp, node[0] }, new RPN.Token("*", 2, RPN.Type.Operator));
                             node.Replace(node[0], multiplication);
                             Simplify(node, SimplificationMode.Division);
                         }
@@ -2538,8 +2543,8 @@ namespace AbMath.Calculator
                 {
                     Write("\tf(x)^2 = g(x) -> abs(f(x)) = sqrt(g(x))");
 
-                    RPN.Node abs = new RPN.Node(new [] {node[1, 1]}, new RPN.Token("abs", 1, RPN.Type.Function));
-                    RPN.Node sqrt = new RPN.Node(new[] {node[0]}, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node abs = new RPN.Node(new[] { node[1, 1] }, new RPN.Token("abs", 1, RPN.Type.Function));
+                    RPN.Node sqrt = new RPN.Node(new[] { node[0] }, new RPN.Token("sqrt", 1, RPN.Type.Function));
 
                     node.Replace(node[1], abs);
                     node.Replace(node[0], sqrt);
@@ -2569,7 +2574,7 @@ namespace AbMath.Calculator
                     node.Children.Reverse();
                 }
                 else
-                { 
+                {
                     Assign(node, gen(add));
                 }
             }
@@ -2621,8 +2626,8 @@ namespace AbMath.Calculator
 
                 //Prep stage
                 Queue<RPN.Node> additions = new Queue<RPN.Node>(node.Children.Count);
-                additions.Enqueue(new RPN.Node(new [] {node[0], node[1]}, token));
-                for (int i = 2; i + 1< node.Children.Count; i += 2)
+                additions.Enqueue(new RPN.Node(new[] { node[0], node[1] }, token));
+                for (int i = 2; i + 1 < node.Children.Count; i += 2)
                 {
                     additions.Enqueue(new RPN.Node(new[] { node[i], node[i + 1] }, token));
                 }
@@ -2635,7 +2640,7 @@ namespace AbMath.Calculator
                 while (additions.Count > 1)
                 {
 
-                    RPN.Node[] temp = new[] {additions.Dequeue(), additions.Dequeue()};
+                    RPN.Node[] temp = new[] { additions.Dequeue(), additions.Dequeue() };
                     temp.Reverse();
                     additions.Enqueue(new RPN.Node(temp, token));
                 }
@@ -2757,7 +2762,7 @@ namespace AbMath.Calculator
 
         private void GenerateDerivativeAndReplace(RPN.Node child)
         {
-            RPN.Node temp = new RPN.Node( new[] { Clone( child ) }, _derive);
+            RPN.Node temp = new RPN.Node(new[] { Clone(child) }, _derive);
             temp.Parent = child.Parent;
 
             child.Parent?.Replace(child, temp);
@@ -2821,4 +2826,56 @@ namespace AbMath.Calculator
         public string Hash;
         public int count;
     }
+
+    public class OptimizerRuleSet
+    {
+        public static Dictionary<AST.SimplificationMode, List<Rule>> ruleSet { get; private set; }
+
+        public OptimizerRuleSet()
+        {
+            if (ruleSet == null)
+            {
+                ruleSet = new Dictionary<AST.SimplificationMode, List<Rule>>();
+            }
+        }
+
+        private bool RuleExists(AST.SimplificationMode mode, Rule rule)
+        {
+            //If the ruleset class does not contain a mode 
+            //it cannot by definiotn contain the rule! 
+            if (!ruleSet.ContainsKey(mode))
+            {
+                return false;
+            }
+
+            return ruleSet[mode].Contains(rule);
+        }
+
+        public void Add(AST.SimplificationMode mode, Rule rule)
+        {
+            //If the rule already exists we should not
+            //add it!
+            if (RuleExists(mode, rule))
+            {
+                return;
+            }
+
+            //When the key already exists we just add onto the existing list 
+            if (ruleSet.ContainsKey(mode))
+            {
+                List<Rule> rules = ruleSet[mode];
+                rules.Add(rule);
+                ruleSet[mode] = rules;
+                return;
+            }
+            //When the key does not exist we should create a list and add the rule onto it
+            ruleSet.Add(mode, new List<Rule> {rule});
+        }
+
+        public List<Rule> Get(AST.SimplificationMode mode)
+        {
+            return ruleSet[mode];
+        }
+    }
+
 }
