@@ -63,6 +63,36 @@ namespace AbMath.Calculator
                 set => _children[i]._children[j]._children[k] = value;
             }
 
+            public static Node Generate(RPN.Token[] input)
+            {
+                Stack<RPN.Node> stack = new Stack<RPN.Node>(5);
+
+                for (int i = 0; i < input.Length; i++)
+                {
+                    RPN.Node node = new RPN.Node(input[i]);
+                    if (node.IsOperator() || node.IsFunction())
+                    {
+                        //Due to the nature of PostFix we know that all children
+                        //of a function or operator have already been processed before this point
+                        //this ensures we do not have any overflows or exceptions.
+                        RPN.Node[] range = new RPN.Node[node.Token.Arguments];
+                        for (int j = 0; j < node.Token.Arguments; j++)
+                        {
+                            range[j] = stack.Pop();
+                        }
+                        node.AddChild(range);
+                    }
+                    stack.Push(node); //Push new tree into the stack 
+                }
+
+                return stack.Pop();
+            }
+
+            public Node Clone()
+            {
+                return Generate(this.ToPostFix().ToArray());
+            }
+
 
             /// <summary>
             /// Replaces in the tree the node with 

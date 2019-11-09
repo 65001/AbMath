@@ -85,36 +85,17 @@ namespace AbMath.Calculator
         {
             Stopwatch SW = new Stopwatch();
             SW.Start();
-
-            Stack<RPN.Node> stack = new Stack<RPN.Node>(5);
-
-            for (int i = 0; i < input.Length; i++)
-            {
-                RPN.Node node = new RPN.Node(input[i]);
-                if (node.IsOperator() || node.IsFunction())
-                {
-                    //Due to the nature of PostFix we know that all children
-                    //of a function or operator have already been processed before this point
-                    //this ensures we do not have any overflows or exceptions.
-                    RPN.Node[] range = new RPN.Node[node.Token.Arguments];
-                    for (int j = 0; j < node.Token.Arguments; j++)
-                    {
-                        range[j] = stack.Pop();
-                    }
-                    node.AddChild(range);
-                }
-                stack.Push(node); //Push new tree into the stack 
-            }
+            RPN.Node node = RPN.Node.Generate(input);
 
             //This prevents the reassignment of the root node
             if (Root is null)
             {
-                Root = stack.Peek();
+                Root = node;
             }
 
             SW.Stop();
             _rpn.Data.AddTimeRecord("AST Generate", SW);
-            return stack.Pop();
+            return node;
         }
 
         /// <summary>
@@ -2767,7 +2748,7 @@ namespace AbMath.Calculator
 
         private RPN.Node Clone(RPN.Node node)
         {
-            return Generate(node.ToPostFix().ToArray());
+            return node.Clone();
         }
 
         /// <summary>
