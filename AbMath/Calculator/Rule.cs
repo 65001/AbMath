@@ -31,11 +31,6 @@ namespace AbMath.Calculator
 
         public bool Execute(RPN.Node node)
         {
-            if (!CanRun.Invoke(node))
-            {
-                return false;
-            }
-            
             output?.Invoke(this, Name);
             Compute.Invoke(node);
             return true;

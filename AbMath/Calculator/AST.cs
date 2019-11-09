@@ -57,8 +57,23 @@ namespace AbMath.Calculator
 
             ruleManager = new OptimizerRuleSet();
             //Let us generate the rules here if not already creates 
-
+            generateRuleSet();
             RPN.Node.ResetCounter();
+        }
+
+        private void generateRuleSet()
+        {
+            generateSqrtSimplifications();
+        }
+
+        private void generateSqrtSimplifications()
+        {
+            Rule sqrt = new Rule(RPN.SqrtSimplifications.SqrtToFuncRunnable, RPN.SqrtSimplifications.SqrtToFunc, "sqrt(g(x))^2 - > g(x)", Logger);
+            Rule abs = new Rule(RPN.SqrtSimplifications.SqrtToAbsRunnable, RPN.SqrtSimplifications.SqrtToAbs, "sqrt(g(x)^2) -> abs(g(x))", Logger);
+            Rule sqrtPower = new Rule(RPN.SqrtSimplifications.SqrtPowerFourRunnable, RPN.SqrtSimplifications.SqrtPowerFour, "sqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2", Logger);
+            ruleManager.Add(SimplificationMode.Sqrt, sqrt);
+            ruleManager.Add(SimplificationMode.Sqrt, abs);
+            ruleManager.Add(SimplificationMode.Sqrt, sqrtPower);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -219,43 +234,10 @@ namespace AbMath.Calculator
 
                 if (mode == SimplificationMode.Sqrt)
                 {
-                    if (node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt())
+                    RPN.Node assignment = ruleManager.Execute(SimplificationMode.Sqrt, node);
+                    if (assignment != null)
                     {
-                        if (debug)
-                        {
-                            Write("\tsqrt(g(x))^2 -> g(x)");
-                        }
-
-                        Assign(node, node.Children[1].Children[0]);
-                    }
-                    else if (node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber(2))
-                    {
-                        if (debug)
-                        {
-                            Write("\tsqrt(g(x)^2) -> abs(g(x))");
-                        }
-
-                        RPN.Node abs = new RPN.Node(new[] { node.Children[0].Children[1] },
-                            new RPN.Token("abs", 1, RPN.Type.Function));
-                        Assign(node, abs);
-                    }
-                    else if (node.IsSqrt() && node.Children[0].IsExponent() &&
-                             node.Children[0].Children[0].IsNumber() &&
-                             node.Children[0].Children[0].GetNumber() % 4 == 0)
-                    {
-                        if (debug)
-                        {
-                            Write("\tsqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
-                        }
-
-                        RPN.Node exponent =
-                            new RPN.Node(
-                                new[]
-                                {
-                                    new RPN.Node(node.Children[0].Children[0].GetNumber() / 2),
-                                    node.Children[0].Children[1]
-                                }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        Assign(node, exponent);
+                        Assign(node, assignment); 
                     }
                 }
                 else if (mode == SimplificationMode.Log)
@@ -430,7 +412,7 @@ namespace AbMath.Calculator
                     else if (node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() &&
                              node[1, 0].IsInteger() && node[0, 1].Matches(node[1, 1]))
                     {
-                        int reduction = Math.Min((int)node[0, 0].GetNumber(), (int)node[1, 0].GetNumber()) - 1;
+                        int reduction = System.Math.Min((int)node[0, 0].GetNumber(), (int)node[1, 0].GetNumber()) - 1;
                         node[0, 0].Replace(node[0, 0].GetNumber() - reduction);
                         node[1, 0].Replace(node[1, 0].GetNumber() - reduction);
                         Write("\tPower Reduction");
@@ -586,7 +568,7 @@ namespace AbMath.Calculator
                     {
                         Write("\tAddition can be converted to subtraction");
                         node.Replace("-");
-                        node.Replace(node[0], new RPN.Node(Math.Abs(node[0].GetNumber())));
+                        node.Replace(node[0], new RPN.Node(System.Math.Abs(node[0].GetNumber())));
                     }
                     else if (node.Children[0].IsSubtraction() && node[1].Matches(node[0, 1]))
                     {
@@ -918,16 +900,16 @@ namespace AbMath.Calculator
                     {
                         Write("\tA negative times a negative is always positive.");
                         node.Replace(node.Children[0],
-                            new RPN.Node(Math.Abs(double.Parse(node.Children[0].Token.Value))));
+                            new RPN.Node(System.Math.Abs(double.Parse(node.Children[0].Token.Value))));
                         node.Replace(node.Children[1],
-                            new RPN.Node(Math.Abs(double.Parse(node.Children[1].Token.Value))));
+                            new RPN.Node(System.Math.Abs(double.Parse(node.Children[1].Token.Value))));
                     }
                     else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0) &&
                              node[1].IsLessThanNumber(0))
                     {
                         Write("\tComplex: A negative times a negative is always positive.");
-                        node.Replace(node[0, 1], new RPN.Node(Math.Abs(node[0, 1].GetNumber())));
-                        node.Replace(node[1], new RPN.Node(Math.Abs(node[1].GetNumber())));
+                        node.Replace(node[0, 1], new RPN.Node(System.Math.Abs(node[0, 1].GetNumber())));
+                        node.Replace(node[1], new RPN.Node(System.Math.Abs(node[1].GetNumber())));
                     }
                     else if (node[0].IsNumber(-1) && node[1].IsNumber())
                     {
@@ -2830,6 +2812,7 @@ namespace AbMath.Calculator
     public class OptimizerRuleSet
     {
         public static Dictionary<AST.SimplificationMode, List<Rule>> ruleSet { get; private set; }
+        private static HashSet<Rule> contains;
 
         public OptimizerRuleSet()
         {
@@ -2837,28 +2820,23 @@ namespace AbMath.Calculator
             {
                 ruleSet = new Dictionary<AST.SimplificationMode, List<Rule>>();
             }
-        }
 
-        private bool RuleExists(AST.SimplificationMode mode, Rule rule)
-        {
-            //If the ruleset class does not contain a mode 
-            //it cannot by definiotn contain the rule! 
-            if (!ruleSet.ContainsKey(mode))
+            if (contains == null)
             {
-                return false;
+                contains = new HashSet<Rule>();
             }
-
-            return ruleSet[mode].Contains(rule);
         }
 
         public void Add(AST.SimplificationMode mode, Rule rule)
         {
             //If the rule already exists we should not
             //add it!
-            if (RuleExists(mode, rule))
+            if (contains.Contains(rule))
             {
                 return;
             }
+
+            contains.Add(rule);
 
             //When the key already exists we just add onto the existing list 
             if (ruleSet.ContainsKey(mode))
@@ -2875,6 +2853,27 @@ namespace AbMath.Calculator
         public List<Rule> Get(AST.SimplificationMode mode)
         {
             return ruleSet[mode];
+        }
+
+        public RPN.Node Execute(AST.SimplificationMode mode, RPN.Node node)
+        {
+            if (!ruleSet.ContainsKey(mode))
+            {
+                throw new KeyNotFoundException("The optimization set was not found");
+            }
+
+            List<Rule> rules = ruleSet[mode];
+            int length = rules.Count;
+            for (int i = 0; i < length; i++)
+            {
+                Rule rule = rules[i];
+                if (rule.CanRun(node))
+                {
+                    return rule.Compute(node);
+                }
+            }
+
+            return null;
         }
     }
 
