@@ -78,7 +78,10 @@ namespace AbMath.Calculator
 
         private void GenerateLogSimplifications()
         {
-
+            Rule logOne = new Rule(RPN.LogSimplifications.LogOneRunnable,RPN.LogSimplifications.LogOne,"log(b,1) -> 0");
+            Rule logIdentical = new Rule(RPN.LogSimplifications.LogIdentitcalRunnable, RPN.LogSimplifications.LogIdentitcal, "log(b,b) -> 1");
+            ruleManager.Add(SimplificationMode.Log, logOne);
+            ruleManager.Add(SimplificationMode.Log, logIdentical);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -224,38 +227,22 @@ namespace AbMath.Calculator
                     continue;
                 }
 
-                if (mode == SimplificationMode.Sqrt)
+                if (ruleManager.ContainsSet(mode))
                 {
-                    RPN.Node assignment = ruleManager.Execute(SimplificationMode.Sqrt, node);
+                    RPN.Node assignment = ruleManager.Execute(mode, node);
                     if (assignment != null)
                     {
-                        Assign(node, assignment); 
+                        Assign(node, assignment);
                     }
                 }
-                else if (mode == SimplificationMode.Log)
+
+                if (mode == SimplificationMode.Log)
                 {
                     //TODO: e^ln(x) -> x
                     //TODO: ln(e) -> 1
                     RPN.Node temp = null;
-                    if (node.Token.IsLog() && node.Children[0].IsNumber(1))
-                    {
-                        if (debug)
-                        {
-                            Write("\tlog(b,1) -> 0");
-                        }
 
-                        temp = new RPN.Node(0);
-                    }
-                    else if (node.Token.IsLog() && node.ChildrenAreIdentical())
-                    {
-                        if (debug)
-                        {
-                            Write("\tlog(b,b) -> 1");
-                        }
-
-                        temp = new RPN.Node(1);
-                    }
-                    else if (node.IsExponent() && node.Children[0].IsLog() &&
+                    if (node.IsExponent() && node.Children[0].IsLog() &&
                              node.Children[0].Children[1].Matches(node.Children[1]))
                     {
                         if (debug)
@@ -2872,6 +2859,11 @@ namespace AbMath.Calculator
             }
 
             return null;
+        }
+
+        public bool ContainsSet(AST.SimplificationMode mode)
+        {
+            return ruleSet.ContainsKey(mode);
         }
 
         private void Write(string message)

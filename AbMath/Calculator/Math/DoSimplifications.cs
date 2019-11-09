@@ -40,5 +40,28 @@ namespace AbMath.Calculator
                 return new RPN.Node(new[] {new RPN.Node(node.Children[0].Children[0].GetNumber() / 2), node.Children[0].Children[1]}, new RPN.Token("^", 2, RPN.Type.Operator));
             }
         }
+
+        public static class LogSimplifications
+        {
+            public static bool LogOneRunnable(RPN.Node node)
+            {
+                return node.IsLog() && node.Children[0].IsNumber(1);
+            }
+
+            public static RPN.Node LogOne(RPN.Node node)
+            {
+                return new RPN.Node(0);
+            }
+
+            public static bool LogIdentitcalRunnable(RPN.Node node)
+            {
+                return node.IsLog() && node.ChildrenAreIdentical();
+            }
+
+            public static RPN.Node LogIdentitcal(RPN.Node node)
+            {
+                return new RPN.Node(1);
+            }
+        }
     }
 }
