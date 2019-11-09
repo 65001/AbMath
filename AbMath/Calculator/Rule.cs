@@ -14,26 +14,24 @@ namespace AbMath.Calculator
         public delegate bool isRunnable(RPN.Node node);
         public delegate RPN.Node Run(RPN.Node node);
 
-        public EventHandler<string> output { get; private set; }
-
         public isRunnable CanRun { get; private set; }
-        public Run Compute { get; private set; }
+
+        private Run Compute;
 
         public string Name { get; private set; }
 
-        public Rule(isRunnable isRunnable, Run run, string name, EventHandler<string> std)
+        public Rule(isRunnable isRunnable, Run run, string name)
         {
             CanRun = isRunnable;
             Compute = run;
             Name = name;
-            output = std;
         }
 
-        public bool Execute(RPN.Node node)
+        public RPN.Node Execute(RPN.Node node)
         {
-            output?.Invoke(this, Name);
-            Compute.Invoke(node);
-            return true;
+            //Thoughts: Maybe we could have a pre run and post run rules for this kind of thing and let 
+            //execute do that ? 
+            return Compute.Invoke(node);
         }
 
     }

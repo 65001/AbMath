@@ -54,26 +54,31 @@ namespace AbMath.Calculator
         {
             _rpn = rpn;
             _data = rpn.Data;
-
-            ruleManager = new OptimizerRuleSet();
-            //Let us generate the rules here if not already creates 
-            generateRuleSet();
             RPN.Node.ResetCounter();
         }
 
-        private void generateRuleSet()
+        /// <summary>
+        /// Generates the rule set for all simplifications
+        /// </summary>
+        private void GenerateRuleSetSimplifications()
         {
-            generateSqrtSimplifications();
+            GenerateSqrtSimplifications();
+            GenerateLogSimplifications();
         }
 
-        private void generateSqrtSimplifications()
+        private void GenerateSqrtSimplifications()
         {
-            Rule sqrt = new Rule(RPN.SqrtSimplifications.SqrtToFuncRunnable, RPN.SqrtSimplifications.SqrtToFunc, "sqrt(g(x))^2 - > g(x)", Logger);
-            Rule abs = new Rule(RPN.SqrtSimplifications.SqrtToAbsRunnable, RPN.SqrtSimplifications.SqrtToAbs, "sqrt(g(x)^2) -> abs(g(x))", Logger);
-            Rule sqrtPower = new Rule(RPN.SqrtSimplifications.SqrtPowerFourRunnable, RPN.SqrtSimplifications.SqrtPowerFour, "sqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2", Logger);
+            Rule sqrt = new Rule(RPN.SqrtSimplifications.SqrtToFuncRunnable, RPN.SqrtSimplifications.SqrtToFunc, "sqrt(g(x))^2 - > g(x)");
+            Rule abs = new Rule(RPN.SqrtSimplifications.SqrtToAbsRunnable, RPN.SqrtSimplifications.SqrtToAbs, "sqrt(g(x)^2) -> abs(g(x))");
+            Rule sqrtPower = new Rule(RPN.SqrtSimplifications.SqrtPowerFourRunnable, RPN.SqrtSimplifications.SqrtPowerFour, "sqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
             ruleManager.Add(SimplificationMode.Sqrt, sqrt);
             ruleManager.Add(SimplificationMode.Sqrt, abs);
             ruleManager.Add(SimplificationMode.Sqrt, sqrtPower);
+        }
+
+        private void GenerateLogSimplifications()
+        {
+
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -121,6 +126,12 @@ namespace AbMath.Calculator
             Normalize();
 
             Stopwatch sw = new Stopwatch();
+
+            ruleManager = new OptimizerRuleSet();
+            ruleManager.Logger += Logger;
+            //Let us generate the rules here if not already creates 
+            GenerateRuleSetSimplifications();
+
             sw.Start();
             int pass = 0;
             string hash = string.Empty;
@@ -242,6 +253,8 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Log)
                 {
+                    //TODO: e^ln(x) -> x
+                    //TODO: ln(e) -> 1
                     RPN.Node temp = null;
                     if (node.Token.IsLog() && node.Children[0].IsNumber(1))
                     {
@@ -2813,7 +2826,8 @@ namespace AbMath.Calculator
     {
         public static Dictionary<AST.SimplificationMode, List<Rule>> ruleSet { get; private set; }
         private static HashSet<Rule> contains;
-
+        public event EventHandler<string> Logger;
+        
         public OptimizerRuleSet()
         {
             if (ruleSet == null)
@@ -2825,6 +2839,8 @@ namespace AbMath.Calculator
             {
                 contains = new HashSet<Rule>();
             }
+
+            Write("Optimizer Rule Set initalized!");
         }
 
         public void Add(AST.SimplificationMode mode, Rule rule)
@@ -2869,11 +2885,17 @@ namespace AbMath.Calculator
                 Rule rule = rules[i];
                 if (rule.CanRun(node))
                 {
-                    return rule.Compute(node);
+                    Write($"\t{rule.Name}");
+                    return rule.Execute(node);
                 }
             }
 
             return null;
+        }
+
+        private void Write(string message)
+        {
+            Logger?.Invoke(this, message);
         }
     }
 
