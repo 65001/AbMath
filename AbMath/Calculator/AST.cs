@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
+using AbMath.Calculator.Simplifications;
 
 namespace AbMath.Calculator
 {
@@ -63,37 +64,37 @@ namespace AbMath.Calculator
         private void GenerateRuleSetSimplifications()
         {
             GenerateSqrtSimplifications();
-            GenerateLogSimplifications();
+            GenerateLog();
         }
 
         private void GenerateSqrtSimplifications()
         {
-            Rule sqrt = new Rule(RPN.SqrtSimplifications.SqrtToFuncRunnable, RPN.SqrtSimplifications.SqrtToFunc, "sqrt(g(x))^2 - > g(x)");
-            Rule abs = new Rule(RPN.SqrtSimplifications.SqrtToAbsRunnable, RPN.SqrtSimplifications.SqrtToAbs, "sqrt(g(x)^2) -> abs(g(x))");
-            Rule sqrtPower = new Rule(RPN.SqrtSimplifications.SqrtPowerFourRunnable, RPN.SqrtSimplifications.SqrtPowerFour, "sqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
+            Rule sqrt = new Rule(Sqrt.SqrtToFuncRunnable, Sqrt.SqrtToFunc, "sqrt(g(x))^2 - > g(x)");
+            Rule abs = new Rule(Sqrt.SqrtToAbsRunnable, Sqrt.SqrtToAbs, "sqrt(g(x)^2) -> abs(g(x))");
+            Rule sqrtPower = new Rule(Sqrt.SqrtPowerFourRunnable, Sqrt.SqrtPowerFour, "sqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
             ruleManager.Add(SimplificationMode.Sqrt, sqrt);
             ruleManager.Add(SimplificationMode.Sqrt, abs);
             ruleManager.Add(SimplificationMode.Sqrt, sqrtPower);
         }
 
-        private void GenerateLogSimplifications()
+        private void GenerateLog()
         {
-            Rule logToLn = new Rule(RPN.LogSimplifications.LogToLnRunnable, RPN.LogSimplifications.LogToLn, "log(e,f(x)) - > ln(f(x))");
+            Rule logToLn = new Rule(Log.LogToLnRunnable, Log.LogToLn, "log(e,f(x)) - > ln(f(x))");
             
             //This rule only can be a preprocessor rule and therefore should not be added to the rule manager!
-            Rule LnToLog = new Rule(RPN.LogSimplifications.LnToLogRunnable, RPN.LogSimplifications.LnToLog, "ln(f(x)) -> log(e,f(x))");
+            Rule LnToLog = new Rule(Log.LnToLogRunnable, Log.LnToLog, "ln(f(x)) -> log(e,f(x))");
 
             //These are candidates for preprocessing and post processing:
-            Rule logOne = new Rule(RPN.LogSimplifications.LogOneRunnable,RPN.LogSimplifications.LogOne,"log(b,1) -> 0");
-            Rule logIdentical = new Rule(RPN.LogSimplifications.LogIdentitcalRunnable, RPN.LogSimplifications.LogIdentitcal, "log(b,b) -> 1");
+            Rule logOne = new Rule(Log.LogOneRunnable,Log.LogOne,"log(b,1) -> 0");
+            Rule logIdentical = new Rule(Log.LogIdentitcalRunnable, Log.LogIdentitcal, "log(b,b) -> 1");
 
-            Rule logPower = new Rule(RPN.LogSimplifications.LogPowerRunnable, RPN.LogSimplifications.LogPower, "b^log(b,x) -> x");
-            Rule logPowerExpansion = new Rule(RPN.LogSimplifications.LogExponentExpansionRunnable, RPN.LogSimplifications.LogExponentExpansion, "log(b,R^c) -> c * log(b,R)");
-            Rule logSummation = new Rule(RPN.LogSimplifications.LogSummationRunnable, RPN.LogSimplifications.LogSummation, "log(b,R) + log(b,S) -> log(b,R*S)");
-            Rule logSubtraction = new Rule(RPN.LogSimplifications.LogSubtractionRunnable, RPN.LogSimplifications.LogSubtraction, "log(b,R) - log(b,S) -> log(b,R/S)");
+            Rule logPower = new Rule(Log.LogPowerRunnable, Log.LogPower, "b^log(b,x) -> x");
+            Rule logPowerExpansion = new Rule(Log.LogExponentExpansionRunnable, Log.LogExponentExpansion, "log(b,R^c) -> c * log(b,R)");
+            Rule logSummation = new Rule(Log.LogSummationRunnable, Log.LogSummation, "log(b,R) + log(b,S) -> log(b,R*S)");
+            Rule logSubtraction = new Rule(Log.LogSubtractionRunnable, Log.LogSubtraction, "log(b,R) - log(b,S) -> log(b,R/S)");
 
-            Rule lnSummation = new Rule(RPN.LogSimplifications.LnSummationRunnable, RPN.LogSimplifications.LnSummation, "ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
-            Rule lnSubtraction = new Rule(RPN.LogSimplifications.LnSubtractionRunnable, RPN.LogSimplifications.LnSubtraction, "ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
+            Rule lnSummation = new Rule(Log.LnSummationRunnable, Log.LnSummation, "ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
+            Rule lnSubtraction = new Rule(Log.LnSubtractionRunnable, Log.LnSubtraction, "ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
 
             ruleManager.Add(SimplificationMode.Log, logOne);
             ruleManager.Add(SimplificationMode.Log, logIdentical);
