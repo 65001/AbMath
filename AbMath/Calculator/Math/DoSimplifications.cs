@@ -109,6 +109,40 @@ namespace AbMath.Calculator
                 RPN.Node log = new Node(new RPN.Node[] { e ,node[0] }, new Token("log", 2, Type.Function));
                 return log;
             }
+
+            public static bool LogSummationRunnable(RPN.Node node)
+            {
+                return node.IsAddition() && node.Children[0].IsLog() &&
+                       node.Children[1].IsLog() &&
+                       node.Children[0].Children[1].Matches(node.Children[1].Children[1]);
+            }
+
+            public static RPN.Node LogSummation(RPN.Node node)
+            {
+                RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
+                    new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node baseNode = node.Children[0].Children[1];
+                RPN.Node log = new RPN.Node(new[] { parameter, baseNode },
+                    new RPN.Token("log", 2, RPN.Type.Function));
+                return log;
+            }
+
+            public static bool LogSubtractionRunnable(RPN.Node node)
+            {
+                return node.IsSubtraction() && node.Children[0].IsLog() &&
+                       node.Children[1].IsLog() &&
+                       node.Children[0].Children[1].Matches(node.Children[1].Children[1]);
+            }
+
+            public static RPN.Node LogSubtraction(RPN.Node node)
+            {
+                RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
+                    new RPN.Token("/", 2, RPN.Type.Operator));
+                RPN.Node baseNode = node.Children[0].Children[1];
+                RPN.Node log = new RPN.Node(new[] { parameter, baseNode },
+                    new RPN.Token("log", 2, RPN.Type.Function));
+                return log;
+            }
         }
     }
 }

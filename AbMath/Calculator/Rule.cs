@@ -42,18 +42,10 @@ namespace AbMath.Calculator
 
         public RPN.Node Execute(RPN.Node node)
         {
-            //Pre Rule execution 
-            if (preRule != null)
+            RPN.Node assignment = PreOrPostprocess(preRule, node);
+            if (assignment != null)
             {
-                //if we the pre rule confirms it is applicable run it!
-                if (preRule.CanRun.Invoke(node))
-                {
-                    RPN.Node assignment = preRule.Execute(node);
-                    if (assignment != null)
-                    {
-                        node = assignment;
-                    }
-                }
+                node = assignment;
             }
 
             node = Compute.Invoke(node);
@@ -63,21 +55,28 @@ namespace AbMath.Calculator
                 return null;
             }
 
-            //Post Rule Execution 
-            if (postRule != null)
+            assignment = PreOrPostprocess(postRule, node);
+            if (assignment != null)
             {
-                if (postRule.CanRun.Invoke(node))
-                {
-                    RPN.Node assignment = postRule.Execute(node);
-                    if (assignment != null)
-                    {
-                        node = assignment;
-                    }
-                }
+                node = assignment;
             }
 
             return node;
 
+        }
+
+        private RPN.Node PreOrPostprocess(Rule rule, RPN.Node node)
+        {
+            if (rule != null)
+            {
+                //if we the pre rule confirms it is applicable run it!
+                if (rule.CanExecute(node))
+                {
+                     return rule.Execute(node);
+                }
+            }
+
+            return null;
         }
 
         public bool CanExecute(RPN.Node node)

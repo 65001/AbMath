@@ -89,10 +89,15 @@ namespace AbMath.Calculator
             Rule logPower = new Rule(RPN.LogSimplifications.LogPowerRunnable, RPN.LogSimplifications.LogPower, "b^log(b,x) -> x");
             Rule logPowerExpansion = new Rule(RPN.LogSimplifications.LogExponentExpansionRunnable, RPN.LogSimplifications.LogExponentExpansion, "log(b,R^c) -> c * log(b,R)");
 
+            Rule logSummation = new Rule(RPN.LogSimplifications.LogSummationRunnable, RPN.LogSimplifications.LogSummation, "log(b,R) + log(b,S) -> log(b,R*S)");
+            Rule logSubtraction = new Rule(RPN.LogSimplifications.LogSubtractionRunnable, RPN.LogSimplifications.LogSubtraction, "log(b,R) - log(b,S) -> log(b,R/S)");
+
             ruleManager.Add(SimplificationMode.Log, logOne);
             ruleManager.Add(SimplificationMode.Log, logIdentical);
             ruleManager.Add(SimplificationMode.Log, logPower);
             ruleManager.Add(SimplificationMode.Log, logPowerExpansion);
+            ruleManager.Add(SimplificationMode.Log, logSummation);
+            ruleManager.Add(SimplificationMode.Log, logSubtraction);
 
             ruleManager.Add(SimplificationMode.Log, logToLn);
         }
@@ -271,29 +276,6 @@ namespace AbMath.Calculator
                             new RPN.Token("ln", 1, RPN.Type.Function));
                         RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
                         temp = multiply;
-                    }
-                    else if ((node.IsAddition() || node.IsSubtraction()) && node.Children[0].IsLog() &&
-                             node.Children[1].IsLog() &&
-                             node.Children[0].Children[1].Matches(node.Children[1].Children[1]))
-                    {
-                        RPN.Node parameter;
-                        if (node.IsAddition())
-                        {
-                            Write("\tlog(b,R) + log(b,S) -> log(b,R*S)");
-                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                                new RPN.Token("*", 2, RPN.Type.Operator));
-                        }
-                        else
-                        {
-                            Write("\tlog(b,R) - log(b,S) -> log(b,R/S)");
-                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                                new RPN.Token("/", 2, RPN.Type.Operator));
-                        }
-
-                        RPN.Node baseNode = node.Children[0].Children[1];
-                        RPN.Node log = new RPN.Node(new[] { parameter, baseNode },
-                            new RPN.Token("log", 2, RPN.Type.Function));
-                        temp = log;
                     }
                     else if ((node.IsAddition() || node.IsSubtraction()) && node.Children[0].IsLn() &&
                              node.Children[1].IsLn())
