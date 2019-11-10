@@ -78,10 +78,23 @@ namespace AbMath.Calculator
 
         private void GenerateLogSimplifications()
         {
+            Rule logToLn = new Rule(RPN.LogSimplifications.LogToLnRunnable, RPN.LogSimplifications.LogToLn, "log(e,f(x)) - > ln(f(x))");
+            
+            //This rule only can be a preprocessor rule!
+            Rule LnToLog = new Rule(RPN.LogSimplifications.LnToLogRunnable, RPN.LogSimplifications.LnToLog, "ln(f(x)) -> log(e,f(x))");
+
             Rule logOne = new Rule(RPN.LogSimplifications.LogOneRunnable,RPN.LogSimplifications.LogOne,"log(b,1) -> 0");
             Rule logIdentical = new Rule(RPN.LogSimplifications.LogIdentitcalRunnable, RPN.LogSimplifications.LogIdentitcal, "log(b,b) -> 1");
+
+            Rule logPower = new Rule(RPN.LogSimplifications.LogPowerRunnable, RPN.LogSimplifications.LogPower, "b^log(b,x) -> x");
+            Rule logPowerExpansion = new Rule(RPN.LogSimplifications.LogExponentExpansionRunnable, RPN.LogSimplifications.LogExponentExpansion, "log(b,R^c) -> c * log(b,R)");
+
             ruleManager.Add(SimplificationMode.Log, logOne);
             ruleManager.Add(SimplificationMode.Log, logIdentical);
+            ruleManager.Add(SimplificationMode.Log, logPower);
+            ruleManager.Add(SimplificationMode.Log, logPowerExpansion);
+
+            ruleManager.Add(SimplificationMode.Log, logToLn);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -227,6 +240,7 @@ namespace AbMath.Calculator
                     continue;
                 }
 
+                //This is the rule manager execution code
                 if (ruleManager.ContainsSet(mode))
                 {
                     RPN.Node assignment = ruleManager.Execute(mode, node);
@@ -238,38 +252,12 @@ namespace AbMath.Calculator
 
                 if (mode == SimplificationMode.Log)
                 {
+                    //TODO: For SimplificationMode.Log: 
                     //TODO: e^ln(x) -> x
                     //TODO: ln(e) -> 1
                     RPN.Node temp = null;
 
-                    if (node.IsExponent() && node.Children[0].IsLog() &&
-                             node.Children[0].Children[1].Matches(node.Children[1]))
-                    {
-                        if (debug)
-                        {
-                            Write($"\tb^log(b,x) -> x");
-                        }
-
-                        temp = node.Children[0].Children[0];
-                    }
-                    else if (node.IsLog() && node.Children[0].IsExponent() &&
-                             !node.Children[0].Children[1].IsVariable())
-                    {
-                        if (debug)
-                        {
-                            Write("\tlog(b,R^c) -> c * log(b,R)");
-                        }
-
-                        RPN.Node exponent = node.Children[0];
-                        RPN.Node baseNode = exponent.Children[1];
-                        RPN.Node power = exponent.Children[0];
-
-                        RPN.Node log = new RPN.Node(new[] { Clone(baseNode), node.Children[1] },
-                            new RPN.Token("log", 2, RPN.Type.Function));
-                        RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        temp = multiply;
-                    }
-                    else if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
+                    if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
                     {
                         if (debug)
                         {
@@ -2807,8 +2795,6 @@ namespace AbMath.Calculator
             {
                 contains = new HashSet<Rule>();
             }
-
-            Write("Optimizer Rule Set initalized!");
         }
 
         public void Add(AST.SimplificationMode mode, Rule rule)
@@ -2839,6 +2825,14 @@ namespace AbMath.Calculator
             return ruleSet[mode];
         }
 
+        /// <summary>
+        /// This executes any possible simplification in the appropriate
+        /// set.
+        /// </summary>
+        /// <param name="mode">The set to look in</param>
+        /// <param name="node">The node to apply over</param>
+        /// <returns>A new node that is the result of the application of the rule or null
+        /// when no rule could be run</returns>
         public RPN.Node Execute(AST.SimplificationMode mode, RPN.Node node)
         {
             if (!ruleSet.ContainsKey(mode))
@@ -2851,7 +2845,7 @@ namespace AbMath.Calculator
             for (int i = 0; i < length; i++)
             {
                 Rule rule = rules[i];
-                if (rule.CanRun(node))
+                if (rule.CanExecute(node))
                 {
                     Write($"\t{rule.Name}");
                     return rule.Execute(node);

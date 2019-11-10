@@ -62,6 +62,53 @@ namespace AbMath.Calculator
             {
                 return new RPN.Node(1);
             }
+
+            public static bool LogPowerRunnable(RPN.Node node)
+            {
+                return node.IsExponent() && node.Children[0].IsLog() && node.Children[0].Children[1].Matches(node.Children[1]);
+            }
+
+            public static RPN.Node LogPower(RPN.Node node)
+            {
+                return node.Children[0].Children[0];
+            }
+
+            public static bool LogExponentExpansionRunnable(RPN.Node node)
+            {
+                return node.IsLog() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable();
+            }
+
+            public static RPN.Node LogExponentExpansion(RPN.Node node)
+            {
+                RPN.Node exponent = node.Children[0];
+                RPN.Node baseNode = exponent.Children[1];
+                RPN.Node power = exponent.Children[0];
+
+                RPN.Node log = new RPN.Node(new[] { baseNode.Clone(), node.Children[1] }, new RPN.Token("log", 2, RPN.Type.Function));
+                return new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+            }
+
+            public static bool LogToLnRunnable(RPN.Node node)
+            {
+                return node.IsLog() && node[1].IsConstant("e");
+            }
+
+            public static RPN.Node LogToLn(RPN.Node node)
+            {
+                return new Node(new RPN.Node[] { node[0] }, new Token("ln", 1, Type.Function));
+            }
+
+            public static bool LnToLogRunnable(RPN.Node node)
+            {
+                return node.IsLn();
+            }
+
+            public static RPN.Node LnToLog(RPN.Node node)
+            {
+                RPN.Node e = new Node(new Token("e", 0 , Type.Function));
+                RPN.Node log = new Node(new RPN.Node[] { e ,node[0] }, new Token("log", 2, Type.Function));
+                return log;
+            }
         }
     }
 }
