@@ -11,6 +11,8 @@ namespace AbMath.Calculator
     /// </summary>
     public class Rule
     {
+        public event EventHandler<string> Logger;
+
         public delegate bool isRunnable(RPN.Node node);
         public delegate RPN.Node Run(RPN.Node node);
 
@@ -72,7 +74,8 @@ namespace AbMath.Calculator
                 //if we the pre rule confirms it is applicable run it!
                 if (rule.CanExecute(node))
                 {
-                     return rule.Execute(node);
+                     Write($"\t{rule.Name}");
+                     return rule.Execute(node.Clone());
                 }
             }
 
@@ -87,6 +90,11 @@ namespace AbMath.Calculator
             }
 
             return CanRun.Invoke(node);
+        }
+
+        private void Write(string message)
+        {
+            Logger?.Invoke(this, message);
         }
 
     }

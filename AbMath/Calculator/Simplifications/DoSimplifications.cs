@@ -105,8 +105,8 @@ namespace AbMath.Calculator
 
             public static RPN.Node LnToLog(RPN.Node node)
             {
-                RPN.Node e = new Node(new Token("e", 0 , Type.Function));
-                RPN.Node log = new Node(new RPN.Node[] { e ,node[0] }, new Token("log", 2, Type.Function));
+                RPN.Node e = new Node(new Token("e", 0, Type.Function));
+                RPN.Node log = new Node(new RPN.Node[] { node[0], e }, new Token("log", 2, Type.Function));
                 return log;
             }
 
@@ -143,6 +143,35 @@ namespace AbMath.Calculator
                     new RPN.Token("log", 2, RPN.Type.Function));
                 return log;
             }
+
+            public static bool LnSummationRunnable(RPN.Node node)
+            {
+                return node.IsAddition() && node.Children[0].IsLn() && node.Children[1].IsLn();
+            }
+
+            public static RPN.Node LnSummation(RPN.Node node)
+            {
+                RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
+                    new RPN.Token("*", 2, RPN.Type.Operator));
+                RPN.Node ln = new RPN.Node(new[] { parameter },
+                    new RPN.Token("ln", 1, RPN.Type.Function));
+                return ln;
+            }
+
+            public static bool LnSubtractionRunnable(RPN.Node node)
+            {
+                return node.IsSubtraction() && node.Children[0].IsLn() && node.Children[1].IsLn();
+            }
+
+            public static RPN.Node LnSubtraction(RPN.Node node)
+            {
+                RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
+                    new RPN.Token("/", 2, RPN.Type.Operator));
+                RPN.Node ln = new RPN.Node(new[] { parameter },
+                    new RPN.Token("ln", 1, RPN.Type.Function));
+                return ln;
+            }
         }
+
     }
 }

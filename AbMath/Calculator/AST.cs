@@ -80,24 +80,30 @@ namespace AbMath.Calculator
         {
             Rule logToLn = new Rule(RPN.LogSimplifications.LogToLnRunnable, RPN.LogSimplifications.LogToLn, "log(e,f(x)) - > ln(f(x))");
             
-            //This rule only can be a preprocessor rule!
+            //This rule only can be a preprocessor rule and therefore should not be added to the rule manager!
             Rule LnToLog = new Rule(RPN.LogSimplifications.LnToLogRunnable, RPN.LogSimplifications.LnToLog, "ln(f(x)) -> log(e,f(x))");
 
+            //These are candidates for preprocessing and post processing:
             Rule logOne = new Rule(RPN.LogSimplifications.LogOneRunnable,RPN.LogSimplifications.LogOne,"log(b,1) -> 0");
             Rule logIdentical = new Rule(RPN.LogSimplifications.LogIdentitcalRunnable, RPN.LogSimplifications.LogIdentitcal, "log(b,b) -> 1");
 
             Rule logPower = new Rule(RPN.LogSimplifications.LogPowerRunnable, RPN.LogSimplifications.LogPower, "b^log(b,x) -> x");
             Rule logPowerExpansion = new Rule(RPN.LogSimplifications.LogExponentExpansionRunnable, RPN.LogSimplifications.LogExponentExpansion, "log(b,R^c) -> c * log(b,R)");
-
             Rule logSummation = new Rule(RPN.LogSimplifications.LogSummationRunnable, RPN.LogSimplifications.LogSummation, "log(b,R) + log(b,S) -> log(b,R*S)");
             Rule logSubtraction = new Rule(RPN.LogSimplifications.LogSubtractionRunnable, RPN.LogSimplifications.LogSubtraction, "log(b,R) - log(b,S) -> log(b,R/S)");
+
+            Rule lnSummation = new Rule(RPN.LogSimplifications.LnSummationRunnable, RPN.LogSimplifications.LnSummation, "ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
+            Rule lnSubtraction = new Rule(RPN.LogSimplifications.LnSubtractionRunnable, RPN.LogSimplifications.LnSubtraction, "ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
 
             ruleManager.Add(SimplificationMode.Log, logOne);
             ruleManager.Add(SimplificationMode.Log, logIdentical);
             ruleManager.Add(SimplificationMode.Log, logPower);
             ruleManager.Add(SimplificationMode.Log, logPowerExpansion);
+
             ruleManager.Add(SimplificationMode.Log, logSummation);
             ruleManager.Add(SimplificationMode.Log, logSubtraction);
+            ruleManager.Add(SimplificationMode.Log, lnSummation);
+            ruleManager.Add(SimplificationMode.Log, lnSubtraction);
 
             ruleManager.Add(SimplificationMode.Log, logToLn);
         }
@@ -276,26 +282,6 @@ namespace AbMath.Calculator
                             new RPN.Token("ln", 1, RPN.Type.Function));
                         RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
                         temp = multiply;
-                    }
-                    else if ((node.IsAddition() || node.IsSubtraction()) && node.Children[0].IsLn() &&
-                             node.Children[1].IsLn())
-                    {
-                        RPN.Node parameter;
-                        if (node.IsAddition())
-                        {
-                            Write("\tln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
-                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                                new RPN.Token("*", 2, RPN.Type.Operator));
-                        }
-                        else
-                        {
-                            Write("\tln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
-                            parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                                new RPN.Token("/", 2, RPN.Type.Operator));
-                        }
-
-                        RPN.Node ln = new RPN.Node(new[] { parameter }, new RPN.Token("ln", 1, RPN.Type.Function));
-                        temp = ln;
                     }
 
                     if (temp != null)
@@ -2789,6 +2775,7 @@ namespace AbMath.Calculator
             }
 
             contains.Add(rule);
+            rule.Logger += Write;
 
             //When the key already exists we just add onto the existing list 
             if (ruleSet.ContainsKey(mode))
@@ -2824,6 +2811,7 @@ namespace AbMath.Calculator
 
             List<Rule> rules = ruleSet[mode];
             int length = rules.Count;
+
             for (int i = 0; i < length; i++)
             {
                 Rule rule = rules[i];
@@ -2840,6 +2828,11 @@ namespace AbMath.Calculator
         public bool ContainsSet(AST.SimplificationMode mode)
         {
             return ruleSet.ContainsKey(mode);
+        }
+
+        private void Write(object obj, string message)
+        {
+            Write(message);
         }
 
         private void Write(string message)
