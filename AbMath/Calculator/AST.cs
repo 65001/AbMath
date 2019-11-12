@@ -87,14 +87,25 @@ namespace AbMath.Calculator
             //These are candidates for preprocessing and post processing:
             Rule logOne = new Rule(Log.LogOneRunnable,Log.LogOne,"log(b,1) -> 0");
             Rule logIdentical = new Rule(Log.LogIdentitcalRunnable, Log.LogIdentitcal, "log(b,b) -> 1");
+            Rule logPowerExpansion = new Rule(Log.LogExponentExpansionRunnable, Log.LogExponentExpansion, "log(b,R^c) -> c * log(b,R)");
+
+            logOne.AddPreProcessingRule(LnToLog).AddPostProcessingRule(logToLn);
+            logIdentical.AddPreProcessingRule(LnToLog).AddPostProcessingRule(logToLn);
+            logPowerExpansion.AddPreProcessingRule(LnToLog).AddPostProcessingRule(logToLn);
 
             Rule logPower = new Rule(Log.LogPowerRunnable, Log.LogPower, "b^log(b,x) -> x");
-            Rule logPowerExpansion = new Rule(Log.LogExponentExpansionRunnable, Log.LogExponentExpansion, "log(b,R^c) -> c * log(b,R)");
             Rule logSummation = new Rule(Log.LogSummationRunnable, Log.LogSummation, "log(b,R) + log(b,S) -> log(b,R*S)");
             Rule logSubtraction = new Rule(Log.LogSubtractionRunnable, Log.LogSubtraction, "log(b,R) - log(b,S) -> log(b,R/S)");
 
+            //TODO: lnPower e^ln(x) -> x
+            //TODO: log(b,R^c)
+            //TODO: e^ln(x) -> x
+            //TODO: ln(e) -> 1
+            //TODO: ln(R^c) -> log(e,R^c) -> c * ln(R)
+
             Rule lnSummation = new Rule(Log.LnSummationRunnable, Log.LnSummation, "ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
             Rule lnSubtraction = new Rule(Log.LnSubtractionRunnable, Log.LnSubtraction, "ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
+            Rule lnPowerExpansion = new Rule(Log.LnPowerRuleRunnable, Log.LnPowerRule, "ln(R^c) -> c*ln(R)");
 
             ruleManager.Add(SimplificationMode.Log, logOne);
             ruleManager.Add(SimplificationMode.Log, logIdentical);
@@ -105,6 +116,8 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Log, logSubtraction);
             ruleManager.Add(SimplificationMode.Log, lnSummation);
             ruleManager.Add(SimplificationMode.Log, lnSubtraction);
+
+            ruleManager.Add(SimplificationMode.Log, lnPowerExpansion);
 
             ruleManager.Add(SimplificationMode.Log, logToLn);
         }
@@ -262,35 +275,7 @@ namespace AbMath.Calculator
                     }
                 }
 
-                if (mode == SimplificationMode.Log)
-                {
-                    //TODO: For SimplificationMode.Log: 
-                    //TODO: e^ln(x) -> x
-                    //TODO: ln(e) -> 1
-                    RPN.Node temp = null;
-
-                    if (node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable())
-                    {
-                        if (debug)
-                        {
-                            Write("\tln(R^c) -> log(e,R^c) -> c * ln(R)");
-                        }
-
-                        RPN.Node exponent = node.Children[0];
-                        RPN.Node power = exponent.Children[0];
-
-                        RPN.Node log = new RPN.Node(new[] { exponent.Children[1] },
-                            new RPN.Token("ln", 1, RPN.Type.Function));
-                        RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        temp = multiply;
-                    }
-
-                    if (temp != null)
-                    {
-                        Assign(node, temp);
-                    }
-                }
-                else if (mode == SimplificationMode.Imaginary && node.IsSqrt())
+                if (mode == SimplificationMode.Imaginary && node.IsSqrt())
                 {
                     //Any sqrt function with a negative number -> Imaginary number to the root node
                     //An imaginary number propagates anyways
@@ -2818,7 +2803,6 @@ namespace AbMath.Calculator
                 Rule rule = rules[i];
                 if (rule.CanExecute(node))
                 {
-                    Write($"\t{rule.Name}");
                     return rule.Execute(node);
                 }
             }

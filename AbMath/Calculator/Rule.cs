@@ -32,14 +32,30 @@ namespace AbMath.Calculator
             Name = name;
         }
 
-        public void AddPreProcessingRule(Rule rule)
+        /// <summary>
+        /// Adds a pre processing rule.
+        /// The rule is optional and does not have to be run
+        /// for the main rule to be run. 
+        /// </summary>
+        /// <param name="rule"></param>
+        /// <returns></returns>
+        public Rule AddPreProcessingRule(Rule rule)
         {
             preRule = rule;
+            return this;
         }
 
-        public void AddPostProcessingRule(Rule rule)
+        /// <summary>
+        /// Adds a post processing rule.
+        /// The rule is optional and does not have to be run
+        /// for the main rule to be run. 
+        /// </summary>
+        /// <param name="rule"></param>
+        /// <returns></returns>
+        public Rule AddPostProcessingRule(Rule rule)
         {
             postRule = rule;
+            return this;
         }
 
         public RPN.Node Execute(RPN.Node node)
@@ -50,6 +66,7 @@ namespace AbMath.Calculator
                 node = assignment;
             }
 
+            Write($"\t{Name}");
             node = Compute.Invoke(node);
 
             if (node == null)

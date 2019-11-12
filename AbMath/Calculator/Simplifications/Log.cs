@@ -70,7 +70,7 @@ namespace AbMath.Calculator.Simplifications
         public static RPN.Node LnToLog(RPN.Node node)
         {
             RPN.Node e = new RPN.Node(new RPN.Token("e", 0, RPN.Type.Function));
-            RPN.Node log = new RPN.Node(new RPN.Node[] { node[0], e }, new RPN.Token("log", 2, RPN.Type.Function));
+            RPN.Node log = new RPN.Node(new RPN.Node[] { node[0].Clone(), e }, new RPN.Token("log", 2, RPN.Type.Function));
             return log;
         }
 
@@ -135,5 +135,21 @@ namespace AbMath.Calculator.Simplifications
                 new RPN.Token("ln", 1, RPN.Type.Function));
             return ln;
         }
+
+        public static bool LnPowerRuleRunnable(RPN.Node node)
+        {
+            return node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable();
+        }
+
+        public static RPN.Node LnPowerRule(RPN.Node node)
+        {
+            RPN.Node exponent = node.Children[0];
+            RPN.Node power = exponent.Children[0];
+
+            RPN.Node log = new RPN.Node(new[] { exponent.Children[1] },
+                new RPN.Token("ln", 1, RPN.Type.Function));
+            RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+            return multiply;
+        } 
     }
 }

@@ -5,6 +5,7 @@ using NUnit.Framework;
 namespace AbMath.Tests
 {
     [TestFixture]
+    [Parallelizable]
     public class AST
     {
         [Test]
@@ -69,8 +70,8 @@ namespace AbMath.Tests
         [Test]
         public void LnAddOrSub()
         {
-            RPN rpn = new RPN("ln(2) + ln(1/2)").Compute();
-            Assert.AreEqual("1 ln", rpn.Polish.Print());
+            RPN rpn = new RPN("ln(2) + ln(1/3)").Compute();
+            Assert.AreEqual("2 3 / ln", rpn.Polish.Print());
 
             rpn.SetEquation("ln(2) - ln(3)").Compute();
             Assert.AreEqual("2 3 / ln", rpn.Polish.Print());
