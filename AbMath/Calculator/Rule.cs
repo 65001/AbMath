@@ -69,11 +69,6 @@ namespace AbMath.Calculator
             Write($"\t{Name}");
             node = Compute.Invoke(node);
 
-            if (node == null)
-            {
-                return null;
-            }
-
             assignment = PreOrPostprocess(postRule, node);
             if (assignment != null)
             {

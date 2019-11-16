@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using AbMath.Calculator.Simplifications;
 
 namespace AbMath.Calculator
@@ -64,7 +65,8 @@ namespace AbMath.Calculator
         private void GenerateRuleSetSimplifications()
         {
             GenerateSqrtSimplifications();
-            GenerateLog();
+            GenerateLogSimplifications();
+            GenerateSubtractionSimplifications();
         }
 
         private void GenerateSqrtSimplifications()
@@ -77,7 +79,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Sqrt, sqrtPower);
         }
 
-        private void GenerateLog()
+        private void GenerateLogSimplifications()
         {
             Rule logToLn = new Rule(Log.LogToLnRunnable, Log.LogToLn, "log(e,f(x)) - > ln(f(x))");
             
@@ -120,6 +122,21 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Log, lnPowerExpansion);
 
             ruleManager.Add(SimplificationMode.Log, logToLn);
+        }
+
+        private void GenerateSubtractionSimplifications()
+        {
+            Rule setRule = new Rule(Subtraction.setRule, null, "Subtraction Set Rule");
+            ruleManager.AddSetRule(SimplificationMode.Subtraction, setRule);
+
+            Rule sameFunction = new Rule(Subtraction.SameFunctionRunnable, Subtraction.SameFunction, "f(x) - f(x) -> 0");
+            Rule coefficientOneReduction = new Rule(Subtraction.CoefficientOneReductionRunnable, Subtraction.CoefficientOneReduction, "cf(x) - f(x) -> (c - 1)f(x)");
+            Rule subtractionByZero = new Rule(Subtraction.SubtractionByZeroRunnable, Subtraction.SubtractionByZero, "f(x) - 0 -> f(x)");
+
+            ruleManager.Add(SimplificationMode.Subtraction, sameFunction);
+            ruleManager.Add(SimplificationMode.Subtraction, coefficientOneReduction);
+            ruleManager.Add(SimplificationMode.Subtraction, subtractionByZero);
+
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -268,10 +285,15 @@ namespace AbMath.Calculator
                 //This is the rule manager execution code
                 if (ruleManager.ContainsSet(mode))
                 {
-                    RPN.Node assignment = ruleManager.Execute(mode, node);
-                    if (assignment != null)
+                    bool canRunTestSuite = (!ruleManager.HasSetRule(mode) || ruleManager.GetSetRule(mode).CanExecute(node));
+
+                    if (canRunTestSuite)
                     {
-                        Assign(node, assignment);
+                        RPN.Node assignment = ruleManager.Execute(mode, node);
+                        if (assignment != null)
+                        {
+                            Assign(node, assignment);
+                        }
                     }
                 }
 
@@ -356,14 +378,8 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
                 {
-                    //3sin(x) - 3sin(x)
-                    if (node.ChildrenAreIdentical() && !node.containsDomainViolation())
-                    {
-                        Write("\tSimplification: Subtraction");
-                        Assign(node, new RPN.Node(0));
-                    }
                     //3sin(x) - 2sin(x)
-                    else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
+                    if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
                     {
                         if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() &&
                             node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
@@ -375,23 +391,8 @@ namespace AbMath.Calculator
                             node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
                         }
                     }
-                    //3sin(x) - sin(x)
-                    else if (node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() &&
-                             node.Children[1].Children[0].Matches(node.Children[0]))
-                    {
-                        Write("\tSimplification: Subtraction: Dual Node: Sub one.");
-                        node.Replace(node.Children[0], new RPN.Node(0));
-                        node.Children[1].Replace(node.Children[1].Children[1],
-                            new RPN.Node(node.Children[1].Children[1].GetNumber() - 1));
-                    }
-                    //3sin(x) - 0
-                    else if (node.Children[0].IsNumber(0))
-                    {
-                        //Root case
-                        Assign(node, node.Children[1]);
-                        Write("\tSubtraction by zero.");
-                    }
                     //0 - 3sin(x)
+                    
                     else if (node.Children[1].IsNumber(0))
                     {
                         RPN.Node multiply = new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] },
@@ -400,6 +401,7 @@ namespace AbMath.Calculator
                         Write($"\tSubtraction by zero. Case 2.");
                         Assign(node, multiply);
                     }
+                    
                     else if (node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]))
                     {
                         Write("\tf(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
@@ -409,17 +411,14 @@ namespace AbMath.Calculator
                             new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(node, division);
                     }
-                    else if (node[0].IsMultiplication() && node[0, 1].IsNumber(-1))
-                    {
-                        //(cos(x)^2)-(-1*(sin(x)^2)) 
-                        Write("\tf(x) - (-1 * g(x)) -> f(x) + g(x)");
-                        node[0, 1].Replace(1);
-                        node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
-                    }
-                    //TODO: ((-2*(cos(x)^2))+(2*(sin(x)^2)))
                     else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0))
                     {
-                        //f(x) - (-c * g(x)) -> f(x) + c *g(x)
+                        //(cos(x)^2)-(-1*(sin(x)^2)) 
+                        //(cos(x)^2)-(-2*(sin(x)^2)) 
+                        //((-2*(cos(x)^2))+(2*(sin(x)^2)))
+                        Write("\tf(x) - (-c * g(x)) -> f(x) + c *g(x)");
+                        node[0, 1].Replace(  node[0,1].GetNumber() * -1);
+                        node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
                     }
                     else if (node[0].IsNumber() && node[0].IsLessThanNumber(0))
                     {
@@ -983,7 +982,6 @@ namespace AbMath.Calculator
 
                 SW.Stop();
                 _data.AddTimeRecord("AST.Simplify:Compute", SW);
-
                 SW.Restart();
                 //Propagate down the tree
                 for (int i = (node.Children.Count - 1); i >= 0; i--)
@@ -2735,6 +2733,8 @@ namespace AbMath.Calculator
     public class OptimizerRuleSet
     {
         public static Dictionary<AST.SimplificationMode, List<Rule>> ruleSet { get; private set; }
+        public static Dictionary<AST.SimplificationMode, Rule> setRule { get; private set; }
+
         private static HashSet<Rule> contains;
         public event EventHandler<string> Logger;
         
@@ -2748,6 +2748,11 @@ namespace AbMath.Calculator
             if (contains == null)
             {
                 contains = new HashSet<Rule>();
+            }
+
+            if (setRule == null)
+            {
+                setRule = new Dictionary<AST.SimplificationMode, Rule>();
             }
         }
 
@@ -2775,9 +2780,22 @@ namespace AbMath.Calculator
             ruleSet.Add(mode, new List<Rule> {rule});
         }
 
+        public void AddSetRule(AST.SimplificationMode mode, Rule rule)
+        {
+            if (!this.HasSetRule(mode))
+            {
+                setRule.Add(mode, rule);
+            }
+        }
+
         public List<Rule> Get(AST.SimplificationMode mode)
         {
             return ruleSet[mode];
+        }
+
+        public Rule GetSetRule(AST.SimplificationMode mode)
+        {
+            return setRule[mode];
         }
 
         /// <summary>
@@ -2815,6 +2833,11 @@ namespace AbMath.Calculator
             return ruleSet.ContainsKey(mode);
         }
 
+        public bool HasSetRule(AST.SimplificationMode mode)
+        {
+            return setRule.ContainsKey(mode);
+        }
+
         private void Write(object obj, string message)
         {
             Write(message);
@@ -2823,6 +2846,23 @@ namespace AbMath.Calculator
         private void Write(string message)
         {
             Logger?.Invoke(this, message);
+        }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach(var KV in ruleSet)
+            {
+                sb.Append($"{KV.Key} has {KV.Value.Count} rules");
+                if (setRule.ContainsKey(KV.Key))
+                {
+                    sb.Append(" and has a set rule");
+                }
+
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
         }
     }
 
