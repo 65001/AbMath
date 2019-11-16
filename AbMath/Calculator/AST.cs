@@ -133,10 +133,14 @@ namespace AbMath.Calculator
             Rule coefficientOneReduction = new Rule(Subtraction.CoefficientOneReductionRunnable, Subtraction.CoefficientOneReduction, "cf(x) - f(x) -> (c - 1)f(x)");
             Rule subtractionByZero = new Rule(Subtraction.SubtractionByZeroRunnable, Subtraction.SubtractionByZero, "f(x) - 0 -> f(x)");
 
+            Rule subtractionDivisionCommmonDenominator = new Rule(Subtraction.SubtractionDivisionCommonDenominatorRunnable,
+                Subtraction.SubtractionDivisionCommonDenominator, "f(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
+
             ruleManager.Add(SimplificationMode.Subtraction, sameFunction);
             ruleManager.Add(SimplificationMode.Subtraction, coefficientOneReduction);
             ruleManager.Add(SimplificationMode.Subtraction, subtractionByZero);
 
+            ruleManager.Add(SimplificationMode.Subtraction, subtractionDivisionCommmonDenominator);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -400,16 +404,6 @@ namespace AbMath.Calculator
 
                         Write($"\tSubtraction by zero. Case 2.");
                         Assign(node, multiply);
-                    }
-                    
-                    else if (node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]))
-                    {
-                        Write("\tf(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
-                        RPN.Node subtraction = new RPN.Node(new[] { node[0, 1], node[1, 1] },
-                            new RPN.Token("-", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] { node[0, 0], subtraction },
-                            new RPN.Token("/", 2, RPN.Type.Operator));
-                        Assign(node, division);
                     }
                     else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0))
                     {

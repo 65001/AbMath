@@ -111,7 +111,7 @@ namespace AbMath.Tests
         public void Ln()
         {
             RPN test = new RPN("derivative(ln(x^2),x)").Compute();
-            Assert.AreEqual("2 x * x 2 ^ /", test.Polish.Print());
+            Assert.AreEqual("2 x /", test.Polish.Print());
         }
 
         [Test]

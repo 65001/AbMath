@@ -138,7 +138,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool LnPowerRuleRunnable(RPN.Node node)
         {
-            return node.IsLn() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable();
+            return node.IsLn() && node[0].IsExponent() && !node[0,0].IsVariable();
         }
 
         public static RPN.Node LnPowerRule(RPN.Node node)

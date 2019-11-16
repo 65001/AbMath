@@ -293,5 +293,12 @@ namespace AbMath.Tests
             rpn.SetEquation("cos(x^3)/(sin(x^3) * x^2)").Compute();
             Assert.AreEqual("x 3 ^ cot x 2 ^ /", rpn.Polish.Print());
         }
+
+        [Test]
+        public void LnPowerRule()
+        {
+            RPN rpn = new RPN("ln(x^2)").Compute();
+            Assert.AreEqual("2 x ln *", rpn.Polish.Print());
+        }
     }
 }
