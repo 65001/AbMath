@@ -679,6 +679,16 @@ namespace AbMath.Calculator
             {
                 counter = 0;
             }
+
+            public override bool Equals(Object obj)
+            {
+                if (obj == null || this.GetType() != obj.GetType())
+                {
+                    return false;
+                }
+
+                return this.GetHash() == ((Node) (obj)).GetHash();
+            }
         }
     }
 }

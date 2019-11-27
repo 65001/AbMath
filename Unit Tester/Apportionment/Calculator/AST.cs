@@ -18,7 +18,7 @@ namespace AbMath.Tests
         public void ComplexIncreaseExponent()
         {
             RPN rpn = new RPN("(x(x + 1))(x(x + 1))(x(x + 1))").Compute();
-            Assert.AreEqual("x 1 + x * 3 ^", rpn.Polish.Print());
+            Assert.AreEqual("x 1 + 3 ^ x 3 ^ *", rpn.Polish.Print());
         }
 
         [Test]

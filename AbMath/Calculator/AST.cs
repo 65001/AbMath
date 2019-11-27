@@ -410,8 +410,7 @@ namespace AbMath.Calculator
                         node[0, 1].Replace(  node[0,1].GetNumber() * -1);
                         node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
                     }
-
-                    //TODO: f(x)/g(x) - i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) - i(x)g(x)/g(x)j(x) -> [f(x)j(x) - g(x)i(x)]/[g(x)j(x)]
+                    //TODO: f(x)/g(x) /pm i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) /p, i(x)g(x)/g(x)j(x) -> [f(x)j(x) /pm g(x)i(x)]/[g(x)j(x)]
                 }
                 else if (mode == SimplificationMode.Addition && node.IsAddition())
                 {
@@ -879,6 +878,12 @@ namespace AbMath.Calculator
                         node.Replace(1);
                         node.Children.Clear();
                     }
+                    else if (baseNode.IsNumber(0) && power.IsGreaterThanNumber(0))
+                    {
+                        Write("\t0^c where c > 0 -> 0");
+                        node.Replace(0);
+                        node.Children.Clear();
+                    }
                     else if (baseNode.IsNumber(1))
                     {
                         Write("\t1^(fx) -> 1");
@@ -1178,6 +1183,47 @@ namespace AbMath.Calculator
                 {
                     node.Children.Reverse();
                     string hash = string.Empty;
+                    //Simplification
+                    Dictionary<string, List<RPN.Node>> hashDictionary = new Dictionary<string, List<RPN.Node>>();
+                    hashDictionary.Clear();
+
+                    //This tracks everything
+                    for (int i = 0; i < node.Children.Count; i++)
+                    {
+                        hash = node.Children[i].GetHash();
+                        if (!hashDictionary.ContainsKey(hash))
+                        {
+                            List<RPN.Node> temp = new List<RPN.Node>();
+                            temp.Add(node.Children[i]);
+                            hashDictionary.Add(hash, temp);
+                        }
+                        else
+                        {
+                            hashDictionary[hash].Add(node.Children[i]);
+                        }
+                    }
+
+                    //This simplifies everything
+                    foreach (var kv in hashDictionary)
+                    {
+                        if (kv.Value.Count > 1)
+                        {
+                            Write("\t" + kv.Key + " with a count of " + kv.Value.Count + " and infix of " + kv.Value[0].ToInfix());
+
+                            RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(kv.Value.Count), kv.Value[0] },
+                                new RPN.Token("^", 2, RPN.Type.Operator));
+
+                            foreach (var nv in kv.Value)
+                            {
+                                Write($"\t\t Replacing {nv.ID} with 1");
+                                node.Replace(nv, new RPN.Node(1));
+                            }
+
+                            node.AddChild(exponent);
+                        }
+                    }
+
+
                     while (node.GetHash() != hash)
                     {
                         hash = node.GetHash();
@@ -1193,16 +1239,6 @@ namespace AbMath.Calculator
                             {
                                 node.Children.Swap(i - 1, i);
                                 Write("\tNumbers and constants take way.");
-                            }
-                            else if (node[i - 1].Matches(node.Children[i]))
-                            {
-
-                                Write("\tIP: f(x) * f(x) -> f(x) ^ 2");
-
-                                RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), node[i] },
-                                    new RPN.Token("^", 2, RPN.Type.Operator));
-                                node.Replace(node[i], exponent);
-                                node.Replace(node[i - 1], new RPN.Node(1));
                             }
                             //Sort functions alphabetically
                             else if (node[i - 1].IsFunction() && node[i].IsFunction() && !node[i - 1].IsConstant() &&
@@ -1233,6 +1269,9 @@ namespace AbMath.Calculator
                             //TODO: Exponents and other expressions right of way
                         }
                     }
+
+
+
                     Write(node.Print());
                 }
             }

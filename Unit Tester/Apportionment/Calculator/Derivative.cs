@@ -104,7 +104,8 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative( abs(x^2), x)").Compute();
             //Assert.AreEqual("0.5 x 2 ^ * 2 2 ^ x * * x 2 ^ /", test.Polish.Print());
-            Assert.AreEqual("2 2 ^ 0.5 x 3 ^ * * x 2 ^ /", test.Polish.Print());
+
+            Assert.AreEqual("0.5 2 2 ^ * x 2 ^ x * * x 2 ^ /", test.Polish.Print());
         }
 
         [Test]
