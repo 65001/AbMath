@@ -148,10 +148,13 @@ namespace AbMath.Calculator
         private void GenerateDivisionSimplifications()
         {
             Rule setRule = new Rule(Division.setRule, null, "Division Set Rule");
+
             Rule divisionByOne = new Rule(Division.DivisionByOneRunnable, Division.DivisionByOne, "f(x)/1 -> f(x)");
+            Rule gcd = new Rule(Division.GCDRunnable, Division.GCD, "(cC)/(cX) -> C/X");
 
             ruleManager.AddSetRule(SimplificationMode.Division, setRule);
             ruleManager.Add(SimplificationMode.Division, divisionByOne);
+            ruleManager.Add(SimplificationMode.Division, gcd);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -332,26 +335,6 @@ namespace AbMath.Calculator
                     {
                         SetRoot(new RPN.Node(double.NaN));
                         Write("\tDivision by zero -> Root");
-                    }
-                    /*
-                    else 
-                    if (node.Children[0].IsNumber(1))
-                    {
-                        Write("\tDivision by one");
-                        Assign(node, node.Children[1]);
-                    }
-                    */
-                    //gcd if the leafs are both numbers since the values of the leafs themselves are changed
-                    //we don't have to worry about if the node is the root or not
-                    else if (node.Children[0].IsInteger() && node.Children[1].IsInteger())
-                    {
-                        double num1 = node.Children[0].GetNumber();
-                        double num2 = node.Children[1].GetNumber();
-                        double gcd = RPN.DoFunctions.Gcd(new double[] { num1, num2 });
-
-                        node.Replace(node.Children[0], new RPN.Node((num1 / gcd)));
-                        node.Replace(node.Children[1], new RPN.Node((num2 / gcd)));
-                        Write("\tDivision GCD.");
                     }
                     else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
                     {
