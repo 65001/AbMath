@@ -70,5 +70,20 @@ namespace AbMath.Calculator.Simplifications
                 new RPN.Token("/", 2, RPN.Type.Operator));
             return division;
         }
+
+        public static bool CoefficientReductionRunnable(RPN.Node node)
+        {
+            return (node[0].IsMultiplication() && node[1].IsMultiplication()) &&
+                   node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() &&
+                   node.Children[0].Children[0].Matches(node.Children[1].Children[0]);
+        }
+
+        public static RPN.Node CoefficientReduction(RPN.Node node)
+        {
+            double coefficient = node.Children[1].Children[1].GetNumber() - node.Children[0].Children[1].GetNumber();
+            node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
+            node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
+            return node;
+        }
     }
 }

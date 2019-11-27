@@ -137,12 +137,14 @@ namespace AbMath.Calculator
             Rule ZeroSubtractedFunction = new Rule(Subtraction.ZeroSubtractedByFunctionRunnable, Subtraction.ZeroSubtractedByFunction,"0 - f(x) -> -f(x)");
             Rule subtractionDivisionCommmonDenominator = new Rule(Subtraction.SubtractionDivisionCommonDenominatorRunnable,
                 Subtraction.SubtractionDivisionCommonDenominator, "f(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
+            Rule coefficientReduction = new Rule(Subtraction.CoefficientReductionRunnable, Subtraction.CoefficientReduction, "Cf(x) - cf(x) -> (C - c)f(x)");
 
             ruleManager.Add(SimplificationMode.Subtraction, sameFunction);
             ruleManager.Add(SimplificationMode.Subtraction, coefficientOneReduction);
             ruleManager.Add(SimplificationMode.Subtraction, subtractionByZero);
             ruleManager.Add(SimplificationMode.Subtraction, ZeroSubtractedFunction);
             ruleManager.Add(SimplificationMode.Subtraction, subtractionDivisionCommmonDenominator);
+            ruleManager.Add(SimplificationMode.Subtraction, coefficientReduction);
         }
 
         private void GenerateDivisionSimplifications()
@@ -381,7 +383,7 @@ namespace AbMath.Calculator
                 {
 
                     //0 - 3sin(x)
-                    if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[1].IsNumber(0))
+                    if (node[1].IsNumber(0))
                     {
                         /*
                         RPN.Node multiply = new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] },
@@ -391,6 +393,14 @@ namespace AbMath.Calculator
                         Assign(node, multiply);
                         */
                     }
+                    else if (node[0].IsNumber() && node[0].IsLessThanNumber(0))
+                    {
+                        Write("\tf(x) - (-c) -> f(x) + c");
+                        RPN.Node multiplication = new RPN.Node(new[] { Clone(node[0]), new RPN.Node(-1) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node addition = new RPN.Node(new[] { multiplication, node[1] }, new RPN.Token("+", 2, RPN.Type.Operator));
+                        Assign(node, addition);
+                        Simplify(multiplication, SimplificationMode.Multiplication);
+                    }
                     else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0))
                     {
                         //(cos(x)^2)-(-1*(sin(x)^2)) 
@@ -399,27 +409,6 @@ namespace AbMath.Calculator
                         Write("\tf(x) - (-c * g(x)) -> f(x) + c *g(x)");
                         node[0, 1].Replace(  node[0,1].GetNumber() * -1);
                         node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
-                    }
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsNumber() && node[0].IsLessThanNumber(0))
-                    {
-                        Write("\tf(x) - (-c) -> f(x) + c");
-                        RPN.Node multiplication = new RPN.Node(new[] { Clone(node[0]), new RPN.Node(-1) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node addition = new RPN.Node(new[] { multiplication, node[1] }, new RPN.Token("+", 2, RPN.Type.Operator));
-                        Assign(node, addition);
-                        Simplify(multiplication, SimplificationMode.Multiplication);
-                    }
-                    //3sin(x) - 2sin(x)
-                    else if (node[0].IsMultiplication() && node[1].IsMultiplication())
-                    {
-                        if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() &&
-                            node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
-                        {
-                            Write("\tCf(x) - cf(x) -> (C - c)f(x)");
-                            double coefficient = node.Children[1].Children[1].GetNumber() -
-                                                 node.Children[0].Children[1].GetNumber();
-                            node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
-                            node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
-                        }
                     }
 
                     //TODO: f(x)/g(x) - i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) - i(x)g(x)/g(x)j(x) -> [f(x)j(x) - g(x)i(x)]/[g(x)j(x)]

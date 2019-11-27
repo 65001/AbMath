@@ -36,5 +36,23 @@ namespace AbMath.Calculator.Simplifications
             node.Replace(node.Children[1], new RPN.Node((num2 / gcd)));
             return node;
         }
+
+        public static bool DivisionFlipRunnable(RPN.Node node)
+        {
+            return node.Children[0].IsDivision() && node.Children[1].IsDivision();
+        }
+
+        public static RPN.Node DivisionFlip(RPN.Node node)
+        {
+            RPN.Node[] numerator = { node.Children[0].Children[1], node.Children[1].Children[1] };
+            RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
+
+            RPN.Node top = new RPN.Node(new[] { denominator[0], numerator[1] },
+                new RPN.Token("*", 2, RPN.Type.Operator));
+            RPN.Node bottom = new RPN.Node(new[] { denominator[1], numerator[0] },
+                new RPN.Token("*", 2, RPN.Type.Operator));
+            RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
+            return division;
+        }
     }
 }
