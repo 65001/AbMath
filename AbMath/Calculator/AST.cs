@@ -67,6 +67,8 @@ namespace AbMath.Calculator
             GenerateSqrtSimplifications();
             GenerateLogSimplifications();
             GenerateSubtractionSimplifications();
+            GenerateDivisionSimplifications();
+
         }
 
         private void GenerateSqrtSimplifications()
@@ -132,15 +134,24 @@ namespace AbMath.Calculator
             Rule sameFunction = new Rule(Subtraction.SameFunctionRunnable, Subtraction.SameFunction, "f(x) - f(x) -> 0");
             Rule coefficientOneReduction = new Rule(Subtraction.CoefficientOneReductionRunnable, Subtraction.CoefficientOneReduction, "cf(x) - f(x) -> (c - 1)f(x)");
             Rule subtractionByZero = new Rule(Subtraction.SubtractionByZeroRunnable, Subtraction.SubtractionByZero, "f(x) - 0 -> f(x)");
-
+            Rule ZeroSubtractedFunction = new Rule(Subtraction.ZeroSubtractedByFunctionRunnable, Subtraction.ZeroSubtractedByFunction,"0 - f(x) -> -f(x)");
             Rule subtractionDivisionCommmonDenominator = new Rule(Subtraction.SubtractionDivisionCommonDenominatorRunnable,
                 Subtraction.SubtractionDivisionCommonDenominator, "f(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
 
             ruleManager.Add(SimplificationMode.Subtraction, sameFunction);
             ruleManager.Add(SimplificationMode.Subtraction, coefficientOneReduction);
             ruleManager.Add(SimplificationMode.Subtraction, subtractionByZero);
-
+            ruleManager.Add(SimplificationMode.Subtraction, ZeroSubtractedFunction);
             ruleManager.Add(SimplificationMode.Subtraction, subtractionDivisionCommmonDenominator);
+        }
+
+        private void GenerateDivisionSimplifications()
+        {
+            Rule setRule = new Rule(Division.setRule, null, "Division Set Rule");
+            Rule divisionByOne = new Rule(Division.DivisionByOneRunnable, Division.DivisionByOne, "f(x)/1 -> f(x)");
+
+            ruleManager.AddSetRule(SimplificationMode.Division, setRule);
+            ruleManager.Add(SimplificationMode.Division, divisionByOne);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -322,11 +333,14 @@ namespace AbMath.Calculator
                         SetRoot(new RPN.Node(double.NaN));
                         Write("\tDivision by zero -> Root");
                     }
-                    else if (node.Children[0].IsNumber(1))
+                    /*
+                    else 
+                    if (node.Children[0].IsNumber(1))
                     {
                         Write("\tDivision by one");
                         Assign(node, node.Children[1]);
                     }
+                    */
                     //gcd if the leafs are both numbers since the values of the leafs themselves are changed
                     //we don't have to worry about if the node is the root or not
                     else if (node.Children[0].IsInteger() && node.Children[1].IsInteger())
@@ -386,11 +400,13 @@ namespace AbMath.Calculator
                     //0 - 3sin(x)
                     if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[1].IsNumber(0))
                     {
+                        /*
                         RPN.Node multiply = new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
 
                         Write($"\t0 - f(x) -> -f(x)");
                         Assign(node, multiply);
+                        */
                     }
                     else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0))
                     {

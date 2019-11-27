@@ -45,10 +45,22 @@ namespace AbMath.Calculator.Simplifications
             return node.Children[1];
         }
 
+        public static bool ZeroSubtractedByFunctionRunnable(RPN.Node node)
+        {
+            return !(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[1].IsNumber(0);
+        }
+
+        public static RPN.Node ZeroSubtractedByFunction(RPN.Node node)
+        {
+            return new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] },
+                new RPN.Token("*", 2, RPN.Type.Operator));
+        }
+
         public static bool SubtractionDivisionCommonDenominatorRunnable(RPN.Node node)
         {
             return node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]);
         }
+
 
         public static RPN.Node SubtractionDivisionCommonDenominator(RPN.Node node)
         {
