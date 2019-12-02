@@ -8,7 +8,7 @@ namespace AbMath.Calculator.Simplifications
     {
         public static bool SqrtNegativeNumbersRunnable(RPN.Node node)
         {
-            return node[0].IsLessThanNumber(0);
+            return node.IsSqrt() && node[0].IsLessThanNumber(0);
         }
 
         public static RPN.Node SqrtNegativeNumbers(RPN.Node node)

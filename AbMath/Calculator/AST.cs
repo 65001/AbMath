@@ -326,7 +326,7 @@ namespace AbMath.Calculator
        
                         if (assignment != null)
                         {
-                            if (assignment.IsNumber(double.NaN))
+                            if (assignment.IsNumber() && assignment.Token.Value == "NaN")
                             {
                                 SetRoot(assignment);
                             }
