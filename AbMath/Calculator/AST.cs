@@ -15,7 +15,6 @@ namespace AbMath.Calculator
         /// <summary>
         ///  Sqrt -
         ///  Log -
-        ///  Imaginary -
         ///  Division -
         ///  Exponent -
         ///  Subtraction -
@@ -33,7 +32,7 @@ namespace AbMath.Calculator
         /// </summary>
         public enum SimplificationMode
         {
-            Sqrt, Log, Imaginary, Division, Exponent, Subtraction, Addition, Multiplication, Swap,
+            Sqrt, Log, Division, Exponent, Subtraction, Addition, Multiplication, Swap,
             Trig, TrigHalfAngle, TrigHalfAngleExpansion,
             TrigPowerReduction, TrigPowerExpansion,
             TrigDoubleAngle, TrigDoubleAngleReduction,
@@ -68,14 +67,16 @@ namespace AbMath.Calculator
             GenerateLogSimplifications();
             GenerateSubtractionSimplifications();
             GenerateDivisionSimplifications();
-
         }
 
         private void GenerateSqrtSimplifications()
         {
+            Rule negative = new Rule(Sqrt.SqrtNegativeNumbersRunnable, Sqrt.SqrtNegativeNumbers, "sqrt(-c) -> i Imaginary Number to Root");
             Rule sqrt = new Rule(Sqrt.SqrtToFuncRunnable, Sqrt.SqrtToFunc, "sqrt(g(x))^2 - > g(x)");
             Rule abs = new Rule(Sqrt.SqrtToAbsRunnable, Sqrt.SqrtToAbs, "sqrt(g(x)^2) -> abs(g(x))");
             Rule sqrtPower = new Rule(Sqrt.SqrtPowerFourRunnable, Sqrt.SqrtPowerFour, "sqrt(g(x)^n) where n is a multiple of 4. -> g(x)^n/2");
+
+            ruleManager.Add(SimplificationMode.Sqrt, negative);
             ruleManager.Add(SimplificationMode.Sqrt, sqrt);
             ruleManager.Add(SimplificationMode.Sqrt, abs);
             ruleManager.Add(SimplificationMode.Sqrt, sqrtPower);
@@ -167,6 +168,9 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Division, constantCancelation);
             ruleManager.Add(SimplificationMode.Division, powerReduction);
             ruleManager.Add(SimplificationMode.Division, divisionFlipTwo);
+
+            //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
+            //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -273,7 +277,6 @@ namespace AbMath.Calculator
 
             Simplify(node, SimplificationMode.Sqrt);
             Simplify(node, SimplificationMode.Log);
-            Simplify(node, SimplificationMode.Imaginary);
             Simplify(node, SimplificationMode.Division);
 
             Simplify(node, SimplificationMode.Exponent); //This will make all negative exponennts into divisions
@@ -335,27 +338,7 @@ namespace AbMath.Calculator
                     }
                 }
 
-                if (mode == SimplificationMode.Imaginary && node.IsSqrt())
-                {
-                    //Any sqrt function with a negative number -> Imaginary number to the root node
-                    //An imaginary number propagates anyways
-                    if (node.Children[0].IsLessThanNumber(0))
-                    {
-                        SetRoot(new RPN.Node(double.NaN));
-                        Write($"\tSqrt Imaginary Number -> Root.");
-                    }
-
-                    //MAYBE: Any sqrt function with any non-positive number -> Cannot simplify further??
-                }
-                else if (mode == SimplificationMode.Division && node.IsDivision())
-                {
-                    //if there are any divide by zero exceptions -> NaN to the root node
-                    //NaN propagate anyways
-
-                    //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
-                    //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
-                }
-                else if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
+                if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
                 {
 
                     //0 - 3sin(x)

@@ -6,6 +6,17 @@ namespace AbMath.Calculator.Simplifications
 {
     public static class Sqrt
     {
+        public static bool SqrtNegativeNumbersRunnable(RPN.Node node)
+        {
+            return node[0].IsLessThanNumber(0);
+        }
+
+        public static RPN.Node SqrtNegativeNumbers(RPN.Node node)
+        {
+            return new RPN.Node(double.NaN);
+        }
+
+
         public static bool SqrtToFuncRunnable(RPN.Node node)
         {
             return node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt();
