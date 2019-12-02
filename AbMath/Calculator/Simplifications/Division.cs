@@ -65,6 +65,21 @@ namespace AbMath.Calculator.Simplifications
             return division;
         }
 
+        public static bool DivisionFlipTwoRunnable(RPN.Node node)
+        {
+            return node[1].IsDivision();
+        }
+
+        public static RPN.Node DivisionFlipTwo(RPN.Node node)
+        {
+            RPN.Node numerator = node[1, 1];
+            RPN.Node denominator = new RPN.Node(new[] { node[0], node[1, 0] },
+                new RPN.Token("*", 2, RPN.Type.Operator));
+            RPN.Node division = new RPN.Node(new[] { denominator, numerator },
+                new RPN.Token("/", 2, RPN.Type.Operator));
+            return division;
+        }
+
         public static bool DivisionCancelingRunnable(RPN.Node node)
         {
             return node[1].IsMultiplication() && node[0].IsNumberOrConstant() && node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0);

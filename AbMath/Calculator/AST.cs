@@ -157,7 +157,7 @@ namespace AbMath.Calculator
             Rule divisionFlip = new Rule(Division.DivisionFlipRunnable, Division.DivisionFlip, "(f(x)/g(x))/(h(x)/j(x)) - > (f(x)j(x))/(g(x)h(x))");
             Rule constantCancelation = new Rule(Division.DivisionCancelingRunnable, Division.DivisionCanceling, "(c * f(x))/c -> f(x) where c is not 0");
             Rule powerReduction = new Rule(Division.PowerReductionRunnable, Division.PowerReduction, "Power Reduction");
-
+            Rule divisionFlipTwo = new Rule(Division.DivisionFlipTwoRunnable, Division.DivisionFlipTwo, "[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
             ruleManager.AddSetRule(SimplificationMode.Division, setRule);
 
             ruleManager.Add(SimplificationMode.Division, divisionByZero);
@@ -166,6 +166,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Division, divisionFlip);
             ruleManager.Add(SimplificationMode.Division, constantCancelation);
             ruleManager.Add(SimplificationMode.Division, powerReduction);
+            ruleManager.Add(SimplificationMode.Division, divisionFlipTwo);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -350,16 +351,6 @@ namespace AbMath.Calculator
                 {
                     //if there are any divide by zero exceptions -> NaN to the root node
                     //NaN propagate anyways
-                    if (node[1].IsDivision())
-                    {
-                        Write("\t[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
-                        RPN.Node numerator = node[1, 1];
-                        RPN.Node denominator = new RPN.Node(new[] { node[0], node[1, 0] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] { denominator, numerator },
-                            new RPN.Token("/", 2, RPN.Type.Operator));
-                        Assign(node, division);
-                    }
 
                     //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
                     //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
