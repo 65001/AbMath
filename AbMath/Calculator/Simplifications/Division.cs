@@ -54,5 +54,15 @@ namespace AbMath.Calculator.Simplifications
             RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
             return division;
         }
+
+        public static bool DivisionCancelingRunnable(RPN.Node node)
+        {
+            return node[1].IsMultiplication() && node[0].IsNumberOrConstant() && node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0);
+        }
+
+        public static RPN.Node DivisionCanceling(RPN.Node node)
+        {
+            return node[1, 0];
+        }
     }
 }

@@ -154,11 +154,13 @@ namespace AbMath.Calculator
             Rule divisionByOne = new Rule(Division.DivisionByOneRunnable, Division.DivisionByOne, "f(x)/1 -> f(x)");
             Rule gcd = new Rule(Division.GCDRunnable, Division.GCD, "(cC)/(cX) -> C/X");
             Rule divisionFlip = new Rule(Division.DivisionFlipRunnable, Division.DivisionFlip, "(f(x)/g(x))/(h(x)/j(x)) - > (f(x)j(x))/(g(x)h(x))");
+            Rule constantCancelation = new Rule(Division.DivisionCancelingRunnable, Division.DivisionCanceling, "(c * f(x))/c -> f(x) where c is not 0");
 
             ruleManager.AddSetRule(SimplificationMode.Division, setRule);
             ruleManager.Add(SimplificationMode.Division, divisionByOne);
             ruleManager.Add(SimplificationMode.Division, gcd);
             ruleManager.Add(SimplificationMode.Division, divisionFlip);
+            ruleManager.Add(SimplificationMode.Division, constantCancelation);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -339,12 +341,6 @@ namespace AbMath.Calculator
                     {
                         SetRoot(new RPN.Node(double.NaN));
                         Write("\tDivision by zero -> Root");
-                    }
-                    else if (node[1].IsMultiplication() && node[0].IsNumberOrConstant() &&
-                             node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0))
-                    {
-                        Write("\t(c * f(x))/c -> f(x) where c is not 0");
-                        Assign(node, node[1, 0]);
                     }
                     else if (node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() &&
                              node[1, 0].IsInteger() && node[0, 1].Matches(node[1, 1]))
