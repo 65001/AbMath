@@ -153,10 +153,12 @@ namespace AbMath.Calculator
 
             Rule divisionByOne = new Rule(Division.DivisionByOneRunnable, Division.DivisionByOne, "f(x)/1 -> f(x)");
             Rule gcd = new Rule(Division.GCDRunnable, Division.GCD, "(cC)/(cX) -> C/X");
+            Rule divisionFlip = new Rule(Division.DivisionFlipRunnable, Division.DivisionFlip, "(f(x)/g(x))/(h(x)/j(x)) - > (f(x)j(x))/(g(x)h(x))");
 
             ruleManager.AddSetRule(SimplificationMode.Division, setRule);
             ruleManager.Add(SimplificationMode.Division, divisionByOne);
             ruleManager.Add(SimplificationMode.Division, gcd);
+            ruleManager.Add(SimplificationMode.Division, divisionFlip);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -337,19 +339,6 @@ namespace AbMath.Calculator
                     {
                         SetRoot(new RPN.Node(double.NaN));
                         Write("\tDivision by zero -> Root");
-                    }
-                    else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
-                    {
-                        Write("\tDivison Flip");
-                        RPN.Node[] numerator = { node.Children[0].Children[1], node.Children[1].Children[1] };
-                        RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
-
-                        RPN.Node top = new RPN.Node(new[] { denominator[0], numerator[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node bottom = new RPN.Node(new[] { denominator[1], numerator[0] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
-                        Assign(node, division);
                     }
                     else if (node[1].IsMultiplication() && node[0].IsNumberOrConstant() &&
                              node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0))
