@@ -151,16 +151,21 @@ namespace AbMath.Calculator
         {
             Rule setRule = new Rule(Division.setRule, null, "Division Set Rule");
 
+            Rule divisionByZero = new Rule(Division.DivisionByZeroRunnable, Division.DivisionByZero, "f(x)/0 -> NaN");
             Rule divisionByOne = new Rule(Division.DivisionByOneRunnable, Division.DivisionByOne, "f(x)/1 -> f(x)");
             Rule gcd = new Rule(Division.GCDRunnable, Division.GCD, "(cC)/(cX) -> C/X");
             Rule divisionFlip = new Rule(Division.DivisionFlipRunnable, Division.DivisionFlip, "(f(x)/g(x))/(h(x)/j(x)) - > (f(x)j(x))/(g(x)h(x))");
             Rule constantCancelation = new Rule(Division.DivisionCancelingRunnable, Division.DivisionCanceling, "(c * f(x))/c -> f(x) where c is not 0");
+            Rule powerReduction = new Rule(Division.PowerReductionRunnable, Division.PowerReduction, "Power Reduction");
 
             ruleManager.AddSetRule(SimplificationMode.Division, setRule);
+
+            ruleManager.Add(SimplificationMode.Division, divisionByZero);
             ruleManager.Add(SimplificationMode.Division, divisionByOne);
             ruleManager.Add(SimplificationMode.Division, gcd);
             ruleManager.Add(SimplificationMode.Division, divisionFlip);
             ruleManager.Add(SimplificationMode.Division, constantCancelation);
+            ruleManager.Add(SimplificationMode.Division, powerReduction);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -314,9 +319,17 @@ namespace AbMath.Calculator
                     if (canRunTestSuite)
                     {
                         RPN.Node assignment = ruleManager.Execute(mode, node);
+       
                         if (assignment != null)
                         {
-                            Assign(node, assignment);
+                            if (assignment.IsNumber(double.NaN))
+                            {
+                                SetRoot(assignment);
+                            }
+                            else
+                            {
+                                Assign(node, assignment);
+                            }
                         }
                     }
                 }
@@ -337,20 +350,7 @@ namespace AbMath.Calculator
                 {
                     //if there are any divide by zero exceptions -> NaN to the root node
                     //NaN propagate anyways
-                    if (node.Children[0].IsNumber(0))
-                    {
-                        SetRoot(new RPN.Node(double.NaN));
-                        Write("\tDivision by zero -> Root");
-                    }
-                    else if (node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() &&
-                             node[1, 0].IsInteger() && node[0, 1].Matches(node[1, 1]))
-                    {
-                        int reduction = System.Math.Min((int)node[0, 0].GetNumber(), (int)node[1, 0].GetNumber()) - 1;
-                        node[0, 0].Replace(node[0, 0].GetNumber() - reduction);
-                        node[1, 0].Replace(node[1, 0].GetNumber() - reduction);
-                        Write("\tPower Reduction");
-                    }
-                    else if (node[1].IsDivision())
+                    if (node[1].IsDivision())
                     {
                         Write("\t[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
                         RPN.Node numerator = node[1, 1];

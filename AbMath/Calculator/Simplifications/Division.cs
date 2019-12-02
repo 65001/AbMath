@@ -11,6 +11,16 @@ namespace AbMath.Calculator.Simplifications
             return node.IsDivision();
         }
 
+        public static bool DivisionByZeroRunnable(RPN.Node node)
+        {
+            return node[0].IsNumber(0);
+        }
+
+        public static RPN.Node DivisionByZero(RPN.Node node)
+        {
+            return new RPN.Node(double.NaN);
+        }
+
         public static bool DivisionByOneRunnable(RPN.Node node)
         {
             return node[0].IsNumber(1);
@@ -63,6 +73,19 @@ namespace AbMath.Calculator.Simplifications
         public static RPN.Node DivisionCanceling(RPN.Node node)
         {
             return node[1, 0];
+        }
+
+        public static bool PowerReductionRunnable(RPN.Node node)
+        {
+            return node[0].IsExponent() && node[1].IsExponent() && node[0, 0].IsInteger() && node[1, 0].IsInteger() && node[0, 1].Matches(node[1, 1]);
+        }
+
+        public static RPN.Node PowerReduction(RPN.Node node)
+        {
+            int reduction = System.Math.Min((int)node[0, 0].GetNumber(), (int)node[1, 0].GetNumber()) - 1;
+            node[0, 0].Replace(node[0, 0].GetNumber() - reduction);
+            node[1, 0].Replace(node[1, 0].GetNumber() - reduction);
+            return node;
         }
     }
 }
