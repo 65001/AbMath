@@ -67,6 +67,7 @@ namespace AbMath.Calculator
             GenerateLogSimplifications();
             GenerateSubtractionSimplifications();
             GenerateDivisionSimplifications();
+            GenerateMultiplicationSimplifications();
         }
 
         private void GenerateSqrtSimplifications()
@@ -171,6 +172,23 @@ namespace AbMath.Calculator
 
             //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
             //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
+        }
+
+        private void GenerateMultiplicationSimplifications()
+        {
+            //TODO: If one of the leafs is a division and the other a number or variable
+            //TODO: Replace the requirement that we cannot do a simplification when a division is present to 
+            //that we cannot do a simplification when a division has a variable in the denominator!
+
+            Rule setRule = new Rule(Multiplication.setRule, null, "Multiplication Set Rule");
+            Rule toExponent = new Rule(Multiplication.multiplicationToExponentRunnable, Multiplication.multiplicationToExponent, "f(x) * f(x) -> f(x)^2");
+            Rule simplificationByOne = new Rule(Multiplication.multiplicationByOneRunnable, Multiplication.multiplicationByOne, "1 * f(x) -> f(x)");
+            Rule multiplyByZero = new Rule(Multiplication.multiplicationByZeroRunnable, Multiplication.multiplicationByZero, "0 * f(x) -> 0");
+
+            ruleManager.AddSetRule(SimplificationMode.Multiplication, setRule);
+            ruleManager.Add(SimplificationMode.Multiplication, toExponent);
+            ruleManager.Add(SimplificationMode.Multiplication, simplificationByOne);
+            ruleManager.Add(SimplificationMode.Multiplication, multiplyByZero);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -664,26 +682,11 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
                 {
-                    //TODO: If one of the leafs is a division and the other a number or variable
-                    if (node.ChildrenAreIdentical())
-                    {
-                        RPN.Node head = new RPN.Node(new[] { new RPN.Node(2), node.Children[0] },
-                            new RPN.Token("^", 2, RPN.Type.Operator));
-                        Assign(node, head);
-                        Write("\tSimplification: Multiplication -> Exponent");
-                    }
-                    else if (node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1))
+                    if (node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1))
                     {
                         RPN.Node temp = node.Children[1].IsNumber(1) ? node.Children[0] : node.Children[1];
                         Assign(node, temp);
                         Write($"\tMultiplication by one simplification.");
-                    }
-                    //TODO: Replace the requirement that we cannot do a simplification when a division is present to 
-                    //that we cannot do a simplification when a division has a variable in the denominator!
-                    else if ((node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.containsDomainViolation())
-                    {
-                        Write($"\tMultiplication by zero simplification.");
-                        Assign(node, new RPN.Node(0));
                     }
                     //sin(x)sin(x)sin(x) -> sin(x)^3
                     else if (node.Children[1].IsExponent() && node.Children[1].Children[0].IsNumber() &&
