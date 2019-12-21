@@ -140,6 +140,8 @@ namespace AbMath.Calculator
             Rule subtractionDivisionCommmonDenominator = new Rule(Subtraction.SubtractionDivisionCommonDenominatorRunnable,
                 Subtraction.SubtractionDivisionCommonDenominator, "f(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
             Rule coefficientReduction = new Rule(Subtraction.CoefficientReductionRunnable, Subtraction.CoefficientReduction, "Cf(x) - cf(x) -> (C - c)f(x)");
+            Rule constantToAddition = new Rule(Subtraction.ConstantToAdditionRunnable, Subtraction.ConstantToAddition, "f(x) - (-c) -> f(x) + c");
+            Rule functionToAddition = new Rule(Subtraction.FunctionToAdditionRunnable, Subtraction.FunctionToAddition, "f(x) - (-c * g(x)) -> f(x) + c *g(x)");
 
             ruleManager.Add(SimplificationMode.Subtraction, sameFunction);
             ruleManager.Add(SimplificationMode.Subtraction, coefficientOneReduction);
@@ -147,6 +149,10 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Subtraction, ZeroSubtractedFunction);
             ruleManager.Add(SimplificationMode.Subtraction, subtractionDivisionCommmonDenominator);
             ruleManager.Add(SimplificationMode.Subtraction, coefficientReduction);
+            ruleManager.Add(SimplificationMode.Subtraction, constantToAddition);
+            ruleManager.Add(SimplificationMode.Subtraction, functionToAddition);
+
+            //TODO: f(x)/g(x) /pm i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) /p, i(x)g(x)/g(x)j(x) -> [f(x)j(x) /pm g(x)i(x)]/[g(x)j(x)]
         }
 
         private void GenerateDivisionSimplifications()
@@ -185,10 +191,23 @@ namespace AbMath.Calculator
             Rule simplificationByOne = new Rule(Multiplication.multiplicationByOneRunnable, Multiplication.multiplicationByOne, "1 * f(x) -> f(x)");
             Rule multiplyByZero = new Rule(Multiplication.multiplicationByZeroRunnable, Multiplication.multiplicationByZero, "0 * f(x) -> 0");
 
+            Rule increaseExponent = new Rule(Multiplication.increaseExponentRunnable, Multiplication.increaseExponent, "R1: f(x)^n * f(x) -> f(x)^(n + 1)");
+            Rule increaseExponentTwo = new Rule(Multiplication.increaseExponentTwoRunnable, Multiplication.increaseExponentTwo, "R2: f(x)^n * f(x) -> f(x)^(n + 1)");
+            Rule increaseExponentThree = new Rule(Multiplication.increaseExponentThreeRunnable, Multiplication.increaseExponentThree, "R3: f(x)^n * f(x) -> f(x)^(n + 1");
+
+            Rule dualNode = new Rule(Multiplication.dualNodeMultiplicationRunnable,
+                Multiplication.dualNodeMultiplication, "Dual Node");
+
             ruleManager.AddSetRule(SimplificationMode.Multiplication, setRule);
             ruleManager.Add(SimplificationMode.Multiplication, toExponent);
             ruleManager.Add(SimplificationMode.Multiplication, simplificationByOne);
             ruleManager.Add(SimplificationMode.Multiplication, multiplyByZero);
+
+            ruleManager.Add(SimplificationMode.Multiplication, increaseExponent);
+            ruleManager.Add(SimplificationMode.Multiplication, increaseExponentTwo);
+            ruleManager.Add(SimplificationMode.Multiplication, increaseExponentThree);
+
+            ruleManager.Add(SimplificationMode.Multiplication, dualNode);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -289,9 +308,10 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
-#if DEBUG
+        #if DEBUG
                 Write(Root.ToInfix());       
-#endif
+        #endif
+            //We want to reduce this! 
 
             Simplify(node, SimplificationMode.Sqrt);
             Simplify(node, SimplificationMode.Log);
@@ -320,7 +340,6 @@ namespace AbMath.Calculator
             while (stack.Count > 0)
             {
                 node = stack.Pop();
-                //Write(node.GetHash());
 
                 //If Root is a number abort. 
                 if (Root.IsNumber())
@@ -334,62 +353,23 @@ namespace AbMath.Calculator
                 }
 
                 //This is the rule manager execution code
-                if (ruleManager.ContainsSet(mode))
+                if (ruleManager.ContainsSet(mode) && (!ruleManager.HasSetRule(mode) || ruleManager.GetSetRule(mode).CanExecute(node)))
                 {
-                    bool canRunTestSuite = (!ruleManager.HasSetRule(mode) || ruleManager.GetSetRule(mode).CanExecute(node));
-
-                    if (canRunTestSuite)
+                    RPN.Node assignment = ruleManager.Execute(mode, node);
+                    if (assignment != null)
                     {
-                        RPN.Node assignment = ruleManager.Execute(mode, node);
-       
-                        if (assignment != null)
+                        if (assignment.IsNumber() && assignment.Token.Value == "NaN")
                         {
-                            if (assignment.IsNumber() && assignment.Token.Value == "NaN")
-                            {
-                                SetRoot(assignment);
-                            }
-                            else
-                            {
-                                Assign(node, assignment);
-                            }
+                            SetRoot(assignment);
+                        }
+                        else
+                        {
+                            Assign(node, assignment);
                         }
                     }
                 }
 
-                if (mode == SimplificationMode.Subtraction && node.IsSubtraction())
-                {
-
-                    //0 - 3sin(x)
-                    if (node[1].IsNumber(0))
-                    {
-                        /*
-                        RPN.Node multiply = new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-
-                        Write($"\t0 - f(x) -> -f(x)");
-                        Assign(node, multiply);
-                        */
-                    }
-                    else if (node[0].IsNumber() && node[0].IsLessThanNumber(0))
-                    {
-                        Write("\tf(x) - (-c) -> f(x) + c");
-                        RPN.Node multiplication = new RPN.Node(new[] { Clone(node[0]), new RPN.Node(-1) }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node addition = new RPN.Node(new[] { multiplication, node[1] }, new RPN.Token("+", 2, RPN.Type.Operator));
-                        Assign(node, addition);
-                        Simplify(multiplication, SimplificationMode.Multiplication);
-                    }
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0))
-                    {
-                        //(cos(x)^2)-(-1*(sin(x)^2)) 
-                        //(cos(x)^2)-(-2*(sin(x)^2)) 
-                        //((-2*(cos(x)^2))+(2*(sin(x)^2)))
-                        Write("\tf(x) - (-c * g(x)) -> f(x) + c *g(x)");
-                        node[0, 1].Replace(  node[0,1].GetNumber() * -1);
-                        node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
-                    }
-                    //TODO: f(x)/g(x) /pm i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) /p, i(x)g(x)/g(x)j(x) -> [f(x)j(x) /pm g(x)i(x)]/[g(x)j(x)]
-                }
-                else if (mode == SimplificationMode.Addition && node.IsAddition())
+                if (mode == SimplificationMode.Addition && node.IsAddition())
                 {
                     //Is root and leafs have the same hash
                     if (node.ChildrenAreIdentical())
@@ -423,12 +403,14 @@ namespace AbMath.Calculator
                         node.Children[1].Replace(node.Children[1].Children[1],
                             new RPN.Node(node.Children[1].Children[1].GetNumber() + 1));
                     }
+                    
                     else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsLessThanNumber(0))
                     {
                         Write("\tAddition can be converted to subtraction");
                         node.Replace("-");
                         node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
                     }
+                    
                     else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsLessThanNumber(0) && node[1].IsMultiplication())
                     {
                         Write("\tAddition can be converted to subtraction");
@@ -687,42 +669,6 @@ namespace AbMath.Calculator
                         RPN.Node temp = node.Children[1].IsNumber(1) ? node.Children[0] : node.Children[1];
                         Assign(node, temp);
                         Write($"\tMultiplication by one simplification.");
-                    }
-                    //sin(x)sin(x)sin(x) -> sin(x)^3
-                    else if (node.Children[1].IsExponent() && node.Children[1].Children[0].IsNumber() &&
-                             node.Children[0].Matches(node.Children[1].Children[1]))
-                    {
-                        Write("\tIncrease Exponent");
-                        node.Replace(node.Children[0], new RPN.Node(1));
-                        node.Replace(node.Children[1].Children[0],
-                            new RPN.Node(node.Children[1].Children[0].GetNumber() + 1));
-                    }
-                    else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() &&
-                             node.Children[0].Children[0].IsGreaterThanNumber(0) && node.Children[1].Children[0]
-                                 .Matches(node.Children[0].Children[1]))
-                    {
-                        Write($"\tIncrease Exponent 2:");
-                        RPN.Node temp = node.Children[0].Children[0];
-                        temp.Replace(temp.GetNumber() + 1);
-                        node.Children[1].Children[0].Remove(new RPN.Node(1));
-                    }
-                    else if (node.Children[0].IsExponent() && node.Children[1].IsMultiplication() &&
-                             node.Children[0].Children[1].Matches(node.Children[1]))
-                    {
-                        Write("\tIncrease Exponent 3");
-                        RPN.Node temp = node.Children[0].Children[0];
-                        temp.Replace(temp.GetNumber() + 1);
-                        node.Children[1].Remove(new RPN.Node(1));
-                    }
-                    else if (node.Children[1].IsNumber() && node.Children[0].IsMultiplication() &&
-                             node.Children[0].Children[1].IsNumber() && !node.Children[0].Children[0].IsNumber())
-                    {
-                        Write($"\tDual Node Multiplication.");
-                        double num1 = double.Parse(node.Children[0].Children[1].Token.Value);
-                        double num2 = double.Parse(node.Children[1].Token.Value);
-
-                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
-                        node.Replace(node.Children[1], new RPN.Node(num1 * num2));
                     }
                     else if ((node.Children[0].IsDivision() || node.Children[1].IsDivision()) &&
                              !(node.Children[0].IsDivision() && node.Children[1].IsDivision()))

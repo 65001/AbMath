@@ -85,5 +85,32 @@ namespace AbMath.Calculator.Simplifications
             node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
             return node;
         }
+
+        public static bool ConstantToAdditionRunnable(RPN.Node node)
+        {
+            return node[0].IsNumber() && node[0].IsLessThanNumber(0);
+        }
+
+        public static RPN.Node ConstantToAddition(RPN.Node node)
+        {
+            RPN.Node addition = new RPN.Node(new[] { new RPN.Node(node[0].GetNumber() * -1), node[1] }, new RPN.Token("+", 2, RPN.Type.Operator));
+            return addition;
+        }
+
+        public static bool FunctionToAdditionRunnable(RPN.Node node)
+        {
+            //(cos(x)^2)-(-1*(sin(x)^2)) 
+            //(cos(x)^2)-(-2*(sin(x)^2)) 
+            //((-2*(cos(x)^2))+(2*(sin(x)^2)))
+            return !(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() &&
+                   node[0, 1].IsLessThanNumber(0);
+        }
+
+        public static RPN.Node FunctionToAddition(RPN.Node node)
+        {
+            node[0, 1].Replace(node[0, 1].GetNumber() * -1);
+            node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
+            return node;
+        }
     }
 }
