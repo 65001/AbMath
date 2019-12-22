@@ -188,18 +188,29 @@ namespace AbMath.Calculator
             Rule setRule = new Rule(Multiplication.setRule, null, "Multiplication Set Rule");
             Rule toExponent = new Rule(Multiplication.multiplicationToExponentRunnable, Multiplication.multiplicationToExponent, "f(x) * f(x) -> f(x)^2");
             Rule simplificationByOne = new Rule(Multiplication.multiplicationByOneRunnable, Multiplication.multiplicationByOne, "1 * f(x) -> f(x)");
+            Rule simplificationByOneComplex = new Rule(Multiplication.multiplicationByOneComplexRunnable, Multiplication.multiplicationByOneComplex, "1 * f(x) || f(x) * 1 -> f(x)");
+
             Rule multiplyByZero = new Rule(Multiplication.multiplicationByZeroRunnable, Multiplication.multiplicationByZero, "0 * f(x) -> 0");
 
             Rule increaseExponent = new Rule(Multiplication.increaseExponentRunnable, Multiplication.increaseExponent, "R1: f(x)^n * f(x) -> f(x)^(n + 1)");
             Rule increaseExponentTwo = new Rule(Multiplication.increaseExponentTwoRunnable, Multiplication.increaseExponentTwo, "R2: f(x)^n * f(x) -> f(x)^(n + 1)");
             Rule increaseExponentThree = new Rule(Multiplication.increaseExponentThreeRunnable, Multiplication.increaseExponentThree, "R3: f(x)^n * f(x) -> f(x)^(n + 1");
 
+            Rule expressionDivision = new Rule(Multiplication.expressionTimesDivisionRunnable, Multiplication.expressionTimesDivision, "f(x) * [g(x)/h(x)] -> [f(x) * g(x)]/h(x)");
+            Rule DivisionDivision = new Rule(Multiplication.divisionTimesDivisionRunnable, Multiplication.divisionTimesDivision, "[f(x)/g(x)] * [h(x)/j(x)] -> [f(x) * h(x)]/[g(x) * j(x)]");
+            Rule negativeTimesNegative = new Rule(Multiplication.negativeTimesnegativeRunnable, Multiplication.negativeTimesnegative, "(-c)(-C) -> (c)(C)");
+            Rule complexNegativeTimesNegative = new Rule(Multiplication.complexNegativeNegativeRunnable, Multiplication.complexNegativeNegative, "Complex: A negative times a negative is always positive.");
+            Rule negativeByConstant = new Rule(Multiplication.negativeTimesConstantRunnable, Multiplication.negativeTimesConstant, "-1 * c -> -c");
+            Rule constantByNegative = new Rule(Multiplication.constantTimesNegativeRunnable, Multiplication.constantTimesNegative, "c * -1 -> -c");
+            Rule negativeOneDistributed = new Rule(Multiplication.negativeOneDistributedRunnable, Multiplication.negativeOneDistributed, "-1[f(x) - g(x)] -> -f(x) + g(x) -> g(x) - f(x)");
             Rule dualNode = new Rule(Multiplication.dualNodeMultiplicationRunnable,
                 Multiplication.dualNodeMultiplication, "Dual Node");
+
 
             ruleManager.AddSetRule(SimplificationMode.Multiplication, setRule);
             ruleManager.Add(SimplificationMode.Multiplication, toExponent);
             ruleManager.Add(SimplificationMode.Multiplication, simplificationByOne);
+            ruleManager.Add(SimplificationMode.Multiplication, simplificationByOneComplex);
             ruleManager.Add(SimplificationMode.Multiplication, multiplyByZero);
 
             ruleManager.Add(SimplificationMode.Multiplication, increaseExponent);
@@ -207,6 +218,13 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Multiplication, increaseExponentThree);
 
             ruleManager.Add(SimplificationMode.Multiplication, dualNode);
+            ruleManager.Add(SimplificationMode.Multiplication, expressionDivision);
+            ruleManager.Add(SimplificationMode.Multiplication, DivisionDivision);
+            ruleManager.Add(SimplificationMode.Multiplication, negativeTimesNegative);
+            ruleManager.Add(SimplificationMode.Multiplication, complexNegativeTimesNegative);
+            ruleManager.Add(SimplificationMode.Multiplication, negativeByConstant);
+            ruleManager.Add(SimplificationMode.Multiplication, constantByNegative);
+            ruleManager.Add(SimplificationMode.Multiplication, negativeOneDistributed);
         }
 
         private void GenerateAdditionSimplifications()
@@ -603,85 +621,6 @@ namespace AbMath.Calculator
 
 
                 }
-                else if (mode == SimplificationMode.Multiplication && node.IsMultiplication())
-                {
-                    if (node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1))
-                    {
-                        RPN.Node temp = node.Children[1].IsNumber(1) ? node.Children[0] : node.Children[1];
-                        Assign(node, temp);
-                        Write($"\tMultiplication by one simplification.");
-                    }
-                    else if ((node.Children[0].IsDivision() || node.Children[1].IsDivision()) &&
-                             !(node.Children[0].IsDivision() && node.Children[1].IsDivision()))
-                    {
-                        Write($"\tExpression times a division -> Division ");
-                        RPN.Node division;
-                        RPN.Node expression;
-                        if (node.Children[0].IsDivision())
-                        {
-                            division = node.Children[0];
-                            expression = node.Children[1];
-                        }
-                        else
-                        {
-                            division = node.Children[1];
-                            expression = node.Children[0];
-                        }
-
-                        RPN.Node numerator = division.Children[1];
-                        RPN.Node multiply = new RPN.Node(new[] { Clone(numerator), Clone(expression) },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        numerator.Remove(multiply);
-                        expression.Remove(new RPN.Node(1));
-                    }
-                    else if (node.Children[0].IsDivision() && node.Children[1].IsDivision())
-                    {
-                        Write($"\tDivision times a division -> Division");
-                        RPN.Node[] numerator = { node.Children[0].Children[1], node.Children[1].Children[1] };
-                        RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
-                        RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
-
-                        RPN.Node top = new RPN.Node(numerator, multiply);
-                        RPN.Node bottom = new RPN.Node(denominator, multiply);
-                        RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
-
-                        node.Children[0].Remove(division);
-                        node.Children[1].Remove(new RPN.Node(1));
-                    }
-                    else if (node.Children[0].IsLessThanNumber(0) && node.Children[1].IsLessThanNumber(0))
-                    {
-                        Write("\tA negative times a negative is always positive.");
-                        node.Replace(node.Children[0],
-                            new RPN.Node(System.Math.Abs(double.Parse(node.Children[0].Token.Value))));
-                        node.Replace(node.Children[1],
-                            new RPN.Node(System.Math.Abs(double.Parse(node.Children[1].Token.Value))));
-                    }
-                    else if (node[0].IsMultiplication() && node[0, 1].IsLessThanNumber(0) &&
-                             node[1].IsLessThanNumber(0))
-                    {
-                        Write("\tComplex: A negative times a negative is always positive.");
-                        node.Replace(node[0, 1], new RPN.Node(System.Math.Abs(node[0, 1].GetNumber())));
-                        node.Replace(node[1], new RPN.Node(System.Math.Abs(node[1].GetNumber())));
-                    }
-                    else if (node[0].IsNumber(-1) && node[1].IsNumber())
-                    {
-                        Write("\t-1 * c -> -c");
-                        node.Replace(node[0], new RPN.Node(1));
-                        node.Replace(node[1], new RPN.Node(node[1].GetNumber() * -1));
-                    }
-                    else if (node[0].IsNumber() && node[1].IsNumber(-1))
-                    {
-                        Write("\tc * -1 -> -c");
-                        node.Replace(node[1], new RPN.Node(1));
-                        node.Replace(node[0], new RPN.Node(node[0].GetNumber() * -1));
-                    }
-                    else if (node[0].IsSubtraction() && node[1].IsNumber(-1))
-                    {
-                        Write("\t-1[f(x) - g(x)] -> -f(x) + g(x) -> g(x) - f(x)");
-                        node[0].Swap(0, 1);
-                        node[1].Replace(1);
-                    }
-                }
                 else if (mode == SimplificationMode.Swap)
                 {
                     //We can do complex swapping in here
@@ -712,76 +651,74 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Exponent && node.IsExponent())
                 {
-                    RPN.Node baseNode = node.Children[1];
-                    RPN.Node power = node.Children[0];
-                    if (power.IsNumber(1))
+                    if (node[0].IsNumber(1))
                     {
                         Write("\tf(x)^1 -> f(x)");
-                        Assign(node, baseNode);
-                        power.Delete();
+                        Assign(node, node[1]);
+                        node[0].Delete();
                         node.Delete();
                     }
-                    else if (power.IsNumber(0))
+                    else if (node[0].IsNumber(0))
                     {
                         Write("\tf(x)^0 -> 1");
                         node.Replace(1);
                         node.Children.Clear();
                     }
-                    else if (baseNode.IsNumber(0) && power.IsGreaterThanNumber(0))
+                    else if (node[1].IsNumber(0) && node[0].IsGreaterThanNumber(0))
                     {
                         Write("\t0^c where c > 0 -> 0");
                         node.Replace(0);
                         node.Children.Clear();
                     }
-                    else if (baseNode.IsNumber(1))
+                    else if (node[1].IsNumber(1))
                     {
                         Write("\t1^(fx) -> 1");
                         node.Replace(1);
                         node.Children.Clear();
                     }
-                    else if (power.IsLessThanNumber(0))
+                    else if (node[0].IsLessThanNumber(0))
                     {
-                        RPN.Node powerClone = new RPN.Node(new[] { new RPN.Node(-1), Clone(power) },
+                        RPN.Node powerClone = new RPN.Node(new[] { new RPN.Node(-1), node[0].Clone() },
                             new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node exponent = new RPN.Node(new[] { powerClone, Clone(baseNode) },
+                        RPN.Node exponent = new RPN.Node(new[] { powerClone, node[1].Clone() },
                             new RPN.Token("^", 2, RPN.Type.Operator));
                         RPN.Node division = new RPN.Node(new[] { exponent, new RPN.Node(1) },
                             new RPN.Token("/", 2, RPN.Type.Operator));
-                        Assign(power.Parent, division);
+                        Assign(node, division);
                         Write($"\tf(x)^-c -> 1/f(x)^c");
                     }
-                    else if (power.IsNumber(0.5))
+                    else if (node[0].IsNumber(0.5))
                     {
-                        RPN.Node sqrt = new RPN.Node(new[] { Clone(baseNode) },
+                        RPN.Node sqrt = new RPN.Node(new[] { node[1].Clone() },
                             new RPN.Token("sqrt", 1, RPN.Type.Function));
-                        Assign(power.Parent, sqrt);
+                        Assign(node, sqrt);
                         Write("\tf(x)^0.5 -> sqrt( f(x) )");
                     }
-                    else if ((power.IsNumber() || power.IsConstant()) && baseNode.IsExponent() &&
-                             (baseNode.Children[0].IsNumber() || baseNode.Children[0].IsConstant()))
+                    else if ((node[0].IsNumber() || node[0].IsConstant()) && node[1].IsExponent() &&
+                             (node[1,0].IsNumber() || node[1,0].IsConstant()))
                     {
                         Write("\t(f(x)^c)^a -> f(x)^[c * a]");
                         RPN.Node multiply;
 
-                        if (power.IsNumber() && baseNode.Children[0].IsNumber())
+                        if (node[0].IsNumber() && node[1,0].IsNumber())
                         {
-                            multiply = new RPN.Node(power.GetNumber() * baseNode.Children[0].GetNumber());
+                            multiply = new RPN.Node(node[0].GetNumber() * node[1,0].GetNumber());
                         }
                         else
                         {
-                            multiply = new RPN.Node(new[] { Clone(power), Clone(baseNode.Children[0]) },
+                            multiply = new RPN.Node(new[] { node[0].Clone() , node[1,0].Clone() },
                                 new RPN.Token("*", 2, RPN.Type.Operator));
                         }
 
-                        RPN.Node func = Clone(baseNode.Children[1]);
+                        RPN.Node func = Clone(node[1,1]);
                         RPN.Node exponent = new RPN.Node(new[] { multiply, func },
                             new RPN.Token("^", 2, RPN.Type.Operator));
-                        Assign(power.Parent, exponent);
+                        Assign(node, exponent);
                     }
-                    else if (power.IsNumberOrConstant() && baseNode.IsLessThanNumber(0) && power.GetNumber() % 2 == 0)
+                    else if (node[0].IsNumberOrConstant() && node[1].IsLessThanNumber(0) && node[0].GetNumber() % 2 == 0)
                     {
                         Write("c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
-                        node.Replace(baseNode, new RPN.Node(-1 * baseNode.GetNumber()));
+                        node.Replace(node[1], new RPN.Node(-1 * node[1].GetNumber()));
                     }
                 }
                 else if (mode == SimplificationMode.Constants)
