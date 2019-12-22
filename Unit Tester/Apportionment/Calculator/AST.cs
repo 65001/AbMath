@@ -160,6 +160,9 @@ namespace AbMath.Tests
 
             rpn.SetEquation("(2x)^log(2x,2)").Compute();
             Assert.AreEqual("2", rpn.Polish.Print());
+
+            rpn.SetEquation("ln(x^2)").Compute();
+            Assert.AreEqual("2 x ln *", rpn.Polish.Print());
         }
 
         [Test]

@@ -68,6 +68,7 @@ namespace AbMath.Calculator
             GenerateSubtractionSimplifications();
             GenerateDivisionSimplifications();
             GenerateMultiplicationSimplifications();
+            GenerateAdditionSimplifications();
         }
 
         private void GenerateSqrtSimplifications()
@@ -105,9 +106,7 @@ namespace AbMath.Calculator
 
             //TODO: lnPower e^ln(x) -> x
             //TODO: log(b,R^c)
-            //TODO: e^ln(x) -> x
             //TODO: ln(e) -> 1
-            //TODO: ln(R^c) -> log(e,R^c) -> c * ln(R)
 
             Rule lnSummation = new Rule(Log.LnSummationRunnable, Log.LnSummation, "ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
             Rule lnSubtraction = new Rule(Log.LnSubtractionRunnable, Log.LnSubtraction, "ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
@@ -208,6 +207,28 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Multiplication, increaseExponentThree);
 
             ruleManager.Add(SimplificationMode.Multiplication, dualNode);
+        }
+
+        private void GenerateAdditionSimplifications()
+        {
+            Rule setRule = new Rule(Addition.setRule, null, "Addition Set Rule");
+            ruleManager.AddSetRule(SimplificationMode.Addition,setRule);
+
+            Rule additionToMultiplication = new Rule(Addition.AdditionToMultiplicationRunnable, Addition.AdditionToMultiplication, "f(x) + f(x) -> 2 * f(x)");
+            Rule zeroAddition = new Rule(Addition.ZeroAdditionRunnable, Addition.ZeroAddition, "f(x) + 0 -> f(x)");
+            Rule simpleCoefficient = new Rule(Addition.SimpleCoefficientRunnable, Addition.SimpleCoefficient, "cf(x) + f(x) -> (c + 1)f(x) + 0");
+            Rule complexCoefficient = new Rule(Addition.ComplexCoefficientRunnable, Addition.ComplexCoefficient, "cf(x) + Cf(x) -> (c + C)f(x) + 0");
+            Rule additionSwap = new Rule(Addition.AdditionSwapRunnable, Addition.AdditionSwap, "-f(x) + g(x) -> g(x) - f(x)");
+
+            ruleManager.Add(SimplificationMode.Addition, additionToMultiplication);
+            ruleManager.Add(SimplificationMode.Addition, zeroAddition);
+            ruleManager.Add(SimplificationMode.Addition, simpleCoefficient);
+            ruleManager.Add(SimplificationMode.Addition, complexCoefficient);
+            ruleManager.Add(SimplificationMode.Addition, additionSwap);
+
+            //TODO: -c * f(x) + g(x) -> g(x) - c * f(x)
+            //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
+            //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -371,53 +392,20 @@ namespace AbMath.Calculator
 
                 if (mode == SimplificationMode.Addition && node.IsAddition())
                 {
-                    //Is root and leafs have the same hash
-                    if (node.ChildrenAreIdentical())
+                    if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() && node[0,1].IsLessThanNumber(0))
                     {
-                        RPN.Node multiply = new RPN.Node(new[] { node.Children[0], new RPN.Node(2) },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiply);
-                        Write("\tSimplification: Addition -> Multiplication");
-                    }
-                    //Zero addition
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node.Children[0].IsNumber(0))
-                    {
-                        Write("\tZero Addition.");
-                        Assign(node, node.Children[1]);
-                    }
-                    //Case: 0 + sin(x)
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node.Children[1].IsNumber(0))
-                    {
-                        //Child 1 is the expression in this case.
-                        Write("\tZero Addition. Case 2.");
-                        Assign(node, node.Children[0]);
-                    }
-                    //7sin(x) + sin(x)
-                    //C0: Anything
-                    //C1:C0: Compare hash to C0.
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() &&
-                             node.Children[1].Children[0].Matches(node.Children[0]))
-                    {
-                        Write("\tSimplification Addition Dual Node.");
-                        node.Children[0].Remove(new RPN.Node(0));
-                        node.Children[1].Replace(node.Children[1].Children[1],
-                            new RPN.Node(node.Children[1].Children[1].GetNumber() + 1));
-                    }
-                    
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node.Children[0].IsMultiplication() && node.Children[0].Children[1].IsLessThanNumber(0))
-                    {
-                        Write("\tAddition can be converted to subtraction");
+                        Write("\tAddition can be converted to subtraction C1");
                         node.Replace("-");
                         node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
                     }
                     
                     else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsLessThanNumber(0) && node[1].IsMultiplication())
                     {
-                        Write("\tAddition can be converted to subtraction");
+                        Write("\tAddition can be converted to subtraction C2");
                         node.Replace("-");
                         node.Replace(node[0], new RPN.Node(System.Math.Abs(node[0].GetNumber())));
                     }
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node.Children[0].IsSubtraction() && node[1].Matches(node[0, 1]))
+                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsSubtraction() && node[1].Matches(node[0, 1]))
                     {
                         Write("\tf(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
 
@@ -426,33 +414,6 @@ namespace AbMath.Calculator
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         node.Replace(node[1], multiplication);
                     }
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[1].IsMultiplication() && node[1, 1].IsNumber(-1))
-                    {
-                        Write("\t-f(x) + g(x) -> g(x) - f(x)");
-                        node[1, 1].Replace(1);
-                        node.Swap(0, 1);
-                        node.Replace(new RPN.Token("-", 2, RPN.Type.Operator));
-                    }
-                    //Both nodes are multiplications with 
-                    //the parent node being addition
-                    //Case: 2sin(x) + 3sin(x)
-                    else if (node.Children[0].IsMultiplication() && node.Children[1].IsMultiplication())
-                    {
-                        if (node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() &&
-                            node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
-                        {
-                            Write("\tSimplification: Addition");
-                            double sum = (node.Children[0].Children[1].GetNumber() +
-                                          node.Children[1].Children[1].GetNumber());
-                            node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(sum));
-                            node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
-                        }
-                    }
-
-                    //TODO: -c * f(x) + g(x) -> g(x) - c * f(x)
-
-                    //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
-                    //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
                 }
                 else if (mode == SimplificationMode.Trig)
                 {
