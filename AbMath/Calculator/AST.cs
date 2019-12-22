@@ -219,13 +219,18 @@ namespace AbMath.Calculator
             Rule simpleCoefficient = new Rule(Addition.SimpleCoefficientRunnable, Addition.SimpleCoefficient, "cf(x) + f(x) -> (c + 1)f(x) + 0");
             Rule complexCoefficient = new Rule(Addition.ComplexCoefficientRunnable, Addition.ComplexCoefficient, "cf(x) + Cf(x) -> (c + C)f(x) + 0");
             Rule additionSwap = new Rule(Addition.AdditionSwapRunnable, Addition.AdditionSwap, "-f(x) + g(x) -> g(x) - f(x)");
+            Rule toSubtractionRuleOne = new Rule(Addition.AdditionToSubtractionRuleOneRunnable, Addition.AdditionToSubtractionRuleOne, "Addition can be converted to subtraction R1");
+            Rule toSubtractionRuleTwo = new Rule(Addition.AdditionToSubtractionRuleTwoRunnable, Addition.AdditionToSubtractionRuleTwo, "Addition can be converted to subtraction R2");
+            Rule complex = new Rule(Addition.ComplexNodeAdditionRunnable, Addition.ComplexNodeAddition, "f(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
 
             ruleManager.Add(SimplificationMode.Addition, additionToMultiplication);
             ruleManager.Add(SimplificationMode.Addition, zeroAddition);
             ruleManager.Add(SimplificationMode.Addition, simpleCoefficient);
             ruleManager.Add(SimplificationMode.Addition, complexCoefficient);
             ruleManager.Add(SimplificationMode.Addition, additionSwap);
-
+            ruleManager.Add(SimplificationMode.Addition, toSubtractionRuleOne);
+            ruleManager.Add(SimplificationMode.Addition, toSubtractionRuleTwo);
+            ruleManager.Add(SimplificationMode.Addition, complex);
             //TODO: -c * f(x) + g(x) -> g(x) - c * f(x)
             //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
             //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
@@ -390,32 +395,7 @@ namespace AbMath.Calculator
                     }
                 }
 
-                if (mode == SimplificationMode.Addition && node.IsAddition())
-                {
-                    if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() && node[0,1].IsLessThanNumber(0))
-                    {
-                        Write("\tAddition can be converted to subtraction C1");
-                        node.Replace("-");
-                        node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(1));
-                    }
-                    
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsLessThanNumber(0) && node[1].IsMultiplication())
-                    {
-                        Write("\tAddition can be converted to subtraction C2");
-                        node.Replace("-");
-                        node.Replace(node[0], new RPN.Node(System.Math.Abs(node[0].GetNumber())));
-                    }
-                    else if (!(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsSubtraction() && node[1].Matches(node[0, 1]))
-                    {
-                        Write("\tf(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
-
-                        node[0].Replace(node[0, 1], new RPN.Node(0));
-                        RPN.Node multiplication = new RPN.Node(new[] { node[1], new RPN.Node(2) },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        node.Replace(node[1], multiplication);
-                    }
-                }
-                else if (mode == SimplificationMode.Trig)
+                if (mode == SimplificationMode.Trig)
                 {
 
                     if (node.IsAddition() &&
