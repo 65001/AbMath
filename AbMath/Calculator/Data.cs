@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -24,6 +24,8 @@ namespace AbMath.Calculator
 
             private List<TimeRecord> _time;
             private readonly Dictionary<string, string> _variableStore;
+
+            protected internal object LockObject = new object();
 
             /// <summary>
             /// A list of all the functions that are supported
@@ -124,7 +126,7 @@ namespace AbMath.Calculator
             /// Determines the default format of CLI Tables
             /// based on the value of MarkdownTables
             /// </summary>
-            public Format DefaultFormat => (MarkdownTables) ? CLI.Format.MarkDown : CLI.Format.Default ;
+            public Format DefaultFormat => (MarkdownTables) ? Utilities.Format.MarkDown : Utilities.Format.Default ;
 
             public DataStore(string equation)
             {

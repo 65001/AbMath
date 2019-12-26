@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CLI
+namespace AbMath.Utilities
 {
     public enum Format { Default, MarkDown };
     public struct Config

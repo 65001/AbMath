@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using AbMath.Calculator.Simplifications;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -43,7 +43,7 @@ namespace AbMath.Calculator
         private RPN _rpn;
         private RPN.DataStore _data;
 
-        private bool debug => _rpn.Data.DebugMode;
+        private bool debug => _data.DebugMode;
 
         private readonly RPN.Token _derive = new RPN.Token("derive", 1, RPN.Type.Function);
 
@@ -51,6 +51,7 @@ namespace AbMath.Calculator
         public event EventHandler<string> Output;
 
         private OptimizerRuleSet ruleManager;
+        private Object loggingLock => _data.LockObject;
 
         public AST(RPN rpn)
         {
@@ -367,11 +368,8 @@ namespace AbMath.Calculator
 
             Normalize();
 
-            //Print the rule sets if requested!
-            if (debug)
-            {
-                Write(ruleManager.ToString());
-            }
+            Write("");
+            Write(ruleManager.ToString());
 
             return this;
         }
@@ -2493,12 +2491,18 @@ namespace AbMath.Calculator
 
         private void Write(string message)
         {
-            Logger?.Invoke(this, message);
+            lock (loggingLock)
+            {
+                Logger?.Invoke(this, message);
+            }
         }
 
         private void stdout(string message)
         {
-            Output?.Invoke(this, message);
+            lock (loggingLock)
+            {
+                Output?.Invoke(this, message);
+            }
         }
     }
 
@@ -2741,27 +2745,30 @@ namespace AbMath.Calculator
             ruleTables.Add(new Schema() {Column = "Name", Width = 25});
             ruleTables.Add(new Schema() { Column = "Count", Width = 6 });
             ruleTables.Add(new Schema() { Column = "Set Rule", Width = 10 });
-            ruleTables.Add(new Schema() {Column = "Execution Time (ms | Ticks)", Width = 25});
+            ruleTables.Add(new Schema() {Column = "Execution Time (ms | Ticks)", Width = 27});
             ruleTables.Add(new Schema() {Column = "Check Time (ms | Ticks)", Width = 25});
             ruleTables.Add(new Schema() {Column = "Hits", Width = 4});
 
             foreach(var KV in ruleSet)
             {
-                string executionTime = "0";
-                string checkTime = "0";
-                string hit = "0";
+                string executionTime = "-";
+                string checkTime = "-";
+                string hit = "-";
                 if (debug && ruleSetTracker != null && ruleSetTracker.ContainsKey(KV.Key))
                 {
                     executionTime = ruleSetTracker[KV.Key].ElapsedMilliseconds.ToString() + " | " + ruleSetTracker[KV.Key].ElapsedTicks.ToString("N0");
                     checkTime = canExecuteTracker[KV.Key].ElapsedMilliseconds.ToString() + " | " + canExecuteTracker[KV.Key].ElapsedTicks.ToString("N0");
+                    
+                }
+
+                if (hits.ContainsKey(KV.Key))
+                {
                     hit = hits[KV.Key].ToString();
                 }
+
                 string[] row = new string[] { KV.Key.ToString(), KV.Value.Count.ToString(), setRule.ContainsKey(KV.Key) ? "✓" : "X", executionTime, checkTime, hit };
                 ruleTables.Add(row);
             }
-
-            ruleTables.ToString();
-            ruleTables.Redraw();
 
             return ruleTables.ToString();
         }

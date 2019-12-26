@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -499,7 +499,10 @@ namespace AbMath.Calculator
 
             void Write(string message)
             {
-                Logger?.Invoke(this, message);
+                lock (_dataStore.LockObject)
+                {
+                    Logger?.Invoke(this, message);
+                }
             }
         }
     }

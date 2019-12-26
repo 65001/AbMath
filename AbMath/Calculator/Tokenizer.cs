@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -21,7 +21,7 @@ namespace AbMath.Calculator
             private List<Token> _tokens;
             private string _rule;
 
-           public event EventHandler<string> Logger;
+            public event EventHandler<string> Logger;
 
             public Tokenizer(DataStore dataStore)
             {
@@ -250,13 +250,19 @@ namespace AbMath.Calculator
             {
                 if (_dataStore.DebugMode)
                 {
-                    Logger?.Invoke(this, message);
+                    lock (_dataStore.LockObject)
+                    {
+                        Logger?.Invoke(this, message);
+                    }
                 }
             }
 
             private void Log(string message)
             {
-                Logger?.Invoke(this, message);
+                lock (_dataStore.LockObject)
+                {
+                    Logger?.Invoke(this, message);
+                }
             }
         }
     }

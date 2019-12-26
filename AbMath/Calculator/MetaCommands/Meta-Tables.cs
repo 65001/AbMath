@@ -1,5 +1,5 @@
 ﻿using System;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {

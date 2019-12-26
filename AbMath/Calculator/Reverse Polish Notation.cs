@@ -176,7 +176,10 @@ namespace AbMath.Calculator
 
         private void Write(string message)
         {
-            Logger?.Invoke(this, message);
+            lock (Data.LockObject)
+            {
+                Logger?.Invoke(this, message);
+            }
         }
     }
 }
