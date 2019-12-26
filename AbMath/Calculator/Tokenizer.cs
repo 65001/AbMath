@@ -35,12 +35,12 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     _tables = new Tables<string>(new Config {Title = "Tokenizer", Format = _dataStore.DefaultFormat});
-                    _tables.Add(new Schema {Column = "#", Width = 3});
-                    _tables.Add(new Schema {Column = "Character", Width = 10});
-                    _tables.Add(new Schema {Column = "Code", Width = 5});
-                    _tables.Add(new Schema {Column = "Token", Width = 15});
-                    _tables.Add(new Schema {Column = "# Tokens", Width = 11});
-                    _tables.Add(new Schema {Column = "Action", Width = 16});
+                    _tables.Add(new Schema("#", 3));
+                    _tables.Add(new Schema("Character"));
+                    _tables.Add(new Schema("Code"));
+                    _tables.Add(new Schema("Token"));
+                    _tables.Add(new Schema("# Tokens"));
+                    _tables.Add(new Schema("Action"));
                 }
 
                 string token = string.Empty;

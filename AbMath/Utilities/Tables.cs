@@ -148,7 +148,7 @@ namespace AbMath.Utilities
                 throw new Exception("You cannot add to the schema after you have added a row to your table.");
             }
             //If the schema width is bad we should adjust it without telling the user! 
-            schema.Width = Math.Max(schema.Column.Length + Padding, schema.Width);
+            schema.Width = Math.Max(schema.Column.Length + RightPadding, schema.Width);
             schemas.Add(schema);
             return this;
         }

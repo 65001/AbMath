@@ -211,13 +211,13 @@ namespace AbMath.Calculator
                     Title = "Time"
                 });
 
-                times.Add(new Schema() { Column = "Type", Width = 30 });
-                times.Add(new Schema() {Column = "# Calls", Width = 8});
-                times.Add(new Schema() { Column = "Time (ms)", Width = 10 });
+                times.Add(new Schema("Type"));
+                times.Add(new Schema("# Calls"));
+                times.Add(new Schema("Time (ms)"));
 
-                times.Add(new Schema() { Column = "Ticks", Width = 8 });
-                times.Add(new Schema() { Column = "% Milliseconds", Width = 16 });
-                times.Add(new Schema() { Column = "% Ticks", Width = 9 });
+                times.Add(new Schema("Ticks"));
+                times.Add(new Schema("% Milliseconds"));
+                times.Add(new Schema("% Ticks"));
 
                 double miliseconds = TotalMilliseconds;
                 double steps = TotalSteps;
