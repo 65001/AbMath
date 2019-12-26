@@ -109,5 +109,21 @@ namespace AbMath.Calculator
             Logger?.Invoke(this, message);
         }
 
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode();
+        }
+
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            Rule temp = (Rule) obj;
+            return temp.Name == this.Name;
+        }
+
     }
 }

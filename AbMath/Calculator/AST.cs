@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using AbMath.Calculator.Simplifications;
+using CLI;
 
 namespace AbMath.Calculator
 {
@@ -69,6 +70,8 @@ namespace AbMath.Calculator
             GenerateDivisionSimplifications();
             GenerateMultiplicationSimplifications();
             GenerateAdditionSimplifications();
+            GenerateExponentSimplifications();
+            GenerateTrigSimplifications();
         }
 
         private void GenerateSqrtSimplifications()
@@ -254,6 +257,37 @@ namespace AbMath.Calculator
             //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
         }
 
+        private void GenerateExponentSimplifications()
+        {
+            Rule setRule = new Rule(Exponent.setRule, null, "Exponent Set Rule");
+            ruleManager.AddSetRule(SimplificationMode.Exponent, setRule);
+
+            Rule functionRaisedToOne = new Rule(Exponent.functionRaisedToOneRunnable, Exponent.functionRaisedToOne, "f(x)^1 -> f(x)");
+            Rule functionRaisedToZero = new Rule(Exponent.functionRaisedToZeroRunnable, Exponent.functionRaisedToZero, "f(x)^0 -> 1");
+            Rule zeroRaisedToConstant = new Rule(Exponent.zeroRaisedToConstantRunnable, Exponent.zeroRaisedToConstant, "0^c where c > 0 -> 0");
+            Rule oneRaisedToFunction = new Rule(Exponent.oneRaisedToFunctionRunnable, Exponent.oneRaisedToFunction, "1^(fx) -> 1");
+            Rule toDivision = new Rule(Exponent.toDivisionRunnable, Exponent.toDivision, "f(x)^-c -> 1/f(x)^c");
+            Rule toSqrt = new Rule(Exponent.toSqrtRunnable, Exponent.toSqrt, "f(x)^0.5 -> sqrt( f(x) )");
+            Rule exponentToExponent = new Rule(Exponent.ExponentToExponentRunnable, Exponent.ExponentToExponent,
+                "(f(x)^c)^a -> f(x)^[c * a]");
+            Rule negativeConstantRaisedToAPowerOfTwo = new Rule(Exponent.NegativeConstantRaisedToAPowerOfTwoRunnable, 
+                Exponent.NegativeConstantRaisedToAPowerOfTwo, "c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
+
+            ruleManager.Add(SimplificationMode.Exponent, functionRaisedToOne);
+            ruleManager.Add(SimplificationMode.Exponent, functionRaisedToZero);
+            ruleManager.Add(SimplificationMode.Exponent, zeroRaisedToConstant);
+            ruleManager.Add(SimplificationMode.Exponent, oneRaisedToFunction);
+            ruleManager.Add(SimplificationMode.Exponent, toDivision);
+            ruleManager.Add(SimplificationMode.Exponent, toSqrt);
+            ruleManager.Add(SimplificationMode.Exponent, exponentToExponent);
+            ruleManager.Add(SimplificationMode.Exponent, negativeConstantRaisedToAPowerOfTwo);
+        }
+
+        private void GenerateTrigSimplifications()
+        {
+
+        }
+
         public RPN.Node Generate(RPN.Token[] input)
         {
             Stopwatch SW = new Stopwatch();
@@ -285,6 +319,11 @@ namespace AbMath.Calculator
             ruleManager.Logger += Logger;
             //Let us generate the rules here if not already creates 
             GenerateRuleSetSimplifications();
+            ruleManager.debug = false;
+            if (debug)
+            {
+                ruleManager.debug = true;
+            }
 
             sw.Start();
             int pass = 0;
@@ -327,6 +366,13 @@ namespace AbMath.Calculator
             _data.AddTimeRecord("AST Simplify", sw);
 
             Normalize();
+
+            //Print the rule sets if requested!
+            if (debug)
+            {
+                Write(ruleManager.ToString());
+            }
+
             return this;
         }
 
@@ -397,7 +443,7 @@ namespace AbMath.Calculator
                 }
 
                 //This is the rule manager execution code
-                if (ruleManager.ContainsSet(mode) && (!ruleManager.HasSetRule(mode) || ruleManager.GetSetRule(mode).CanExecute(node)))
+                if (ruleManager.CanRunSet(mode, node))
                 {
                     RPN.Node assignment = ruleManager.Execute(mode, node);
                     if (assignment != null)
@@ -585,7 +631,7 @@ namespace AbMath.Calculator
                     }
                     else if (node.IsDivision() && node[0].IsMultiplication() && node[1].IsFunction("cos") && node[0, 0].IsFunction("sin") && node[0, 0, 0].Matches(node[1, 0]))
                     {
-                        Write("\tcos(x)/(f(x) * sin(x)) -> cot(x)/f(x)");
+                        Write("\tcos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
                         //cos(x)/[sin(x) * f(x)] -> cot(x)/f(x) is also implemented due to swapping rules. 
 
                         RPN.Node cot = new RPN.Node(new[] { node[1, 0] }, new RPN.Token("cot", 1, RPN.Type.Function));
@@ -618,8 +664,6 @@ namespace AbMath.Calculator
                     //[1 - cos(2x)]/2 = sin(x)^2
                     //[1 + cos(2x)]/2 = cos(x)^2
                     //[1 - cos(2x)]/[1 + cos(2x)] = tan(x)^2 
-
-
                 }
                 else if (mode == SimplificationMode.Swap)
                 {
@@ -647,78 +691,6 @@ namespace AbMath.Calculator
                             node.Children[1].Children[1].Remove(multiply);
                             node.Children[0].Children[1].Remove(new RPN.Node(1));
                         }
-                    }
-                }
-                else if (mode == SimplificationMode.Exponent && node.IsExponent())
-                {
-                    if (node[0].IsNumber(1))
-                    {
-                        Write("\tf(x)^1 -> f(x)");
-                        Assign(node, node[1]);
-                        node[0].Delete();
-                        node.Delete();
-                    }
-                    else if (node[0].IsNumber(0))
-                    {
-                        Write("\tf(x)^0 -> 1");
-                        node.Replace(1);
-                        node.Children.Clear();
-                    }
-                    else if (node[1].IsNumber(0) && node[0].IsGreaterThanNumber(0))
-                    {
-                        Write("\t0^c where c > 0 -> 0");
-                        node.Replace(0);
-                        node.Children.Clear();
-                    }
-                    else if (node[1].IsNumber(1))
-                    {
-                        Write("\t1^(fx) -> 1");
-                        node.Replace(1);
-                        node.Children.Clear();
-                    }
-                    else if (node[0].IsLessThanNumber(0))
-                    {
-                        RPN.Node powerClone = new RPN.Node(new[] { new RPN.Node(-1), node[0].Clone() },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node exponent = new RPN.Node(new[] { powerClone, node[1].Clone() },
-                            new RPN.Token("^", 2, RPN.Type.Operator));
-                        RPN.Node division = new RPN.Node(new[] { exponent, new RPN.Node(1) },
-                            new RPN.Token("/", 2, RPN.Type.Operator));
-                        Assign(node, division);
-                        Write($"\tf(x)^-c -> 1/f(x)^c");
-                    }
-                    else if (node[0].IsNumber(0.5))
-                    {
-                        RPN.Node sqrt = new RPN.Node(new[] { node[1].Clone() },
-                            new RPN.Token("sqrt", 1, RPN.Type.Function));
-                        Assign(node, sqrt);
-                        Write("\tf(x)^0.5 -> sqrt( f(x) )");
-                    }
-                    else if ((node[0].IsNumber() || node[0].IsConstant()) && node[1].IsExponent() &&
-                             (node[1,0].IsNumber() || node[1,0].IsConstant()))
-                    {
-                        Write("\t(f(x)^c)^a -> f(x)^[c * a]");
-                        RPN.Node multiply;
-
-                        if (node[0].IsNumber() && node[1,0].IsNumber())
-                        {
-                            multiply = new RPN.Node(node[0].GetNumber() * node[1,0].GetNumber());
-                        }
-                        else
-                        {
-                            multiply = new RPN.Node(new[] { node[0].Clone() , node[1,0].Clone() },
-                                new RPN.Token("*", 2, RPN.Type.Operator));
-                        }
-
-                        RPN.Node func = Clone(node[1,1]);
-                        RPN.Node exponent = new RPN.Node(new[] { multiply, func },
-                            new RPN.Token("^", 2, RPN.Type.Operator));
-                        Assign(node, exponent);
-                    }
-                    else if (node[0].IsNumberOrConstant() && node[1].IsLessThanNumber(0) && node[0].GetNumber() % 2 == 0)
-                    {
-                        Write("c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
-                        node.Replace(node[1], new RPN.Node(-1 * node[1].GetNumber()));
                     }
                 }
                 else if (mode == SimplificationMode.Constants)
@@ -2542,10 +2514,16 @@ namespace AbMath.Calculator
         public static Dictionary<AST.SimplificationMode, List<Rule>> ruleSet { get; private set; }
         public static Dictionary<AST.SimplificationMode, Rule> setRule { get; private set; }
 
+        private Dictionary<AST.SimplificationMode, Stopwatch> ruleSetTracker;
+        private Dictionary<AST.SimplificationMode, Stopwatch> canExecuteTracker;
+        private Dictionary<AST.SimplificationMode, int> hits; 
+
+        public bool debug;
+
         private static HashSet<Rule> contains;
         public event EventHandler<string> Logger;
         
-        public OptimizerRuleSet()
+        public OptimizerRuleSet(bool debugMode = false)
         {
             if (ruleSet == null)
             {
@@ -2560,6 +2538,15 @@ namespace AbMath.Calculator
             if (setRule == null)
             {
                 setRule = new Dictionary<AST.SimplificationMode, Rule>();
+            }
+
+            hits = new Dictionary<AST.SimplificationMode, int>();
+            debug = debugMode;
+
+            if (debug)
+            {
+                ruleSetTracker = new Dictionary<AST.SimplificationMode, Stopwatch>();
+                canExecuteTracker = new Dictionary<AST.SimplificationMode, Stopwatch>();
             }
         }
 
@@ -2585,6 +2572,18 @@ namespace AbMath.Calculator
             }
             //When the key does not exist we should create a list and add the rule onto it
             ruleSet.Add(mode, new List<Rule> {rule});
+            hits.Add(mode, 0);
+
+            if (debug)
+            {
+                Stopwatch sw = new Stopwatch();
+                sw.Reset();
+                ruleSetTracker.Add(mode, sw);
+
+                Stopwatch sw2 = new Stopwatch();
+                sw2.Reset();
+                canExecuteTracker.Add(mode, sw2);
+            }
         }
 
         public void AddSetRule(AST.SimplificationMode mode, Rule rule)
@@ -2621,15 +2620,52 @@ namespace AbMath.Calculator
             }
 
             List<Rule> rules = ruleSet[mode];
-            int length = rules.Count;
+            Stopwatch sw = null;
 
-            for (int i = 0; i < length; i++)
+            if (debug)
+            {
+                if (ruleSetTracker == null)
+                {
+                    ruleSetTracker = new Dictionary<AST.SimplificationMode, Stopwatch>();
+                }
+
+                if (ruleSetTracker.ContainsKey(mode))
+                {
+                    sw = ruleSetTracker[mode];
+                }
+                else
+                {
+                    sw = new Stopwatch();
+                    ruleSetTracker.Add(mode, sw);
+                }
+
+                sw.Start();
+            }
+
+            if (!hits.ContainsKey(mode))
+            {
+                hits.Add(mode, 0);
+            }
+
+            for (int i = 0; i < rules.Count; i++)
             {
                 Rule rule = rules[i];
                 if (rule.CanExecute(node))
                 {
-                    return rule.Execute(node);
+                    RPN.Node temp = rule.Execute(node);
+                    if (debug)
+                    {
+                        sw.Stop();
+                    }
+
+                    hits[mode] = hits[mode] + 1;
+                    return temp;
                 }
+            }
+
+            if (debug)
+            {
+                sw.Stop();
             }
 
             return null;
@@ -2645,6 +2681,39 @@ namespace AbMath.Calculator
             return setRule.ContainsKey(mode);
         }
 
+        public bool CanRunSet(AST.SimplificationMode mode, RPN.Node node)
+        {
+            if (debug)
+            {
+                if (canExecuteTracker == null)
+                {
+                    canExecuteTracker = new Dictionary<AST.SimplificationMode, Stopwatch>();
+                }
+
+                if (!canExecuteTracker.ContainsKey(mode))
+                {
+                    Stopwatch temp = new Stopwatch();
+                    temp.Reset();
+                    canExecuteTracker.Add(mode, temp);
+                }
+            }
+
+            bool result = false;
+            Stopwatch sw = null;
+            if (debug)
+            {
+                sw = canExecuteTracker[mode];
+                sw.Start();
+            }
+
+            result = ContainsSet(mode) && (!HasSetRule(mode) || GetSetRule(mode).CanExecute(node));
+            if (debug)
+            {
+                sw.Stop();
+            }
+            return result;
+        }
+
         private void Write(object obj, string message)
         {
             Write(message);
@@ -2657,19 +2726,44 @@ namespace AbMath.Calculator
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
-            foreach(var KV in ruleSet)
-            {
-                sb.Append($"{KV.Key} has {KV.Value.Count} rules");
-                if (setRule.ContainsKey(KV.Key))
-                {
-                    sb.Append(" and has a set rule");
-                }
+            return this.ToString(null);
+        }
 
-                sb.AppendLine();
+        public string ToString(string format)
+        {
+            Config config = new Config() { Format = Format.Default, Title = "Simplification Rule Set Overview" };
+            if (format == "%M")
+            {
+                config.Format = Format.MarkDown;
             }
 
-            return sb.ToString();
+            Tables<string> ruleTables = new Tables<string>(config);
+            ruleTables.Add(new Schema() {Column = "Name", Width = 25});
+            ruleTables.Add(new Schema() { Column = "Count", Width = 6 });
+            ruleTables.Add(new Schema() { Column = "Set Rule", Width = 10 });
+            ruleTables.Add(new Schema() {Column = "Execution Time (ms | Ticks)", Width = 25});
+            ruleTables.Add(new Schema() {Column = "Check Time (ms | Ticks)", Width = 25});
+            ruleTables.Add(new Schema() {Column = "Hits", Width = 4});
+
+            foreach(var KV in ruleSet)
+            {
+                string executionTime = "0";
+                string checkTime = "0";
+                string hit = "0";
+                if (debug && ruleSetTracker != null && ruleSetTracker.ContainsKey(KV.Key))
+                {
+                    executionTime = ruleSetTracker[KV.Key].ElapsedMilliseconds.ToString() + " | " + ruleSetTracker[KV.Key].ElapsedTicks.ToString("N0");
+                    checkTime = canExecuteTracker[KV.Key].ElapsedMilliseconds.ToString() + " | " + canExecuteTracker[KV.Key].ElapsedTicks.ToString("N0");
+                    hit = hits[KV.Key].ToString();
+                }
+                string[] row = new string[] { KV.Key.ToString(), KV.Value.Count.ToString(), setRule.ContainsKey(KV.Key) ? "✓" : "X", executionTime, checkTime, hit };
+                ruleTables.Add(row);
+            }
+
+            ruleTables.ToString();
+            ruleTables.Redraw();
+
+            return ruleTables.ToString();
         }
     }
 
