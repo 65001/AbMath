@@ -13,6 +13,18 @@ namespace AbMath.Utilities
 
     public struct Schema
     {
+        public Schema(string column)
+        {
+            this.Column = column;
+            this.Width = column.Length + Tables.Padding;
+        }
+
+        public Schema(string column, int width)
+        {
+            this.Column = column;
+            this.Width = width;
+        }
+
         public string Column { get; set; }
         public int Width { get; set; }
     }
@@ -86,7 +98,14 @@ namespace AbMath.Utilities
         public char BottomRight;
     }
 
-    public class Tables<T>
+    public class Tables
+    {
+        public const int LeftPadding = 1;
+        public const int RightPadding = 1;
+        public const int Padding = LeftPadding + RightPadding;
+    }
+
+    public class Tables<T> : Tables
     {
         private List<Schema> schemas;
         private List<T[]> data;
@@ -123,6 +142,13 @@ namespace AbMath.Utilities
 
         public Tables<T> Add(Schema schema)
         {
+            if (data.Count > 0)
+            {
+                //If we have data already we cannot add to the schema
+                throw new Exception("You cannot add to the schema after you have added a row to your table.");
+            }
+            //If the schema width is bad we should adjust it without telling the user! 
+            schema.Width = Math.Max(schema.Column.Length + Padding, schema.Width);
             schemas.Add(schema);
             return this;
         }
@@ -138,9 +164,7 @@ namespace AbMath.Utilities
 
                 if (row[i].ToString().Length > schemas[i].Width)
                 {
-                    Schema schema = schemas[i];
-                    schema.Width = row[i].ToString().Length;
-                    schemas[i] = schema;
+                    schemas[i] = new Schema(schemas[i].Column, row[i].ToString().Length + RightPadding); 
                 }
             }
             data.Add(row);
@@ -163,14 +187,26 @@ namespace AbMath.Utilities
 
             if (config.Format == Format.Default)
             {
-                sb.AppendLine($"{Sheet.TopLeft}{"".PadRight(sum, Sheet.Continue)}{Sheet.TopRight}");
-                sb.AppendLine(
-                    $"{Sheet.Down}{"".PadRight(floor - Length)}{config.Title}{"".PadRight(ceiling)}{Sheet.Down}");
-                sb.AppendLine(Lines(new char[] { Sheet.MidLeft, Sheet.MidTerminate, Sheet.MidRight }));
+                sb.Append(Sheet.TopLeft);
+                sb.Append(Sheet.Continue, sum);
+                sb.Append(Sheet.TopRight);
+                sb.AppendLine();
+
+                sb.Append(Sheet.Down);
+                sb.Append(' ', floor - Length);
+                sb.Append(config.Title);
+                sb.Append(' ', ceiling);
+                sb.Append(Sheet.Down);
+                sb.AppendLine();
+
+                Lines(new char[] {Sheet.MidLeft, Sheet.MidTerminate, Sheet.MidRight}, sb);
+                sb.AppendLine();
             }
             else
             {
-                sb.AppendLine($"# {config.Title}");
+                sb.Append("# ");
+                sb.Append(config.Title);
+                sb.AppendLine();
             }
 
             sb.Append(Sheet.Down);
@@ -178,7 +214,7 @@ namespace AbMath.Utilities
             for (int i = 0; i < schemas.Count; i++)
             {
                 int dif = schemas[i].Width - schemas[i].Column.Length;
-                sb.Append(Row(schemas[i].Column, dif, i));
+                Row(schemas[i].Column, dif, i, sb);
                 md?.Append("|-");
             }
 
@@ -192,35 +228,19 @@ namespace AbMath.Utilities
         {
             var sb = new StringBuilder();
             for (int i = 0; i < data.Count; i++)
-            {
-                sb.AppendLine( GenerateRow(i));
-            }
-            return sb.ToString();
-        }
+            { 
+                if (schemas.Count != data[i].Length)
+                {
+                    throw new ArgumentOutOfRangeException($"Was given {data[i].Length} args but expected {schemas.Count}");
+                }
 
-        public string GenerateNextRow()
-        {
-            return GenerateRow(data.Count - 1);
-        }
+                sb.Append(Sheet.Down);
+                for (int j = 0; j < schemas.Count; j++)
+                {
+                    Row(data[i][j].ToString() ?? string.Empty, schemas[j].Width - data[i][j].ToString().Length, j, sb);
+                }
 
-        private string GenerateRow(int index)
-        {
-            if (index > data.Count)
-            {
-                throw new IndexOutOfRangeException($"The Index was {index} but the max is {data.Count}!");
-            }
-
-            if (schemas.Count != data[index].Length)
-            {
-                throw new ArgumentOutOfRangeException($"Was given {data[index].Length} args but expected {schemas.Count}");
-            }
-
-
-            var sb = new StringBuilder();
-            sb.Append(Sheet.Down);
-            for (int i = 0; i < schemas.Count; i++)
-            {
-                sb.Append(Row(data[index][i].ToString() ?? string.Empty, schemas[i].Width - data[index][i].ToString().Length, i));
+                sb.Append("\n");
             }
             return sb.ToString();
         }
@@ -229,16 +249,16 @@ namespace AbMath.Utilities
         //any addtional footers?
         public string GenerateFooter()
         {
-            string footer = Lines(new char[] { Sheet.BottomLeft, Sheet.BottomTerminate, Sheet.BottomRight });
+            StringBuilder sb = new StringBuilder();
+            Lines(new char[] { Sheet.BottomLeft, Sheet.BottomTerminate, Sheet.BottomRight }, sb);
             if (cursor.Exists)
             {
                 cursor.endy = Console.CursorTop + 1;
             }
-            return footer;
+            return sb.ToString();
         }
 
-        private string Lines(char[] chars) {
-            var sb = new StringBuilder();
+        private void Lines(char[] chars, StringBuilder sb) {
             sb.Append(chars[0]);
 
             for (int i = 0; i < schemas.Count; i++)
@@ -253,24 +273,24 @@ namespace AbMath.Utilities
                 }
             }
             sb.Append($"{chars[2]}");
-
-            return sb.ToString();
         }
 
-        private string Row(string output, int dif, int i) {
-            var temp = string.Empty;
-            if (dif <= 0)
+        private void Row(string output, int dif, int i, StringBuilder sb) {
+            //If the diff is negative it means that the column is not big enough! 
+            if (dif < 0)
             {
                 //Overrides user width suggestion when an overflow occurs.
-                schemas[i] = new Schema { Column = schemas[i].Column, Width = schemas[i].Width + Math.Abs(dif) };
-                SuggestedRedraw = true;
-                temp = (i == 0) ? $"{output}{Sheet.Down}" : $" {output} {Sheet.Down}";
+                throw new Exception($"Table overflow occured!\n{config.Title}\n{output}\n{i}\n{dif}\n{schemas[i].Width}");
             }
-            else
+
+            if (i != 0)
             {
-                temp = (i == 0) ? $"{output}{"".PadRight(dif)} {Sheet.Down}" : $" {output}{"".PadRight(dif)} {Sheet.Down}";
+                sb.Append(" ");
             }
-            return temp;
+
+            sb.Append(output);
+            sb.Append(' ', dif + 1);
+            sb.Append(Sheet.Down);
         }
 
         private int TableWidth()
@@ -311,7 +331,12 @@ namespace AbMath.Utilities
 
         public override string ToString()
         {
-            return GenerateHeaders() +"\n"+ GenerateBody() + GenerateFooter();
+            StringBuilder sb = new StringBuilder();
+            sb.Append(GenerateHeaders());
+            sb.AppendLine();
+            sb.Append(GenerateBody());
+            sb.Append(GenerateFooter());
+            return sb.ToString();
         }
     }
 }

@@ -2738,8 +2738,10 @@ namespace AbMath.Calculator
             }
 
             Tables<string> ruleTables = new Tables<string>(config);
-            ruleTables.Add(new Schema() {Column = "Name", Width = 25});
-            ruleTables.Add(new Schema() { Column = "Count", Width = 6 });
+            ruleTables.Add(new Schema("Name"));
+
+            //I set the width to zero to test tables out for a bit, we should put it back to 6 when we are done
+            ruleTables.Add(new Schema() { Column = "Count", Width = 0 }); 
             ruleTables.Add(new Schema() { Column = "Set Rule", Width = 10 });
             ruleTables.Add(new Schema() {Column = "Execution Time (ms | Ticks)", Width = 27});
             ruleTables.Add(new Schema() {Column = "Check Time (ms | Ticks)", Width = 25});

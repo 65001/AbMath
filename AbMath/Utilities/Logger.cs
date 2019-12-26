@@ -26,16 +26,7 @@ namespace AbMath.Utilities
         public void Log(Channels channel, string message)
         {
             queues[channel].Enqueue(message);
-            Flush(channel);
-        }
 
-        public void Bind(Channels channel, EventHandler<string> handler)
-        {
-            handlers[channel] = handler;
-        }
-
-        private void Flush(Channels channel)
-        {
             //If there is no handler return
             if (!handlers.ContainsKey(channel) || handlers[channel] == null)
             {
@@ -52,6 +43,10 @@ namespace AbMath.Utilities
             }
         }
 
+        public void Bind(Channels channel, EventHandler<string> handler)
+        {
+            handlers[channel] = handler;
+        }
     }
 
     public enum Channels
