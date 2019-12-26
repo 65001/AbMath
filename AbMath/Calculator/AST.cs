@@ -51,12 +51,14 @@ namespace AbMath.Calculator
         public event EventHandler<string> Output;
 
         private OptimizerRuleSet ruleManager;
-        private Object loggingLock => _data.LockObject;
+
+        private Logger logger;
 
         public AST(RPN rpn)
         {
             _rpn = rpn;
             _data = rpn.Data;
+            logger = _data.Logger;
             RPN.Node.ResetCounter();
         }
 
@@ -316,8 +318,7 @@ namespace AbMath.Calculator
 
             Stopwatch sw = new Stopwatch();
 
-            ruleManager = new OptimizerRuleSet();
-            ruleManager.Logger += Logger;
+            ruleManager = new OptimizerRuleSet(logger);
             //Let us generate the rules here if not already creates 
             GenerateRuleSetSimplifications();
             ruleManager.debug = false;
@@ -2491,18 +2492,12 @@ namespace AbMath.Calculator
 
         private void Write(string message)
         {
-            lock (loggingLock)
-            {
-                Logger?.Invoke(this, message);
-            }
+            logger.Log(Channels.Debug, message);
         }
 
         private void stdout(string message)
         {
-            lock (loggingLock)
-            {
-                Output?.Invoke(this, message);
-            }
+            logger.Log(Channels.Output, message);
         }
     }
 
@@ -2524,10 +2519,10 @@ namespace AbMath.Calculator
 
         public bool debug;
 
+        private Logger logger;
         private static HashSet<Rule> contains;
-        public event EventHandler<string> Logger;
-        
-        public OptimizerRuleSet(bool debugMode = false)
+
+        public OptimizerRuleSet(Logger logger,bool debugMode = false)
         {
             if (ruleSet == null)
             {
@@ -2546,6 +2541,7 @@ namespace AbMath.Calculator
 
             hits = new Dictionary<AST.SimplificationMode, int>();
             debug = debugMode;
+            this.logger = logger;
 
             if (debug)
             {
@@ -2725,7 +2721,7 @@ namespace AbMath.Calculator
 
         private void Write(string message)
         {
-            Logger?.Invoke(this, message);
+            logger.Log(Channels.Debug, message);
         }
 
         public override string ToString()

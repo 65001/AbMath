@@ -7,13 +7,11 @@ namespace AbMath.Calculator
     public interface IShunt<T>
     {
         T[] ShuntYard(List<T> tokens);
-        event EventHandler<string> Logger;
     }
 
     public interface ITokenizer<T>
     {
         List<T> Tokenize();
-        event EventHandler<string> Logger;
     }
 
     public interface IEvaluator<T>

@@ -41,11 +41,12 @@ namespace AbMath.Calculator
             //See https://web.archive.org/web/20181008151605/http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
             private Stack<int> _arity;
 
-            public event EventHandler<string> Logger;
+            private Logger logger;
 
             public Shunt(DataStore dataStore)
             {
                 _dataStore = dataStore;
+                logger = dataStore.Logger;
 
                 _multiply = new Token("*", 2, Type.Operator);
                 _division = new Token("/", 2, Type.Operator);
@@ -499,10 +500,7 @@ namespace AbMath.Calculator
 
             void Write(string message)
             {
-                lock (_dataStore.LockObject)
-                {
-                    Logger?.Invoke(this, message);
-                }
+                logger.Log(Channels.Debug, message);
             }
         }
     }

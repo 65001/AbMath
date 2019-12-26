@@ -21,7 +21,6 @@ namespace AbMath.Calculator
             private List<Token> _tokens;
             private string _rule;
 
-            public event EventHandler<string> Logger;
 
             public Tokenizer(DataStore dataStore)
             {
@@ -248,22 +247,10 @@ namespace AbMath.Calculator
 
             private void Write(string message)
             {
-                if (_dataStore.DebugMode)
-                {
-                    lock (_dataStore.LockObject)
-                    {
-                        Logger?.Invoke(this, message);
-                    }
-                }
+                var logger = _dataStore.Logger;
+                logger.Log(Channels.Debug, message);
             }
 
-            private void Log(string message)
-            {
-                lock (_dataStore.LockObject)
-                {
-                    Logger?.Invoke(this, message);
-                }
-            }
         }
     }
 }

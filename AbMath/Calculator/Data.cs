@@ -27,6 +27,8 @@ namespace AbMath.Calculator
 
             protected internal object LockObject = new object();
 
+            protected internal Logger Logger;
+
             /// <summary>
             /// A list of all the functions that are supported
             /// by this calculator.
@@ -142,6 +144,7 @@ namespace AbMath.Calculator
 
                 _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
+                Logger = new Logger();
 
                 DefaultFunctions();
                 DefaultOperators();

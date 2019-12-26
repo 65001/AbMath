@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -143,20 +144,25 @@ namespace AbMath.Calculator
 
         public RPN Compute()
         {
-            _tokenizer.Logger += Logger;
-            Tokens = _tokenizer.Tokenize();
+            //We bind late because otherwise there is no way that someone can attach into 
+            //either of the below channels! 
+            Data.Logger.Bind(Channels.Debug, Logger);
+            Data.Logger.Bind(Channels.Output, Output);
 
-            _shunt.Logger += Logger;
+            Tokens = _tokenizer.Tokenize();
             Data.Polish = _shunt.ShuntYard( this.Tokens  );
 
             //Generate an Abstract Syntax Tree
+
+            var logger = Data.Logger;
+
             AST ast = new AST(this);
             ast.Output += Output;
             ast.Logger += Logger;
 
             ast.Generate(this.Data.Polish);
-           
-            Write("AST RPN : " + ast.Root.ToPostFix().Print());
+            
+            logger.Log(Channels.Debug, "AST RPN : " + ast.Root.ToPostFix().Print());
 
             //Simplify the Abstract Syntax Tree
             //This can take quite a lot of time
@@ -166,20 +172,13 @@ namespace AbMath.Calculator
             this.Data.Polish = ast.Root.ToPostFix().ToArray();
             this.Data.SimplifiedEquation = ast.Root.ToInfix();
 
-            Write("");
-            Write("AST Simplified RPN : " + this.Data.Polish.Print());
-            Write("AST Simplified Infix : " + this.Data.SimplifiedEquation);
-            Write( ast.Root.Print());
+            logger.Log(Channels.Debug, "");
+            logger.Log(Channels.Debug, "AST Simplified RPN : " + Data.Polish.Print());
+            logger.Log(Channels.Debug, "AST Simplified Infix : " + Data.SimplifiedEquation);
+            logger.Log(Channels.Debug, ast.Root.Print());
 
+            //TODO: We should flush the Logger here
             return this;
-        }
-
-        private void Write(string message)
-        {
-            lock (Data.LockObject)
-            {
-                Logger?.Invoke(this, message);
-            }
         }
     }
 }
