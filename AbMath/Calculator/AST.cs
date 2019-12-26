@@ -288,6 +288,32 @@ namespace AbMath.Calculator
 
         private void GenerateTrigSimplifications()
         {
+            //TODO:
+            //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
+            //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
+            //sin(x)/[f(x) * cos(x)] -> tan(x)/f(x)
+            //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x) 
+
+            //TODO: [1 + tan(f(x))^2] -> sec(f(x))^2
+            //TODO: [cot(f(x))^2 + 1] -> csc(f(x))^2
+
+            //These will probably violate domain constraints ?
+            //TODO: sec(x)^2 - tan(x)^2 = 1
+            //TODO: cot(x)^2 + 1 = csc(x)^2 
+            //TODO: csc(x)^2 - cot(x)^2 = 1
+
+            //TODO: Double Angle
+            //[cos(x)^2 - sin(x)^2] = cos(2x)
+            //1 - 2sin(x)^2 = cos(2x)
+            //2cos(x)^2 - 1 = cos(2x) 
+            //2sin(x)cos(x) = sin(2x)
+            //[2tan(x)]/1 - tan(x)^2] = tan(2x) 
+
+            //TODO: Power Reducing 
+            //[1 - cos(2x)]/2 = sin(x)^2
+            //[1 + cos(2x)]/2 = cos(x)^2
+            //[1 - cos(2x)]/[1 + cos(2x)] = tan(x)^2 
+
 
         }
 
@@ -637,32 +663,6 @@ namespace AbMath.Calculator
                         RPN.Node division = new RPN.Node(new[] { node[0, 1], cot }, new RPN.Token("/", 2, RPN.Type.Operator));
                         Assign(node, division);
                     }
-                    //TODO:
-                    //[f(x) * cos(x)]/[g(x) * sin(x)] -> [f(x) * cot(x)]/g(x) 
-
-                    //[f(x) * sin(x)]/cos(x) -> f(x) * tan(x)
-                    //sin(x)/[f(x) * cos(x)] -> tan(x)/f(x)
-                    //[f(x) * sin(x)]/[g(x) * cos(x)] -> [f(x) * tan(x)]/g(x) 
-
-                    //TODO: [1 + tan(f(x))^2] -> sec(f(x))^2
-                    //TODO: [cot(f(x))^2 + 1] -> csc(f(x))^2
-
-                    //These will probably violate domain constraints ?
-                    //TODO: sec(x)^2 - tan(x)^2 = 1
-                    //TODO: cot(x)^2 + 1 = csc(x)^2 
-                    //TODO: csc(x)^2 - cot(x)^2 = 1
-
-                    //TODO: Double Angle
-                    //[cos(x)^2 - sin(x)^2] = cos(2x)
-                    //1 - 2sin(x)^2 = cos(2x)
-                    //2cos(x)^2 - 1 = cos(2x) 
-                    //2sin(x)cos(x) = sin(2x)
-                    //[2tan(x)]/1 - tan(x)^2] = tan(2x) 
-
-                    //TODO: Power Reducing 
-                    //[1 - cos(2x)]/2 = sin(x)^2
-                    //[1 + cos(2x)]/2 = cos(x)^2
-                    //[1 - cos(2x)]/[1 + cos(2x)] = tan(x)^2 
                 }
                 else if (mode == SimplificationMode.Swap)
                 {
@@ -1943,8 +1943,9 @@ namespace AbMath.Calculator
                     RPN.Node subtraction = new RPN.Node(new[] { new RPN.Node(1), exponent },
                         new RPN.Token("-", 2, RPN.Type.Operator));
                     RPN.Node sqrt = new RPN.Node(new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node abs = new RPN.Node(new[] { body.Clone() }, new RPN.Token("abs", 1, RPN.Type.Function));
                     RPN.Node denominator =
-                        new RPN.Node(new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        new RPN.Node(new[] { sqrt, abs }, new RPN.Token("*", 2, RPN.Type.Operator));
 
                     RPN.Node division = new RPN.Node(new[] { denominator, bodyDerive },
                         new RPN.Token("/", 2, RPN.Type.Operator));
@@ -1975,8 +1976,9 @@ namespace AbMath.Calculator
                     RPN.Node subtraction = new RPN.Node(new[] { new RPN.Node(1), exponent },
                         new RPN.Token("-", 2, RPN.Type.Operator));
                     RPN.Node sqrt = new RPN.Node(new[] { subtraction }, new RPN.Token("sqrt", 1, RPN.Type.Function));
+                    RPN.Node abs = new RPN.Node(new[] { body.Clone() }, new RPN.Token("abs", 1, RPN.Type.Function));
                     RPN.Node denominator =
-                        new RPN.Node(new[] { sqrt, Clone(body) }, new RPN.Token("*", 2, RPN.Type.Operator));
+                        new RPN.Node(new[] { sqrt, abs }, new RPN.Token("*", 2, RPN.Type.Operator));
                     RPN.Node multiplication = new RPN.Node(new[] { new RPN.Node(-1), bodyDerive },
                         new RPN.Token("*", 2, RPN.Type.Operator));
                     RPN.Node division = new RPN.Node(new[] { denominator, multiplication },
