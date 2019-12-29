@@ -631,15 +631,31 @@ namespace AbMath.Calculator
                 {
                     return;
                 }
+                
+                //These are attempts to change how the infix prints
+                //to remove excessive paranthesis 
+                bool startOfSequence = infix.Length == 0;
+                if (node.Parent != null && node.Parent.IsFunction())
+                {
+                    startOfSequence = true;
+                }
 
                 //Operators with left and right
                 if (node.Children.Count == 2 && node.Token.IsOperator())
                 {
-                    infix.Append("(");
+                    if (!startOfSequence) { 
+                        infix.Append("(");
+                    }
+
                     Infix(node.Children[1], infix);
                     infix.Append(node.Token.Value);
                     Infix(node.Children[0], infix);
-                    infix.Append(")");
+
+                    if (!startOfSequence)
+                    {
+                        infix.Append(")");
+                    }
+
                     return;
                 }
 
@@ -651,8 +667,7 @@ namespace AbMath.Calculator
                     return;
                 }
 
-                //Functions
-                //Functions
+                //Functions that have at least one child
                 if (node.Children.Count > 0 && node.Token.IsFunction())
                 {
                     infix.Append(node.Token.Value);
