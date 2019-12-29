@@ -22,7 +22,7 @@ namespace AbMath.Calculator
         ///  Addition -
         ///  Multiplication -
         ///  Swap - 
-        ///  Trig - 
+        ///  Trig - All other trig conversions. [Currently encomposes all the below trig rules]
         ///  Trig Half Angle - Converts fractions to trig functions when appropriate
         ///  Trig Half Angle Expansion - Converts trig functions to fractions
         ///  Power Reduction -  Converts trig functions to fractions
@@ -110,8 +110,8 @@ namespace AbMath.Calculator
             Rule logSummation = new Rule(Log.LogSummationRunnable, Log.LogSummation, "log(b,R) + log(b,S) -> log(b,R*S)");
             Rule logSubtraction = new Rule(Log.LogSubtractionRunnable, Log.LogSubtraction, "log(b,R) - log(b,S) -> log(b,R/S)");
 
-            //TODO: lnPower e^ln(x) -> x
-            //TODO: log(b,R^c)
+            //TODO: lnPower e^ln(f(x)) -> f(x)
+            //TODO: log(b,R^c) -> c * log(b,R)
             //TODO: ln(e) -> 1
 
             Rule lnSummation = new Rule(Log.LnSummationRunnable, Log.LnSummation, "ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
@@ -310,11 +310,22 @@ namespace AbMath.Calculator
             //[2tan(x)]/1 - tan(x)^2] = tan(2x) 
 
             //TODO: Power Reducing 
-            //[1 - cos(2x)]/2 = sin(x)^2
-            //[1 + cos(2x)]/2 = cos(x)^2
-            //[1 - cos(2x)]/[1 + cos(2x)] = tan(x)^2 
+            //[1 - cos(2x)]/2 <- sin(x)^2
+            //[1 + cos(2x)]/2 <- cos(x)^2
+            //[1 - cos(2x)]/[1 + cos(2x)] <- tan(x)^2 
 
+            //TODO: Power Expansion 
+            //[1 - cos(2x)]/2 -> sin(x)^2
+            //[1 + cos(2x)]/2 -> cos(x)^2
+            //[1 - cos(2x)]/[1 + cos(2x)] -> tan(x)^2 
 
+            Rule TrigIdentitySinToCos = new Rule(Trig.TrigIdentitySinToCosRunnable, Trig.TrigIdentitySinToCos, "1 - sin(x)^2 -> cos(x)^2");
+            Rule TrigIdentityCosToSin = new Rule(Trig.TrigIdentityCosToSinRunnable, Trig.TrigIdentityCosToSin, "1 - cos(x) ^ 2->sin(x) ^ 2");
+            Rule CosOverSinToCot = new Rule(Trig.CosOverSinToCotComplexRunnable, Trig.CosOverSinToCotComplex, "cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
+
+            ruleManager.Add(SimplificationMode.Trig, TrigIdentitySinToCos);
+            ruleManager.Add(SimplificationMode.Trig, TrigIdentityCosToSin);
+            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCot);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -639,29 +650,6 @@ namespace AbMath.Calculator
                         RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[0].Children[1] },
                             new RPN.Token("*", 2, RPN.Type.Operator));
                         Assign(node, multiplication);
-                    }
-                    else if (node.IsSubtraction() && node[0].IsExponent() && node[1].IsNumber(1) && node[0, 0].IsNumber(2) && node[0, 1].IsFunction("sin"))
-                    {
-                        Write("\t1 - sin(x)^2 -> cos(x)^2");
-                        RPN.Node cos = new RPN.Node(new[] { node[0, 1, 0] }, new RPN.Token("cos", 1, RPN.Type.Function));
-                        RPN.Node exponent = new RPN.Node(new[] { node[0, 0], cos }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        Assign(node, exponent);
-                    }
-                    else if (node.IsSubtraction() && node[0].IsExponent() && node[1].IsNumber(1) && node[0, 0].IsNumber(2) && node[0, 1].IsFunction("cos"))
-                    {
-                        Write("\t1 - cos(x)^2 -> sin(x)^2");
-                        RPN.Node sin = new RPN.Node(new[] { node[0, 1, 0] }, new RPN.Token("sin", 1, RPN.Type.Function));
-                        RPN.Node exponent = new RPN.Node(new[] { node[0, 0], sin }, new RPN.Token("^", 2, RPN.Type.Operator));
-                        Assign(node, exponent);
-                    }
-                    else if (node.IsDivision() && node[0].IsMultiplication() && node[1].IsFunction("cos") && node[0, 0].IsFunction("sin") && node[0, 0, 0].Matches(node[1, 0]))
-                    {
-                        Write("\tcos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
-                        //cos(x)/[sin(x) * f(x)] -> cot(x)/f(x) is also implemented due to swapping rules. 
-
-                        RPN.Node cot = new RPN.Node(new[] { node[1, 0] }, new RPN.Token("cot", 1, RPN.Type.Function));
-                        RPN.Node division = new RPN.Node(new[] { node[0, 1], cot }, new RPN.Token("/", 2, RPN.Type.Operator));
-                        Assign(node, division);
                     }
                 }
                 else if (mode == SimplificationMode.Swap)
