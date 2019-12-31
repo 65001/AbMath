@@ -319,13 +319,14 @@ namespace AbMath.Calculator
             //[1 + cos(2x)]/2 -> cos(x)^2
             //[1 - cos(2x)]/[1 + cos(2x)] -> tan(x)^2 
 
+
             Rule TrigIdentitySinToCos = new Rule(Trig.TrigIdentitySinToCosRunnable, Trig.TrigIdentitySinToCos, "1 - sin(x)^2 -> cos(x)^2");
             Rule TrigIdentityCosToSin = new Rule(Trig.TrigIdentityCosToSinRunnable, Trig.TrigIdentityCosToSin, "1 - cos(x) ^ 2->sin(x) ^ 2");
-            Rule CosOverSinToCot = new Rule(Trig.CosOverSinToCotComplexRunnable, Trig.CosOverSinToCotComplex, "cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
+            Rule CosOverSinToCotComplex = new Rule(Trig.CosOverSinToCotComplexRunnable, Trig.CosOverSinToCotComplex, "cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
 
             ruleManager.Add(SimplificationMode.Trig, TrigIdentitySinToCos);
             ruleManager.Add(SimplificationMode.Trig, TrigIdentityCosToSin);
-            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCot);
+            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCotComplex);
         }
 
         public RPN.Node Generate(RPN.Token[] input)

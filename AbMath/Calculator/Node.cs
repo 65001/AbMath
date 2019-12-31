@@ -18,13 +18,15 @@ namespace AbMath.Calculator
             private List<Node> _children;
 
             private MD5 _md5;
+
+            private static object myLock = new object();
             private static int counter = 0;
 
             public Node(Node[] children, Token token)
             {
                 this._children = new List<Node>();
                 AssignChildren(children);
-                this.ID = counter++;
+                this.ID = NextCounter();
                 Parent = null;
                 Token = token;
             }
@@ -32,7 +34,7 @@ namespace AbMath.Calculator
             public Node(double number)
             {
                 _children = new List<Node>(0);
-                this.ID = counter++;
+                this.ID = NextCounter();
                 Parent = null;
                 Token = new RPN.Token(number);
             }
@@ -40,7 +42,7 @@ namespace AbMath.Calculator
             public Node(Token token)
             {
                 _children = new List<Node>(0);
-                this.ID = counter++;
+                this.ID = NextCounter();
                 Parent = null;
                 Token = token;
             }
@@ -113,7 +115,7 @@ namespace AbMath.Calculator
             /// <param name="node">The replacement</param>
             public void Replace(int identification, Node node)
             {
-                for (int i = 0; i < Children.Count; i++)
+                for (int i = 0; i < _children.Count; i++)
                 {
                     if (_children[i].ID == identification)
                     {
@@ -147,7 +149,7 @@ namespace AbMath.Calculator
                     return;
                 }
 
-                this.ID = counter++;
+                this.ID = NextCounter();
                 this.Token.Value = number.ToString();
             }
 
@@ -158,7 +160,7 @@ namespace AbMath.Calculator
             /// <param name="token"></param>
             public void Replace(RPN.Token token)
             {
-                this.ID = counter++;
+                this.ID = NextCounter();
                 this.Token = token;
             }
 
@@ -169,7 +171,7 @@ namespace AbMath.Calculator
             /// <param name="token"></param>
             public void Replace(string token)
             {
-                this.ID = counter++;
+                this.ID = NextCounter();
                 this.Token.Value = token;
             }
 
@@ -210,6 +212,7 @@ namespace AbMath.Calculator
             public void Delete()
             {
                 Parent = null;
+                Token = null;
                 _children.Clear();
             }
 
@@ -692,7 +695,24 @@ namespace AbMath.Calculator
 
             public static void ResetCounter()
             {
-                counter = 0;
+                MutateCounter(0);
+            }
+
+            public static int NextCounter()
+            {
+                lock (myLock)
+                {
+                    counter++;
+                }
+                return counter;
+            }
+
+            private static void MutateCounter(int value)
+            {
+                lock (myLock)
+                {
+                    counter = value;
+                }
             }
 
             public override bool Equals(Object obj)

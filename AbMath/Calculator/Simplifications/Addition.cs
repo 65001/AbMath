@@ -84,7 +84,7 @@ namespace AbMath.Calculator.Simplifications
         public static bool AdditionToSubtractionRuleOneRunnable(RPN.Node node)
         {
             return !(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() &&
-                   node[0, 1].IsLessThanNumber(0);
+                   node[0, 1].IsNumber(-1);
         }
 
         public static RPN.Node AdditionToSubtractionRuleOne(RPN.Node node)
