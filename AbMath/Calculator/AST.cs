@@ -537,9 +537,8 @@ namespace AbMath.Calculator
                             Assign(node, assignment);
                         }
                     }
-                } 
-                
-                if (mode == SimplificationMode.Swap)
+                }
+                else if (mode == SimplificationMode.Swap)
                 {
                     //We can do complex swapping in here
                     if (node.IsMultiplication() && node.Children[0].IsMultiplication() &&
