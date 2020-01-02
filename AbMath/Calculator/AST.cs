@@ -320,11 +320,14 @@ namespace AbMath.Calculator
             //[1 - cos(2x)]/[1 + cos(2x)] -> tan(x)^2 
 
             //Complex Conversions
-            Rule CosOverSinToCot = new Rule(Trig.CosOverSinComplexRunnable, Trig.CosOverSinComplex, "[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
-
-            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCot);
+            Rule CosOverSinToCotComplex = new Rule(Trig.CosOverSinComplexRunnable, Trig.CosOverSinComplex, "[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
+            Rule CosOverSinToCotComplexTwo = new Rule(Trig.CosOverSinToCotComplexRunnable, Trig.CosOverSinToCotComplex, "cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
+            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCotComplex);
+            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCotComplexTwo);
 
             //Simple Conversions 
+            Rule CosOverSinToCot = new Rule(Trig.CosOverSinToCotRunnable, Trig.CosOverSinToCot, "cos(x)/sin(x) -> cot(x)");
+            Rule SinOverCosToTan = new Rule(Trig.SinOverCosRunnable, Trig.SinOverCos, "sin(x)/cos(x) -> tan(x)");
             Rule SecUnderToCos = new Rule(Trig.SecUnderToCosRunnable, Trig.SecUnderToCos, "f(x)/sec(g(x)) -> f(x)cos(g(x))");
             Rule CscUnderToSin = new Rule(Trig.CscUnderToSinRunnable, Trig.CscUnderToSin, "f(x)/csc(g(x)) -> f(x)sin(g(x))");
             Rule CotUnderToTan = new Rule(Trig.CotUnderToTanRunnable, Trig.CotUnderToTan, "f(x)/cot(g(x)) -> f(x)tan(g(x))");
@@ -332,6 +335,8 @@ namespace AbMath.Calculator
             Rule SinUnderToCsc = new Rule(Trig.SinUnderToCscRunnable, Trig.SinUnderToCsc, "f(x)/sin(g(x)) -> f(x)csc(g(x))");
             Rule TanUnderToCot = new Rule(Trig.TanUnderToCotRunnable, Trig.TanUnderToCot, "f(x)/tan(g(x)) -> f(x)cot(g(x))");
 
+            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCot);
+            ruleManager.Add(SimplificationMode.Trig, SinOverCosToTan);
             ruleManager.Add(SimplificationMode.Trig, SecUnderToCos);
             ruleManager.Add(SimplificationMode.Trig, CscUnderToSin);
             ruleManager.Add(SimplificationMode.Trig, CotUnderToTan);
@@ -358,12 +363,13 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Trig, CscOdd);
 
             Rule TrigIdentitySinToCos = new Rule(Trig.TrigIdentitySinToCosRunnable, Trig.TrigIdentitySinToCos, "1 - sin(x)^2 -> cos(x)^2");
-            Rule TrigIdentityCosToSin = new Rule(Trig.TrigIdentityCosToSinRunnable, Trig.TrigIdentityCosToSin, "1 - cos(x) ^ 2->sin(x) ^ 2");
-            Rule CosOverSinToCotComplex = new Rule(Trig.CosOverSinToCotComplexRunnable, Trig.CosOverSinToCotComplex, "cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
-
+            Rule TrigIdentityCosToSin = new Rule(Trig.TrigIdentityCosToSinRunnable, Trig.TrigIdentityCosToSin, "1 - cos(x)^2 -> sin(x)^2");
+            Rule TrigIdentitySinPlusCos = new Rule(Trig.TrigIdentitySinPlusCosRunnable, Trig.TrigIdentitySinPlusCos, "sin²(x) + cos²(x) -> 1");
+            
+            ruleManager.Add(SimplificationMode.Trig, TrigIdentitySinPlusCos);
             ruleManager.Add(SimplificationMode.Trig, TrigIdentitySinToCos);
             ruleManager.Add(SimplificationMode.Trig, TrigIdentityCosToSin);
-            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCotComplex);
+            
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -531,49 +537,9 @@ namespace AbMath.Calculator
                             Assign(node, assignment);
                         }
                     }
-                }
-
-                if (mode == SimplificationMode.Trig)
-                {
-
-                    if (node.IsAddition() &&
-                        node.Children[0].IsExponent() &&
-                        node.Children[1].IsExponent() &&
-                        node.Children[0].Children[0].IsNumber(2) &&
-                        node.Children[1].Children[0].IsNumber(2) &&
-                        (node.Children[0].Children[1].IsFunction("cos") ||
-                         node.Children[0].Children[1].IsFunction("sin")) &&
-                        (node.Children[1].Children[1].IsFunction("sin") ||
-                         node.Children[1].Children[1].IsFunction("cos")) &&
-                        !node.ChildrenAreIdentical() &&
-                        !node.containsDomainViolation() &&
-                        node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0])
-                    )
-                    {
-                        RPN.Node head = new RPN.Node(1);
-                        Write("\tsin²(x) + cos²(x) -> 1");
-                        Assign(node, head);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("sin") &&
-                             node.Children[1].IsFunction("cos") &&
-                             node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
-                    {
-                        Write("\tcos(x)/sin(x) -> cot(x)");
-                        RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("cot", 1, RPN.Type.Function));
-                        Assign(node, cot);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("cos") &&
-                             node.Children[1].IsFunction("sin") &&
-                             node.Children[0].Children[0].Matches(node.Children[1].Children[0]))
-                    {
-                        Write("\tsin(x)/cos(x) -> tan(x)");
-                        RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("tan", 1, RPN.Type.Function));
-                        Assign(node, tan);
-                    }
-                }
-                else if (mode == SimplificationMode.Swap)
+                } 
+                
+                if (mode == SimplificationMode.Swap)
                 {
                     //We can do complex swapping in here
                     if (node.IsMultiplication() && node.Children[0].IsMultiplication() &&

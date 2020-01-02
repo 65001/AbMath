@@ -238,6 +238,27 @@ namespace AbMath.Calculator.Simplifications
             return exponent;
         }
 
+        public static bool TrigIdentitySinPlusCosRunnable(RPN.Node node)
+        {
+            return node.IsAddition() &&
+                   node.Children[0].IsExponent() &&
+                   node.Children[1].IsExponent() &&
+                   node.Children[0].Children[0].IsNumber(2) &&
+                   node.Children[1].Children[0].IsNumber(2) &&
+                   (node.Children[0].Children[1].IsFunction("cos") ||
+                    node.Children[0].Children[1].IsFunction("sin")) &&
+                   (node.Children[1].Children[1].IsFunction("sin") ||
+                    node.Children[1].Children[1].IsFunction("cos")) &&
+                   !node.ChildrenAreIdentical() &&
+                   !node.containsDomainViolation() &&
+                   node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0]);
+        }
+
+        public static RPN.Node TrigIdentitySinPlusCos(RPN.Node node)
+        {
+            return new RPN.Node(1);
+        }
+
         public static bool CosOverSinToCotComplexRunnable(RPN.Node node)
         {
             return node.IsDivision() && node[0].IsMultiplication() && node[1].IsFunction("cos") &&
