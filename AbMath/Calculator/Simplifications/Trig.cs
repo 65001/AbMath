@@ -241,17 +241,15 @@ namespace AbMath.Calculator.Simplifications
         public static bool TrigIdentitySinPlusCosRunnable(RPN.Node node)
         {
             return node.IsAddition() &&
-                   node.Children[0].IsExponent() &&
-                   node.Children[1].IsExponent() &&
-                   node.Children[0].Children[0].IsNumber(2) &&
-                   node.Children[1].Children[0].IsNumber(2) &&
-                   (node.Children[0].Children[1].IsFunction("cos") ||
-                    node.Children[0].Children[1].IsFunction("sin")) &&
-                   (node.Children[1].Children[1].IsFunction("sin") ||
-                    node.Children[1].Children[1].IsFunction("cos")) &&
+                   node[0].IsExponent() &&
+                   node[1].IsExponent() &&
+                   node[0,0].IsNumber(2) &&
+                   node[1,0].IsNumber(2) &&
+                   (node[0,1].IsFunction("cos") || node[0,1].IsFunction("sin")) &&
+                   (node[1,1].IsFunction("sin") || node[1,1].IsFunction("cos")) &&
                    !node.ChildrenAreIdentical() &&
                    !node.containsDomainViolation() &&
-                   node.Children[0].Children[1].Children[0].Matches(node.Children[1].Children[1].Children[0]);
+                   node[0,1,0].Matches(node[1,1,0]);
         }
 
         public static RPN.Node TrigIdentitySinPlusCos(RPN.Node node)
