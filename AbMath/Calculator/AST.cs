@@ -319,7 +319,25 @@ namespace AbMath.Calculator
             //[1 + cos(2x)]/2 -> cos(x)^2
             //[1 - cos(2x)]/[1 + cos(2x)] -> tan(x)^2 
 
-            //Complex Conversions 
+            //Complex Conversions
+            Rule CosOverSinToCot = new Rule(Trig.CosOverSinComplexRunnable, Trig.CosOverSinComplex, "[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
+
+            ruleManager.Add(SimplificationMode.Trig, CosOverSinToCot);
+
+            //Simple Conversions 
+            Rule SecUnderToCos = new Rule(Trig.SecUnderToCosRunnable, Trig.SecUnderToCos, "f(x)/sec(g(x)) -> f(x)cos(g(x))");
+            Rule CscUnderToSin = new Rule(Trig.CscUnderToSinRunnable, Trig.CscUnderToSin, "f(x)/csc(g(x)) -> f(x)sin(g(x))");
+            Rule CotUnderToTan = new Rule(Trig.CotUnderToTanRunnable, Trig.CotUnderToTan, "f(x)/cot(g(x)) -> f(x)tan(g(x))");
+            Rule CosUnderToSec = new Rule(Trig.CosUnderToSecRunnable, Trig.CosUnderToSec, "f(x)/cos(g(x)) -> f(x)sec(g(x))");
+            Rule SinUnderToCsc = new Rule(Trig.SinUnderToCscRunnable, Trig.SinUnderToCsc, "f(x)/sin(g(x)) -> f(x)csc(g(x))");
+            Rule TanUnderToCot = new Rule(Trig.TanUnderToCotRunnable, Trig.TanUnderToCot, "f(x)/tan(g(x)) -> f(x)cot(g(x))");
+
+            ruleManager.Add(SimplificationMode.Trig, SecUnderToCos);
+            ruleManager.Add(SimplificationMode.Trig, CscUnderToSin);
+            ruleManager.Add(SimplificationMode.Trig, CotUnderToTan);
+            ruleManager.Add(SimplificationMode.Trig, CosUnderToSec);
+            ruleManager.Add(SimplificationMode.Trig, SinUnderToCsc);
+            ruleManager.Add(SimplificationMode.Trig, TanUnderToCot);
 
             //Even Identity 
             Rule CosEven = new Rule(Trig.CosEvenIdentityRunnable, Trig.CosEvenIdentity, "cos(-f(x)) -> cos(f(x))");
@@ -553,71 +571,6 @@ namespace AbMath.Calculator
                         RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] },
                             new RPN.Token("tan", 1, RPN.Type.Function));
                         Assign(node, tan);
-                    }
-                    else if (node.IsDivision() && node.Children[1].IsMultiplication() &&
-                             node.Children[0].IsFunction("sin") && node.Children[1].Children[0].IsFunction("cos") &&
-                             node.Children[0].Children[0].Matches(node.Children[1].Children[0].Children[0]))
-                    {
-                        Write("\t[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
-                        RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("cot", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1].Children[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiplication);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("sec"))
-                    {
-                        Write("\tf(x)/sec(g(x)) -> f(x)cos(g(x))");
-                        RPN.Node cos = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("cos", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] { cos, node.Children[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiplication);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("csc"))
-                    {
-                        Write("\tf(x)/csc(g(x)) -> f(x)sin(g(x))");
-                        RPN.Node sin = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("sin", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] { sin, node.Children[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiplication);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("cot"))
-                    {
-                        Write("\tf(x)/cot(g(x)) -> f(x)tan(g(x))");
-                        RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("tan", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] { tan, node.Children[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiplication);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("cos"))
-                    {
-                        Write("\tf(x)/cos(g(x)) -> f(x)sec(g(x))");
-                        RPN.Node sec = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("sec", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] { sec, node.Children[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiplication);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("sin"))
-                    {
-                        Write("\tf(x)/sin(g(x)) -> f(x)csc(g(x))");
-                        RPN.Node csc = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("csc", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] { csc, node.Children[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiplication);
-                    }
-                    else if (node.IsDivision() && node.Children[0].IsFunction("tan"))
-                    {
-                        Write("\tf(x)/tan(g(x)) -> f(x)cot(g(x))");
-                        RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                            new RPN.Token("cot", 1, RPN.Type.Function));
-                        RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1] },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
-                        Assign(node, multiplication);
                     }
                 }
                 else if (mode == SimplificationMode.Swap)
