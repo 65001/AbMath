@@ -18,7 +18,7 @@ namespace AbMath.Tests
         public void ComplexIncreaseExponent()
         {
             RPN rpn = new RPN("(x(x + 1))(x(x + 1))(x(x + 1))").Compute();
-            Assert.AreEqual("x 1 + x * 3 ^", rpn.Polish.Print());
+            Assert.AreEqual("x 1 + 3 ^ x 3 ^ *", rpn.Polish.Print());
         }
 
         [Test]
@@ -69,8 +69,8 @@ namespace AbMath.Tests
         [Test]
         public void LnAddOrSub()
         {
-            RPN rpn = new RPN("ln(2) + ln(1/2)").Compute();
-            Assert.AreEqual("1 ln", rpn.Polish.Print());
+            RPN rpn = new RPN("ln(2) + ln(1/3)").Compute();
+            Assert.AreEqual("2 3 / ln", rpn.Polish.Print());
 
             rpn.SetEquation("ln(2) - ln(3)").Compute();
             Assert.AreEqual("2 3 / ln", rpn.Polish.Print());
@@ -160,6 +160,9 @@ namespace AbMath.Tests
 
             rpn.SetEquation("(2x)^log(2x,2)").Compute();
             Assert.AreEqual("2", rpn.Polish.Print());
+
+            rpn.SetEquation("ln(x^2)").Compute();
+            Assert.AreEqual("2 x ln *", rpn.Polish.Print());
         }
 
         [Test]
@@ -292,6 +295,13 @@ namespace AbMath.Tests
 
             rpn.SetEquation("cos(x^3)/(sin(x^3) * x^2)").Compute();
             Assert.AreEqual("x 3 ^ cot x 2 ^ /", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void LnPowerRule()
+        {
+            RPN rpn = new RPN("ln(x^2)").Compute();
+            Assert.AreEqual("2 x ln *", rpn.Polish.Print());
         }
     }
 }

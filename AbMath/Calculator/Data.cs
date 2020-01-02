@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -24,6 +24,10 @@ namespace AbMath.Calculator
 
             private List<TimeRecord> _time;
             private readonly Dictionary<string, string> _variableStore;
+
+            protected internal object LockObject = new object();
+
+            protected internal Logger Logger;
 
             /// <summary>
             /// A list of all the functions that are supported
@@ -124,7 +128,7 @@ namespace AbMath.Calculator
             /// Determines the default format of CLI Tables
             /// based on the value of MarkdownTables
             /// </summary>
-            public Format DefaultFormat => (MarkdownTables) ? CLI.Format.MarkDown : CLI.Format.Default ;
+            public Format DefaultFormat => (MarkdownTables) ? Utilities.Format.MarkDown : Utilities.Format.Default ;
 
             public DataStore(string equation)
             {
@@ -140,6 +144,7 @@ namespace AbMath.Calculator
 
                 _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
+                Logger = new Logger();
 
                 DefaultFunctions();
                 DefaultOperators();
@@ -206,13 +211,13 @@ namespace AbMath.Calculator
                     Title = "Time"
                 });
 
-                times.Add(new Schema() { Column = "Type", Width = 30 });
-                times.Add(new Schema() {Column = "# Calls", Width = 8});
-                times.Add(new Schema() { Column = "Time (ms)", Width = 10 });
+                times.Add(new Schema("Type"));
+                times.Add(new Schema("# Calls"));
+                times.Add(new Schema("Time (ms)"));
 
-                times.Add(new Schema() { Column = "Ticks", Width = 8 });
-                times.Add(new Schema() { Column = "% Milliseconds", Width = 16 });
-                times.Add(new Schema() { Column = "% Ticks", Width = 9 });
+                times.Add(new Schema("Ticks"));
+                times.Add(new Schema("% Milliseconds"));
+                times.Add(new Schema("% Ticks"));
 
                 double miliseconds = TotalMilliseconds;
                 double steps = TotalSteps;

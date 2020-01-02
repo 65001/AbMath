@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -21,7 +21,6 @@ namespace AbMath.Calculator
             private List<Token> _tokens;
             private string _rule;
 
-           public event EventHandler<string> Logger;
 
             public Tokenizer(DataStore dataStore)
             {
@@ -36,12 +35,12 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     _tables = new Tables<string>(new Config {Title = "Tokenizer", Format = _dataStore.DefaultFormat});
-                    _tables.Add(new Schema {Column = "#", Width = 3});
-                    _tables.Add(new Schema {Column = "Character", Width = 10});
-                    _tables.Add(new Schema {Column = "Code", Width = 5});
-                    _tables.Add(new Schema {Column = "Token", Width = 15});
-                    _tables.Add(new Schema {Column = "# Tokens", Width = 11});
-                    _tables.Add(new Schema {Column = "Action", Width = 16});
+                    _tables.Add(new Schema("#", 3));
+                    _tables.Add(new Schema("Character"));
+                    _tables.Add(new Schema("Code"));
+                    _tables.Add(new Schema("Token"));
+                    _tables.Add(new Schema("# Tokens"));
+                    _tables.Add(new Schema("Action"));
                 }
 
                 string token = string.Empty;
@@ -248,16 +247,10 @@ namespace AbMath.Calculator
 
             private void Write(string message)
             {
-                if (_dataStore.DebugMode)
-                {
-                    Logger?.Invoke(this, message);
-                }
+                var logger = _dataStore.Logger;
+                logger.Log(Channels.Debug, message);
             }
 
-            private void Log(string message)
-            {
-                Logger?.Invoke(this, message);
-            }
         }
     }
 }

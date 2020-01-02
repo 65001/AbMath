@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
-using CLI;
 
 namespace AbMath.Calculator
 {

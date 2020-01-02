@@ -1,5 +1,5 @@
 ﻿using System;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -26,8 +26,8 @@ namespace AbMath.Calculator
                 Format = rpn.Data.DefaultFormat,
                 Title = "Table"
             });
-            table.Add(new Schema {Column = $"{variable.Token.Value}", Width = 26});
-            table.Add(new Schema { Column = $"f({variable.Token.Value})", Width = 26 });
+            table.Add(new Schema(variable.Token.Value));
+            table.Add(new Schema($"f({variable.Token.Value})"));
 
             for (int x = 0; x <= max; x++)
             {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -41,11 +41,12 @@ namespace AbMath.Calculator
             //See https://web.archive.org/web/20181008151605/http://wcipeg.com/wiki/Shunting_yard_algorithm#Variadic_functions
             private Stack<int> _arity;
 
-            public event EventHandler<string> Logger;
+            private Logger logger;
 
             public Shunt(DataStore dataStore)
             {
                 _dataStore = dataStore;
+                logger = dataStore.Logger;
 
                 _multiply = new Token("*", 2, Type.Operator);
                 _division = new Token("/", 2, Type.Operator);
@@ -68,16 +69,16 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     _tables = new Tables<string>(new Config { Title = "Shunting Yard Algorithm", Format = _dataStore.DefaultFormat });
-                    _tables.Add(new Schema {Column = "#", Width = 3});
-                    _tables.Add(new Schema {Column = "Token", Width = 10});
-                    _tables.Add(new Schema {Column = "Stack Count", Width = 12});
-                    _tables.Add(new Schema {Column = "Stack ", Width = 12});
-                    _tables.Add(new Schema {Column = "Arity", Width = 5});
-                    _tables.Add(new Schema {Column = "Arity Peek", Width = 11});
-                    _tables.Add(new Schema {Column = "Type", Width = 12});
-                    _tables.Add(new Schema {Column = "Left | Right", Width = 10});
-                    _tables.Add(new Schema {Column = "RPN", Width = 20});
-                    _tables.Add(new Schema {Column = "Action", Width = 7});
+                    _tables.Add(new Schema("#", 3));
+                    _tables.Add(new Schema("Token"));
+                    _tables.Add(new Schema("Stack Count"));
+                    _tables.Add(new Schema("Stack"));
+                    _tables.Add(new Schema("Arity"));
+                    _tables.Add(new Schema("Arity Peek"));
+                    _tables.Add(new Schema("Type"));
+                    _tables.Add(new Schema("Left | Right"));
+                    _tables.Add(new Schema("RPN"));
+                    _tables.Add(new Schema("Action"));
                 }
 
                 string action = string.Empty;
@@ -274,9 +275,9 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     _arityTables = new Tables<string>(new Config { Title = "Arity", Format = _dataStore.DefaultFormat });
-                    _arityTables.Add(new Schema {Column = "#", Width = 3});
-                    _arityTables.Add(new Schema {Column = "Token", Width = 10});
-                    _arityTables.Add(new Schema {Column = "Arity", Width = 5});
+                    _arityTables.Add(new Schema("#", 3));
+                    _arityTables.Add(new Schema("Token"));
+                    _arityTables.Add(new Schema("Arity"));
                 }
                 
                 for (int i = 0; i < _output.Count; i++)
@@ -499,7 +500,7 @@ namespace AbMath.Calculator
 
             void Write(string message)
             {
-                Logger?.Invoke(this, message);
+                logger.Log(Channels.Debug, message);
             }
         }
     }

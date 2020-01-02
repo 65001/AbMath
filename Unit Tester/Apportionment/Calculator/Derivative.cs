@@ -104,14 +104,15 @@ namespace AbMath.Tests
         {
             RPN test = new RPN("derivative( abs(x^2), x)").Compute();
             //Assert.AreEqual("0.5 x 2 ^ * 2 2 ^ x * * x 2 ^ /", test.Polish.Print());
-            Assert.AreEqual("2 2 ^ 0.5 x 3 ^ * * x 2 ^ /", test.Polish.Print());
+
+            Assert.AreEqual("0.5 2 2 ^ * x 2 ^ x * * x 2 ^ /", test.Polish.Print());
         }
 
         [Test]
         public void Ln()
         {
             RPN test = new RPN("derivative(ln(x^2),x)").Compute();
-            Assert.AreEqual("2 x * x 2 ^ /", test.Polish.Print());
+            Assert.AreEqual("2 x /", test.Polish.Print());
         }
 
         [Test]
@@ -219,20 +220,20 @@ namespace AbMath.Tests
         public void ArcSec()
         {
             RPN test = new RPN("derivative( arcsec(x), x)").Compute();
-            Assert.AreEqual("1 x x 2 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("1 x abs x 2 ^ 1 - sqrt * /", test.Polish.Print());
 
             test.SetEquation("derivative( arcsec(x^2), x)").Compute();
-            Assert.AreEqual("2 x * x 2 ^ x 4 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("2 x * x 2 ^ abs x 4 ^ 1 - sqrt * /", test.Polish.Print());
         }
 
         [Test]
         public void ArcCsc()
         {
             RPN test = new RPN("derivative( arccsc(x), x)").Compute();
-            Assert.AreEqual("-1 x x 2 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("-1 x abs x 2 ^ 1 - sqrt * /", test.Polish.Print());
 
             test.SetEquation("derivative( arccsc(x^2), x)").Compute();
-            Assert.AreEqual("-2 x * x 2 ^ x 4 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("-2 x * x 2 ^ abs x 4 ^ 1 - sqrt * /", test.Polish.Print());
         }
 
         [Test]
