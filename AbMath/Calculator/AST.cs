@@ -29,6 +29,7 @@ namespace AbMath.Calculator
         ///  Power Expansion - Converts fractions to trig functions
         ///  Double Angle - Converts double angles to trig functions
         ///  Double Angle Reduction - Converts trig functions to double angles
+        ///  Sum - deals with all sum functions etc. 
         ///  Constants - 
         /// </summary>
         public enum SimplificationMode
@@ -37,7 +38,9 @@ namespace AbMath.Calculator
             Trig, TrigHalfAngle, TrigHalfAngleExpansion,
             TrigPowerReduction, TrigPowerExpansion,
             TrigDoubleAngle, TrigDoubleAngleReduction,
-            Constants, Compress, COUNT
+            Sum,
+            Constants,
+            Compress, COUNT
         }
 
         private RPN _rpn;
@@ -46,6 +49,7 @@ namespace AbMath.Calculator
         private bool debug => _data.DebugMode;
 
         private readonly RPN.Token _derive = new RPN.Token("derive", 1, RPN.Type.Function);
+        private readonly RPN.Token _sum = new RPN.Token("sum", 5, RPN.Type.Function);
 
         public event EventHandler<string> Logger;
         public event EventHandler<string> Output;
@@ -75,6 +79,7 @@ namespace AbMath.Calculator
             GenerateAdditionSimplifications();
             GenerateExponentSimplifications();
             GenerateTrigSimplifications();
+            GenerateSumSimplifications();
         }
 
         private void GenerateSqrtSimplifications()
@@ -322,6 +327,7 @@ namespace AbMath.Calculator
             //Complex Conversions
             Rule CosOverSinToCotComplex = new Rule(Trig.CosOverSinComplexRunnable, Trig.CosOverSinComplex, "[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
             Rule CosOverSinToCotComplexTwo = new Rule(Trig.CosOverSinToCotComplexRunnable, Trig.CosOverSinToCotComplex, "cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
+            
             ruleManager.Add(SimplificationMode.Trig, CosOverSinToCotComplex);
             ruleManager.Add(SimplificationMode.Trig, CosOverSinToCotComplexTwo);
 
@@ -370,6 +376,24 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Trig, TrigIdentitySinToCos);
             ruleManager.Add(SimplificationMode.Trig, TrigIdentityCosToSin);
             
+        }
+
+        private void GenerateSumSimplifications()
+        {
+            Rule setRule = new Rule(Sum.setUp, null, "Sum Set Rule");
+
+            ruleManager.AddSetRule(SimplificationMode.Sum, setRule);
+
+            Rule propagation = new Rule(Sum.PropagationRunnable, Sum.Propagation, "sum(f(x) + g(x),x,a,b) -> sum(f(x),x,a,b) + sum(g(x),x,a,b)");
+            Rule variable = new Rule(Sum.VariableRunnable, Sum.Variable, "sum(x,x,0,a) -> [a(a + 1)]/2");
+            Rule coefficient = new Rule(Sum.CoefficientRunnable, Sum.Coefficient, "sum(k * f(x),x,a,b) -> k * sum(f(x),x,a,b)");
+            Rule constant = new Rule(Sum.ConstantRunnable, Sum.Constant, "sum(k,x,0,b) -> k * b");
+
+            ruleManager.Add(SimplificationMode.Sum, propagation);
+            ruleManager.Add(SimplificationMode.Sum, coefficient);
+            ruleManager.Add(SimplificationMode.Sum, variable);
+
+            ruleManager.Add(SimplificationMode.Sum, constant);
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -492,7 +516,11 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Addition);
             Simplify(node, SimplificationMode.Trig);
             Simplify(node, SimplificationMode.Multiplication);
+
             Simplify(node, SimplificationMode.Swap);
+
+            Simplify(node, SimplificationMode.Sum);
+            
 
             Swap(node);
 #if DEBUG
@@ -538,7 +566,8 @@ namespace AbMath.Calculator
                         }
                     }
                 }
-                else if (mode == SimplificationMode.Swap)
+
+                if (mode == SimplificationMode.Swap)
                 {
                     //We can do complex swapping in here
                     if (node.IsMultiplication() && node.Children[0].IsMultiplication() &&
@@ -721,7 +750,7 @@ namespace AbMath.Calculator
                     unvisited.Enqueue(node.Children[i]);
                 }
 
-                if (node.IsFunction("internal_sum") || node.IsFunction("sum"))
+                if (node.IsFunction("internal_sum") || node.IsFunction("total"))
                 {
                     /*
                     1) A constant or number should always be swapped with any other expression if it comes before another expression if 
@@ -1062,10 +1091,6 @@ namespace AbMath.Calculator
 
                     Write(temp.ToInfix());
                     Assign(node, temp);
-                }
-                else if (node.IsFunction("sum"))
-                {
-
                 }
 
                 return true;
@@ -1958,9 +1983,9 @@ namespace AbMath.Calculator
                     node.Replace(node.Children[0], sqrt);
                     stack.Push(node);
                 }
-                else if (node.Children[0].IsFunction("sum"))
+                else if (node.Children[0].IsFunction("total"))
                 {
-                    Write("\tExploding sum");
+                    Write("\tExploding total");
                     explode(node.Children[0]);
                     stack.Push(node);
                     stack.Push(node);
@@ -2123,7 +2148,7 @@ namespace AbMath.Calculator
             RPN.Token multiplication = new RPN.Token("*", 2, RPN.Type.Operator);
 
             //convert a sum to a series of additions
-            if (node.IsFunction("internal_sum") || node.IsFunction("sum"))
+            if (node.IsFunction("internal_sum") || node.IsFunction("total"))
             {
                 if (node.Children.Count == 2)
                 {
@@ -2163,7 +2188,7 @@ namespace AbMath.Calculator
                     results.AddRange(node.Children[i].ToPostFix());
                 }
 
-                results.Add(new RPN.Token("sum", node.Children.Count, RPN.Type.Function));
+                results.Add(new RPN.Token("total", node.Children.Count, RPN.Type.Function));
                 results.Add(new RPN.Token(node.Children.Count));
                 results.Add(division);
                 RPN.Node temp = Generate(results.ToArray());
@@ -2319,7 +2344,7 @@ namespace AbMath.Calculator
 
         private void GenerateDerivativeAndReplace(RPN.Node child)
         {
-            RPN.Node temp = new RPN.Node(new[] { Clone(child) }, _derive);
+            RPN.Node temp = new RPN.Node(new[] { child.Clone() }, _derive);
             temp.Parent = child.Parent;
 
             child.Parent?.Replace(child, temp);

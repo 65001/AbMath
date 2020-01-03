@@ -295,7 +295,7 @@ namespace AbMath.Calculator
                         Function function = _dataStore.Functions[token.Value];
                         //See if we can apply casting
                         //Cast sum to total if it has more than the possible arguments since thats what the user probably wanted
-                        if (token.Value == "sum" && token.Arguments > function.MinArguments)
+                        if (token.Value == "sum" && token.Arguments > function.MaxArguments)
                         {
                             Write("Casting sum to total since it exceeds max arguments for sum");
                             _output[i] = new Token("total", token.Arguments, RPN.Type.Function);
