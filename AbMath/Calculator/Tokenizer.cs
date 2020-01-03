@@ -181,11 +181,6 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     Write(_tables.ToString());
-
-                    if (_tables.SuggestedRedraw)
-                    {
-                        Write(_tables.Redraw());
-                    }
                 }
 
                 sw.Stop();

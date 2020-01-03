@@ -8,7 +8,7 @@ namespace AbMath.Calculator
 {
     public partial class RPN
     {
-        public class Node
+        public class Node : IComparable<Node>
         {
             public int ID;
             public Token Token;
@@ -723,6 +723,113 @@ namespace AbMath.Calculator
                 }
 
                 return this.GetHash() == ((Node) (obj)).GetHash();
+            }
+
+            public int CompareTo(Node other)
+            {
+                //Assume that if you have no parent you really cannot sort.
+                if (other.Parent == null || this.Parent == null)
+                {
+                    return 0;
+                }
+
+                //If we have different parents we cannot be sorted! 
+                if (other.Parent.ID != this.Parent.ID)
+                {
+                    return 0;
+                }
+
+                /**
+                 * Map
+                 * 0 -> other
+                 * 1 -> this
+                 */
+
+                //Here we know we have the same parent and that parent exists! 
+
+                if (this.Parent.IsAddition() || this.Parent.IsFunction("internal_sum") || this.Parent.IsFunction("total"))
+                {
+                    //Numbers and constants should yield to everything
+                    if (this.IsNumberOrConstant() && !other.IsNumberOrConstant())
+                    {
+                        return -1;
+                    }
+
+                    if (!this.IsNumberOrConstant() && other.IsNumberOrConstant())
+                    {
+                        return 1;
+                    }
+
+                    if (this.IsNumberOrConstant() && other.IsNumberOrConstant())
+                    {
+                        return 0;
+                    }
+
+                    //Something that can be solved should yield like constants and numbers do! 
+                    if (this.IsSolveable() && !other.IsSolveable())
+                    {
+                        return -1;
+                    }
+
+                    if (!this.IsSolveable() && other.IsSolveable())
+                    {
+                        return 1;
+                    }
+
+                    if (this.IsSolveable() && other.IsSolveable())
+                    {
+                        return 0;
+                    }
+
+                    //Single Variables should yield to other expressions 
+                    if (this.IsVariable() && !other.IsVariable())
+                    {
+                        return -1;
+                    }
+
+                    if (!this.IsVariable() && other.IsVariable())
+                    {
+                        return 1;
+                    }
+
+                    if (this.IsVariable() && other.IsVariable())
+                    {
+                        return 0;
+                    }
+
+                    //Multiplication should yield to exponents
+                    if (this.IsMultiplication() && other.IsExponent())
+                    {
+                        return -1;
+                    }
+                    if (this.IsExponent() && other.IsMultiplication())
+                    {
+                        return 1;
+                    }
+
+                    //Multiplication should yield to exponents with multiplications 
+
+                    //Exponents compared to other exponents
+                    if (this.IsExponent() && other.IsExponent())
+                    {
+                        //Constant powers should yield to non constant powers
+
+                        //Constant powers should yield depending on their value! 
+                        if (this[0].IsNumberOrConstant() && other[0].IsNumberOrConstant())
+                        {
+                            return this[0].GetNumber().CompareTo(other[0].GetNumber());
+                        }
+                    }
+
+                    //TODO: A straight exponent should give way to a multiplication with an exponent if...
+                    //TODO: Swapping exponent with non exponent
+                }
+                else if (this.Parent.IsMultiplication())
+                {
+
+                }
+
+                return 0;
             }
         }
     }

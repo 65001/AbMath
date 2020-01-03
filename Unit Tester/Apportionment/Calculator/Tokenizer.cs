@@ -66,14 +66,14 @@ namespace AbMath.Tests
         public void MultiTermAdd()
         {
             RPN test = new RPN("2 + 3 + 2").Compute();
-            Assert.AreEqual("2 3 + 2 +", test.Polish.Print());
+            Assert.AreEqual("2 2 + 3 +", test.Polish.Print());
         }
 
         [Test]
         public void MultiTermAddNoSpace()
         {
             RPN test = new RPN("2+3+2").Compute();
-            Assert.AreEqual("2 3 + 2 +", test.Polish.Print());
+            Assert.AreEqual("2 2 + 3 +", test.Polish.Print());
         }
 
         [Test]

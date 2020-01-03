@@ -662,31 +662,16 @@ namespace AbMath.Calculator
                 //Addition operator
                 if (node.IsAddition())
                 {
-                    if (node[1].IsNumberOrConstant() && !node[0].IsNumberOrConstant())
-                    {
-                        Write("\tNode Swap: Constants and numbers always yield.");
-                        node.Swap(0, 1);
-                    }
-                    else if (node[1].IsVariable() && node[0].IsMultiplication() && !node[0].IsSolveable())
-                    {
-                        Write($"\tNode Swap: Single variables yields to generic expression");
-                        node.Swap(0, 1);
-                    }
-                    else if (node[1].IsVariable() && node[0].IsExponent())
-                    {
-                        Write("\tNode Swap: Single variables yields to exponent");
-                        node.Swap(0, 1);
-                    }
-                    else if (node[1].IsMultiplication() && node[0].IsMultiplication() &&
-                             !node.Children[1].Children.Any(n => n.IsExponent()) &&
-                             node.Children[0].Children.Any(n => n.IsExponent()))
+                    //Write($"\t{node[0].CompareTo(node[1])}  {node[1].CompareTo(node[0])}");
+                    //Write($"\t{node[0].ToInfix()} {node[1].ToInfix()}\n");
+                    node.Children.Sort();
+                    if (node[1].IsMultiplication() && node[0].IsMultiplication() && !node.Children[1].Children.Any(n => n.IsExponent()) && node.Children[0].Children.Any(n => n.IsExponent()))
                     {
                         Write("\tNode Swap:Straight multiplication gives way to multiplication with an exponent");
                         node.Swap(0, 1);
                     }
 
-                    //TODO: A straight exponent should give way to a multiplication with an exponent if...
-                    //TODO: Swapping exponent with non exponent
+                    
                 }
                 //Multiplication operator
                 else if (node.IsMultiplication())
@@ -752,92 +737,8 @@ namespace AbMath.Calculator
 
                 if (node.IsFunction("internal_sum") || node.IsFunction("total"))
                 {
-                    /*
-                    1) A constant or number should always be swapped with any other expression if it comes before another expression if 
-                    that expression is not a constant or number. 
-                    2) An expression that has a multiplication or exponent can only be swapped if it has a higher exponent or coefficient
-    
-                    Swapping should be done til there are no more changes on the tree.
-                    */
-                    //x + 2 + 2x -> 2x + x + 2
-                    //x + 2 + x^2 -> x^2 + x + 2
-                    //5 + x^3 + x + x^2 + 2x + 3x^2
-                    node.Children.Reverse();
-                    string hash = string.Empty;
-                    while (node.GetHash() != hash)
-                    {
-                        hash = node.GetHash();
-                        //Swapping code here
-                        for (int i = 0; i < node.Children.Count; i++)
-                        {
-                            if (i - 1 < 0)
-                            {
-                                continue;
-                            }
-
-                            //Constants and numbers should give way.
-                            if ((node.Children[i - 1].IsNumber() || node.Children[i - 1].IsConstant()) &&
-                                !(node.Children[i].IsNumber() || node.Children[i].IsConstant()))
-                            {
-                                node.Swap(i - 1, i);
-                                Write($"\tConstants and numbers always yield: Swap {i - 1} and {i}. {node.ToInfix()}");
-                            }
-                            //Single variables give way to other expressions that are not constants and numbers 
-                            else if (node.Children[i - 1].IsVariable() &&
-                                     (node.Children[i].IsMultiplication() ||
-                                      node.Children[i].IsFunction("internal_product")) &&
-                                     !node.Children[i].IsSolveable())
-                            {
-                                node.Swap(i - 1, i);
-                                Write(
-                                    $"\tSingle variables yields to generic expression: Swap {i - 1} and {i}. {node.ToInfix()}");
-                            }
-                            //Single variable gives way to exponent 
-                            else if (node.Children[i - 1].IsVariable() && node.Children[i].IsExponent())
-                            {
-                                node.Children.Swap(i - 1, i);
-                                Write($"\tSingle variables yields to exponent: Swap {i - 1} and {i}. {node.ToInfix()}");
-                            }
-                            //Straight multiplication gives way to multiplication with an exponent
-                            else if ((node.Children[i - 1].IsMultiplication() ||
-                                      node.Children[i].IsFunction("internal_product")) &&
-                                     !node.Children[i - 1].Children.Any(n => n.IsExponent()) &&
-                                     (node.Children[i].IsMultiplication() ||
-                                      node.Children[i].IsFunction("internal_product")) &&
-                                     node.Children[i].Children.Any(n => n.IsExponent()))
-                            {
-                                node.Children.Swap(i - 1, i);
-                                Write(
-                                    $"\tStraight multiplication gives way to multiplication with an exponent: Swap {i - 1} and {i}. {node.ToInfix()}");
-                            }
-                            //A straight exponent should give way to a multiplication with an exponent if...
-                            else if (node.Children[i - 1].IsExponent() &&
-                                     (node.Children[i].IsMultiplication() ||
-                                      node.Children[i].IsFunction("internal_product")) &&
-                                     node.Children[i].Children[0].IsExponent())
-                            {
-                                //its degree is higher or equal
-                                if (node[i - 1, 0].IsNumberOrConstant() && node[i, 0, 0].IsNumberOrConstant() &&
-                                    node[i, 0, 0].IsGreaterThanOrEqualToNumber(node[i - 1, 0].GetNumber()))
-                                {
-                                    node.Children.Swap(i - 1, i);
-                                    Write(
-                                        $"\tA straight exponent should give way to a multiplication with an exponent if its degree is higher or equal : Swap {i - 1} and {i}. {node.ToInfix()}");
-                                }
-
-                                //TODO: its degree is an expression and the straight exponent's is not an expression 
-                            }
-                            else if ((node.Children[i].IsMultiplication() ||
-                                      node.Children[i].IsFunction("internal_product")) &&
-                                     node.Children[i].Children[1].IsExponent() &&
-                                     !node.Children[i].Children[0].IsExponent())
-                            {
-                                node.Children[i].Children.Swap(0, 1);
-                                Write("\tSwapping exponent with nonexponent");
-                            }
-                        }
-                    }
-                    //Write(node.Print()); //TODO
+                    node.Children.Sort(); 
+                    Write($"After Auto Sort: {node.ToInfix()}");
                 }
                 else if (node.IsFunction("internal_product") || node.IsFunction("product"))
                 {
@@ -1092,7 +993,32 @@ namespace AbMath.Calculator
                     Write(temp.ToInfix());
                     Assign(node, temp);
                 }
+                else if (node.IsFunction("sum"))
+                {
+                    Write($"\tSolving the sum! : {node[3].ToInfix()}");
+                    PostFix math = new PostFix(_rpn);
+                    double start = math.Compute(node[1].ToPostFix().ToArray());
+                    double end = math.Compute(node[0].ToPostFix().ToArray());
+                    double DeltaX = end - start;
+                    int max = (int)Math.Ceiling(DeltaX);
 
+                    double PrevAnswer = 0;
+
+                    math.SetPolish(node[3].ToPostFix().ToArray());
+                    double sum = 0;
+
+                    for (int x = 0; x <= max; x++)
+                    {
+                        double RealX = start + x;
+                        math.SetVariable("ans", PrevAnswer);
+                        math.SetVariable(node[2].Token.Value, RealX);
+                        double answer = math.Compute();
+                        PrevAnswer = answer;
+                        sum += answer;
+                        math.Reset();
+                    }
+                    Assign(node, new RPN.Node(sum));
+                }
                 return true;
             }
 
