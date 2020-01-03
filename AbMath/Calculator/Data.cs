@@ -339,6 +339,7 @@ namespace AbMath.Calculator
 
             public Type Resolve(string value)
             {
+                if (string.IsNullOrEmpty(value) || value == ".") { return Type.Null; }
                 if (IsNumber(value)) { return Type.Number; }
                 if (IsOperator(value)) { return Type.Operator; }
                 if (IsFunction(value)) { return Type.Function; }
