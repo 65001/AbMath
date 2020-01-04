@@ -87,7 +87,7 @@ namespace AbMath.Tests
         public void DivisionTimesDivision()
         {
             RPN rpn = new RPN("(3/4)(1/4)").Compute();
-            Assert.AreEqual("3 4 2 ^ /", rpn.Polish.Print());
+            Assert.AreEqual("3 16 /", rpn.Polish.Print());
         }
 
         [Test]
@@ -259,6 +259,13 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("2x(3x^2)").Compute();
             Assert.AreEqual("2 3 * x 3 ^ *", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void PowerToPower()
+        {
+            RPN rpn = new RPN("((x^2)^c)^a").Compute();
+            Assert.AreEqual("x 2 c * a * ^", rpn.Polish.Print());
         }
 
         [Test]

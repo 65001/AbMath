@@ -40,6 +40,7 @@ namespace AbMath.Calculator
             TrigDoubleAngle, TrigDoubleAngleReduction,
             Sum,
             Constants,
+            Misc,
             Compress, COUNT
         }
 
@@ -80,6 +81,7 @@ namespace AbMath.Calculator
             GenerateExponentSimplifications();
             GenerateTrigSimplifications();
             GenerateSumSimplifications();
+            GenerateMiscSimplifications();
         }
 
         private void GenerateSqrtSimplifications()
@@ -186,6 +188,8 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Division, powerReduction);
             ruleManager.Add(SimplificationMode.Division, divisionFlipTwo);
 
+            //TODO: 0/c when c is a constant or an expression that on solving will be a constant. 
+
             //TODO: (c_0 * f(x))/c_1 where c_0, c_1 share a gcd that is not 1 and c_0 and c_1 are integers 
             //TODO: (c_0 * f(x))/(c_1 * g(x)) where ...
         }
@@ -276,10 +280,12 @@ namespace AbMath.Calculator
             Rule oneRaisedToFunction = new Rule(Exponent.oneRaisedToFunctionRunnable, Exponent.oneRaisedToFunction, "1^(fx) -> 1");
             Rule toDivision = new Rule(Exponent.toDivisionRunnable, Exponent.toDivision, "f(x)^-c -> 1/f(x)^c");
             Rule toSqrt = new Rule(Exponent.toSqrtRunnable, Exponent.toSqrt, "f(x)^0.5 -> sqrt( f(x) )");
+
             Rule exponentToExponent = new Rule(Exponent.ExponentToExponentRunnable, Exponent.ExponentToExponent,
                 "(f(x)^c)^a -> f(x)^[c * a]");
             Rule negativeConstantRaisedToAPowerOfTwo = new Rule(Exponent.NegativeConstantRaisedToAPowerOfTwoRunnable, 
                 Exponent.NegativeConstantRaisedToAPowerOfTwo, "c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
+            Rule constantRaisedToConstant = new Rule(Exponent.ConstantRaisedToConstantRunnable, Exponent.ConstantRaisedToConstant, "c^k -> a");
 
             ruleManager.Add(SimplificationMode.Exponent, functionRaisedToOne);
             ruleManager.Add(SimplificationMode.Exponent, functionRaisedToZero);
@@ -289,6 +295,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Exponent, toSqrt);
             ruleManager.Add(SimplificationMode.Exponent, exponentToExponent);
             ruleManager.Add(SimplificationMode.Exponent, negativeConstantRaisedToAPowerOfTwo);
+            ruleManager.Add(SimplificationMode.Exponent, constantRaisedToConstant);
         }
 
         private void GenerateTrigSimplifications()
@@ -405,6 +412,11 @@ namespace AbMath.Calculator
             // sum(x^p,x,0,n) -> 0^p + sum(x^p,x,1,n) 
         }
 
+        private void GenerateMiscSimplifications()
+        {
+            
+        }
+
         public RPN.Node Generate(RPN.Token[] input)
         {
             Stopwatch SW = new Stopwatch();
@@ -481,7 +493,14 @@ namespace AbMath.Calculator
             sw.Stop();
             _data.AddTimeRecord("AST Simplify", sw);
 
-            Normalize();
+            if (debug)
+            {
+                Write("Before being normalized the tree looks like:");
+                Write(Root.ToInfix());
+                Write(Root.Print());
+            }
+
+            Normalize(); //This distorts the tree :(
 
             Write("");
             Write(ruleManager.ToString());
@@ -527,8 +546,9 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Multiplication);
 
             Simplify(node, SimplificationMode.Swap);
-
+            Simplify(node, SimplificationMode.Misc);
             Simplify(node, SimplificationMode.Sum);
+            
             
 
             Swap(node);
@@ -631,6 +651,24 @@ namespace AbMath.Calculator
                         if (node[0].IsNumber(0) || node[0].IsNumber(1))
                         {
                             Solve(node);
+                        }
+                    }
+                }
+                else if (mode == SimplificationMode.Misc)
+                {
+                    if (node.IsOperator() && node.Children.Any(t => t.IsGreaterThanOrEqualToNumber(-1) && t.IsLessThanOrEqualToNumber(1) ))
+                    {
+                        Write("\tDecimal to Fraction");
+                        for (int i = 0; i < node.Children.Count; i++)
+                        {
+                            if (node[i].IsGreaterThanOrEqualToNumber(-1) && node[i].IsLessThanOrEqualToNumber(1))
+                            {
+                                var f = Extensions.getDecimalFormatToNode(node[i].GetNumber());
+                                if (f != null)
+                                {
+                                    node.Replace(node[i], f);
+                                }
+                            }
                         }
                     }
                 }
@@ -870,8 +908,7 @@ namespace AbMath.Calculator
             {
                 _rpn.Data.AddFunction("derive", new RPN.Function { Arguments = 1, MaxArguments = 1, MinArguments = 1 });
             }
-
-            bool go = MetaFunctions(Root);
+            MetaFunctions(Root);
 
             if (_rpn.Data.Functions.ContainsKey("derive"))
             {
@@ -882,11 +919,8 @@ namespace AbMath.Calculator
 
             _data.AddTimeRecord("AST MetaFunctions", SW);
 
-            if (go)
-            {
-                Simplify();
-            }
 
+            Simplify();
 
             return this;
         }
@@ -894,151 +928,153 @@ namespace AbMath.Calculator
         private bool MetaFunctions(RPN.Node node)
         {
             //Propagate down the tree
+            bool fooBar = false;
             for (int i = 0; i < node.Children.Count; i++)
             {
                 MetaFunctions(node.Children[i]);
             }
 
-            if (node.IsFunction() && _data.MetaFunctions.Contains(node.Token.Value))
+            if (!node.IsFunction() || !_data.MetaFunctions.Contains(node.Token.Value))
             {
-                if (node.IsFunction("integrate"))
+                return false;
+            }
+
+            if (node.IsFunction("integrate"))
+            {
+                double answer = double.NaN;
+                if (node.Children.Count == 4)
                 {
-                    double answer = double.NaN;
-                    if (node.Children.Count == 4)
-                    {
-                        node.Children.Insert(0, new RPN.Node(0.001));
-                    }
-
-                    if (node.Children.Count == 5)
-                    {
-                        answer = MetaCommands.Integrate(_rpn,
-                            node.Children[4],
-                            node.Children[3],
-                            node.Children[2],
-                            node.Children[1],
-                            node.Children[0]);
-                    }
-
-                    RPN.Node temp = new RPN.Node(answer);
-                    Assign(node, temp);
+                    node.Children.Insert(0, new RPN.Node(0.001));
                 }
-                else if (node.IsFunction("table"))
+
+                if (node.Children.Count == 5)
                 {
-                    string table;
-
-                    if (node.Children.Count == 4)
-                    {
-                        node.Children.Insert(0, new RPN.Node(0.001));
-                    }
-
-                    table = MetaCommands.Table(_rpn,
+                    answer = MetaCommands.Integrate(_rpn,
                         node.Children[4],
                         node.Children[3],
                         node.Children[2],
                         node.Children[1],
                         node.Children[0]);
-
-                    stdout(table);
-                    SetRoot(new RPN.Node(double.NaN));
                 }
-                else if (node.IsFunction("derivative"))
+
+                RPN.Node temp = new RPN.Node(answer);
+                Assign(node, temp);
+            }
+            else if (node.IsFunction("table"))
+            {
+                string table;
+
+                if (node.Children.Count == 4)
                 {
-                    if (node.Children.Count == 2)
+                    node.Children.Insert(0, new RPN.Node(0.001));
+                }
+
+                table = MetaCommands.Table(_rpn,
+                    node.Children[4],
+                    node.Children[3],
+                    node.Children[2],
+                    node.Children[1],
+                    node.Children[0]);
+
+                stdout(table);
+                SetRoot(new RPN.Node(double.NaN));
+            }
+            else if (node.IsFunction("derivative"))
+            {
+                if (node.Children.Count == 2)
+                {
+                    GenerateDerivativeAndReplace(node.Children[1]);
+                    Derive(node.Children[0]);
+                    Assign(node, node.Children[1]);
+                    node.Delete();
+                }
+                else if (node.Children.Count == 3)
+                {
+                    if (!node[0].IsNumberOrConstant() && (int)node[0].GetNumber() == node[0].GetNumber())
+                    {
+                        throw new Exception("Expected a number or constant");
+                    }
+
+                    //This code is suspect!
+                    int count = (int)node[0].GetNumber();
+
+                    node.RemoveChild(node[0]);
+
+
+                    for (int i = 0; i < count; i++)
                     {
                         GenerateDerivativeAndReplace(node.Children[1]);
                         Derive(node.Children[0]);
-                        Assign(node, node.Children[1]);
-                        node.Delete();
+                        Simplify(node);
                     }
-                    else if (node.Children.Count == 3)
-                    {
-                        if (!node[0].IsNumberOrConstant() && (int)node[0].GetNumber() == node[0].GetNumber())
-                        {
-                            throw new Exception("Expected a number or constant");
-                        }
-
-                        //This code is suspect!
-                        int count = (int)node[0].GetNumber();
-
-                        node.RemoveChild(node[0]);
+                    Assign(node, node.Children[1]);
+                    node.Delete();
 
 
-                        for (int i = 0; i < count; i++)
-                        {
-                            GenerateDerivativeAndReplace(node.Children[1]);
-                            Derive(node.Children[0]);
-                            Simplify(node);
-                        }
-                        Assign(node, node.Children[1]);
-                        node.Delete();
-
-
-                    }
                 }
-                else if (node.IsFunction("solve"))
+            }
+            else if (node.IsFunction("solve"))
+            {
+                if (node.Children.Count == 2)
                 {
-                    if (node.Children.Count == 2)
-                    {
-                        node.AddChild(new RPN.Node(new RPN.Token("=", 2, RPN.Type.Operator)));
-                    }
-                    else
-                    {
-                        node.Swap(0, 2);
-                        node[2].Children.Clear();
-                    }
-
-                    Write(node.Print());
-
-                    RPN.Node temp = node[2];
-                    node.RemoveChild(temp);
-
-                    Algebra(node, ref temp);
-
-                    temp.AddChild(new[] { node[0], node[1] });
-
-                    //This is done to fix a bug
-                    if (!temp.IsOperator("="))
-                    {
-                        temp.Swap(0, 1);
-                    }
-
-                    node.AddChild(temp);
-                    Write($"{node[1].ToInfix()} {node[2].ToInfix()} {node[0].ToInfix()}");
-                    node.RemoveChild(temp);
-
-                    Write(temp.ToInfix());
-                    Assign(node, temp);
+                    node.AddChild(new RPN.Node(new RPN.Token("=", 2, RPN.Type.Operator)));
                 }
-                else if (node.IsFunction("sum"))
+                else
                 {
-                    Write($"\tSolving the sum! : {node[3].ToInfix()}");
-                    PostFix math = new PostFix(_rpn);
-                    double start = math.Compute(node[1].ToPostFix().ToArray());
-                    double end = math.Compute(node[0].ToPostFix().ToArray());
-                    double DeltaX = end - start;
-                    int max = (int)Math.Ceiling(DeltaX);
-
-                    double PrevAnswer = 0;
-
-                    math.SetPolish(node[3].ToPostFix().ToArray());
-                    double sum = 0;
-
-                    for (int x = 0; x <= max; x++)
-                    {
-                        double RealX = start + x;
-                        math.SetVariable("ans", PrevAnswer);
-                        math.SetVariable(node[2].Token.Value, RealX);
-                        double answer = math.Compute();
-                        PrevAnswer = answer;
-                        sum += answer;
-                        math.Reset();
-                    }
-                    Assign(node, new RPN.Node(sum));
+                    node.Swap(0, 2);
+                    node[2].Children.Clear();
                 }
-                return true;
+
+                Write(node.Print());
+
+                RPN.Node temp = node[2];
+                node.RemoveChild(temp);
+
+                Algebra(node, ref temp);
+
+                temp.AddChild(new[] { node[0], node[1] });
+
+                //This is done to fix a bug
+                if (!temp.IsOperator("="))
+                {
+                    temp.Swap(0, 1);
+                }
+
+                node.AddChild(temp);
+                Write($"{node[1].ToInfix()} {node[2].ToInfix()} {node[0].ToInfix()}");
+                node.RemoveChild(temp);
+
+                Write(temp.ToInfix());
+                Assign(node, temp);
+            }
+            else if (node.IsFunction("sum"))
+            {
+                Write($"\tSolving the sum! : {node[3].ToInfix()}");
+                PostFix math = new PostFix(_rpn);
+                double start = math.Compute(node[1].ToPostFix().ToArray());
+                double end = math.Compute(node[0].ToPostFix().ToArray());
+                double DeltaX = end - start;
+                int max = (int)Math.Ceiling(DeltaX);
+
+                double PrevAnswer = 0;
+
+                math.SetPolish(node[3].ToPostFix().ToArray());
+                double sum = 0;
+
+                for (int x = 0; x <= max; x++)
+                {
+                    double RealX = start + x;
+                    math.SetVariable("ans", PrevAnswer);
+                    math.SetVariable(node[2].Token.Value, RealX);
+                    double answer = math.Compute();
+                    PrevAnswer = answer;
+                    sum += answer;
+                    math.Reset();
+                }
+                Assign(node, new RPN.Node(sum));
             }
 
-            return false;
+            return true;
         }
 
         private void Solve(RPN.Node node)
@@ -1847,7 +1883,8 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(.5), body },
+                    RPN.Node OneHalf = new RPN.Node(0.5);
+                    RPN.Node exponent = new RPN.Node(new[] { OneHalf, body },
                         new RPN.Token("^", 2, RPN.Type.Operator));
                     node.Replace(node.Children[0], exponent);
                     stack.Push(node);

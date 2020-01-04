@@ -70,7 +70,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool toSqrtRunnable(RPN.Node node)
         {
-            return node[0].IsNumber(0.5);
+            return node[0].IsNumber(0.5) || (node[0].IsDivision() && node[0, 0].IsNumber(2) && node[0,1].IsNumber(1));
         }
 
         public static RPN.Node toSqrt(RPN.Node node)
@@ -80,8 +80,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool ExponentToExponentRunnable(RPN.Node node)
         {
-            return (node[0].IsNumber() || node[0].IsConstant()) && node[1].IsExponent() &&
-                   (node[1, 0].IsNumber() || node[1, 0].IsConstant());
+            return node[1].IsExponent();
         }
 
         public static RPN.Node ExponentToExponent(RPN.Node node)
@@ -102,6 +101,18 @@ namespace AbMath.Calculator.Simplifications
                 new RPN.Token("^", 2, RPN.Type.Operator));
             return exponent;
         }
+
+        public static bool ConstantRaisedToConstantRunnable(RPN.Node node)
+        {
+            return node[0].IsInteger() && node[1].IsInteger();
+        }
+
+        public static RPN.Node ConstantRaisedToConstant(RPN.Node node)
+        {
+            return new RPN.Node( Math.Pow( node[1].GetNumber() , node[0].GetNumber() ) );
+        }
+
+
 
         public static bool NegativeConstantRaisedToAPowerOfTwoRunnable(RPN.Node node)
         {

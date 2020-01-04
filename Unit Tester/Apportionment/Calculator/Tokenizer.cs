@@ -83,7 +83,7 @@ namespace AbMath.Tests
         public void Wikipedia()
         {
             RPN test = new RPN("3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3").Compute();
-            Assert.AreEqual("4 2 * 1 5 - 2 3 ^ ^ / 3 +", test.Polish.Print());
+            Assert.AreEqual("4 2 * 1 5 - 8 ^ / 3 +", test.Polish.Print());
         }
 
         [Test]
@@ -166,7 +166,7 @@ namespace AbMath.Tests
             Assert.AreEqual("1 2 x * /", test.Polish.Print());
 
             test.SetEquation("8/2(2 + 2)").Compute();
-            Assert.AreEqual("8 2 2 2 ^ * /", test.Polish.Print());
+            Assert.AreEqual("8 2 4 * /", test.Polish.Print());
 
             test.Data.ImplicitMultiplicationPriority = false;
 
@@ -174,7 +174,7 @@ namespace AbMath.Tests
             Assert.AreEqual("x 2 /", test.Polish.Print());
 
             test.SetEquation("8/2(2 + 2)").Compute();
-            Assert.AreEqual("4 2 2 ^ *", test.Polish.Print());
+            Assert.AreEqual("16", test.Polish.Print());
         }
 
         [Test]

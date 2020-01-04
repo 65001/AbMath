@@ -93,19 +93,18 @@ namespace AbMath.Tests
         public void Sqrt()
         {
             RPN test = new RPN("derivative(sqrt(x),x)").Compute();
-            Assert.AreEqual("0.5 x sqrt /", test.Polish.Print());
+            Assert.AreEqual("1 2 x sqrt * /", test.Polish.Print());
 
             test.SetEquation("derivative(sqrt(x + 3),x)").Compute();
-            Assert.AreEqual("0.5 x 3 + sqrt /", test.Polish.Print());
+            Assert.AreEqual("1 2 x 3 + sqrt * /", test.Polish.Print());
         }
 
         [Test]
         public void Abs()
         {
             RPN test = new RPN("derivative( abs(x^2), x)").Compute();
-            //Assert.AreEqual("0.5 x 2 ^ * 2 2 ^ x * * x 2 ^ /", test.Polish.Print());
 
-            Assert.AreEqual("0.5 2 2 ^ * x 2 ^ x * * x 2 ^ /", test.Polish.Print());
+            Assert.AreEqual("4 x 2 ^ * x * 2 x 2 ^ * /", test.Polish.Print());
         }
 
         [Test]
