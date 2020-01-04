@@ -429,6 +429,11 @@ namespace AbMath.Calculator
                 return IsNumber() && ((int)GetNumber()) == GetNumber();
             }
 
+            public bool IsInteger(int number)
+            {
+                return IsInteger() && GetNumber() == number;
+            }
+
             public bool IsLessThanNumber(double number)
             {
                 return Token.IsNumber() && double.Parse(Token.Value) < number;
@@ -637,11 +642,7 @@ namespace AbMath.Calculator
                 
                 //These are attempts to change how the infix prints
                 //to remove excessive paranthesis 
-                bool startOfSequence = infix.Length == 0;
-                if (node.Parent != null && node.Parent.IsFunction())
-                {
-                    startOfSequence = true;
-                }
+                bool startOfSequence = false;
 
                 //Operators with left and right
                 if (node.Children.Count == 2 && node.Token.IsOperator())
@@ -665,6 +666,13 @@ namespace AbMath.Calculator
                 //Operators that only have one child
                 if (node.Children.Count == 1 && node.Token.IsOperator())
                 {
+                    if (node.Token.Value == "!")
+                    {
+                        Infix(node.Children[0], infix);
+                        infix.Append(node.Token.Value);
+                        return;
+                    }
+
                     infix.Append(node.Token.Value);
                     Infix(node.Children[0], infix);
                     return;
@@ -762,7 +770,7 @@ namespace AbMath.Calculator
 
                     if (this.IsNumberOrConstant() && other.IsNumberOrConstant())
                     {
-                        return 0;
+                        return this.GetNumber().CompareTo(other.GetNumber());
                     }
 
                     //Something that can be solved should yield like constants and numbers do! 
@@ -824,7 +832,7 @@ namespace AbMath.Calculator
                     //TODO: A straight exponent should give way to a multiplication with an exponent if...
                     //TODO: Swapping exponent with non exponent
                 }
-                else if (this.Parent.IsMultiplication())
+                else if (this.Parent.IsMultiplication() || this.Parent.IsFunction("internal_product"))
                 {
 
                 }

@@ -384,16 +384,25 @@ namespace AbMath.Calculator
 
             ruleManager.AddSetRule(SimplificationMode.Sum, setRule);
 
-            Rule propagation = new Rule(Sum.PropagationRunnable, Sum.Propagation, "sum(f(x) + g(x),x,a,b) -> sum(f(x),x,a,b) + sum(g(x),x,a,b)");
+            Rule propagation = new Rule(Sum.PropagationRunnable, Sum.Propagation, "sum(f(x) + g(x),x,a,b) -> sum(f(x),x,a,b) + sum(g(x),x,a,b)"); //No bounds change
+            Rule coefficient = new Rule(Sum.CoefficientRunnable, Sum.Coefficient, "sum(k * f(x),x,a,b) -> k * sum(f(x),x,a,b)"); //No bounds change
+
+
+
             Rule variable = new Rule(Sum.VariableRunnable, Sum.Variable, "sum(x,x,0,a) -> [a(a + 1)]/2");
-            Rule coefficient = new Rule(Sum.CoefficientRunnable, Sum.Coefficient, "sum(k * f(x),x,a,b) -> k * sum(f(x),x,a,b)");
-            Rule constant = new Rule(Sum.ConstantRunnable, Sum.Constant, "sum(k,x,0,b) -> k * b");
+            Rule constantComplex = new Rule(Sum.ConstantComplexRunnable, Sum.ConstantComplex, "sum(k,x,a,b) -> k(b - a + 1)");
+            Rule power = new Rule(Sum.PowerRunnable, Sum.Power, "sum(x^p,x,1,n) -> [1/(p + 1)] * sum( (-1)^j * [(p + 1)!]/ [j! * (p - j + 1)!] * B_j * n^(p - j + 1),j,0,p)");
 
             ruleManager.Add(SimplificationMode.Sum, propagation);
             ruleManager.Add(SimplificationMode.Sum, coefficient);
-            ruleManager.Add(SimplificationMode.Sum, variable);
 
-            ruleManager.Add(SimplificationMode.Sum, constant);
+            ruleManager.Add(SimplificationMode.Sum, variable);
+            ruleManager.Add(SimplificationMode.Sum, power);
+            ruleManager.Add(SimplificationMode.Sum, constantComplex);
+
+            //TODO: 
+            // sum(f(x),x,a,b) -> sum(f(x),x,0,b) - sum(f(x),x,0,a - 1)
+            // sum(x^p,x,0,n) -> 0^p + sum(x^p,x,1,n) 
         }
 
         public RPN.Node Generate(RPN.Token[] input)
@@ -616,6 +625,13 @@ namespace AbMath.Calculator
                     else if (node.IsExponent() && node[0].IsInteger() && node[1].IsInteger())
                     {
                         Solve(node);
+                    }
+                    else if (node.IsOperator("!"))
+                    {
+                        if (node[0].IsNumber(0) || node[0].IsNumber(1))
+                        {
+                            Solve(node);
+                        }
                     }
                 }
 
@@ -2124,6 +2140,7 @@ namespace AbMath.Calculator
 
             RPN.Node gen(RPN.Token token)
             {
+                
                 if (node.Children.Count == 1)
                 {
                     node.Remove();
@@ -2133,6 +2150,11 @@ namespace AbMath.Calculator
                 //TODO: Convert this from using ToPostFix to automatically generating a new correct tree!
 
                 //Prep stage
+                if (token.IsAddition())
+                {
+                    node.Children.Reverse();
+                }
+
                 Queue<RPN.Node> additions = new Queue<RPN.Node>(node.Children.Count);
                 additions.Enqueue(new RPN.Node(new[] { node[0], node[1] }, token));
                 for (int i = 2; i + 1 < node.Children.Count; i += 2)
@@ -2162,6 +2184,8 @@ namespace AbMath.Calculator
                 }
 
                 //This is fall back code! 
+                
+
                 List<RPN.Token> results = new List<RPN.Token>(node.Children.Count);
                 results.AddRange(node.Children[0].ToPostFix());
                 results.AddRange(node.Children[1].ToPostFix());
@@ -2572,26 +2596,43 @@ namespace AbMath.Calculator
             ruleTables.Add(new Schema("Check Time (ms | Ticks)"));
             ruleTables.Add(new Schema("Hits"));
 
+            int totalRules = 0;
+            long totalExecutionElapsedMilliseconds = 0;
+            long totalExecutionElappsedTicks = 0;
+            long totalCheckElapsedMilliseconds = 0;
+            long totalCheckElapsedTicks = 0;
+            int totalHits = 0;
             foreach(var KV in ruleSet)
             {
                 string executionTime = "-";
                 string checkTime = "-";
                 string hit = "-";
+
                 if (debug && ruleSetTracker != null && ruleSetTracker.ContainsKey(KV.Key))
                 {
                     executionTime = ruleSetTracker[KV.Key].ElapsedMilliseconds.ToString() + " | " + ruleSetTracker[KV.Key].ElapsedTicks.ToString("N0");
                     checkTime = canExecuteTracker[KV.Key].ElapsedMilliseconds.ToString() + " | " + canExecuteTracker[KV.Key].ElapsedTicks.ToString("N0");
-                    
+
+                    totalExecutionElapsedMilliseconds += ruleSetTracker[KV.Key].ElapsedMilliseconds;
+                    totalExecutionElappsedTicks += ruleSetTracker[KV.Key].ElapsedTicks;
+
+                    totalCheckElapsedMilliseconds += canExecuteTracker[KV.Key].ElapsedMilliseconds;
+                    totalCheckElapsedTicks += canExecuteTracker[KV.Key].ElapsedTicks;
                 }
 
                 if (hits.ContainsKey(KV.Key))
                 {
                     hit = hits[KV.Key].ToString();
+                    totalHits += hits[KV.Key];
                 }
+
+                totalRules += KV.Value.Count;
 
                 string[] row = new string[] { KV.Key.ToString(), KV.Value.Count.ToString(), setRule.ContainsKey(KV.Key) ? "✓" : "X", executionTime, checkTime, hit };
                 ruleTables.Add(row);
             }
+            string[] total = new string[] {"Total", totalRules.ToString(), "", $"{totalExecutionElapsedMilliseconds} | {totalExecutionElappsedTicks}", $"{totalCheckElapsedMilliseconds} | {totalCheckElapsedTicks}", totalHits.ToString()};
+            ruleTables.Add(total);
 
             return ruleTables.ToString();
         }

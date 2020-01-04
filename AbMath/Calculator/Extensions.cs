@@ -265,5 +265,6 @@ namespace AbMath.Calculator
                 return null;
             }
         }
+
     }
 }

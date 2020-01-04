@@ -66,14 +66,10 @@ namespace AbMath.Tests
         public void MultiTermAdd()
         {
             RPN test = new RPN("2 + 3 + 2").Compute();
-            Assert.AreEqual("2 2 + 3 +", test.Polish.Print());
-        }
+            Assert.AreEqual("3 2 + 2 +", test.Polish.Print());
 
-        [Test]
-        public void MultiTermAddNoSpace()
-        {
-            RPN test = new RPN("2+3+2").Compute();
-            Assert.AreEqual("2 2 + 3 +", test.Polish.Print());
+            test = new RPN("2+3+2").Compute();
+            Assert.AreEqual("3 2 + 2 +", test.Polish.Print());
         }
 
         [Test]
@@ -150,7 +146,7 @@ namespace AbMath.Tests
         public void UnaryStart()
         {
             RPN test = new RPN("-2 + 4").Compute();
-            Assert.AreEqual("-2 4 +", test.Polish.Print());
+            Assert.AreEqual("4 -2 +", test.Polish.Print());
         }
 
         [Test]
