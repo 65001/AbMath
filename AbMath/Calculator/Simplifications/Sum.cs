@@ -108,8 +108,10 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool PowerRunnable(RPN.Node node)
         {
-            return node[1].IsInteger(1) && node[3].IsExponent() && node[3, 0].IsInteger() && 
-                   node[3, 0].IsGreaterThanNumber(0) &&
+            return ( node[1].IsInteger(1) || node[1].IsNumber(0) ) //start point must be 0 or 1 since 0^(c) = 0 when c > 0.
+                   && node[3].IsExponent() 
+                   && node[3, 0].IsInteger() && 
+                   node[3, 0].IsGreaterThanNumber(0) && //ensures power is positive
                    node[3, 1].Matches(node[2]);
         }
 

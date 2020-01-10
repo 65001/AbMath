@@ -25,11 +25,14 @@ namespace AbMath.Calculator
         private Rule preRule;
         private Rule postRule;
 
-        public Rule(isRunnable isRunnable, Run run, string name)
+        private bool debug;
+
+        public Rule(isRunnable isRunnable, Run run, string name, bool debugMode = false)
         {
             CanRun = isRunnable;
             Compute = run;
             Name = name;
+            debug = debugMode;
         }
 
         /// <summary>
@@ -102,6 +105,11 @@ namespace AbMath.Calculator
             }
 
             return CanRun.Invoke(node);
+        }
+
+        public bool DebugMode()
+        {
+            return debug;
         }
 
         private void Write(string message)

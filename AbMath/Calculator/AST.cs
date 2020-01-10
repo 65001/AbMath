@@ -152,8 +152,10 @@ namespace AbMath.Calculator
             Rule subtractionDivisionCommmonDenominator = new Rule(Subtraction.SubtractionDivisionCommonDenominatorRunnable,
                 Subtraction.SubtractionDivisionCommonDenominator, "f(x)/g(x) - h(x)/g(x) -> [f(x) - h(x)]/g(x)");
             Rule coefficientReduction = new Rule(Subtraction.CoefficientReductionRunnable, Subtraction.CoefficientReduction, "Cf(x) - cf(x) -> (C - c)f(x)");
+
             Rule constantToAddition = new Rule(Subtraction.ConstantToAdditionRunnable, Subtraction.ConstantToAddition, "f(x) - (-c) -> f(x) + c");
             Rule functionToAddition = new Rule(Subtraction.FunctionToAdditionRunnable, Subtraction.FunctionToAddition, "f(x) - (-c * g(x)) -> f(x) + c *g(x)");
+            Rule distributive = new Rule(Subtraction.DistributiveSimpleRunnable, Subtraction.DistributiveSimple, "f(x) - (g(x) - h(x)) -> f(x) - g(x) + h(x) -> (f(x) + h(x)) - g(x)");
 
             ruleManager.Add(SimplificationMode.Subtraction, sameFunction);
             ruleManager.Add(SimplificationMode.Subtraction, coefficientOneReduction);
@@ -163,6 +165,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Subtraction, coefficientReduction);
             ruleManager.Add(SimplificationMode.Subtraction, constantToAddition);
             ruleManager.Add(SimplificationMode.Subtraction, functionToAddition);
+            ruleManager.Add(SimplificationMode.Subtraction, distributive);
 
             //TODO: f(x)/g(x) /pm i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) /p, i(x)g(x)/g(x)j(x) -> [f(x)j(x) /pm g(x)i(x)]/[g(x)j(x)]
         }
@@ -314,7 +317,7 @@ namespace AbMath.Calculator
             //TODO: cot(x)^2 + 1 = csc(x)^2 
             //TODO: csc(x)^2 - cot(x)^2 = 1
 
-            //TODO: Double Angle
+            //TODO: Double Angle (I wonder if double angle could be done through power reduction instead...)
             //[cos(x)^2 - sin(x)^2] = cos(2x)
             //1 - 2sin(x)^2 = cos(2x)
             //2cos(x)^2 - 1 = cos(2x) 
@@ -656,12 +659,12 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Misc)
                 {
-                    if (node.IsOperator() && node.Children.Any(t => t.IsGreaterThanOrEqualToNumber(-1) && t.IsLessThanOrEqualToNumber(1) ))
+                    if (node.IsOperator() && node.Children.Any(t => t.IsGreaterThanNumber(-1) && t.IsLessThanNumber(1) ))
                     {
                         Write("\tDecimal to Fraction");
                         for (int i = 0; i < node.Children.Count; i++)
                         {
-                            if (node[i].IsGreaterThanOrEqualToNumber(-1) && node[i].IsLessThanOrEqualToNumber(1))
+                            if (node[i].IsGreaterThanNumber(-1) && node[i].IsLessThanNumber(1))
                             {
                                 var f = Extensions.getDecimalFormatToNode(node[i].GetNumber());
                                 if (f != null)
@@ -2410,7 +2413,7 @@ namespace AbMath.Calculator
         private Logger logger;
         private static HashSet<Rule> contains;
 
-        public OptimizerRuleSet(Logger logger,bool debugMode = false)
+        public OptimizerRuleSet(Logger logger, bool debugMode = false)
         {
             if (ruleSet == null)
             {
@@ -2544,6 +2547,11 @@ namespace AbMath.Calculator
                     if (debug)
                     {
                         sw.Stop();
+                    }
+
+                    if (rule.DebugMode())
+                    {
+                        Write("The output of : " + temp.ToInfix());
                     }
 
                     hits[mode] = hits[mode] + 1;

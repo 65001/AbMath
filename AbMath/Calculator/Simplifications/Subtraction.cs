@@ -112,5 +112,19 @@ namespace AbMath.Calculator.Simplifications
             node.Replace(new RPN.Token("+", 2, RPN.Type.Operator));
             return node;
         }
+
+        public static bool DistributiveSimpleRunnable(RPN.Node node)
+        {
+            return node[0].IsSubtraction();
+        }
+
+        public static RPN.Node DistributiveSimple(RPN.Node node)
+        {
+            //f(x) - (g(x) - h(x)) -> f(x) - g(x) + h(x) -> (f(x) + h(x)) - g(x)
+            //We want to do this automatically
+            RPN.Node add = new RPN.Node(new RPN.Node[] {node[0, 0], node[1]}, new RPN.Token("+", 2, RPN.Type.Operator));
+            RPN.Node sub = new RPN.Node(new RPN.Node[] {node[0,1], add}, new RPN.Token("-", 2, RPN.Type.Operator));
+            return sub;
+        }
     }
 }
