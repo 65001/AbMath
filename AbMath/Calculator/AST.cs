@@ -178,9 +178,14 @@ namespace AbMath.Calculator
             Rule divisionByOne = new Rule(Division.DivisionByOneRunnable, Division.DivisionByOne, "f(x)/1 -> f(x)");
             Rule gcd = new Rule(Division.GCDRunnable, Division.GCD, "(cC)/(cX) -> C/X");
             Rule divisionFlip = new Rule(Division.DivisionFlipRunnable, Division.DivisionFlip, "(f(x)/g(x))/(h(x)/j(x)) - > (f(x)j(x))/(g(x)h(x))");
+
             Rule constantCancelation = new Rule(Division.DivisionCancelingRunnable, Division.DivisionCanceling, "(c * f(x))/c -> f(x) where c is not 0");
+
             Rule powerReduction = new Rule(Division.PowerReductionRunnable, Division.PowerReduction, "Power Reduction");
             Rule divisionFlipTwo = new Rule(Division.DivisionFlipTwoRunnable, Division.DivisionFlipTwo, "[f(x)/g(x)]/ h(x) -> [f(x)/g(x)]/[h(x)/1] - > f(x)/[g(x) * h(x)]");
+
+            Rule factorialSimplificationToOne = new Rule(Division.FactorialCancellationRunnable, Division.FactorialCancellation, "f(x)!/f(x)! -> 1");
+            Rule factorialComplexSimplification = new Rule(Division.FactorialRemovedRunnable, Division.FactorialRemoved, "[f(x)(x!)]/x! -> f(x)");
             ruleManager.AddSetRule(SimplificationMode.Division, setRule);
 
             ruleManager.Add(SimplificationMode.Division, divisionByZero);
@@ -190,6 +195,8 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Division, constantCancelation);
             ruleManager.Add(SimplificationMode.Division, powerReduction);
             ruleManager.Add(SimplificationMode.Division, divisionFlipTwo);
+            ruleManager.Add(SimplificationMode.Division, factorialSimplificationToOne);
+            ruleManager.Add(SimplificationMode.Division, factorialComplexSimplification);
 
             //TODO: 0/c when c is a constant or an expression that on solving will be a constant. 
 
@@ -417,7 +424,9 @@ namespace AbMath.Calculator
 
         private void GenerateMiscSimplifications()
         {
-            
+            Rule factorial = new Rule(Misc.ZeroFactorialRunnable, Misc.ZeroFactorial, "(0! || 1!) -> 1");
+
+            ruleManager.Add(SimplificationMode.Misc, factorial);
         }
 
         public RPN.Node Generate(RPN.Token[] input)

@@ -82,7 +82,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool DivisionCancelingRunnable(RPN.Node node)
         {
-            return node[1].IsMultiplication() && node[0].IsNumberOrConstant() && node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0);
+            return node[1].IsMultiplication() && (node[0].IsNumberOrConstant()) && node[0].Matches(node[1, 1]) && !node[1, 1].IsNumber(0);
         }
 
         public static RPN.Node DivisionCanceling(RPN.Node node)
@@ -101,6 +101,28 @@ namespace AbMath.Calculator.Simplifications
             node[0, 0].Replace(node[0, 0].GetNumber() - reduction);
             node[1, 0].Replace(node[1, 0].GetNumber() - reduction);
             return node;
+        }
+
+        //f(x)!/f(x)! -> 1
+        public static bool FactorialCancellationRunnable(RPN.Node node)
+        {
+            return node[0].IsOperator("!") && node[1].IsOperator("!") && node[0,0].Matches(node[1,0]) && !node[0,0].containsDomainViolation();
+        }
+
+        public static RPN.Node FactorialCancellation(RPN.Node node)
+        {
+            return new RPN.Node(1);
+        }
+
+        //[f(x)(x!)]/x! -> f(x)
+        public static bool FactorialRemovedRunnable(RPN.Node node)
+        {
+            return node[1].IsMultiplication() && node[1, 0].IsOperator("!") && node[0].Matches(node[1, 0]);
+        }
+
+        public static RPN.Node FactorialRemoved(RPN.Node node)
+        {
+            return node[1, 1];
         }
     }
 }
