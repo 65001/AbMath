@@ -303,7 +303,10 @@ namespace AbMath.Calculator
                         //The function has an incorrect number of arguments!
                         else if (function.MinArguments > token.Arguments || token.Arguments > function.MaxArguments)
                         {
-                            throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.");
+                            if (function.Description is null) { 
+                                throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.");
+                            }
+                            throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.\n{function.Description.ToString()}");
                         }
 
                     }
