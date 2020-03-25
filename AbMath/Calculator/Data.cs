@@ -775,6 +775,8 @@ namespace AbMath.Calculator
                     MinArguments = 1
                 });
 
+                AddFunction("binomial", new Function(1,1,1,DoFunctions.Binomial));
+
                 AddFunction("Γ", new Function()
                 {
                     Arguments = 1,
