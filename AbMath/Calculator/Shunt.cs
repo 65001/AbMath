@@ -306,7 +306,7 @@ namespace AbMath.Calculator
                             if (function.Description is null) { 
                                 throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.");
                             }
-                            throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.\n{function.Description.ToString()}");
+                            throw new InvalidOperationException($"The function {token.Value} expected between {function.MinArguments} to {function.MaxArguments} arguments but has received {token.Arguments} instead.The help for the function is displayed below:\n{function.Description.ToString()}");
                         }
 
                     }

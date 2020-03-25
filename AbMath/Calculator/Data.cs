@@ -626,22 +626,14 @@ namespace AbMath.Calculator
                     MinArguments = 1
                 });
 #endregion
+                Description max = new Description();
+                max.Add("max(a,b,...)","Returns the highest value of all the passed in parameters.");
+                AddFunction("max", new Function(2,2,int.MaxValue,DoFunctions.Max, max));
 
-                AddFunction("max", new Function
-                {
-                    MinArguments = 2,
-                    Arguments = 2,
-                    MaxArguments = int.MaxValue,
-                    Compute = DoFunctions.Max
-                });
+                Description min = new Description();
+                min.Add("min(a,b,...)","Returns the lowest value of all the passed in parameters.");
+                AddFunction("min", new Function(2,2,int.MaxValue,DoFunctions.Min, min));
 
-                AddFunction("min", new Function
-                {
-                    MinArguments = 2,
-                    Arguments = 2,
-                    MaxArguments = int.MaxValue,
-                    Compute = DoFunctions.Min
-                });
 
                 AddFunction("sqrt", new Function
                 {
