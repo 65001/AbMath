@@ -36,61 +36,6 @@ namespace AbMath.Calculator
         /// </summary>
         public event EventHandler<string> Output; 
 
-        public struct Operator
-        {
-            public int Weight;
-            public int Arguments;
-            public Assoc Assoc;
-            public Run Compute;
-            public Description Description;
-
-            public Operator(Assoc assoc, int weight, int arguments, Run compute )
-            {
-                this.Weight = weight;
-                this.Arguments = arguments;
-                this.Assoc = assoc;
-                this.Compute = compute;
-                Description = null;
-            }
-
-            public Operator(Assoc assoc, int weight, int arguments, Run compute, Description description)
-            {
-                this.Weight = weight;
-                this.Arguments = arguments;
-                this.Assoc = assoc;
-                this.Compute = compute;
-                Description = description;
-            }
-        }
-
-        public struct Function
-        {
-            public int Arguments;
-            public int MaxArguments;
-            public int MinArguments;
-
-            public Run Compute;
-            public Description Description;
-
-            public Function(int Min, int Args, int Max, Run compute)
-            {
-                this.MinArguments = Min;
-                this.Arguments = Args;
-                this.MaxArguments = Max;
-                this.Compute = compute;
-                Description = null;
-            }
-
-            public Function(int Min, int Args, int Max, Run compute, Description description)
-            {
-                this.MinArguments = Min;
-                this.Arguments = Args;
-                this.MaxArguments = Max;
-                this.Compute = compute;
-                Description = description;
-            }
-        }
-
         public struct TimeRecord
         {
             public string Type;

@@ -45,7 +45,7 @@ namespace AbMath.Calculator
 
             if (_examples.Count > 0)
             {
-                sb.AppendLine("Examples:\n");
+                sb.AppendLine("\nExamples:");
             }
 
             foreach (var ex in _examples)

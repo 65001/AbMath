@@ -80,7 +80,7 @@ namespace AbMath.Calculator
                         break;
                     case RPN.Type.Operator:
                     {
-                        RPN.Operator Operator = _dataStore.Operators[token.Value];
+                        Operator Operator = _dataStore.Operators[token.Value];
                         double[] arguments = GetArguments(token.Arguments);
                         double ans = Operator.Compute(arguments);
                         _stack.Push(ans);
@@ -89,7 +89,7 @@ namespace AbMath.Calculator
                     case RPN.Type.Function:
                     {
                         //Looks up the function in the Dict
-                        RPN.Function function = _dataStore.Functions[token.Value];
+                        Function function = _dataStore.Functions[token.Value];
 
                         double[] arguments = GetArguments(token.Arguments);
                         double ans = function.Compute(arguments);

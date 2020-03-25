@@ -513,7 +513,7 @@ namespace AbMath.Calculator
 
             private void DefaultFunctions()
             {
-#region Trig
+                #region Trig
                 AddFunction("sin", new Function
                 {
                     MinArguments = 1,
@@ -625,7 +625,8 @@ namespace AbMath.Calculator
                     MaxArguments = 1,
                     MinArguments = 1
                 });
-#endregion
+                #endregion
+
                 Description max = new Description();
                 max.Add("max(a,b,...)","Returns the highest value of all the passed in parameters.");
                 AddFunction("max", new Function(2,2,int.MaxValue,DoFunctions.Max, max));
@@ -634,22 +635,19 @@ namespace AbMath.Calculator
                 min.Add("min(a,b,...)","Returns the lowest value of all the passed in parameters.");
                 AddFunction("min", new Function(2,2,int.MaxValue,DoFunctions.Min, min));
 
+                Description sqrt = new Description();
+                sqrt.Add("sqrt(f(x))","Returns the square root of f(x).");
+                AddFunction("sqrt", new Function(1,1,1,DoFunctions.Sqrt, sqrt));
 
-                AddFunction("sqrt", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Sqrt
-                });
-
-                AddFunction("round", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 2,
-                    MaxArguments = 2,
-                    Compute = DoFunctions.Round
-                });
+                Description round = new Description();
+                round.Add("round(a)","Rounds 'a' to the nearest integer");
+                round.Add("round(a,b)", "Rounds 'a' to the 'b' position.");
+                round.Add("round(2.3) = 2");
+                round.Add("round(2.6) = 3");
+                round.Add("round(2.555,0) = 3");
+                round.Add("round(2.555,1) = 2.6");
+                round.Add("round(2.555,2) = 2.56");
+                AddFunction("round", new Function(1, 2, 2, DoFunctions.Round, round));
 
                 AddFunction("gcd", new Function
                 {
@@ -683,7 +681,7 @@ namespace AbMath.Calculator
                     Compute = DoFunctions.Log
                 });
 
-#region Constants
+                #region Constants
                 AddFunction("π", new Function
                 {
                     Arguments = 0,
@@ -699,7 +697,7 @@ namespace AbMath.Calculator
                     MaxArguments = 0,
                     Compute = DoFunctions.EContstant
                 });
-#endregion
+                #endregion
 
                 AddFunction("bounded",new Function()
                 {

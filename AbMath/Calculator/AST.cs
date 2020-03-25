@@ -527,8 +527,8 @@ namespace AbMath.Calculator
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            _rpn.Data.AddFunction("internal_product", new RPN.Function());
-            _rpn.Data.AddFunction("internal_sum", new RPN.Function());
+            _rpn.Data.AddFunction("internal_product", new Function());
+            _rpn.Data.AddFunction("internal_sum", new Function());
 
             expand(Root);
             InternalSwap(Root);
@@ -918,7 +918,7 @@ namespace AbMath.Calculator
             //it will not appear to be a function
             if (!_rpn.Data.Functions.ContainsKey("derive"))
             {
-                _rpn.Data.AddFunction("derive", new RPN.Function { Arguments = 1, MaxArguments = 1, MinArguments = 1 });
+                _rpn.Data.AddFunction("derive", new Function { Arguments = 1, MaxArguments = 1, MinArguments = 1 });
             }
             MetaFunctions(Root);
 
