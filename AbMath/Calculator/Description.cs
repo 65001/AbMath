@@ -23,14 +23,30 @@ namespace AbMath.Calculator
             _examples = new List<string>();
         }
 
+        public Description(string signature, string blurb)
+        {
+            _signature = new List<string>();
+            _blurbs = new List<string>();
+            _examples = new List<string>();
+            this.Add(signature, blurb);
+        }
+
         public void Add(string signature, string blurb)
         {
+            if (signature == null || blurb == null)
+            {
+                throw new ArgumentNullException(signature,"The parameter cannot be null for the description.");
+            }
             _signature.Add(signature);
             _blurbs.Add(blurb);
         }
 
         public void Add(string example)
         {
+            if (example == null)
+            {
+                throw new ArgumentNullException(example, "The example parameter cannot be null.");
+            }
             _examples.Add(example);
         }
 

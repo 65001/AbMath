@@ -1061,6 +1061,10 @@ namespace AbMath.Calculator
             }
             else if (node.IsFunction("sum"))
             {
+                //0 - end
+                //1 - start 
+                //2 - variable 
+                //3 - expression
                 Write($"\tSolving the sum! : {node[3].ToInfix()}");
                 PostFix math = new PostFix(_rpn);
                 double start = math.Compute(node[1].ToPostFix().ToArray());
