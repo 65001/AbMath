@@ -370,144 +370,41 @@ namespace AbMath.Calculator
             {
                 AddOperator("^", new Operator(Assoc.Right, 5, 2, DoOperators.Power));
                 AddOperator("E", new Operator(Assoc.Right, 5, 2, DoOperators.E));
+                AddOperator("!", new Operator(Assoc.Left, 5, 1, DoOperators.Factorial));
 
-                AddOperator("!", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 5,
-                    Arguments = 1,
-                    Compute = DoOperators.Factorial
-                });
+                AddOperator("%", new Operator(Assoc.Left, 4, 2, DoOperators.Mod));
 
-                AddOperator("%", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 4,
-                    Arguments = 2,
-                    Compute = DoOperators.Mod
-                });
+                AddOperator("/", new Operator(Assoc.Left, 4, 2, DoOperators.Divide));
 
-                AddOperator("/", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 4,
-                    Arguments = 2,
-                    Compute = DoOperators.Divide
-                });
+                AddOperator("*", new Operator(Assoc.Left, 4, 2, DoOperators.Multiply));
 
-                AddOperator("*", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 4,
-                    Arguments = 2,
-                    Compute = DoOperators.Multiply
-                });
+                AddOperator("+", new Operator(Assoc.Left, 3, 2, DoOperators.Add));
 
-                AddOperator("+", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 2,
-                    Compute = DoOperators.Add
-                });
+                AddOperator("++", new Operator(Assoc.Left, 3, 1, DoOperators.AddSelf));
 
-                AddOperator("++", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 1,
-                    Compute = DoOperators.AddSelf
-                });
+                AddOperator("−", new Operator(Assoc.Left, 3, 2, DoOperators.Subtract));
 
-                AddOperator("−", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 2,
-                    Compute = DoOperators.Subtract
-                });
-
-                AddOperator("-", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 2,
-                    Compute = DoOperators.Subtract
-                });
+                AddOperator("-", new Operator(Assoc.Left, 3, 2, DoOperators.Subtract));
 
 #region Evaluation
-                AddOperator(">", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.GreaterThan
-                });
+                AddOperator(">", new Operator(Assoc.Left, 2, 2, DoOperators.GreaterThan));
 
-                AddOperator("<", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.LessThan
-                });
+                AddOperator("<", new Operator(Assoc.Left, 2, 2, DoOperators.LessThan));
 
-                AddOperator("=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.Equals
-                });
+                AddOperator("=", new Operator(Assoc.Left, 2, 2, DoOperators.Equals));
 
-                AddOperator("==", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.Equals
-                });
+                AddOperator("==", new Operator(Assoc.Left, 2, 2, DoOperators.Equals));
 
-                AddOperator(">=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.GreaterThanOrEquals
-                });
+                AddOperator(">=", new Operator(Assoc.Left, 2, 2, DoOperators.GreaterThanOrEquals));
 
-                AddOperator("<=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.LessThanOrEquals
-                });
+                AddOperator("<=", new Operator(Assoc.Left, 2, 2, DoOperators.LessThanOrEquals));
 #endregion
 #region Logic
-                AddOperator("!=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 1,
-                    Arguments = 2,
-                    Compute = DoOperators.NotEquals
-                });
+                AddOperator("!=", new Operator(Assoc.Left, 1, 2, DoOperators.NotEquals));
 
-                AddOperator("&&", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 1,
-                    Arguments = 2,
-                    Compute = DoOperators.And
-                });
+                AddOperator("&&", new Operator(Assoc.Left, 1, 2, DoOperators.And));
 
-                AddOperator("||", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 1,
-                    Arguments = 2,
-                    Compute = DoOperators.Or
-                });
+                AddOperator("||", new Operator(Assoc.Left, 1, 2, DoOperators.Or));
 #endregion
             }
 
@@ -604,49 +501,29 @@ namespace AbMath.Calculator
                 random.Add("random(min,max)","Returns a random integer that is between the min and maximum.");
                 AddFunction("random", new Function(0, 0, 2, DoFunctions.Random, random));
 
-                AddFunction("rand", new Function()
-                {
-                    MinArguments = 0,
-                    Arguments = 0,
-                    MaxArguments = 0,
-                    Compute = DoFunctions.Random
-                });
+                Description rand = new Description("rand()", "Returns a non-negative random integer number.");
+                AddFunction("rand", new Function(0, 0, 0, DoFunctions.Random, rand));
 
-                AddFunction("seed", new Function()
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Seed
-                });
+                Description seed = new Description("seed(a)","Sets the seed for the random number generator.");
+                AddFunction("seed", new Function(1, 1, 1, DoFunctions.Seed, seed));
 
-                AddFunction("abs", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Abs,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                Description abs = new Description("abs(x)","Returns the absolute value of 'x'.");
+                AddFunction("abs", new Function(1, 1, 1, DoFunctions.Abs, abs));
 
-                AddFunction("binomial", new Function(2,2,2,DoFunctions.Binomial));
+                Description binomial = new Description("binomial(n,k)","Returns the value of (n!)/[k!(n - k)!].\nThis is the equivalent of (n choose k).\nRestrictions:0 <= k <= n");
+                AddFunction("binomial", new Function(2,2,2,DoFunctions.Binomial, binomial));
 
-                AddFunction("Γ", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Gamma,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                Description gamma = new Description("Γ(x)", "The gamma function is related to factorials as: Γ(x) = (x - 1)!.\nSince the gamma function is really hard to compute we are using Gergő Nemes Approximation.");
+                AddFunction("Γ", new Function(1, 1, 1, DoFunctions.Gamma, gamma));
 
                 #region MetaCommands
                 
-                AddFunction("derivative", new Function()
-                {
-                    Arguments = 2,
-                    MinArguments = 2,
-                    MaxArguments = 3,
-                });
+                Description derivative = new Description("derivative(f(x),x)","Takes the derivative of f(x) in respect to x.");
+                derivative.Add("derivative(f(x),x,n)","");
+                derivative.Add("derivative(f(x),x,2) = derivative(derivative(f(x),x),x)");
+                AddFunction("derivative", new Function(2, 2, 3, derivative));
                 
+
                 AddFunction("integrate", new Function()
                 {
                     Arguments = 4,
