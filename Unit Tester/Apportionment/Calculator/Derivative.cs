@@ -52,6 +52,13 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void QuotientConstantRule()
+        {
+            RPN test = new RPN("derivative((x^2)/24,x)").Compute();
+            Assert.AreEqual("2 x * 24 /", test.Polish.Print());
+        }
+
+        [Test]
         public void QuotientRule()
         {
             RPN test = new RPN("derivative(sin(x)/x^2,x)").Compute();

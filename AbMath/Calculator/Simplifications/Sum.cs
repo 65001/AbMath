@@ -106,6 +106,20 @@ namespace AbMath.Calculator.Simplifications
             return multiplication;
         }
 
+        public static bool CoefficientDivisionRunnable(RPN.Node node)
+        {
+            return node[3].IsDivision() && node[3, 0].IsNumberOrConstant();
+        }
+
+        public static RPN.Node CoefficientDivision(RPN.Node node)
+        {
+            RPN.Node sum = new RPN.Node(new RPN.Node[] { node[0].Clone(), node[1].Clone(), node[2].Clone(), node[3, 1] }, _sum);
+            RPN.Node division = new RPN.Node(new RPN.Node[] {node[3,0], sum}, new RPN.Token("/",2,RPN.Type.Operator));
+
+            return division;
+
+        }
+
         public static bool PowerRunnable(RPN.Node node)
         {
             return ( node[1].IsInteger(1) || node[1].IsNumber(0) ) //start point must be 0 or 1 since 0^(c) = 0 when c > 0.
