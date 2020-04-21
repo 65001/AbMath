@@ -59,9 +59,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node toDivision(RPN.Node node)
         {
-            RPN.Node powerClone = new RPN.Node(new[] { new RPN.Node(-1), node[0].Clone() },
-                new RPN.Token("*", 2, RPN.Type.Operator));
-            RPN.Node exponent = new RPN.Node(new[] { powerClone, node[1].Clone() },
+            RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(-1 * node[0].GetNumber()), node[1].Clone() },
                 new RPN.Token("^", 2, RPN.Type.Operator));
             RPN.Node division = new RPN.Node(new[] { exponent, new RPN.Node(1) },
                 new RPN.Token("/", 2, RPN.Type.Operator));
@@ -112,8 +110,6 @@ namespace AbMath.Calculator.Simplifications
             return new RPN.Node( Math.Pow( node[1].GetNumber() , node[0].GetNumber() ) );
         }
 
-
-
         public static bool NegativeConstantRaisedToAPowerOfTwoRunnable(RPN.Node node)
         {
             return node[0].IsNumberOrConstant() && node[1].IsLessThanNumber(0) && node[0].GetNumber() % 2 == 0;
@@ -122,6 +118,17 @@ namespace AbMath.Calculator.Simplifications
         public static RPN.Node NegativeConstantRaisedToAPowerOfTwo(RPN.Node node)
         {
             node.Replace(node[1], new RPN.Node(-1 * node[1].GetNumber()));
+            return node;
+        }
+
+        public static bool AbsRaisedToPowerofTwoRunnable(RPN.Node node)
+        {
+            return node[0].IsNumber(2) && node[1].IsFunction("abs");
+        }
+
+        public static RPN.Node AbsRaisedToPowerofTwo(RPN.Node node)
+        {
+            node.Replace(node[1], node[1, 0]);
             return node;
         }
 

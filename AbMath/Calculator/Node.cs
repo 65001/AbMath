@@ -404,6 +404,26 @@ namespace AbMath.Calculator
                 return double.Parse(Token.Value);
             }
 
+            public Function? GetFunction(RPN.DataStore data)
+            {
+                if (!IsFunction())
+                {
+                    return null;
+                }
+
+                return data.Functions[this.Token.Value];
+            }
+
+            public Operator? GetOperator(RPN.DataStore data)
+            {
+                if (!IsOperator())
+                {
+                    return null;
+                }
+
+                return data.Operators[this.Token.Value];
+            }
+
             public bool containsDomainViolation()
             {
                 return this.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator));
@@ -577,15 +597,15 @@ namespace AbMath.Calculator
                 return PostFix(node);
             }
 
-            public string ToInfix()
+            public string ToInfix(RPN.DataStore? data = null)
             {
-                return ToInfix(this);
+                return ToInfix(this, data);
             }
 
-            public string ToInfix(RPN.Node node)
+            public string ToInfix(RPN.Node node, RPN.DataStore? data)
             {
                 StringBuilder infix = new StringBuilder();
-                Infix(node, infix);
+                Infix(node, infix, data);
                 return infix.ToString();
             }
 
@@ -632,30 +652,76 @@ namespace AbMath.Calculator
             /// </summary>
             /// <param name="node"></param>
             /// <param name="infix"></param>
-            private void Infix(RPN.Node node, StringBuilder infix)
+            private void Infix(RPN.Node node, StringBuilder infix, RPN.DataStore? data)
             {
                 //TODO: Implement nonrecursive algorithim!
                 if (node is null)
                 {
                     return;
                 }
-                
-                //These are attempts to change how the infix prints
-                //to remove excessive paranthesis 
-                bool startOfSequence = false;
+
+                //Rules from https://stackoverflow.com/questions/14175177/how-to-walk-binary-abstract-syntax-tree-to-generate-infix-notation-with-minimall
+
+                bool parenthesis = true;
+                if (node.Parent == null)
+                {
+                    parenthesis = false;
+                }
+                else if (data != null && node.IsOperator() && node.Parent.IsOperator() && data.Operators[node.Token.Value].Weight >
+                         data.Operators[node.Parent.Token.Value].Weight)
+                {
+                    parenthesis = false;
+                }
+                else if (node.IsOperator("+") && node.Parent.IsOperator("+"))
+                {
+                    parenthesis = false;
+                }
+                else if (node.IsOperator("*") && node.Parent.IsOperator("*"))
+                {
+                    parenthesis = false;
+                }
+                else if (node.IsOperator() && node.Parent.IsFunction() && !node.Parent.IsConstant())
+                {
+                    parenthesis = false; //abs(f(x) + g(x))
+                }
+                //TODO: Correctly Implement Associative rules
 
                 //Operators with left and right
                 if (node.Children.Count == 2 && node.Token.IsOperator())
                 {
-                    if (!startOfSequence) { 
+                    if (parenthesis) { 
                         infix.Append("(");
                     }
 
-                    Infix(node.Children[1], infix);
-                    infix.Append(node.Token.Value);
-                    Infix(node.Children[0], infix);
+                    bool printOperator = true;
 
-                    if (!startOfSequence)
+                    if (node.IsOperator("*"))
+                    {
+                        if (node[0].IsFunction() && node[1].IsFunction())
+                        {
+                            printOperator = false; //sin(x)cos(x)
+                        }
+                        else if (node[0].IsNumber() && node[1].IsFunction())
+                        {
+                            printOperator = false; //2sin(x)
+                        }
+                        else if (node[0].IsFunction() && node[1].IsNumber())
+                        {
+                            printOperator = false; //sin(x)2
+                        }
+                    }
+
+                    Infix(node.Children[1], infix, data);
+
+
+                    if (printOperator)
+                    {
+                        infix.Append(node.Token.Value); //The operator 
+                    }
+
+                    Infix(node.Children[0], infix, data);
+
+                    if (parenthesis)
                     {
                         infix.Append(")");
                     }
@@ -666,15 +732,15 @@ namespace AbMath.Calculator
                 //Operators that only have one child
                 if (node.Children.Count == 1 && node.Token.IsOperator())
                 {
-                    if (node.Token.Value == "!")
+                    if (node.IsFunction("!"))
                     {
-                        Infix(node.Children[0], infix);
+                        Infix(node.Children[0], infix, data);
                         infix.Append(node.Token.Value);
                         return;
                     }
 
                     infix.Append(node.Token.Value);
-                    Infix(node.Children[0], infix);
+                    Infix(node.Children[0], infix, data);
                     return;
                 }
 
@@ -685,7 +751,7 @@ namespace AbMath.Calculator
                     infix.Append("(");
                     for (int i = (node.Children.Count - 1); i >= 0; i--)
                     {
-                        Infix(node.Children[i], infix);
+                        Infix(node.Children[i], infix, data);
                         if (i > 0)
                         {
                             infix.Append(",");
@@ -733,6 +799,16 @@ namespace AbMath.Calculator
                 return this.GetHash() == ((Node) (obj)).GetHash();
             }
 
+            /// <summary>
+            /// Compares two nodes to each other.
+            /// The value it returns is dependent
+            /// on its parent and the structure of the tree.
+            /// 
+            /// It is expected that two nodes will share a same
+            /// parent when being compared. 
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
             public int CompareTo(Node other)
             {
                 //Assume that if you have no parent you really cannot sort.
@@ -754,7 +830,6 @@ namespace AbMath.Calculator
                  */
 
                 //Here we know we have the same parent and that parent exists! 
-
                 if (this.Parent.IsAddition() || this.Parent.IsFunction("internal_sum") || this.Parent.IsFunction("total"))
                 {
                     //Numbers and constants should yield to everything
@@ -815,8 +890,19 @@ namespace AbMath.Calculator
                         return 1;
                     }
 
-                    //Multiplication should yield to exponents with multiplications 
-
+                    //Multiplication should yield to multiplications that contain exponents
+                    if (this.IsMultiplication() && other.IsMultiplication())
+                    { 
+                        //This does not have an exponent and the other one does
+                        if (!this.Children.Any(n => n.IsExponent()) && other.Children.Any(n => n.IsExponent()))
+                        {
+                            return -1;
+                        }
+                        else if (!other.Children.Any(n => n.IsExponent()) && this.Children.Any(n => n.IsExponent()))
+                        {
+                            return 1;
+                        }
+                    }
                     //Exponents compared to other exponents
                     if (this.IsExponent() && other.IsExponent())
                     {
@@ -834,7 +920,13 @@ namespace AbMath.Calculator
                 }
                 else if (this.Parent.IsMultiplication() || this.Parent.IsFunction("internal_product"))
                 {
-
+                    //Sort order for multiplication
+                    //1) Numbers or Constants
+                    //2) Exponents of constants
+                    //3) Exponents of variables
+                    //4) Variables
+                    //5) Functions (sorted alphabetically)
+                    //6) Expressions (Everything else)
                 }
 
                 return 0;

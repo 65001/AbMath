@@ -138,7 +138,7 @@ namespace AbMath.Calculator
             ast.MetaFunctions();
 
             this.Data.Polish = ast.Root.ToPostFix().ToArray();
-            this.Data.SimplifiedEquation = ast.Root.ToInfix();
+            this.Data.SimplifiedEquation = ast.Root.ToInfix(this.Data);
 
             logger.Log(Channels.Debug, "");
             logger.Log(Channels.Debug, "AST Simplified RPN : " + Data.Polish.Print());

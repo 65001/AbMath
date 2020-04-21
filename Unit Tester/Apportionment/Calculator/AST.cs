@@ -29,6 +29,20 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void ExponentRaisedToExponent()
+        {
+            RPN rpn = new RPN("(x^2)^(-0.5)").Compute();
+            Assert.AreEqual("1 x abs /", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void AbsRaisedToPowerTwo()
+        {
+            RPN rpn = new RPN("abs(x)^2").Compute();
+            Assert.AreEqual("x 2 ^", rpn.Polish.Print());
+        }
+
+        [Test]
         public void TrigIdentiySinAndCos()
         {
             RPN rpn = new RPN("sin(x)sin(x) + cos(x)cos(x)").Compute();
@@ -309,6 +323,13 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("ln(x^2)").Compute();
             Assert.AreEqual("2 x ln *", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void DivisionAddRule()
+        {
+            RPN rpn = new RPN("x/y + z/y").Compute();
+            Assert.AreEqual("x z + y /", rpn.Polish.Print());
         }
     }
 }

@@ -120,5 +120,17 @@ namespace AbMath.Calculator.Simplifications
                 new RPN.Token("*", 2, RPN.Type.Operator));
             return node;
         }
+
+        public static bool DivisionAdditionRunnable(RPN.Node node)
+        {
+            return node[0].IsDivision() && node[1].IsDivision() && node[0, 0].Matches(node[1, 0]); 
+        }
+
+        public static RPN.Node DivisionAddition(RPN.Node node)
+        {
+            RPN.Node addition = new RPN.Node(new RPN.Node[] {node[0,1], node[1,1]}, new RPN.Token("+", 2, RPN.Type.Operator));
+            RPN.Node division = new RPN.Node(new RPN.Node[] {node[0,0], addition}, new RPN.Token("/",2,RPN.Type.Operator));
+            return division;
+        }
     }
 }

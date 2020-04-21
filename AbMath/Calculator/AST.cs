@@ -39,6 +39,7 @@ namespace AbMath.Calculator
             TrigPowerReduction, TrigPowerExpansion,
             TrigDoubleAngle, TrigDoubleAngleReduction,
             Sum,
+            Integral,
             Constants,
             Misc,
             Compress, COUNT
@@ -81,6 +82,7 @@ namespace AbMath.Calculator
             GenerateExponentSimplifications();
             GenerateTrigSimplifications();
             GenerateSumSimplifications();
+            GenerateIntegralSimplifications();
             GenerateMiscSimplifications();
         }
 
@@ -167,7 +169,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Subtraction, functionToAddition);
             ruleManager.Add(SimplificationMode.Subtraction, distributive);
 
-            //TODO: f(x)/g(x) /pm i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) /p, i(x)g(x)/g(x)j(x) -> [f(x)j(x) /pm g(x)i(x)]/[g(x)j(x)]
+            //TODO: f(x)/g(x) /pm i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) /pm i(x)g(x)/g(x)j(x) -> [f(x)j(x) /pm g(x)i(x)]/[g(x)j(x)]
         }
 
         private void GenerateDivisionSimplifications()
@@ -265,6 +267,7 @@ namespace AbMath.Calculator
             Rule toSubtractionRuleOne = new Rule(Addition.AdditionToSubtractionRuleOneRunnable, Addition.AdditionToSubtractionRuleOne, "Addition can be converted to subtraction R1");
             Rule toSubtractionRuleTwo = new Rule(Addition.AdditionToSubtractionRuleTwoRunnable, Addition.AdditionToSubtractionRuleTwo, "Addition can be converted to subtraction R2");
             Rule complex = new Rule(Addition.ComplexNodeAdditionRunnable, Addition.ComplexNodeAddition, "f(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
+            Rule division = new Rule(Addition.DivisionAdditionRunnable, Addition.DivisionAddition, "f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)");
 
             ruleManager.Add(SimplificationMode.Addition, additionToMultiplication);
             ruleManager.Add(SimplificationMode.Addition, zeroAddition);
@@ -274,8 +277,8 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Addition, toSubtractionRuleOne);
             ruleManager.Add(SimplificationMode.Addition, toSubtractionRuleTwo);
             ruleManager.Add(SimplificationMode.Addition, complex);
+            ruleManager.Add(SimplificationMode.Addition, division);
             //TODO: -c * f(x) + g(x) -> g(x) - c * f(x)
-            //TODO f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)
             //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
         }
 
@@ -288,6 +291,7 @@ namespace AbMath.Calculator
             Rule functionRaisedToZero = new Rule(Exponent.functionRaisedToZeroRunnable, Exponent.functionRaisedToZero, "f(x)^0 -> 1");
             Rule zeroRaisedToConstant = new Rule(Exponent.zeroRaisedToConstantRunnable, Exponent.zeroRaisedToConstant, "0^c where c > 0 -> 0");
             Rule oneRaisedToFunction = new Rule(Exponent.oneRaisedToFunctionRunnable, Exponent.oneRaisedToFunction, "1^(fx) -> 1");
+
             Rule toDivision = new Rule(Exponent.toDivisionRunnable, Exponent.toDivision, "f(x)^-c -> 1/f(x)^c");
             Rule toSqrt = new Rule(Exponent.toSqrtRunnable, Exponent.toSqrt, "f(x)^0.5 -> sqrt( f(x) )");
 
@@ -296,6 +300,7 @@ namespace AbMath.Calculator
             Rule negativeConstantRaisedToAPowerOfTwo = new Rule(Exponent.NegativeConstantRaisedToAPowerOfTwoRunnable, 
                 Exponent.NegativeConstantRaisedToAPowerOfTwo, "c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
             Rule constantRaisedToConstant = new Rule(Exponent.ConstantRaisedToConstantRunnable, Exponent.ConstantRaisedToConstant, "c^k -> a");
+            Rule absRaisedToPowerTwo = new Rule(Exponent.AbsRaisedToPowerofTwoRunnable, Exponent.AbsRaisedToPowerofTwo, "abs(f(x))^2 -> [ sqrt(f(x) ^ 2) ]^2 -> sqrt(f(x)^2)^2 -> f(x)^2");
 
             ruleManager.Add(SimplificationMode.Exponent, functionRaisedToOne);
             ruleManager.Add(SimplificationMode.Exponent, functionRaisedToZero);
@@ -304,8 +309,10 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Exponent, toDivision);
             ruleManager.Add(SimplificationMode.Exponent, toSqrt);
             ruleManager.Add(SimplificationMode.Exponent, exponentToExponent);
+
             ruleManager.Add(SimplificationMode.Exponent, negativeConstantRaisedToAPowerOfTwo);
             ruleManager.Add(SimplificationMode.Exponent, constantRaisedToConstant);
+            ruleManager.Add(SimplificationMode.Exponent, absRaisedToPowerTwo);
         }
 
         private void GenerateTrigSimplifications()
@@ -324,19 +331,19 @@ namespace AbMath.Calculator
             //TODO: cot(x)^2 + 1 = csc(x)^2 
             //TODO: csc(x)^2 - cot(x)^2 = 1
 
-            //TODO: Double Angle (I wonder if double angle could be done through power reduction instead...)
+            //TODO: Double Angle (->) (I wonder if double angle could be done through power reduction instead...)
             //[cos(x)^2 - sin(x)^2] = cos(2x)
             //1 - 2sin(x)^2 = cos(2x)
             //2cos(x)^2 - 1 = cos(2x) 
             //2sin(x)cos(x) = sin(2x)
             //[2tan(x)]/1 - tan(x)^2] = tan(2x) 
 
-            //TODO: Power Reducing 
+            //TODO: Power Reducing (Exclusive with Power Expansion)
             //[1 - cos(2x)]/2 <- sin(x)^2
             //[1 + cos(2x)]/2 <- cos(x)^2
             //[1 - cos(2x)]/[1 + cos(2x)] <- tan(x)^2 
 
-            //TODO: Power Expansion 
+            //TODO: Power Expansion (Exclusive with Power Reduction)
             //[1 - cos(2x)]/2 -> sin(x)^2
             //[1 + cos(2x)]/2 -> cos(x)^2
             //[1 - cos(2x)]/[1 + cos(2x)] -> tan(x)^2 
@@ -422,6 +429,53 @@ namespace AbMath.Calculator
             // sum(x^p,x,0,n) -> 0^p + sum(x^p,x,1,n) 
         }
 
+        private void GenerateIntegralSimplifications()
+        {
+            Rule setRule = new Rule(Integrate.setUp, null, "Integral Set Rule");
+            Rule propagation = new Rule(Integrate.PropagationRunnable, Integrate.Propagation, "integrate(f(x) + g(x),x,a,b) -> integrate(f(x),x,a,b) + integrate(g(x),x,a,b)"); //No bounds change
+
+            ruleManager.AddSetRule(SimplificationMode.Integral, setRule);
+            ruleManager.Add(SimplificationMode.Integral, propagation);
+            //TODO:
+            //1) Coefficient
+            // integrate(cf(x),x,a,b) -> c * integrate(f(x),x,a,b)
+            //2) Coefficient Division
+            // integrate(f(x)/c,x,a,b) -> integrate(f(x),x,a,b)/c
+            //3) Constants
+            // integrate(k,x,a,b) -> k(b - a)
+            // integrate(y,x,a,b) -> y(b - a)
+            // integrate(cos(y),x,a,b) -> (b - a)cos(y)
+            //4) Single Variable
+            // integrate(x,x,a,b) -> (b^2 - a^2)/2
+            //5) Power (n = -1)
+            // integrate(1/x,x,a,b) -> ln(b) - ln(a)
+            //6) Power
+            // integrate(x^n,x,a,b) -> (b^(n + 1) - a^(n + 1))/(n + 1) where n is a number that is not -1 
+            //7) Euler Exponent
+            // integrate(e^x,x,a,b) -> e^b - e^a
+            //8) Exponent 
+            // integrate(k^x,x,a,b) -> [b^x]/ln(b) - [a^x]/ln(a)
+            //9) Cos 
+            // integrate(cos(x),x,a,b) -> sin(b) - sin(a) 
+            //10) Sin 
+            // integrate(sin(x),x,a,b) -> -cos(b) - -cos(a) -> cos(a) - cos(b)
+            //11) sec(x)^2
+            // integrate(sec(x)^2,x,a,b) -> tan(b) - tan(a) 
+            //12) sec(x)tan(x) 
+            // integrate(...,x,a,b) -> sec(b) - sec(a) 
+            //13) 1/sqrt{1 - x^2}
+            // integrate(...,x,a,b) -> arcsin(b) - arcsin(a) 
+            //14) 1/(1 + x^2)
+            // integrate(...,x,a,b) -> arctan(b) - arctan(a)
+            //15) tan(x) 
+            // integrate(tan(x),x,a,b) -> -ln(abs(cos(b)) - -ln(abs(cos(a)) -> ln(abs(cos(a)) - ln(abs(cos(b))
+            //16) cot(x)
+            // integrate(cot(x),x,a,b) -> ln(abs(sin(b))) - ln(abs(sin(a)))
+            //17) sec(x) -> ln( abs(sec(x) + tan(x)) )
+            //18) csc(x) -> -ln( abs(csc(x) + cot(x)) )
+            //All other ones fall back to numerical integration
+        }
+
         private void GenerateMiscSimplifications()
         {
             Rule factorial = new Rule(Misc.ZeroFactorialRunnable, Misc.ZeroFactorial, "(0! || 1!) -> 1");
@@ -496,7 +550,7 @@ namespace AbMath.Calculator
 
                 if (debug)
                 {
-                    Write($"{pass}. {Root.ToInfix()}.");
+                    Write($"Pass:{pass} {Root.ToInfix(_data)}.");
                 }
 
                 Simplify(Root);
@@ -508,7 +562,7 @@ namespace AbMath.Calculator
             if (debug)
             {
                 Write("Before being normalized the tree looks like:");
-                Write(Root.ToInfix());
+                Write(Root.ToInfix(_data));
                 Write(Root.Print());
             }
 
@@ -542,11 +596,10 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
-        #if DEBUG
-                Write(Root.ToInfix());       
-        #endif
+            #if DEBUG
+                Write(Root.ToInfix(_data));       
+            #endif
             //We want to reduce this! 
-
             Simplify(node, SimplificationMode.Sqrt);
             Simplify(node, SimplificationMode.Log);
             Simplify(node, SimplificationMode.Division);
@@ -560,13 +613,12 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Swap);
             Simplify(node, SimplificationMode.Misc);
             Simplify(node, SimplificationMode.Sum);
+            Simplify(node, SimplificationMode.Integral);
             
-            
-
             Swap(node);
-#if DEBUG
-                Write(Root.ToInfix());
-#endif
+            #if DEBUG
+                Write(Root.ToInfix(_data));
+            #endif
         }
 
         private void Simplify(RPN.Node node, SimplificationMode mode)
@@ -636,6 +688,7 @@ namespace AbMath.Calculator
                         }
                     }
                 }
+                //Typically does not get invoked...
                 else if (mode == SimplificationMode.Constants)
                 {
                     if (node.IsMultiplication())
@@ -668,7 +721,7 @@ namespace AbMath.Calculator
                 }
                 else if (mode == SimplificationMode.Misc)
                 {
-                    if (node.IsOperator() && node.Children.Any(t => t.IsGreaterThanNumber(-1) && t.IsLessThanNumber(1) ))
+                    if (node.IsOperator() && node.Children.Any(t => t.IsGreaterThanNumber(-1) && t.IsLessThanNumber(1) && !t.IsNumber(0)))
                     {
                         Write("\tDecimal to Fraction");
                         for (int i = 0; i < node.Children.Count; i++)
@@ -728,16 +781,7 @@ namespace AbMath.Calculator
                 //Addition operator
                 if (node.IsAddition())
                 {
-                    //Write($"\t{node[0].CompareTo(node[1])}  {node[1].CompareTo(node[0])}");
-                    //Write($"\t{node[0].ToInfix()} {node[1].ToInfix()}\n");
                     node.Children.Sort();
-                    if (node[1].IsMultiplication() && node[0].IsMultiplication() && !node.Children[1].Children.Any(n => n.IsExponent()) && node.Children[0].Children.Any(n => n.IsExponent()))
-                    {
-                        Write("\tNode Swap:Straight multiplication gives way to multiplication with an exponent");
-                        node.Swap(0, 1);
-                    }
-
-                    
                 }
                 //Multiplication operator
                 else if (node.IsMultiplication())
@@ -803,54 +847,26 @@ namespace AbMath.Calculator
 
                 if (node.IsFunction("internal_sum") || node.IsFunction("total"))
                 {
-                    node.Children.Sort(); 
-                    Write($"After Auto Sort: {node.ToInfix()}");
+                    node.Children.Sort();
+                    InternalSimplification(node, new RPN.Token("*", 2, RPN.Type.Operator), new RPN.Node(0));
+
+                    Write($"After Auto Sort: {node.ToInfix(_data)}");
                 }
                 else if (node.IsFunction("internal_product") || node.IsFunction("product"))
                 {
                     node.Children.Reverse();
-                    string hash = string.Empty;
+
                     //Simplification
-                    Dictionary<string, List<RPN.Node>> hashDictionary = new Dictionary<string, List<RPN.Node>>();
-                    hashDictionary.Clear();
+                    InternalSimplification(node, new RPN.Token("^",2, RPN.Type.Operator), new RPN.Node(1) );
+                    //Sort order for multiplication
+                    //1) Numbers or Constants
+                    //2) Exponents of constants
+                    //3) Exponents of variables
+                    //4) Variables
+                    //5) Functions (sorted alphabetically)
+                    //6) Expressions (Everything else)
 
-                    //This tracks everything
-                    for (int i = 0; i < node.Children.Count; i++)
-                    {
-                        hash = node.Children[i].GetHash();
-                        if (!hashDictionary.ContainsKey(hash))
-                        {
-                            List<RPN.Node> temp = new List<RPN.Node>();
-                            temp.Add(node.Children[i]);
-                            hashDictionary.Add(hash, temp);
-                        }
-                        else
-                        {
-                            hashDictionary[hash].Add(node.Children[i]);
-                        }
-                    }
-
-                    //This simplifies everything
-                    foreach (var kv in hashDictionary)
-                    {
-                        if (kv.Value.Count > 1)
-                        {
-                            Write("\t" + kv.Key + " with a count of " + kv.Value.Count + " and infix of " + kv.Value[0].ToInfix());
-
-                            RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(kv.Value.Count), kv.Value[0] },
-                                new RPN.Token("^", 2, RPN.Type.Operator));
-
-                            foreach (var nv in kv.Value)
-                            {
-                                Write($"\t\t Replacing {nv.ID} with 1");
-                                node.Replace(nv, new RPN.Node(1));
-                            }
-
-                            node.AddChild(exponent);
-                        }
-                    }
-
-
+                    string hash = string.Empty;
                     while (node.GetHash() != hash)
                     {
                         hash = node.GetHash();
@@ -892,8 +908,6 @@ namespace AbMath.Calculator
                                 Write("\tVariable yields to Exponent");
                                 node.Children.Swap(i - 1, i);
                             }
-
-                            //TODO: Exponents and other expressions right of way
                         }
                     }
 
@@ -903,6 +917,56 @@ namespace AbMath.Calculator
                 }
             }
         }
+
+        void InternalSimplification(RPN.Node node, RPN.Token Operator, RPN.Node replacement)
+        {
+            Dictionary<string, List<RPN.Node>> hashDictionary = new Dictionary<string, List<RPN.Node>>();
+            hashDictionary.Clear();
+            string hash = string.Empty;
+            //This tracks everything
+            for (int i = 0; i < node.Children.Count; i++)
+            {
+                hash = node.Children[i].GetHash();
+                if (!hashDictionary.ContainsKey(hash))
+                {
+                    List<RPN.Node> temp = new List<RPN.Node>();
+                    temp.Add(node.Children[i]);
+                    hashDictionary.Add(hash, temp);
+                }
+                else
+                {
+                    hashDictionary[hash].Add(node.Children[i]);
+                }
+            }
+
+            //This simplifies everything
+            foreach (var kv in hashDictionary)
+            {
+                if (kv.Value.Count > 1)
+                {
+                    Write("\t" + kv.Key + " with a count of " + kv.Value.Count + " and infix of " + kv.Value[0].ToInfix(_data));
+
+                    RPN.Node exponent;
+                    if (Operator.IsExponent())
+                    {
+                        exponent = new RPN.Node(new[] {new RPN.Node(kv.Value.Count), kv.Value[0]}, Operator);
+                    }
+                    else
+                    {
+                        exponent = new RPN.Node(new[] { kv.Value[0], new RPN.Node(kv.Value.Count) }, Operator);
+                    }
+
+                    foreach (var nv in kv.Value)
+                    {
+                        Write($"\t\t Replacing {nv.ID} with {replacement.ToInfix(_data)}");
+                        node.Replace(nv, replacement.Clone());
+                    }
+
+                    node.AddChild(exponent);
+                }
+            }
+        }
+
 
         /// <summary>
         /// Simplifies or evaluates meta functions that
@@ -1053,10 +1117,10 @@ namespace AbMath.Calculator
                 }
 
                 node.AddChild(temp);
-                Write($"{node[1].ToInfix()} {node[2].ToInfix()} {node[0].ToInfix()}");
+                Write($"{node[1].ToInfix(_data)} {node[2].ToInfix(_data)} {node[0].ToInfix(_data)}");
                 node.RemoveChild(temp);
 
-                Write(temp.ToInfix());
+                Write(temp.ToInfix(_data));
                 Assign(node, temp);
             }
             else if (node.IsFunction("sum"))
@@ -1065,7 +1129,7 @@ namespace AbMath.Calculator
                 //1 - start 
                 //2 - variable 
                 //3 - expression
-                Write($"\tSolving the sum! : {node[3].ToInfix()}");
+                Write($"\tSolving the sum! : {node[3].ToInfix(_data)}");
                 PostFix math = new PostFix(_rpn);
                 double start = math.Compute(node[1].ToPostFix().ToArray());
                 double end = math.Compute(node[0].ToPostFix().ToArray());
@@ -1132,7 +1196,7 @@ namespace AbMath.Calculator
             Simplify(Root);
             //Simplify(Root, SimplificationMode.Constants);
 
-            Write($"Starting to derive ROOT: {Root.ToInfix()}");
+            Write($"Starting to derive ROOT: {Root.ToInfix(_data)}");
             Derive(Root, variable);
 
             Write("\tSimplifying Post!\n");
@@ -1151,13 +1215,13 @@ namespace AbMath.Calculator
 
             Stack<RPN.Node> stack = new Stack<RPN.Node>();
             stack.Push(foo);
-            //Write(foo.ToInfix());
-            string v = variable.ToInfix();
+            //Write(foo.ToInfix(_data));
+            string v = variable.ToInfix(_data);
             RPN.Node node = null;
             while (stack.Count > 0)
             {
                 node = stack.Pop();
-                //Write($"Current Node: {node.ToInfix()}");
+                //Write($"Current Node: {node.ToInfix(_data)}");
                 //Propagate down the tree
                 for (int i = (node.Children.Count - 1); i >= 0; i--)
                 {
@@ -1173,8 +1237,8 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string f_x = node.Children[0].Children[0].ToInfix();
-                        string g_x = node.Children[0].Children[1].ToInfix();
+                        string f_x = node.Children[0].Children[0].ToInfix(_data);
+                        string g_x = node.Children[0].Children[1].ToInfix(_data);
                         Write($"\td/d{v}[ {f_x} ± {g_x} ] -> d/d{v}( {f_x} ) ± d/d{v}( {g_x} )");
                     }
                     else
@@ -1196,7 +1260,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 0");
+                        Write($"\td/d{v}[ {node.Children[0].ToInfix(_data)} ] -> 0");
                     }
                     else
                     {
@@ -1212,7 +1276,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        Write($"\td/d{v}[ {node.Children[0].ToInfix()} ] -> 1");
+                        Write($"\td/d{v}[ {node.Children[0].ToInfix(_data)} ] -> 1");
                     }
                     else
                     {
@@ -1233,7 +1297,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             Write(
-                                $"\td/d{v}[ {node.Children[0].Children[0].ToInfix()} * {node.Children[0].Children[1].ToInfix()} ] -> 0");
+                                $"\td/d{v}[ {node.Children[0].Children[0].ToInfix(_data)} * {node.Children[0].Children[1].ToInfix(_data)} ] -> 0");
                         }
                         else
                         {
@@ -1251,7 +1315,7 @@ namespace AbMath.Calculator
                         if (debug)
                         {
                             Write(
-                                $"\td/d{v}[ {node.Children[0].Children[1].ToInfix()} * {node.Children[0].Children[0].ToInfix()}] -> d/d{v}[ {node.Children[0].Children[1].ToInfix()} ] * {node.Children[0].Children[0].ToInfix()}");
+                                $"\td/d{v}[ {node.Children[0].Children[1].ToInfix(_data)} * {node.Children[0].Children[0].ToInfix(_data)}] -> d/d{v}[ {node.Children[0].Children[1].ToInfix(_data)} ] * {node.Children[0].Children[0].ToInfix(_data)}");
                         }
                         else
                         {
@@ -1269,8 +1333,8 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            string constant = node.Children[0].Children[1].ToInfix();
-                            string expr = node.Children[0].Children[0].ToInfix();
+                            string constant = node.Children[0].Children[1].ToInfix(_data);
+                            string expr = node.Children[0].Children[0].ToInfix(_data);
                             Write($"\td/d{v}[ {constant} * {expr}] -> {constant} * d/d{v}[ {expr} ]");
                         }
                         else
@@ -1295,8 +1359,8 @@ namespace AbMath.Calculator
 
                         if (debug)
                         {
-                            string f = fNode.ToInfix();
-                            string g = gNode.ToInfix();
+                            string f = fNode.ToInfix(_data);
+                            string g = gNode.ToInfix(_data);
                             Write($"\td/d{v}[ {f} * {g} ] -> {f} * d/d{v}[ {g} ] + d/d{v}[ {f} ] * {g}");
                         }
                         else
@@ -1325,8 +1389,8 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string f_x = node[0, 1].ToInfix();
-                        string k = node[0, 0].ToInfix();
+                        string f_x = node[0, 1].ToInfix(_data);
+                        string k = node[0, 0].ToInfix(_data);
                         Write($"\td/d{v}[ {f_x}/{k} ] -> d/d{v}{f_x}]/{k}");
                     }
                     else
@@ -1359,8 +1423,8 @@ namespace AbMath.Calculator
 
                     if (debug)
                     {
-                        string n = numerator.ToInfix();
-                        string d = denominator.ToInfix();
+                        string n = numerator.ToInfix(_data);
+                        string d = denominator.ToInfix(_data);
                         Write($"\td/d{v}[ {n} / {d} ] -> [ d/d{v}( {n} ) * {d} - {n} * d/d{v}( {d} ) ]/{d}^2");
                     }
                     else
@@ -1388,8 +1452,8 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            string b = baseNode.ToInfix();
-                            string p = power.ToInfix();
+                            string b = baseNode.ToInfix(_data);
+                            string p = power.ToInfix(_data);
                             Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1)");
                         }
                         else
@@ -1431,8 +1495,8 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            string b = baseNode.ToInfix();
-                            string p = power.ToInfix();
+                            string b = baseNode.ToInfix(_data);
+                            string p = power.ToInfix(_data);
                             Write($"\td/d{v}[ {b}^{p} ] -> {p} * {b}^({p} - 1) * d/d{v}[ {b} ]");
                         }
                         else
@@ -1474,7 +1538,7 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            string p = power.ToInfix();
+                            string p = power.ToInfix(_data);
                             Write($"\td/d{v}[ e^{p} ] -> d/d{v}[ {p} ] * e^{p}");
                         }
                         else
@@ -1495,8 +1559,8 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            string b = baseNode.ToInfix();
-                            string p = power.ToInfix();
+                            string b = baseNode.ToInfix(_data);
+                            string p = power.ToInfix(_data);
                             Write($"\td/d{v}[ {b}^{p} ] -> ln({b}) * {b}^{p} * d/d{v}[ {p} ]");
                         }
                         else
@@ -1520,8 +1584,8 @@ namespace AbMath.Calculator
                     {
                         if (debug)
                         {
-                            string b = baseNode.ToInfix();
-                            string p = power.ToInfix();
+                            string b = baseNode.ToInfix(_data);
+                            string p = power.ToInfix(_data);
                             Write($"\td/d{v}[ {b}^{p} ] -> {b}^{p} * d/d{v}[ {b} * ln( {p} ) ]");
                         }
                         else
@@ -1551,7 +1615,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ sin({expr}) ] -> cos({expr}) * d/d{v}[ {expr} ]");
                     }
                     else
@@ -1577,7 +1641,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ cos({expr}) ] -> -sin({expr}) * d/d{v}[ {expr} ]");
                     }
                     else
@@ -1604,7 +1668,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ tan({expr}) ] -> sec({expr})^2 * d/d{v}[ {expr} ]");
                     }
                     else
@@ -1631,7 +1695,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ sec({expr}) ] -> tan({expr}) * sec({expr}) * d/d{v}[ {expr} ]");
                     }
                     else
@@ -1659,7 +1723,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ csc({expr}) ] -> - cot({expr}) * csc({expr}) * d/d{v}[ {expr} ] ");
                     }
                     else
@@ -1687,7 +1751,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ cot({expr}) ] -> -csc({expr})^2 * d/d{v}[ {expr} ]");
                     }
                     else
@@ -1715,7 +1779,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ arcsin({expr}) ] -> d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
                     }
                     else
@@ -1744,7 +1808,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ arccos({expr}) ] -> -1 * d/d{v}[ {expr} ]/sqrt(1 - {expr}^2)");
                     }
                     else
@@ -1776,7 +1840,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ arctan({expr}) ] -> d/d{v}[ {expr} ]/(1 + {expr}^2)");
                     }
                     else
@@ -1803,7 +1867,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ arccot({expr}) ] -> -1 * d/d{v}[ {expr} ]/(1 + {expr}^2)");
                     }
                     else
@@ -1833,7 +1897,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ arcsec({expr}) ] -> d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
                     }
                     else
@@ -1866,7 +1930,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ arccsc({expr}) ] -> -1 * d/d{v}[ {expr} ]/( {expr} * sqrt({expr}^2 - 1 ) )");
                     }
                     else
@@ -1903,7 +1967,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\tsqrt({expr}) -> {expr}^0.5");
                     }
                     else
@@ -1922,7 +1986,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\td/d{v}[ ln({expr}) ] -> d/d{v}[ {expr} ]/{expr}");
                     }
                     else
@@ -1950,8 +2014,8 @@ namespace AbMath.Calculator
 
                     if (debug)
                     {
-                        string b = body.ToInfix();
-                        string p = power.ToInfix();
+                        string b = body.ToInfix(_data);
+                        string p = power.ToInfix(_data);
                         Write($"\td/d{v}[ log({b},{p}) ] -> d/d{v}[ {p} ]/({p} * ln({b}))");
                     }
                     else
@@ -1975,7 +2039,7 @@ namespace AbMath.Calculator
                 {
                     if (debug)
                     {
-                        string expr = node.Children[0].Children[0].ToInfix();
+                        string expr = node.Children[0].Children[0].ToInfix(_data);
                         Write($"\tabs({expr}) -> sqrt( {expr}^2 )");
                     }
                     else
@@ -2007,7 +2071,7 @@ namespace AbMath.Calculator
                 else
                 {
                     throw new NotImplementedException(
-                        $"Derivative of {node.Children[0].ToInfix()} not known at this time.");
+                        $"Derivative of {node.Children[0].ToInfix(_data)} not known at this time.");
                 }
             }
         }
@@ -2276,7 +2340,8 @@ namespace AbMath.Calculator
 
         /// <summary>
         /// Converts a series of multiplications, additions, or subtractions 
-        /// into a new node to see if there are additional simplifications that can be made
+        /// into a new node to see if there are additional simplifications that can be made.
+        /// (IE converts f(x) + g(x) + h(x) -> internal_sum(f(x),g(x),h(x)) )
         /// </summary>
         /// <param name="node"></param>
         private void expand(RPN.Node node)
@@ -2338,6 +2403,11 @@ namespace AbMath.Calculator
             }
         }
 
+        /// <summary>
+        /// Converts internal_sum and internal_product back into a series of
+        /// multiplications and additions. 
+        /// </summary>
+        /// <param name="node"></param>
         private void compress(RPN.Node node)
         {
             Queue<RPN.Node> unvisited = new Queue<RPN.Node>();
@@ -2403,7 +2473,7 @@ namespace AbMath.Calculator
             }
             catch (IndexOutOfRangeException ex)
             {
-                throw new Exception($"node: {node.ToInfix()}, assign: {assign.ToInfix()}", ex);
+                throw new Exception($"node: {node.ToInfix(_data)}, assign: {assign.ToInfix(_data)}", ex);
             }
         }
 
