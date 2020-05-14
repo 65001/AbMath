@@ -33,7 +33,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool multiplicationByZeroRunnable(RPN.Node node)
         {
-            return (node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.containsDomainViolation();
+            return (node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.ContainsDomainViolation();
         }
 
         public static RPN.Node multiplicationByZero(RPN.Node node)

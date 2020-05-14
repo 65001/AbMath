@@ -248,7 +248,7 @@ namespace AbMath.Calculator.Simplifications
                    (node[0,1].IsFunction("cos") || node[0,1].IsFunction("sin")) &&
                    (node[1,1].IsFunction("sin") || node[1,1].IsFunction("cos")) &&
                    !node.ChildrenAreIdentical() &&
-                   !node.containsDomainViolation() &&
+                   !node.ContainsDomainViolation() &&
                    node[0,1,0].Matches(node[1,1,0]);
         }
 

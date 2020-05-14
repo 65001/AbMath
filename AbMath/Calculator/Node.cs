@@ -424,9 +424,19 @@ namespace AbMath.Calculator
                 return data.Operators[this.Token.Value];
             }
 
-            public bool containsDomainViolation()
+            public bool ContainsDomainViolation()
             {
-                return this.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator));
+                return Contains(new RPN.Token("/", 2, RPN.Type.Operator));
+            }
+
+            public bool Contains(RPN.Node node)
+            {
+                return Contains(node.Token);
+            }
+
+            public bool Contains(RPN.Token token)
+            {
+                return this.ToPostFix().Contains(token);
             }
 
             public bool IsNumberOrConstant()
@@ -507,6 +517,16 @@ namespace AbMath.Calculator
             public bool IsVariable()
             {
                 return Token.IsVariable();
+            }
+
+            public bool IsVariable(Node node)
+            {
+                return IsVariable(node.Token.Value);
+            }
+
+            public bool IsVariable(string variable)
+            {
+                return Token.IsVariable() && Token.Value == variable;
             }
 
             public bool IsAddition()

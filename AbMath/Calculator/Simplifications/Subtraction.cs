@@ -13,7 +13,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool SameFunctionRunnable(RPN.Node node)
         {
-            return node.ChildrenAreIdentical() && !node.containsDomainViolation();
+            return node.ChildrenAreIdentical() && !node.ContainsDomainViolation();
         }
 
         public static RPN.Node SameFunction(RPN.Node node)

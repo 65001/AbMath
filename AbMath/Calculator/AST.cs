@@ -348,6 +348,10 @@ namespace AbMath.Calculator
             //[1 + cos(2x)]/2 -> cos(x)^2
             //[1 - cos(2x)]/[1 + cos(2x)] -> tan(x)^2 
 
+            //TODO: Shifting 
+            //cos(x - pi/2) = sin(x)
+            //sin(pi/2 - x) = sin(pi/2 + x) = cos(x)
+
             //Complex Conversions
             Rule CosOverSinToCotComplex = new Rule(Trig.CosOverSinComplexRunnable, Trig.CosOverSinComplex, "[f(x) * cos(x)]/sin(x) -> f(x) * cot(x)");
             Rule CosOverSinToCotComplexTwo = new Rule(Trig.CosOverSinToCotComplexRunnable, Trig.CosOverSinToCotComplex, "cos(x)/[f(x) * sin(x)] -> cot(x)/f(x)");
@@ -433,22 +437,28 @@ namespace AbMath.Calculator
         {
             Rule setRule = new Rule(Integrate.setUp, null, "Integral Set Rule");
             Rule propagation = new Rule(Integrate.PropagationRunnable, Integrate.Propagation, "integrate(f(x) + g(x),x,a,b) -> integrate(f(x),x,a,b) + integrate(g(x),x,a,b)"); //No bounds change
+            Rule constants = new Rule(Integrate.ConstantsRunnable, Integrate.Constants, "integrate(k,x,a,b) -> k(b - a)");
+            Rule coefficient = new Rule(Integrate.CoefficientRunnable, Integrate.Coefficient,"integrate(cf(x),x,a,b) -> c*integrate(f(x),x,a,b)");
+
+            Rule singleVariable = new Rule(Integrate.SingleVariableRunnable, Integrate.SingleVariable,"integrate(x,x,a,b) -> (b^2 - a^2)/2");
 
             ruleManager.AddSetRule(SimplificationMode.Integral, setRule);
+
             ruleManager.Add(SimplificationMode.Integral, propagation);
-            //TODO:
-            //1) Coefficient
-            // integrate(cf(x),x,a,b) -> c * integrate(f(x),x,a,b)
-            //2) Coefficient Division
+            ruleManager.Add(SimplificationMode.Integral, constants);
+            //2) Coefficient
+            // integrate(c*sin(x),x,a,b) -> c * integrate(sin(x),x,a,b)
+            // integrate(sin(y)*x,x,a,b)
+
+            ruleManager.Add(SimplificationMode.Integral, coefficient);
+
+            //3) Coefficient Division
             // integrate(f(x)/c,x,a,b) -> integrate(f(x),x,a,b)/c
-            //3) Constants
-            // integrate(k,x,a,b) -> k(b - a)
-            // integrate(y,x,a,b) -> y(b - a)
-            // integrate(cos(y),x,a,b) -> (b - a)cos(y)
-            //4) Single Variable
-            // integrate(x,x,a,b) -> (b^2 - a^2)/2
+            //3.5) Coefficient Division Two 
+            // integrate(c/f(x),x,a,b) -> c * integrate(1/f(x),x,a,b) 
+            ruleManager.Add(SimplificationMode.Integral, singleVariable);
             //5) Power (n = -1)
-            // integrate(1/x,x,a,b) -> ln(b) - ln(a)
+            // integrate(1/x,x,a,b) -> ln(b) - ln(a) -> ln(b/a) 
             //6) Power
             // integrate(x^n,x,a,b) -> (b^(n + 1) - a^(n + 1))/(n + 1) where n is a number that is not -1 
             //7) Euler Exponent

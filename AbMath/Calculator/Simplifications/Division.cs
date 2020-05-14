@@ -106,7 +106,7 @@ namespace AbMath.Calculator.Simplifications
         //f(x)!/f(x)! -> 1
         public static bool FactorialCancellationRunnable(RPN.Node node)
         {
-            return node[0].IsOperator("!") && node[1].IsOperator("!") && node[0,0].Matches(node[1,0]) && !node[0,0].containsDomainViolation();
+            return node[0].IsOperator("!") && node[1].IsOperator("!") && node[0,0].Matches(node[1,0]) && !node[0,0].ContainsDomainViolation();
         }
 
         public static RPN.Node FactorialCancellation(RPN.Node node)
