@@ -707,6 +707,7 @@ namespace AbMath.Calculator
                 //TODO: Correctly Implement Associative rules
 
                 //Operators with left and right
+                
                 if (node.Children.Count == 2 && node.Token.IsOperator())
                 {
                     if (parenthesis) { 
@@ -748,13 +749,14 @@ namespace AbMath.Calculator
 
                     return;
                 }
+                
 
                 //Operators that only have one child
                 if (node.Children.Count == 1 && node.Token.IsOperator())
                 {
-                    if (node.IsFunction("!"))
+                    if (node.IsOperator("!"))
                     {
-                        Infix(node.Children[0], infix, data);
+                        infix.Append(node[0].ToInfix());
                         infix.Append(node.Token.Value);
                         return;
                     }

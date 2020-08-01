@@ -36,6 +36,13 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void ZeroRaisedToConstant()
+        {
+            RPN rpn = new RPN("0^2").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
+        }
+
+        [Test]
         public void AbsRaisedToPowerTwo()
         {
             RPN rpn = new RPN("abs(x)^2").Compute();

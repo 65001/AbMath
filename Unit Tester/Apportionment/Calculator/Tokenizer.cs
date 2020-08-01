@@ -195,5 +195,12 @@ namespace AbMath.Tests
             test.SetEquation("2x + 2").Compute();
             Assert.AreEqual("2 x * 2 +", test.Polish.Print());
         }
+
+        [Test]
+        public void testFactorialInfix()
+        {
+            RPN test = new RPN("x!").Compute();
+            Assert.AreEqual("x!", test.Data.SimplifiedEquation);
+        }
     }
 }

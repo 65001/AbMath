@@ -298,7 +298,7 @@ namespace AbMath.Calculator
             Rule exponentToExponent = new Rule(Exponent.ExponentToExponentRunnable, Exponent.ExponentToExponent,
                 "(f(x)^c)^a -> f(x)^[c * a]");
             Rule negativeConstantRaisedToAPowerOfTwo = new Rule(Exponent.NegativeConstantRaisedToAPowerOfTwoRunnable, 
-                Exponent.NegativeConstantRaisedToAPowerOfTwo, "c_1^c_2 where c_2 % 2 = 0 and c_1 < 0 -> [-1 * c_1]^c_2");
+                Exponent.NegativeConstantRaisedToAPowerOfTwo, "c_1^c_2 where c_2 is even and c_1 < 0 -> [-1 * c_1]^c_2");
             Rule constantRaisedToConstant = new Rule(Exponent.ConstantRaisedToConstantRunnable, Exponent.ConstantRaisedToConstant, "c^k -> a");
             Rule absRaisedToPowerTwo = new Rule(Exponent.AbsRaisedToPowerofTwoRunnable, Exponent.AbsRaisedToPowerofTwo, "abs(f(x))^2 -> [ sqrt(f(x) ^ 2) ]^2 -> sqrt(f(x)^2)^2 -> f(x)^2");
 
