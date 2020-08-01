@@ -8,6 +8,13 @@ namespace AbMath.Calculator
         {
             private static Random _rand;
 
+            public static double Binomial(params double[] arguments)
+            {
+                double n = arguments[0];
+                double k = arguments[1];
+                return DoOperators.Factorial(n) / (DoOperators.Factorial(k) * DoOperators.Factorial(n - k));
+            }
+
             public static double Gamma(params double[] arguments)
             {
                 //If args[0] is an integer use factorials

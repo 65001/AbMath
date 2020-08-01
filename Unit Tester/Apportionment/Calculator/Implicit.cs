@@ -5,6 +5,7 @@ using NUnit.Framework;
 namespace AbMath.Tests
 {
     [TestFixture]
+    [Parallelizable]
     public class ImplicitShunting
     {
         [Test]
@@ -81,7 +82,7 @@ namespace AbMath.Tests
         public void Unary()
         {
             RPN test = new RPN("-(3^2)").Compute();
-            Assert.AreEqual("-1 3 2 ^ *", test.Polish.Print());
+            Assert.AreEqual("-9", test.Polish.Print());
         }
     }
 }

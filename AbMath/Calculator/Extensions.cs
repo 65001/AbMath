@@ -179,6 +179,16 @@ namespace AbMath.Calculator
 
         private static string getDecimalFormat(double value, double accuracy = 1E-4, int maxIteration = 10000)
         {
+            RPN.Node foo = getDecimalFormatToNode(value, accuracy, maxIteration);
+            if (foo == null)
+            {
+                return null;
+            }
+            return foo.ToInfix();
+        }
+
+        public static RPN.Node getDecimalFormatToNode(double value, double accuracy = 1E-4, int maxIteration = 10000)
+        {
             //Algorithm from stack overflow. 
             try
             {
@@ -248,8 +258,11 @@ namespace AbMath.Calculator
                             return null;
                         }
 
+                        RPN.Node f = new RPN.Node(new RPN.Node[] {new RPN.Node(denominator), new RPN.Node(numerator * sign)},
+                            new RPN.Token("/", 2, RPN.Type.Operator));
+
                         // Middle is our best fraction
-                        return $"{numerator * sign}/{denominator}";
+                        return f;
                     }
 
                     i++;
@@ -265,5 +278,6 @@ namespace AbMath.Calculator
                 return null;
             }
         }
+
     }
 }

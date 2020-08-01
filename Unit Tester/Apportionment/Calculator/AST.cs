@@ -18,7 +18,7 @@ namespace AbMath.Tests
         public void ComplexIncreaseExponent()
         {
             RPN rpn = new RPN("(x(x + 1))(x(x + 1))(x(x + 1))").Compute();
-            Assert.AreEqual("x 1 + x * 3 ^", rpn.Polish.Print());
+            Assert.AreEqual("x 1 + 3 ^ x 3 ^ *", rpn.Polish.Print());
         }
 
         [Test]
@@ -26,6 +26,27 @@ namespace AbMath.Tests
         {
             RPN rpn = new RPN("1^x").Compute();
             Assert.AreEqual("1", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void ExponentRaisedToExponent()
+        {
+            RPN rpn = new RPN("(x^2)^(-0.5)").Compute();
+            Assert.AreEqual("1 x abs /", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void ZeroRaisedToConstant()
+        {
+            RPN rpn = new RPN("0^2").Compute();
+            Assert.AreEqual("0", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void AbsRaisedToPowerTwo()
+        {
+            RPN rpn = new RPN("abs(x)^2").Compute();
+            Assert.AreEqual("x 2 ^", rpn.Polish.Print());
         }
 
         [Test]
@@ -69,8 +90,8 @@ namespace AbMath.Tests
         [Test]
         public void LnAddOrSub()
         {
-            RPN rpn = new RPN("ln(2) + ln(1/2)").Compute();
-            Assert.AreEqual("1 ln", rpn.Polish.Print());
+            RPN rpn = new RPN("ln(2) + ln(1/3)").Compute();
+            Assert.AreEqual("2 3 / ln", rpn.Polish.Print());
 
             rpn.SetEquation("ln(2) - ln(3)").Compute();
             Assert.AreEqual("2 3 / ln", rpn.Polish.Print());
@@ -87,7 +108,7 @@ namespace AbMath.Tests
         public void DivisionTimesDivision()
         {
             RPN rpn = new RPN("(3/4)(1/4)").Compute();
-            Assert.AreEqual("3 4 2 ^ /", rpn.Polish.Print());
+            Assert.AreEqual("3 16 /", rpn.Polish.Print());
         }
 
         [Test]
@@ -160,6 +181,9 @@ namespace AbMath.Tests
 
             rpn.SetEquation("(2x)^log(2x,2)").Compute();
             Assert.AreEqual("2", rpn.Polish.Print());
+
+            rpn.SetEquation("ln(x^2)").Compute();
+            Assert.AreEqual("2 x ln *", rpn.Polish.Print());
         }
 
         [Test]
@@ -259,6 +283,13 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void PowerToPower()
+        {
+            RPN rpn = new RPN("((x^2)^c)^a").Compute();
+            Assert.AreEqual("x 2 c * a * ^", rpn.Polish.Print());
+        }
+
+        [Test]
         public void ZeroMultiplicationDivision()
         {
             RPN rpn = new RPN("0(1/z)").Compute();
@@ -292,6 +323,20 @@ namespace AbMath.Tests
 
             rpn.SetEquation("cos(x^3)/(sin(x^3) * x^2)").Compute();
             Assert.AreEqual("x 3 ^ cot x 2 ^ /", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void LnPowerRule()
+        {
+            RPN rpn = new RPN("ln(x^2)").Compute();
+            Assert.AreEqual("2 x ln *", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void DivisionAddRule()
+        {
+            RPN rpn = new RPN("x/y + z/y").Compute();
+            Assert.AreEqual("x z + y /", rpn.Polish.Print());
         }
     }
 }

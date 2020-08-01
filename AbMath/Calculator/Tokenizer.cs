@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -21,7 +21,6 @@ namespace AbMath.Calculator
             private List<Token> _tokens;
             private string _rule;
 
-           public event EventHandler<string> Logger;
 
             public Tokenizer(DataStore dataStore)
             {
@@ -36,12 +35,12 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     _tables = new Tables<string>(new Config {Title = "Tokenizer", Format = _dataStore.DefaultFormat});
-                    _tables.Add(new Schema {Column = "#", Width = 3});
-                    _tables.Add(new Schema {Column = "Character", Width = 10});
-                    _tables.Add(new Schema {Column = "Code", Width = 5});
-                    _tables.Add(new Schema {Column = "Token", Width = 15});
-                    _tables.Add(new Schema {Column = "# Tokens", Width = 11});
-                    _tables.Add(new Schema {Column = "Action", Width = 16});
+                    _tables.Add(new Schema("#", 3));
+                    _tables.Add(new Schema("Character"));
+                    _tables.Add(new Schema("Code"));
+                    _tables.Add(new Schema("Token"));
+                    _tables.Add(new Schema("# Tokens"));
+                    _tables.Add(new Schema("Action"));
                 }
 
                 string token = string.Empty;
@@ -51,6 +50,7 @@ namespace AbMath.Calculator
 
                 ReadOnlySpan<char> equationSpan = Equation.AsSpan();
                 ReadOnlySpan<char> localSpan = null;
+                int end = Equation.Length - 1;
 
                 for (int i = 0; i < length; i++)
                 {
@@ -76,82 +76,86 @@ namespace AbMath.Calculator
                     }
                     else
                     {
+                        //Resolve things ahead of time 
+                        Type prevType = _dataStore.Resolve(_prevToken);
+                        Type characterType = _dataStore.Resolve(_character);
+                        Type tokenType = _dataStore.Resolve(token);
+                        Type readAheadType = _dataStore.Resolve(_readAhead);
 
-                        if (_dataStore.IsOperator(_character + _readAhead))
+                        if (characterType == Type.Operator && readAheadType == Type.Operator)
                         {
-                            WriteToken("Operator", ref token);
+                            WriteToken("Operator", ref token, tokenType);
                             token = _character + _readAhead;
-                            WriteToken("Operator", ref token);
+                            WriteToken("Operator", ref token, Type.Operator);
                             i += 1;
                         }
                         //Unary Input at the start of the input or after another operator or left parenthesis
-                        else if ((i == 0 && _dataStore.IsUnary(_character)) || (_tokens.Count > 0 && (_dataStore.IsOperator(_prevToken) || _dataStore.IsLeftBracket(_prevToken) || _prevToken == ",") && _dataStore.IsUnary(_character) && !_dataStore.IsNumber(token)))
-                        {
+                        else if ((i == 0 && _dataStore.IsUnary(_character)) || (_tokens.Count > 0 && (prevType == Type.Operator || prevType == Type.LParen || _prevToken == ",") && _dataStore.IsUnary(_character) && tokenType != Type.Number))
+                        { 
                             _rule = "Unary";
                             token += _character;
-                            if (!(string.IsNullOrWhiteSpace(_readAhead)) && (_dataStore.IsVariable(_readAhead) || _dataStore.IsLeftBracket(_readAhead)))
+                            if (!(string.IsNullOrWhiteSpace(_readAhead)) && (readAheadType == Type.Variable || readAheadType == Type.LParen))
                             {
                                 token += "1";
                                 WriteToken("Unary", ref token);
                             }
                         }
-                        else if (token == "-." && _dataStore.IsNumber(_character))
+                        else if (token == "-." &&  characterType == Type.Number)
                         {
                             _rule = "Decimal Append";
                             token += _character;
                         }
                         //Token is a number 
                         //Character is [LB, FUNC, Variable]
-                        else if ( _dataStore.IsNumber(token) && (_dataStore.IsLeftBracket(_character) || _dataStore.IsFunction(_character) || _dataStore.IsVariable(_character)))
+                        else if ( tokenType == Type.Number && (characterType == Type.LParen || characterType == Type.Function || characterType == Type.Variable))
                         {
                             WriteToken("Left Implicit", ref token);
                             token = _character;
-                            if (_dataStore.IsLeftBracket(_character) || (i == (Equation.Length - 1)))
+                            if (characterType == Type.LParen || (i == (Equation.Length - 1)))
                             {
-                                WriteToken("Left Implicit", ref token);
+                                WriteToken("Left Implicit", ref token, characterType);
                             }
                         }
                         //Token is a variable
                         //Character is a number
-                        else if (_dataStore.IsNumber(_character) && _dataStore.IsVariable(token))
+                        else if (characterType == Type.Number && tokenType == Type.Variable)
                         {
-                            WriteToken("Left Implicit 2", ref token);
+                            WriteToken("Left Implicit 2", ref token, tokenType);
                             token = _character;
                             if (_dataStore.IsLeftBracket(_character) || (i == (Equation.Length - 1)))
                             {
-                                WriteToken("Left Implicit 2", ref token);
+                                WriteToken("Left Implicit 2", ref token, characterType);
                             }
                         }
-                        else if (_dataStore.IsFunction(token) && _dataStore.IsLeftBracket(_character))
+                        else if (tokenType == Type.Function && characterType == Type.LParen)
                         {
-                            WriteToken("Function Start", ref token);
+                            WriteToken("Function Start", ref token, tokenType);
                             token = _character;
-                            WriteToken("Function Start", ref token);
+                            WriteToken("Function Start", ref token, characterType);
                         }
-                        else if (_dataStore.IsFunction(token) && (_dataStore.IsRightBracket(_character) || _dataStore.IsOperator(_character)))
+                        else if (tokenType == Type.Function && (characterType == Type.RParen || characterType == Type.Operator))
                         {
-                            WriteToken("Function End", ref token);
+                            WriteToken("Function End", ref token, tokenType);
                             token = _character;
-                            WriteToken("Function End", ref token);
+                            WriteToken("Function End", ref token, characterType);
                         }
-
-                        else if ( ( _dataStore.IsNumber(token) || _dataStore.IsVariable(token) ) && (_dataStore.IsLeftBracket(_character) || _dataStore.IsRightBracket(_character) || _dataStore.IsOperator(_character)))
+                        else if ( (tokenType == Type.Number || tokenType == Type.Variable) && (characterType == Type.LParen || characterType == Type.RParen || characterType == Type.Operator))
                         {
-                            WriteToken("Edge Case 1", ref token);
+                            WriteToken("Edge Case 1", ref token, tokenType);
                             token = _character;
-                            WriteToken("Edge Case 1", ref token);
+                            WriteToken("Edge Case 1", ref token, characterType);
                         }
-                        else if (_dataStore.IsOperator(_character))
+                        else if (characterType == Type.Operator)
                         {
                             token += _character;
                             WriteToken("Operator", ref token);
                         }
-                        else if (_dataStore.IsLeftBracket(_character) || _dataStore.IsRightBracket(_character))
+                        else if ( characterType == Type.LParen || characterType == Type.RParen)
                         {
                             token += _character;
                             WriteToken("Bracket", ref token);
                         }
-                        else if (i == (Equation.Length - 1))
+                        else if (i == end)
                         {
                             token += _character;
                             WriteToken("End of String", ref token);
@@ -177,11 +181,6 @@ namespace AbMath.Calculator
                 if (_dataStore.DebugMode)
                 {
                     Write(_tables.ToString());
-
-                    if (_tables.SuggestedRedraw)
-                    {
-                        Write(_tables.Redraw());
-                    }
                 }
 
                 sw.Stop();
@@ -198,7 +197,7 @@ namespace AbMath.Calculator
             /// and sets the previous token.
             /// </summary>
             /// <param name="rule"></param>
-            private void WriteToken(string rule,ref string tokens)
+            private void WriteToken(string rule,ref string tokens, Type type = Type.Null)
             {
                 if (string.IsNullOrWhiteSpace(tokens) && tokens != ",")
                 {
@@ -212,32 +211,22 @@ namespace AbMath.Calculator
 
                 _rule = rule;
 
-                Token token;
-                switch (_dataStore.Resolve(tokens))
+                if (type == Type.Null)
                 {
-                    case Type.Number:
-                        token = new Token(tokens, 0, Type.Number);
-                        break;
+                    type = _dataStore.Resolve(tokens);
+                }
+
+                Token token;
+                switch (type)
+                {
                     case Type.Function:
                         token = new Token(tokens, _dataStore.Functions[tokens].Arguments, Type.Function);
                         break;
                     case Type.Operator:
                         token = new Token(tokens, _dataStore.Operators[tokens].Arguments, Type.Operator);
                         break;
-                    case Type.LParen:
-                        token = new Token(tokens, 0, Type.LParen);
-                        break;
-                    case Type.RParen:
-                        token = new Token(tokens, 0, Type.RParen);
-                        break;
-                    case Type.Variable:
-                        token = new Token(tokens, 0, Type.Variable);
-                        break;
-                    case Type.Null:
-                        token = new Token(tokens, 0, Type.Null);
-                        break;
                     default:
-                        token = new Token(tokens, 0, _dataStore.Resolve(tokens));
+                        token = new Token(tokens, 0, type);
                         break;
                 }
                 _tokens.Add(token);
@@ -248,16 +237,10 @@ namespace AbMath.Calculator
 
             private void Write(string message)
             {
-                if (_dataStore.DebugMode)
-                {
-                    Logger?.Invoke(this, message);
-                }
+                var logger = _dataStore.Logger;
+                logger.Log(Channels.Debug, message);
             }
 
-            private void Log(string message)
-            {
-                Logger?.Invoke(this, message);
-            }
         }
     }
 }

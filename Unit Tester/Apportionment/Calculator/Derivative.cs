@@ -52,6 +52,13 @@ namespace AbMath.Tests
         }
 
         [Test]
+        public void QuotientConstantRule()
+        {
+            RPN test = new RPN("derivative((x^2)/24,x)").Compute();
+            Assert.AreEqual("2 x * 24 /", test.Polish.Print());
+        }
+
+        [Test]
         public void QuotientRule()
         {
             RPN test = new RPN("derivative(sin(x)/x^2,x)").Compute();
@@ -93,25 +100,25 @@ namespace AbMath.Tests
         public void Sqrt()
         {
             RPN test = new RPN("derivative(sqrt(x),x)").Compute();
-            Assert.AreEqual("0.5 x sqrt /", test.Polish.Print());
+            Assert.AreEqual("1 2 x sqrt * /", test.Polish.Print());
 
             test.SetEquation("derivative(sqrt(x + 3),x)").Compute();
-            Assert.AreEqual("0.5 x 3 + sqrt /", test.Polish.Print());
+            Assert.AreEqual("1 2 x 3 + sqrt * /", test.Polish.Print());
         }
 
         [Test]
         public void Abs()
         {
             RPN test = new RPN("derivative( abs(x^2), x)").Compute();
-            //Assert.AreEqual("0.5 x 2 ^ * 2 2 ^ x * * x 2 ^ /", test.Polish.Print());
-            Assert.AreEqual("2 2 ^ 0.5 x 3 ^ * * x 2 ^ /", test.Polish.Print());
+
+            Assert.AreEqual("4 x 2 ^ * x * 2 x 2 ^ * /", test.Polish.Print());
         }
 
         [Test]
         public void Ln()
         {
             RPN test = new RPN("derivative(ln(x^2),x)").Compute();
-            Assert.AreEqual("2 x * x 2 ^ /", test.Polish.Print());
+            Assert.AreEqual("2 x /", test.Polish.Print());
         }
 
         [Test]
@@ -219,20 +226,20 @@ namespace AbMath.Tests
         public void ArcSec()
         {
             RPN test = new RPN("derivative( arcsec(x), x)").Compute();
-            Assert.AreEqual("1 x x 2 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("1 x abs x 2 ^ 1 - sqrt * /", test.Polish.Print());
 
             test.SetEquation("derivative( arcsec(x^2), x)").Compute();
-            Assert.AreEqual("2 x * x 2 ^ x 4 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("2 x * x 2 ^ abs x 4 ^ 1 - sqrt * /", test.Polish.Print());
         }
 
         [Test]
         public void ArcCsc()
         {
             RPN test = new RPN("derivative( arccsc(x), x)").Compute();
-            Assert.AreEqual("-1 x x 2 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("-1 x abs x 2 ^ 1 - sqrt * /", test.Polish.Print());
 
             test.SetEquation("derivative( arccsc(x^2), x)").Compute();
-            Assert.AreEqual("-2 x * x 2 ^ x 4 ^ 1 - sqrt * /", test.Polish.Print());
+            Assert.AreEqual("-2 x * x 2 ^ abs x 4 ^ 1 - sqrt * /", test.Polish.Print());
         }
 
         [Test]

@@ -8,7 +8,7 @@ namespace AbMath.Calculator
 {
     public partial class RPN
     {
-        public class Node
+        public class Node : IComparable<Node>
         {
             public int ID;
             public Token Token;
@@ -18,13 +18,15 @@ namespace AbMath.Calculator
             private List<Node> _children;
 
             private MD5 _md5;
+
+            private static object myLock = new object();
             private static int counter = 0;
 
             public Node(Node[] children, Token token)
             {
                 this._children = new List<Node>();
                 AssignChildren(children);
-                this.ID = counter++;
+                this.ID = NextCounter();
                 Parent = null;
                 Token = token;
             }
@@ -32,7 +34,7 @@ namespace AbMath.Calculator
             public Node(double number)
             {
                 _children = new List<Node>(0);
-                this.ID = counter++;
+                this.ID = NextCounter();
                 Parent = null;
                 Token = new RPN.Token(number);
             }
@@ -40,7 +42,7 @@ namespace AbMath.Calculator
             public Node(Token token)
             {
                 _children = new List<Node>(0);
-                this.ID = counter++;
+                this.ID = NextCounter();
                 Parent = null;
                 Token = token;
             }
@@ -63,6 +65,36 @@ namespace AbMath.Calculator
                 set => _children[i]._children[j]._children[k] = value;
             }
 
+            public static Node Generate(RPN.Token[] input)
+            {
+                Stack<RPN.Node> stack = new Stack<RPN.Node>(5);
+
+                for (int i = 0; i < input.Length; i++)
+                {
+                    RPN.Node node = new RPN.Node(input[i]);
+                    if (node.IsOperator() || node.IsFunction())
+                    {
+                        //Due to the nature of PostFix we know that all children
+                        //of a function or operator have already been processed before this point
+                        //this ensures we do not have any overflows or exceptions.
+                        RPN.Node[] range = new RPN.Node[node.Token.Arguments];
+                        for (int j = 0; j < node.Token.Arguments; j++)
+                        {
+                            range[j] = stack.Pop();
+                        }
+                        node.AddChild(range);
+                    }
+                    stack.Push(node); //Push new tree into the stack 
+                }
+
+                return stack.Pop();
+            }
+
+            public Node Clone()
+            {
+                return Generate(this.ToPostFix().ToArray());
+            }
+
 
             /// <summary>
             /// Replaces in the tree the node with 
@@ -83,7 +115,7 @@ namespace AbMath.Calculator
             /// <param name="node">The replacement</param>
             public void Replace(int identification, Node node)
             {
-                for (int i = 0; i < Children.Count; i++)
+                for (int i = 0; i < _children.Count; i++)
                 {
                     if (_children[i].ID == identification)
                     {
@@ -117,7 +149,7 @@ namespace AbMath.Calculator
                     return;
                 }
 
-                this.ID = counter++;
+                this.ID = NextCounter();
                 this.Token.Value = number.ToString();
             }
 
@@ -128,7 +160,7 @@ namespace AbMath.Calculator
             /// <param name="token"></param>
             public void Replace(RPN.Token token)
             {
-                this.ID = counter++;
+                this.ID = NextCounter();
                 this.Token = token;
             }
 
@@ -139,7 +171,7 @@ namespace AbMath.Calculator
             /// <param name="token"></param>
             public void Replace(string token)
             {
-                this.ID = counter++;
+                this.ID = NextCounter();
                 this.Token.Value = token;
             }
 
@@ -180,6 +212,7 @@ namespace AbMath.Calculator
             public void Delete()
             {
                 Parent = null;
+                Token = null;
                 _children.Clear();
             }
 
@@ -371,9 +404,39 @@ namespace AbMath.Calculator
                 return double.Parse(Token.Value);
             }
 
-            public bool containsDomainViolation()
+            public Function? GetFunction(RPN.DataStore data)
             {
-                return this.ToPostFix().Contains(new RPN.Token("/", 2, RPN.Type.Operator));
+                if (!IsFunction())
+                {
+                    return null;
+                }
+
+                return data.Functions[this.Token.Value];
+            }
+
+            public Operator? GetOperator(RPN.DataStore data)
+            {
+                if (!IsOperator())
+                {
+                    return null;
+                }
+
+                return data.Operators[this.Token.Value];
+            }
+
+            public bool ContainsDomainViolation()
+            {
+                return Contains(new RPN.Token("/", 2, RPN.Type.Operator));
+            }
+
+            public bool Contains(RPN.Node node)
+            {
+                return Contains(node.Token);
+            }
+
+            public bool Contains(RPN.Token token)
+            {
+                return this.ToPostFix().Contains(token);
             }
 
             public bool IsNumberOrConstant()
@@ -394,6 +457,11 @@ namespace AbMath.Calculator
             public bool IsInteger()
             {
                 return IsNumber() && ((int)GetNumber()) == GetNumber();
+            }
+
+            public bool IsInteger(int number)
+            {
+                return IsInteger() && GetNumber() == number;
             }
 
             public bool IsLessThanNumber(double number)
@@ -449,6 +517,16 @@ namespace AbMath.Calculator
             public bool IsVariable()
             {
                 return Token.IsVariable();
+            }
+
+            public bool IsVariable(Node node)
+            {
+                return IsVariable(node.Token.Value);
+            }
+
+            public bool IsVariable(string variable)
+            {
+                return Token.IsVariable() && Token.Value == variable;
             }
 
             public bool IsAddition()
@@ -539,15 +617,15 @@ namespace AbMath.Calculator
                 return PostFix(node);
             }
 
-            public string ToInfix()
+            public string ToInfix(RPN.DataStore? data = null)
             {
-                return ToInfix(this);
+                return ToInfix(this, data);
             }
 
-            public string ToInfix(RPN.Node node)
+            public string ToInfix(RPN.Node node, RPN.DataStore? data)
             {
                 StringBuilder infix = new StringBuilder();
-                Infix(node, infix);
+                Infix(node, infix, data);
                 return infix.ToString();
             }
 
@@ -594,7 +672,7 @@ namespace AbMath.Calculator
             /// </summary>
             /// <param name="node"></param>
             /// <param name="infix"></param>
-            private void Infix(RPN.Node node, StringBuilder infix)
+            private void Infix(RPN.Node node, StringBuilder infix, RPN.DataStore? data)
             {
                 //TODO: Implement nonrecursive algorithim!
                 if (node is null)
@@ -602,34 +680,100 @@ namespace AbMath.Calculator
                     return;
                 }
 
+                //Rules from https://stackoverflow.com/questions/14175177/how-to-walk-binary-abstract-syntax-tree-to-generate-infix-notation-with-minimall
+
+                bool parenthesis = true;
+                if (node.Parent == null)
+                {
+                    parenthesis = false;
+                }
+                else if (data != null && node.IsOperator() && node.Parent.IsOperator() && data.Operators[node.Token.Value].Weight >
+                         data.Operators[node.Parent.Token.Value].Weight)
+                {
+                    parenthesis = false;
+                }
+                else if (node.IsOperator("+") && node.Parent.IsOperator("+"))
+                {
+                    parenthesis = false;
+                }
+                else if (node.IsOperator("*") && node.Parent.IsOperator("*"))
+                {
+                    parenthesis = false;
+                }
+                else if (node.IsOperator() && node.Parent.IsFunction() && !node.Parent.IsConstant())
+                {
+                    parenthesis = false; //abs(f(x) + g(x))
+                }
+                //TODO: Correctly Implement Associative rules
+
                 //Operators with left and right
+                
                 if (node.Children.Count == 2 && node.Token.IsOperator())
                 {
-                    infix.Append("(");
-                    Infix(node.Children[1], infix);
-                    infix.Append(node.Token.Value);
-                    Infix(node.Children[0], infix);
-                    infix.Append(")");
+                    if (parenthesis) { 
+                        infix.Append("(");
+                    }
+
+                    bool printOperator = true;
+
+                    if (node.IsOperator("*"))
+                    {
+                        if (node[0].IsFunction() && node[1].IsFunction())
+                        {
+                            printOperator = false; //sin(x)cos(x)
+                        }
+                        else if (node[0].IsNumber() && node[1].IsFunction())
+                        {
+                            printOperator = false; //2sin(x)
+                        }
+                        else if (node[0].IsFunction() && node[1].IsNumber())
+                        {
+                            printOperator = false; //sin(x)2
+                        }
+                    }
+
+                    Infix(node.Children[1], infix, data);
+
+
+                    if (printOperator)
+                    {
+                        infix.Append(node.Token.Value); //The operator 
+                    }
+
+                    Infix(node.Children[0], infix, data);
+
+                    if (parenthesis)
+                    {
+                        infix.Append(")");
+                    }
+
                     return;
                 }
+                
 
                 //Operators that only have one child
                 if (node.Children.Count == 1 && node.Token.IsOperator())
                 {
+                    if (node.IsOperator("!"))
+                    {
+                        infix.Append(node[0].ToInfix());
+                        infix.Append(node.Token.Value);
+                        return;
+                    }
+
                     infix.Append(node.Token.Value);
-                    Infix(node.Children[0], infix);
+                    Infix(node.Children[0], infix, data);
                     return;
                 }
 
-                //Functions
-                //Functions
+                //Functions that have at least one child
                 if (node.Children.Count > 0 && node.Token.IsFunction())
                 {
                     infix.Append(node.Token.Value);
                     infix.Append("(");
                     for (int i = (node.Children.Count - 1); i >= 0; i--)
                     {
-                        Infix(node.Children[i], infix);
+                        Infix(node.Children[i], infix, data);
                         if (i > 0)
                         {
                             infix.Append(",");
@@ -647,7 +791,167 @@ namespace AbMath.Calculator
 
             public static void ResetCounter()
             {
-                counter = 0;
+                MutateCounter(0);
+            }
+
+            public static int NextCounter()
+            {
+                lock (myLock)
+                {
+                    counter++;
+                }
+                return counter;
+            }
+
+            private static void MutateCounter(int value)
+            {
+                lock (myLock)
+                {
+                    counter = value;
+                }
+            }
+
+            public override bool Equals(Object obj)
+            {
+                if (obj == null || this.GetType() != obj.GetType())
+                {
+                    return false;
+                }
+
+                return this.GetHash() == ((Node) (obj)).GetHash();
+            }
+
+            /// <summary>
+            /// Compares two nodes to each other.
+            /// The value it returns is dependent
+            /// on its parent and the structure of the tree.
+            /// 
+            /// It is expected that two nodes will share a same
+            /// parent when being compared. 
+            /// </summary>
+            /// <param name="other"></param>
+            /// <returns></returns>
+            public int CompareTo(Node other)
+            {
+                //Assume that if you have no parent you really cannot sort.
+                if (other.Parent == null || this.Parent == null)
+                {
+                    return 0;
+                }
+
+                //If we have different parents we cannot be sorted! 
+                if (other.Parent.ID != this.Parent.ID)
+                {
+                    return 0;
+                }
+
+                /**
+                 * Map
+                 * 0 -> other
+                 * 1 -> this
+                 */
+
+                //Here we know we have the same parent and that parent exists! 
+                if (this.Parent.IsAddition() || this.Parent.IsFunction("internal_sum") || this.Parent.IsFunction("total"))
+                {
+                    //Numbers and constants should yield to everything
+                    if (this.IsNumberOrConstant() && !other.IsNumberOrConstant())
+                    {
+                        return -1;
+                    }
+
+                    if (!this.IsNumberOrConstant() && other.IsNumberOrConstant())
+                    {
+                        return 1;
+                    }
+
+                    if (this.IsNumberOrConstant() && other.IsNumberOrConstant())
+                    {
+                        return this.GetNumber().CompareTo(other.GetNumber());
+                    }
+
+                    //Something that can be solved should yield like constants and numbers do! 
+                    if (this.IsSolveable() && !other.IsSolveable())
+                    {
+                        return -1;
+                    }
+
+                    if (!this.IsSolveable() && other.IsSolveable())
+                    {
+                        return 1;
+                    }
+
+                    if (this.IsSolveable() && other.IsSolveable())
+                    {
+                        return 0;
+                    }
+
+                    //Single Variables should yield to other expressions 
+                    if (this.IsVariable() && !other.IsVariable())
+                    {
+                        return -1;
+                    }
+
+                    if (!this.IsVariable() && other.IsVariable())
+                    {
+                        return 1;
+                    }
+
+                    if (this.IsVariable() && other.IsVariable())
+                    {
+                        return 0;
+                    }
+
+                    //Multiplication should yield to exponents
+                    if (this.IsMultiplication() && other.IsExponent())
+                    {
+                        return -1;
+                    }
+                    if (this.IsExponent() && other.IsMultiplication())
+                    {
+                        return 1;
+                    }
+
+                    //Multiplication should yield to multiplications that contain exponents
+                    if (this.IsMultiplication() && other.IsMultiplication())
+                    { 
+                        //This does not have an exponent and the other one does
+                        if (!this.Children.Any(n => n.IsExponent()) && other.Children.Any(n => n.IsExponent()))
+                        {
+                            return -1;
+                        }
+                        else if (!other.Children.Any(n => n.IsExponent()) && this.Children.Any(n => n.IsExponent()))
+                        {
+                            return 1;
+                        }
+                    }
+                    //Exponents compared to other exponents
+                    if (this.IsExponent() && other.IsExponent())
+                    {
+                        //Constant powers should yield to non constant powers
+
+                        //Constant powers should yield depending on their value! 
+                        if (this[0].IsNumberOrConstant() && other[0].IsNumberOrConstant())
+                        {
+                            return this[0].GetNumber().CompareTo(other[0].GetNumber());
+                        }
+                    }
+
+                    //TODO: A straight exponent should give way to a multiplication with an exponent if...
+                    //TODO: Swapping exponent with non exponent
+                }
+                else if (this.Parent.IsMultiplication() || this.Parent.IsFunction("internal_product"))
+                {
+                    //Sort order for multiplication
+                    //1) Numbers or Constants
+                    //2) Exponents of constants
+                    //3) Exponents of variables
+                    //4) Variables
+                    //5) Functions (sorted alphabetically)
+                    //6) Expressions (Everything else)
+                }
+
+                return 0;
             }
         }
     }

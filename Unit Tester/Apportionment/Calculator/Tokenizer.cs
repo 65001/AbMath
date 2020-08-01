@@ -66,14 +66,10 @@ namespace AbMath.Tests
         public void MultiTermAdd()
         {
             RPN test = new RPN("2 + 3 + 2").Compute();
-            Assert.AreEqual("2 3 + 2 +", test.Polish.Print());
-        }
+            Assert.AreEqual("4 3 +", test.Polish.Print());
 
-        [Test]
-        public void MultiTermAddNoSpace()
-        {
-            RPN test = new RPN("2+3+2").Compute();
-            Assert.AreEqual("2 3 + 2 +", test.Polish.Print());
+            test = new RPN("2+3+2").Compute();
+            Assert.AreEqual("4 3 +", test.Polish.Print());
         }
 
         [Test]
@@ -87,7 +83,7 @@ namespace AbMath.Tests
         public void Wikipedia()
         {
             RPN test = new RPN("3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3").Compute();
-            Assert.AreEqual("4 2 * 1 5 - 2 3 ^ ^ / 3 +", test.Polish.Print());
+            Assert.AreEqual("4 2 * 1 5 - 8 ^ / 3 +", test.Polish.Print());
         }
 
         [Test]
@@ -150,7 +146,7 @@ namespace AbMath.Tests
         public void UnaryStart()
         {
             RPN test = new RPN("-2 + 4").Compute();
-            Assert.AreEqual("-2 4 +", test.Polish.Print());
+            Assert.AreEqual("4 -2 +", test.Polish.Print());
         }
 
         [Test]
@@ -170,7 +166,7 @@ namespace AbMath.Tests
             Assert.AreEqual("1 2 x * /", test.Polish.Print());
 
             test.SetEquation("8/2(2 + 2)").Compute();
-            Assert.AreEqual("8 2 2 2 ^ * /", test.Polish.Print());
+            Assert.AreEqual("8 2 4 * /", test.Polish.Print());
 
             test.Data.ImplicitMultiplicationPriority = false;
 
@@ -178,7 +174,7 @@ namespace AbMath.Tests
             Assert.AreEqual("x 2 /", test.Polish.Print());
 
             test.SetEquation("8/2(2 + 2)").Compute();
-            Assert.AreEqual("4 2 2 ^ *", test.Polish.Print());
+            Assert.AreEqual("16", test.Polish.Print());
         }
 
         [Test]
@@ -198,6 +194,13 @@ namespace AbMath.Tests
 
             test.SetEquation("2x + 2").Compute();
             Assert.AreEqual("2 x * 2 +", test.Polish.Print());
+        }
+
+        [Test]
+        public void testFactorialInfix()
+        {
+            RPN test = new RPN("x!").Compute();
+            Assert.AreEqual("x!", test.Data.SimplifiedEquation);
         }
     }
 }

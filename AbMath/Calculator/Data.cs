@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CLI;
+using AbMath.Utilities;
 
 namespace AbMath.Calculator
 {
@@ -24,6 +24,10 @@ namespace AbMath.Calculator
 
             private List<TimeRecord> _time;
             private readonly Dictionary<string, string> _variableStore;
+
+            protected internal object LockObject = new object();
+
+            protected internal Logger Logger;
 
             /// <summary>
             /// A list of all the functions that are supported
@@ -124,7 +128,7 @@ namespace AbMath.Calculator
             /// Determines the default format of CLI Tables
             /// based on the value of MarkdownTables
             /// </summary>
-            public Format DefaultFormat => (MarkdownTables) ? CLI.Format.MarkDown : CLI.Format.Default ;
+            public Format DefaultFormat => (MarkdownTables) ? Utilities.Format.MarkDown : Utilities.Format.Default ;
 
             public DataStore(string equation)
             {
@@ -140,6 +144,7 @@ namespace AbMath.Calculator
 
                 _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
+                Logger = new Logger();
 
                 DefaultFunctions();
                 DefaultOperators();
@@ -206,13 +211,13 @@ namespace AbMath.Calculator
                     Title = "Time"
                 });
 
-                times.Add(new Schema() { Column = "Type", Width = 30 });
-                times.Add(new Schema() {Column = "# Calls", Width = 8});
-                times.Add(new Schema() { Column = "Time (ms)", Width = 10 });
+                times.Add(new Schema("Type"));
+                times.Add(new Schema("# Calls"));
+                times.Add(new Schema("Time (ms)"));
 
-                times.Add(new Schema() { Column = "Ticks", Width = 8 });
-                times.Add(new Schema() { Column = "% Milliseconds", Width = 16 });
-                times.Add(new Schema() { Column = "% Ticks", Width = 9 });
+                times.Add(new Schema("Ticks"));
+                times.Add(new Schema("% Milliseconds"));
+                times.Add(new Schema("% Ticks"));
 
                 double miliseconds = TotalMilliseconds;
                 double steps = TotalSteps;
@@ -334,6 +339,7 @@ namespace AbMath.Calculator
 
             public Type Resolve(string value)
             {
+                if (string.IsNullOrEmpty(value) || value == ".") { return Type.Null; }
                 if (IsNumber(value)) { return Type.Number; }
                 if (IsOperator(value)) { return Type.Operator; }
                 if (IsFunction(value)) { return Type.Function; }
@@ -364,428 +370,160 @@ namespace AbMath.Calculator
             {
                 AddOperator("^", new Operator(Assoc.Right, 5, 2, DoOperators.Power));
                 AddOperator("E", new Operator(Assoc.Right, 5, 2, DoOperators.E));
+                AddOperator("!", new Operator(Assoc.Left, 5, 1, DoOperators.Factorial));
 
-                AddOperator("!", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 5,
-                    Arguments = 1,
-                    Compute = DoOperators.Factorial
-                });
+                AddOperator("%", new Operator(Assoc.Left, 4, 2, DoOperators.Mod));
 
-                AddOperator("%", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 4,
-                    Arguments = 2,
-                    Compute = DoOperators.Mod
-                });
+                AddOperator("/", new Operator(Assoc.Left, 4, 2, DoOperators.Divide));
 
-                AddOperator("/", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 4,
-                    Arguments = 2,
-                    Compute = DoOperators.Divide
-                });
+                AddOperator("*", new Operator(Assoc.Left, 4, 2, DoOperators.Multiply));
 
-                AddOperator("*", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 4,
-                    Arguments = 2,
-                    Compute = DoOperators.Multiply
-                });
+                AddOperator("+", new Operator(Assoc.Left, 3, 2, DoOperators.Add));
 
-                AddOperator("+", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 2,
-                    Compute = DoOperators.Add
-                });
+                AddOperator("++", new Operator(Assoc.Left, 3, 1, DoOperators.AddSelf));
 
-                AddOperator("++", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 1,
-                    Compute = DoOperators.AddSelf
-                });
+                AddOperator("−", new Operator(Assoc.Left, 3, 2, DoOperators.Subtract));
 
-                AddOperator("−", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 2,
-                    Compute = DoOperators.Subtract
-                });
-
-                AddOperator("-", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 3,
-                    Arguments = 2,
-                    Compute = DoOperators.Subtract
-                });
+                AddOperator("-", new Operator(Assoc.Left, 3, 2, DoOperators.Subtract));
 
 #region Evaluation
-                AddOperator(">", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.GreaterThan
-                });
+                AddOperator(">", new Operator(Assoc.Left, 2, 2, DoOperators.GreaterThan));
 
-                AddOperator("<", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.LessThan
-                });
+                AddOperator("<", new Operator(Assoc.Left, 2, 2, DoOperators.LessThan));
 
-                AddOperator("=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.Equals
-                });
+                AddOperator("=", new Operator(Assoc.Left, 2, 2, DoOperators.Equals));
 
-                AddOperator("==", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.Equals
-                });
+                AddOperator("==", new Operator(Assoc.Left, 2, 2, DoOperators.Equals));
 
-                AddOperator(">=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.GreaterThanOrEquals
-                });
+                AddOperator(">=", new Operator(Assoc.Left, 2, 2, DoOperators.GreaterThanOrEquals));
 
-                AddOperator("<=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 2,
-                    Arguments = 2,
-                    Compute = DoOperators.LessThanOrEquals
-                });
+                AddOperator("<=", new Operator(Assoc.Left, 2, 2, DoOperators.LessThanOrEquals));
 #endregion
 #region Logic
-                AddOperator("!=", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 1,
-                    Arguments = 2,
-                    Compute = DoOperators.NotEquals
-                });
+                AddOperator("!=", new Operator(Assoc.Left, 1, 2, DoOperators.NotEquals));
 
-                AddOperator("&&", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 1,
-                    Arguments = 2,
-                    Compute = DoOperators.And
-                });
+                AddOperator("&&", new Operator(Assoc.Left, 1, 2, DoOperators.And));
 
-                AddOperator("||", new Operator
-                {
-                    Assoc = Assoc.Left,
-                    Weight = 1,
-                    Arguments = 2,
-                    Compute = DoOperators.Or
-                });
+                AddOperator("||", new Operator(Assoc.Left, 1, 2, DoOperators.Or));
 #endregion
             }
 
             private void DefaultFunctions()
             {
-#region Trig
-                AddFunction("sin", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Sin
-                });
+                #region Trig
+                AddFunction("sin", new Function(1, 1, 1, DoFunctions.Sin));
 
-                AddFunction("cos", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Cos
-                });
+                AddFunction("cos", new Function(1, 1, 1, DoFunctions.Cos));
 
-                AddFunction("tan", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Tan
-                });
+                AddFunction("tan", new Function(1, 1, 1, DoFunctions.Tan));
 
-                AddFunction("sec", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Sec
-                });
+                AddFunction("sec", new Function(1, 1, 1, DoFunctions.Sec));
 
-                AddFunction("csc", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Csc
-                });
+                AddFunction("csc", new Function(1, 1, 1, DoFunctions.Csc));
 
-                AddFunction("cot", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Cot
-                });
+                AddFunction("cot", new Function(1, 1, 1, DoFunctions.Cot));
 
-                AddFunction("arcsin", new Function
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Arcsin,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                AddFunction("arcsin", new Function(1, 1, 1, DoFunctions.Arcsin));
 
-                AddFunction("arccos", new Function
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Arccos,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                AddFunction("arccos", new Function(1, 1, 1, DoFunctions.Arccos));
 
-                AddFunction("arctan", new Function
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Arctan,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                AddFunction("arctan", new Function(1, 1, 1, DoFunctions.Arctan));
 
-                AddFunction("arcsec", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Arcsec
-                });
+                AddFunction("arcsec", new Function(1, 1, 1, DoFunctions.Arcsec));
 
-                AddFunction("arccsc", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Arccsc
-                });
+                AddFunction("arccsc", new Function(1, 1, 1, DoFunctions.Arccsc));
 
-                AddFunction("arccot", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Arccot
-                });
+                AddFunction("arccot", new Function(1, 1, 1, DoFunctions.Arccot));
 
-                AddFunction("rad", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.rad,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                AddFunction("rad", new Function(1, 1, 1, DoFunctions.rad));
 
-                AddFunction("deg", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.deg,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
-#endregion
+                AddFunction("deg", new Function(1, 1, 1, DoFunctions.deg));
+                #endregion
 
-                AddFunction("max", new Function
-                {
-                    MinArguments = 2,
-                    Arguments = 2,
-                    MaxArguments = int.MaxValue,
-                    Compute = DoFunctions.Max
-                });
+                Description max = new Description();
+                max.Add("max(a,b,...)","Returns the highest value of all the passed in parameters.");
+                AddFunction("max", new Function(2,2,int.MaxValue,DoFunctions.Max, max));
 
-                AddFunction("min", new Function
-                {
-                    MinArguments = 2,
-                    Arguments = 2,
-                    MaxArguments = int.MaxValue,
-                    Compute = DoFunctions.Min
-                });
+                Description min = new Description();
+                min.Add("min(a,b,...)","Returns the lowest value of all the passed in parameters.");
+                AddFunction("min", new Function(2,2,int.MaxValue,DoFunctions.Min, min));
 
-                AddFunction("sqrt", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Sqrt
-                });
+                Description sqrt = new Description();
+                sqrt.Add("sqrt(f(x))","Returns the square root of f(x).");
+                AddFunction("sqrt", new Function(1,1,1,DoFunctions.Sqrt, sqrt));
 
-                AddFunction("round", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 2,
-                    MaxArguments = 2,
-                    Compute = DoFunctions.Round
-                });
+                Description round = new Description();
+                round.Add("round(a)","Rounds 'a' to the nearest integer");
+                round.Add("round(a,b)", "Rounds 'a' to the 'b' position.");
+                round.Add("round(2.3) = 2");
+                round.Add("round(2.6) = 3");
+                round.Add("round(2.555,0) = 3");
+                round.Add("round(2.555,1) = 2.6");
+                round.Add("round(2.555,2) = 2.56");
+                AddFunction("round", new Function(1, 2, 2, DoFunctions.Round, round));
 
-                AddFunction("gcd", new Function
-                {
-                    MinArguments = 2,
-                    Arguments = 2,
-                    MaxArguments = 2,
-                    Compute = DoFunctions.Gcd
-                });
+                Description gcd = new Description();
+                gcd.Add("gcd(a,b)", "The greatest common denominator of 'a' and 'b'");
+                AddFunction("gcd", new Function(2, 2, 2, DoFunctions.Gcd, gcd));
 
-                AddFunction("lcm", new Function
-                {
-                    MinArguments = 2,
-                    Arguments = 2,
-                    MaxArguments = 2,
-                    Compute = DoFunctions.Lcm
-                });
+                Description lcm = new Description("lcm(a,b)","The least common multiple of 'a' and 'b'");
+                AddFunction("lcm", new Function(2, 2, 2, DoFunctions.Lcm, lcm));
 
-                AddFunction("ln", new Function
-                {
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    MinArguments = 1,
-                    Compute = DoFunctions.ln
-                });
+                Description ln = new Description("ln(a)","Takes the natural log of 'a'. Equivalent to log(e,a).");
+                AddFunction("ln", new Function(1, 1, 1, DoFunctions.ln, ln));
 
-                AddFunction("log", new Function
-                {
-                    MinArguments = 1,
-                    Arguments = 2,
-                    MaxArguments = 2,
-                    Compute = DoFunctions.Log
-                });
+                Description log = new Description("log(b,x)","Takes the log of 'x' with a base of 'b'.\nx = b^y <-> log(b,x) = y");
+                log.Add("log(x)","Returns the natural log of a specified number");
+                AddFunction("log", new Function(1,2,2, DoFunctions.Log, log));
 
-#region Constants
-                AddFunction("π", new Function
-                {
-                    Arguments = 0,
-                    MinArguments = 0,
-                    MaxArguments = 0,
-                    Compute = DoFunctions.Pi
-                });
+                #region Constants
+                Description pi = new Description("π", "Returns the value of π.");
+                AddFunction("π", new Function(0, 0, 0, DoFunctions.Pi, pi));
 
-                AddFunction("e", new Function
-                {
-                    Arguments = 0,
-                    MinArguments = 0,
-                    MaxArguments = 0,
-                    Compute = DoFunctions.EContstant
-                });
-#endregion
+                Description euler = new Description("e","Returns the euler number");
+                AddFunction("e", new Function(0, 0, 0, DoFunctions.EContstant, euler));
+                #endregion
 
-                AddFunction("bounded",new Function()
-                {
-                    Arguments = 3,
-                    MinArguments = 3,
-                    MaxArguments = 3,
-                    Compute = DoFunctions.Bounded
-                }
-                );
+                Description bounded = new Description("bounded(low,x,high)","Returns low if (x < low)\nReturns high if (x > high)\nReturns x otherwise.");
+                AddFunction("bounded",new Function(3, 3, 3, DoFunctions.Bounded, bounded));
 
-                AddFunction("total", new Function()
-                {
-                    Arguments = 1,
-                    MinArguments = 1,
-                    MaxArguments = int.MaxValue,
-                    Compute = DoFunctions.Sum
-                }
-                );
+                Description total = new Description("total(a_0,...,a_n)","Totals up and returns the sum of all parameters.");
+                AddFunction("total", new Function(1, 1, int.MaxValue, DoFunctions.Sum, total));
 
-                AddFunction("sum", new Function()
-                {
-                    Arguments = 1,
-                    MinArguments = 4,
-                    MaxArguments = 5
-                });
+                Description sum = new Description("sum(f(x),x,a,b)","Computes or returns the sum of f(x) from 'a' to 'b'.\n'x' shall represent the index variable.");
+                AddFunction("sum", new Function(4, 4, 4, sum));
 
-                AddFunction("avg", new Function()
-                {
-                    Arguments = 1,
-                    MinArguments = 1,
-                    MaxArguments = int.MaxValue,
-                    Compute = DoFunctions.Avg
-                });
+                Description avg = new Description("avg(a,...,b)","Returns the average of all the passed in parameters.");
+                AddFunction("avg", new Function(1,1,int.MaxValue, DoFunctions.Avg, avg));
 
-                AddFunction("random", new Function()
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 2,
-                    Compute = DoFunctions.Random
-                }
-                );
+                Description random = new Description("random()","Returns a non-negative random integer number.");
+                random.Add("random(ceiling)","Returns a non-negative integer number that is below the ceiling");
+                random.Add("random(min,max)","Returns a random integer that is between the min and maximum.");
+                AddFunction("random", new Function(0, 0, 2, DoFunctions.Random, random));
 
-                AddFunction("rand", new Function()
-                {
-                    MinArguments = 0,
-                    Arguments = 0,
-                    MaxArguments = 0,
-                    Compute = DoFunctions.Random
-                });
+                Description rand = new Description("rand()", "Returns a non-negative random integer number.");
+                AddFunction("rand", new Function(0, 0, 0, DoFunctions.Random, rand));
 
-                AddFunction("seed", new Function()
-                {
-                    MinArguments = 1,
-                    Arguments = 1,
-                    MaxArguments = 1,
-                    Compute = DoFunctions.Seed
-                });
+                Description seed = new Description("seed(a)","Sets the seed for the random number generator.");
+                AddFunction("seed", new Function(1, 1, 1, DoFunctions.Seed, seed));
 
-                AddFunction("abs", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Abs,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                Description abs = new Description("abs(x)","Returns the absolute value of 'x'.");
+                AddFunction("abs", new Function(1, 1, 1, DoFunctions.Abs, abs));
 
-                AddFunction("Γ", new Function()
-                {
-                    Arguments = 1,
-                    Compute = DoFunctions.Gamma,
-                    MaxArguments = 1,
-                    MinArguments = 1
-                });
+                Description binomial = new Description("binomial(n,k)","Returns the value of (n!)/[k!(n - k)!].\nThis is the equivalent of (n choose k).\nRestrictions:0 <= k <= n");
+                AddFunction("binomial", new Function(2,2,2,DoFunctions.Binomial, binomial));
+
+                Description gamma = new Description("Γ(x)", "The gamma function is related to factorials as: Γ(x) = (x - 1)!.\nSince the gamma function is really hard to compute we are using Gergő Nemes Approximation.");
+                AddFunction("Γ", new Function(1, 1, 1, DoFunctions.Gamma, gamma));
 
                 #region MetaCommands
                 
-                AddFunction("derivative", new Function()
-                {
-                    Arguments = 2,
-                    MinArguments = 2,
-                    MaxArguments = 3,
-                });
+                Description derivative = new Description("derivative(f(x),x)","Takes the derivative of f(x) in respect to x.");
+                derivative.Add("derivative(f(x),x,n)","");
+                derivative.Add("derivative(f(x),x,2) = derivative(derivative(f(x),x),x)");
+                AddFunction("derivative", new Function(2, 2, 3, derivative));
                 
+
                 AddFunction("integrate", new Function()
                 {
                     Arguments = 4,
