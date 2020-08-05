@@ -112,7 +112,7 @@ namespace AbMath.Calculator
             /// If true, the program will write tables to the
             /// log
             /// </summary>
-            public bool DebugMode;
+            public bool DebugMode = true;
 
             /// <summary>
             /// Implicit multiplication in some interpretations
@@ -554,6 +554,14 @@ namespace AbMath.Calculator
                     MaxArguments = 4
                 });
                 */
+
+                AddFunction("list", new Function()
+                {
+                    Arguments = 2,
+                    MinArguments = 1,
+                    MaxArguments = int.MaxValue
+                });
+
                 _meta_functions.Add("derivative");
                 _meta_functions.Add("derive");
                 _meta_functions.Add("integrate");
@@ -561,6 +569,8 @@ namespace AbMath.Calculator
                 _meta_functions.Add("plot");
                 _meta_functions.Add("solve");
                 _meta_functions.Add("sum");
+
+                _meta_functions.Add("list");
                 #endregion
             }
             private void DefaultFormats()
