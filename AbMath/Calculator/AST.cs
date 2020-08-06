@@ -942,6 +942,87 @@ namespace AbMath.Calculator
 
                     Write(node.Print());
                 }
+                else if (node.IsOperator("/") && node[0].IsFunction("internal_product") && node[1].IsFunction("internal_product"))
+                {
+                    List<RPN.Node> denominator = node[0].Children;
+                    List<RPN.Node> numerator = node[1].Children;
+
+
+                    for (int i = 0; i < numerator.Count; i++)
+                    {
+                        RPN.Node top = node[1, i];
+                        for (int y = 0; y < denominator.Count; y++)
+                        {
+                            RPN.Node bottom = node[0, y];
+
+                            //We can now compare the top and bottom
+
+                            //Factorials:
+                            if (top.IsOperator("!") && bottom.IsOperator("!") && top[0].IsInteger() && bottom[0].IsInteger())
+                            {
+                                //Identical Factorial Cancel
+                                if (top[0].GetNumber() == bottom[0].GetNumber())
+                                {
+                                    Write("\tIdentical Factorial Cancel");
+                                    RPN.Node replacement = new RPN.Node(1);
+
+                                    node[0].Replace(top, replacement);
+                                    node[1].Replace(bottom, new RPN.Node(1));
+
+                                    top = replacement;
+                                }
+                                //Radial Factorial Cancelation
+                                else if (Math.Abs(top[0].GetNumber() - bottom[0].GetNumber()) == 1)
+                                {
+                                    Write("\tRadial Factorial Cancel");
+                                    if (top[0].GetNumber() > bottom[0].GetNumber())
+                                    {
+                                        Write("\t\t (a + 1)!/a! - > (a + 1)");
+
+                                        node[1, i] = top[0];
+                                        top = node[1, i];
+
+                                        node[0, y] = new RPN.Node(1);
+                                        bottom = node[0, y];
+
+                                    }
+                                    else
+                                    {
+                                        Write("\t\t a!/(a + 1)! - > 1/(a + 1)");
+                                        RPN.Node replacement = bottom[0];
+                                        node[0].Replace(top, new RPN.Node(1));
+                                        node[1].Replace(bottom, replacement);
+                                        top = replacement;
+                                    }
+                                }
+                            }
+                            //Power Reduction Rule
+                        }
+                    }
+
+                    //The numerator is zero 
+                    //and the denominator is either constant factorials or otherwise a number or constant.
+                    if (numerator.Count == 1 && numerator[0].IsNumber(0) &&
+                        denominator.All(n => (n.IsOperator("!") && n[0].IsInteger()) || n.IsNumberOrConstant()))
+                    {
+                        node[1] = new RPN.Node(1);
+                    }
+
+
+                }
+                else if (node.IsOperator("/") && node[0].IsFunction("internal_product") && node[1].IsNumber(0))
+                {
+                    
+                    List<RPN.Node> denominator = node[0].Children;
+
+                    Write("\t0/(c_0 * c_1 * ... * c_n) where c is constant -> 0/1 -> 0");
+
+                    Write(node.ToInfix());
+                    if (denominator.TrueForAll(n => (n.IsOperator("!") && n[0].IsInteger()) || n.IsNumber()) ) 
+                    {
+                        node[0] = new RPN.Node(1);
+                    }
+                }
             }
         }
 
@@ -2408,10 +2489,15 @@ namespace AbMath.Calculator
                 }
                 else if (node.IsMultiplication())
                 {
-                    if (node.isRoot || !node.Parent.IsFunction("internal_product"))
+                    //Right now an internal_product is created when:
+                    //1) The current is a root multiplication or does not have the parent internal product and either of its children is a multiplication
+                    //2) The current node is a leaf multiplication (therefore eligible for internal_product) and the parent node is a division
+                    //3) The current node is a leaf multiplication and its parent is an internal product.
+                    if (node.isRoot || !node.Parent.IsFunction("internal_product") )
                     {
                         //This prevents a stupid allocation and expansion and compression cycle
-                        if (node[0].IsMultiplication() || node[1].IsMultiplication())
+                        
+                        if (node[0].IsMultiplication() || node[1].IsMultiplication() || (!node.isRoot && node.Parent.IsOperator("/")))
                         {
                             RPN.Node product = new RPN.Node(node.Children.ToArray(),
                                 new RPN.Token("internal_product", node.Children.Count, RPN.Type.Function));

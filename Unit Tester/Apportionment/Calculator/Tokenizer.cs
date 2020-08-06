@@ -214,7 +214,7 @@ namespace AbMath.Tests
         public void Matrix()
         {
             RPN test = new RPN("{{a,b},{c,d}}").Compute();
-            Assert.AreEqual("a b list c d list list", test.Polish.Print());
+            Assert.AreEqual("a b list c d list matrix", test.Polish.Print());
         }
 
         [Test]
