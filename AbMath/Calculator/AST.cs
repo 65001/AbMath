@@ -42,6 +42,7 @@ namespace AbMath.Calculator
             Integral,
             Constants,
             Misc,
+            List,
             Compress, COUNT
         }
 
@@ -84,6 +85,7 @@ namespace AbMath.Calculator
             GenerateSumSimplifications();
             GenerateIntegralSimplifications();
             GenerateMiscSimplifications();
+            GenerateListSimplifications();
         }
 
         private void GenerateSqrtSimplifications()
@@ -493,6 +495,19 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Misc, factorial);
         }
 
+        private void GenerateListSimplifications()
+        {
+            Rule setRule = new Rule(List.setRule, null, "List/Matrix Set Rule");
+            ruleManager.AddSetRule(SimplificationMode.List, setRule);
+
+            Rule singleElement = new Rule(List.singleElementRunnable, List.singleElement,"List Single Element");
+            Rule vectorToMatrix = new Rule(List.convertVectorToMatrixRunnable, List.convertVectorToMatrix, "Vector to Matrix");
+
+            ruleManager.Add(SimplificationMode.List, singleElement);
+            ruleManager.Add(SimplificationMode.List, vectorToMatrix);
+
+        }
+
         public RPN.Node Generate(RPN.Token[] input)
         {
             Stopwatch SW = new Stopwatch();
@@ -612,6 +627,8 @@ namespace AbMath.Calculator
             //We want to reduce this! 
             Simplify(node, SimplificationMode.Sqrt);
             Simplify(node, SimplificationMode.Log);
+            Simplify(node, SimplificationMode.List);
+
             Simplify(node, SimplificationMode.Division);
 
             Simplify(node, SimplificationMode.Exponent); //This will make all negative exponennts into divisions
@@ -624,7 +641,7 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Misc);
             Simplify(node, SimplificationMode.Sum);
             Simplify(node, SimplificationMode.Integral);
-            
+
             Swap(node);
             #if DEBUG
                 Write(Root.ToInfix(_data));

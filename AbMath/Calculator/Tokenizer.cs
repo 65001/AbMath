@@ -83,14 +83,8 @@ namespace AbMath.Calculator
                         Type readAheadType = _dataStore.Resolve(_readAhead);
 
                         //{ -> list ( 
-                        if (_character == "[" || _character == "{")
-                        {
-                            token = "list";
-                            WriteToken("List Expansion", ref token, Type.Function);
-                            token = "(";
-                            WriteToken("List Expansion",ref token, Type.LParen);
-                        }
-                        else if (characterType == Type.Operator && readAheadType == Type.Operator)
+                        
+                        if (characterType == Type.Operator && readAheadType == Type.Operator)
                         {
                             WriteToken("Operator", ref token, tokenType);
                             token = _character + _readAhead;
@@ -119,7 +113,13 @@ namespace AbMath.Calculator
                         {
                             WriteToken("Left Implicit", ref token);
                             token = _character;
-                            if (characterType == Type.LParen || (i == (Equation.Length - 1)))
+
+                            if (token == "{")
+                            {
+                                ListExpansion();
+                                token = "";
+                            }
+                            else if (characterType == Type.LParen || (i == (Equation.Length - 1)))
                             {
                                 WriteToken("Left Implicit", ref token, characterType);
                             }
@@ -134,6 +134,12 @@ namespace AbMath.Calculator
                             {
                                 WriteToken("Left Implicit 2", ref token, characterType);
                             }
+                        }
+                        //Regular List Expansion
+                        else if (_character == "{")
+                        {
+                            ListExpansion();
+                            token = "";
                         }
                         else if (tokenType == Type.Function && characterType == Type.LParen)
                         {
@@ -198,6 +204,14 @@ namespace AbMath.Calculator
                 Write("");
 
                 return _tokens;
+            }
+
+            private void ListExpansion()
+            {
+                string token = "list";
+                WriteToken("List Expansion", ref token, Type.Function);
+                token = "(";
+                WriteToken("List Expansion", ref token, Type.LParen);
             }
 
             /// <summary>

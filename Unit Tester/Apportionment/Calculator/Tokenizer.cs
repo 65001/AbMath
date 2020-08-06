@@ -202,5 +202,29 @@ namespace AbMath.Tests
             RPN test = new RPN("x!").Compute();
             Assert.AreEqual("x!", test.Data.SimplifiedEquation);
         }
+
+        [Test]
+        public void List()
+        {
+            RPN test = new RPN("{5,2}").Compute();
+            Assert.AreEqual("5 2 list", test.Polish.Print());
+        }
+
+        [Test]
+        public void Matrix()
+        {
+            RPN test = new RPN("{{a,b},{c,d}}").Compute();
+            Assert.AreEqual("a b list c d list list", test.Polish.Print());
+        }
+
+        [Test]
+        public void ListImplicitMultiplication()
+        {
+            RPN test = new RPN("3{5,2}").Compute();
+            Assert.AreEqual("3 5 2 list *", test.Polish.Print());
+
+            test.SetEquation("{5,2}3").Compute();
+            Assert.AreEqual("3 5 2 list *", test.Polish.Print());
+        }
     }
 }
