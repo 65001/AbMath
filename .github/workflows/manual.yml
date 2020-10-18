@@ -27,6 +27,8 @@ jobs:
         NUGET_AUTH_TOKEN: ${{secrets.NUGET_TOKEN}}
     - name: cd 
       run: cd AbMath 
+    - name: echo ls
+      run: ls
     - name: Build solution and gen NuGet
       run: dotnet pack -c Release -o out
     - name: Push generated package to GitHub registry
