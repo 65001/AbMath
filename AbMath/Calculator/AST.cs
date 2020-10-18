@@ -729,24 +729,6 @@ namespace AbMath.Calculator
                         }
                     }
                 }
-                else if (mode == SimplificationMode.Misc)
-                {
-                    if (node.IsOperator() && node.Children.Any(t => t.IsGreaterThanNumber(-1) && t.IsLessThanNumber(1) && !t.IsNumber(0)))
-                    {
-                        Write("\tDecimal to Fraction");
-                        for (int i = 0; i < node.Children.Count; i++)
-                        {
-                            if (node[i].IsGreaterThanNumber(-1) && node[i].IsLessThanNumber(1))
-                            {
-                                var f = Extensions.getDecimalFormatToNode(node[i].GetNumber());
-                                if (f != null)
-                                {
-                                    node.Replace(node[i], f);
-                                }
-                            }
-                        }
-                    }
-                }
 
                 //Propagate down the tree IF there is a root 
                 //which value is not NaN or a number
