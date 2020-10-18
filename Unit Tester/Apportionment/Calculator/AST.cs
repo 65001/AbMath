@@ -117,7 +117,7 @@ namespace AbMath.Tests
             RPN rpn = new RPN("(5/x)/(x/3)").Compute();
             Assert.AreEqual("5 3 * x 2 ^ /", rpn.Polish.Print());
 
-            rpn.SetEquation("[f/g]/h").Compute();
+            rpn.SetEquation("(f/g)/h").Compute();
             Assert.AreEqual("f g h * /", rpn.Polish.Print());
         }
 

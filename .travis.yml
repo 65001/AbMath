@@ -12,4 +12,4 @@ install:
 script:
   - cd "Unit Tester/Apportionment/"
   - dotnet build 
-  - travis_wait 15 dotnet test "Unit Tester.csproj" --verbosity n
+  - dotnet test 

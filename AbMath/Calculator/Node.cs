@@ -129,7 +129,7 @@ namespace AbMath.Calculator
                 //Propagate down the tree
                 for (int i = 0; i < Children.Count; i++)
                 {
-                    Children[i].Replace(identification, node);
+                    this[i].Replace(identification, node);
                 }
             }
 
@@ -442,6 +442,12 @@ namespace AbMath.Calculator
             public bool IsNumberOrConstant()
             {
                 return Token.IsNumber() || Token.IsConstant();
+            }
+
+            public bool IsScalar()
+            {
+                return IsNumberOrConstant() || IsVariable() ||  (IsFunction() && !this.ToInfix().Contains("list") &&
+                                                !this.ToInfix().Contains("matrix"));
             }
 
             public bool IsNumber()
@@ -767,10 +773,20 @@ namespace AbMath.Calculator
                 }
 
                 //Functions that have at least one child
+                
+
                 if (node.Children.Count > 0 && node.Token.IsFunction())
                 {
-                    infix.Append(node.Token.Value);
-                    infix.Append("(");
+                    if (node.IsFunction("list") || node.IsFunction("matrix"))
+                    {
+                        infix.Append("{");
+                    }
+                    else
+                    {
+                        infix.Append(node.Token.Value);
+                        infix.Append("(");
+                    }
+
                     for (int i = (node.Children.Count - 1); i >= 0; i--)
                     {
                         Infix(node.Children[i], infix, data);
@@ -780,7 +796,14 @@ namespace AbMath.Calculator
                         }
                     }
 
-                    infix.Append(")");
+                    if (node.IsFunction("list") || node.IsFunction("matrix"))
+                    {
+                        infix.Append("}");
+                    }
+                    else
+                    {
+                        infix.Append(")");
+                    }
 
                     return;
                 }
