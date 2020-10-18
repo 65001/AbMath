@@ -26,7 +26,7 @@ jobs:
       env: 
         NUGET_AUTH_TOKEN: ${{secrets.NUGET_TOKEN}}
     - name: cd 
-      run: cd AbMath 
+      run: cd ./AbMath 
     - name: echo ls
       run: ls
     - name: Build solution and gen NuGet
