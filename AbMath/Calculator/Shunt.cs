@@ -84,7 +84,7 @@ namespace AbMath.Calculator
                 string action = string.Empty;
                 string type = string.Empty;
 
-                Term _null = GenerateNull();
+                Token _null = new Token(){Arguments = 0, Type = Type.Null};
                 for (int i = 0; i < tokens.Count; i++)
                 {
                     _prev = (i > 0) ? _token : _null;
