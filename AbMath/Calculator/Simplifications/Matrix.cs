@@ -8,8 +8,8 @@ namespace AbMath.Calculator.Simplifications
     {
         public static bool setRule(RPN.Node node)
         {
-            return (node.IsAddition() || node.IsSubtraction() || node.IsMultiplication() || node.IsExponent() || node.IsDivision()) && 
-                   node[0].
+            return (node.IsAddition() || node.IsSubtraction() || node.IsMultiplication() || node.IsExponent() ||
+                    node.IsDivision());
 
         }
     }
