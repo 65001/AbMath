@@ -9,7 +9,8 @@
     
      steps:
        - checkout
-       - run: dotnet restore 
+       - run: dotnet restore
+       - run: nuget restore "Ab Math.sln"
        - run: cd "Unit Tester/Apportionment/"
        - run: dotnet build 
        - run: dotnet test 
