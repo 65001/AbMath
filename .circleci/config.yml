@@ -10,7 +10,6 @@
      steps:
        - checkout
        - run: dotnet restore 
-       - run: dotnet build
        - run: cd "Unit Tester/Apportionment/"
        - run: dotnet build 
        - run: dotnet test 
