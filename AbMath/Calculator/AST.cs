@@ -334,7 +334,7 @@ namespace AbMath.Calculator
             //TODO: csc(x)^2 - cot(x)^2 = 1
 
             //TODO: Double Angle (->) (I wonder if double angle could be done through power reduction instead...)
-            //[cos(x)^2 - sin(x)^2] = cos(2x)
+            //[cos(f(x))^2 - sin(f(x))^2] = cos(2f(x))
             //1 - 2sin(x)^2 = cos(2x)
             //2cos(x)^2 - 1 = cos(2x) 
             //2sin(x)cos(x) = sin(2x)
@@ -431,7 +431,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Sum, constantComplex);
 
             //TODO: 
-            // sum(f(x),x,a,b) -> sum(f(x),x,0,b) - sum(f(x),x,0,a - 1)
+            // sum(f(x),x,a,b) -> sum(f(x),x,0,b) - sum(f(x),x,0,a - 1) where f(x) is continious on (0,b)
             // sum(x^p,x,0,n) -> 0^p + sum(x^p,x,1,n) 
         }
 
@@ -485,6 +485,10 @@ namespace AbMath.Calculator
             // integrate(cot(x),x,a,b) -> ln(abs(sin(b))) - ln(abs(sin(a)))
             //17) sec(x) -> ln( abs(sec(x) + tan(x)) )
             //18) csc(x) -> -ln( abs(csc(x) + cot(x)) )
+
+            //U-Substitution 
+            //Chain Rule Integration 
+
             //All other ones fall back to numerical integration
         }
 
