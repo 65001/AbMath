@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/65001/AbMath.svg?branch=master)](https://travis-ci.org/65001/AbMath)
-
+[![65001](https://circleci.com/gh/65001/AbMath.svg?style=svg)](https://app.circleci.com/pipelines/github/65001/AbMath)
 # AbMath
 AbMath is a library that lets you compute an arbitrary mathematical expression and is designed to be 
 efficient enough to be used in graphing calculators. 
