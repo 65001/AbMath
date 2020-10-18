@@ -2,13 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="AbMath">
-      <HintPath>..\AbMath\AbMath.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\AbMath\AbMath.csproj" />
   </ItemGroup>
 
 </Project>

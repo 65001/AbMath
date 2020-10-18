@@ -33,20 +33,20 @@ namespace AbMath.Tests
             Assert.AreEqual("-7709321041217 510 /", bernoulli(32));
             Assert.AreEqual("2577687858367 6 /", bernoulli(34));
 
-            Assert.AreEqual("-2.63152715530535E+19 1919190 /", bernoulli(36));
-            Assert.AreEqual("2.92999391384156E+15 6 /", bernoulli(38));
-            Assert.AreEqual("-2.61082718496449E+20 13530 /", bernoulli(40));
-            Assert.AreEqual("1.52009764391807E+21 1806 /", bernoulli(42));
-            Assert.AreEqual("-2.7833269579301E+22 690 /", bernoulli(44));
-            Assert.AreEqual("5.96451111593912E+23 282 /", bernoulli(46));
-            Assert.AreEqual("-5.60940336899782E+27 46410 /", bernoulli(48));
-            Assert.AreEqual("4.9505720524108E+26 66 /", bernoulli(50));
-            Assert.AreEqual("-8.0116571813549E+29 1590 /", bernoulli(52));
-            Assert.AreEqual("2.91499636348849E+31 798 /", bernoulli(54));
-            Assert.AreEqual("-2.47939292931323E+33 870 /", bernoulli(56));
-            Assert.AreEqual("8.448361334888E+34 354 /", bernoulli(58));
-            Assert.AreEqual("-1.21523314048376E+42 56786730 /", bernoulli(60));
-            Assert.AreEqual("1.23005854340869E+37 6 /", bernoulli(62));
+            Assert.AreEqual("-2.6315271553053475E+19 1919190 /", bernoulli(36));
+            Assert.AreEqual("2929993913841559 6 /", bernoulli(38));
+            Assert.AreEqual("-2.610827184964491E+20 13530 /", bernoulli(40));
+            Assert.AreEqual("1.5200976439180706E+21 1806 /", bernoulli(42));
+            Assert.AreEqual("-2.7833269579301022E+22 690 /", bernoulli(44));
+            Assert.AreEqual("5.964511115939121E+23 282 /", bernoulli(46));
+            Assert.AreEqual("-5.609403368997818E+27 46410 /", bernoulli(48));
+            Assert.AreEqual("4.950572052410796E+26 66 /", bernoulli(50));
+            Assert.AreEqual("-8.011657181354899E+29 1590 /", bernoulli(52));
+            Assert.AreEqual("2.914996363488486E+31 798 /", bernoulli(54));
+            Assert.AreEqual("-2.4793929293132266E+33 870 /", bernoulli(56));
+            Assert.AreEqual("8.448361334888004E+34 354 /", bernoulli(58));
+            Assert.AreEqual("-1.2152331404837555E+42 56786730 /", bernoulli(60));
+            Assert.AreEqual("1.2300585434086857E+37 6 /", bernoulli(62));
         }
 
         [Test]
