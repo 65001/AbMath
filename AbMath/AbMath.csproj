@@ -29,8 +29,4 @@
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.3" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)\bin\Release\netstandard2.0\AbMath.dll&quot; &quot;$(ProjectDir)\AbMath.dll&quot; /Y" />
-  </Target>
 </Project>
