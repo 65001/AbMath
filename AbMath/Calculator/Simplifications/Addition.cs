@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -18,9 +19,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node AdditionToMultiplication(RPN.Node node)
         {
-            RPN.Node multiply = new RPN.Node(new[] { node[0], new RPN.Node(2) },
-                new RPN.Token("*", 2, RPN.Type.Operator));
-            return multiply;
+            return new Mul(new RPN.Node(2), node[0]);
         }
 
         public static bool ZeroAdditionRunnable(RPN.Node node)
@@ -128,9 +127,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node DivisionAddition(RPN.Node node)
         {
-            RPN.Node addition = new RPN.Node(new RPN.Node[] {node[0,1], node[1,1]}, new RPN.Token("+", 2, RPN.Type.Operator));
-            RPN.Node division = new RPN.Node(new RPN.Node[] {node[0,0], addition}, new RPN.Token("/",2,RPN.Type.Operator));
-            return division;
+            return new Div(new Add(node[1, 1], node[0, 1]) , node[0, 0] );
         }
     }
 }
