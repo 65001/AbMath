@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -59,11 +60,8 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node toDivision(RPN.Node node)
         {
-            RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(-1 * node[0].GetNumber()), node[1].Clone() },
-                new RPN.Token("^", 2, RPN.Type.Operator));
-            RPN.Node division = new RPN.Node(new[] { exponent, new RPN.Node(1) },
-                new RPN.Token("/", 2, RPN.Type.Operator));
-            return division;
+            node[0].Replace(-1 * node[0].GetNumber());
+            return new Div(new RPN.Node(1), new Pow(node[1], node[0]));
         }
 
         public static bool toSqrtRunnable(RPN.Node node)
@@ -91,13 +89,9 @@ namespace AbMath.Calculator.Simplifications
             }
             else
             {
-                multiply = new RPN.Node(new[] { node[0].Clone(), node[1, 0].Clone() },
-                    new RPN.Token("*", 2, RPN.Type.Operator));
+                multiply = new Mul(node[1, 0], node[0]);
             }
-
-            RPN.Node exponent = new RPN.Node(new[] { multiply, node[1, 1].Clone() },
-                new RPN.Token("^", 2, RPN.Type.Operator));
-            return exponent;
+            return new Pow(node[1,1], multiply);
         }
 
         public static bool ConstantRaisedToConstantRunnable(RPN.Node node)
