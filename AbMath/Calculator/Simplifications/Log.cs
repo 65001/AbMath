@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using AbMath.Calculator;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -49,7 +49,7 @@ namespace AbMath.Calculator.Simplifications
             RPN.Node power = exponent.Children[0];
 
             RPN.Node log = new RPN.Node(new[] { baseNode.Clone(), node.Children[1] }, new RPN.Token("log", 2, RPN.Type.Function));
-            return new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
+            return new Mul(power, log);
         }
 
         public static bool LogToLnRunnable(RPN.Node node)
@@ -83,10 +83,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node LogSummation(RPN.Node node)
         {
-            RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                new RPN.Token("*", 2, RPN.Type.Operator));
-            RPN.Node baseNode = node.Children[0].Children[1];
-            RPN.Node log = new RPN.Node(new[] { parameter, baseNode },
+            RPN.Node log = new RPN.Node(new[] { new Mul(node[1,0], node[0,0]) , node[0, 1] },
                 new RPN.Token("log", 2, RPN.Type.Function));
             return log;
         }
@@ -100,10 +97,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node LogSubtraction(RPN.Node node)
         {
-            RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                new RPN.Token("/", 2, RPN.Type.Operator));
-            RPN.Node baseNode = node.Children[0].Children[1];
-            RPN.Node log = new RPN.Node(new[] { parameter, baseNode },
+            RPN.Node log = new RPN.Node(new[] { new Div(node[1,0], node[0,0]), node[0, 1] },
                 new RPN.Token("log", 2, RPN.Type.Function));
             return log;
         }
@@ -115,9 +109,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node LnSummation(RPN.Node node)
         {
-            RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                new RPN.Token("*", 2, RPN.Type.Operator));
-            RPN.Node ln = new RPN.Node(new[] { parameter },
+            RPN.Node ln = new RPN.Node(new[] { new Mul(node[1,0], node[0,0]) },
                 new RPN.Token("ln", 1, RPN.Type.Function));
             return ln;
         }
@@ -129,9 +121,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node LnSubtraction(RPN.Node node)
         {
-            RPN.Node parameter = new RPN.Node(new[] { node.Children[0].Children[0], node.Children[1].Children[0] },
-                new RPN.Token("/", 2, RPN.Type.Operator));
-            RPN.Node ln = new RPN.Node(new[] { parameter },
+            RPN.Node ln = new RPN.Node(new[] { new Div(node[1,0], node[0,0]) },
                 new RPN.Token("ln", 1, RPN.Type.Function));
             return ln;
         }
@@ -143,13 +133,9 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node LnPowerRule(RPN.Node node)
         {
-            RPN.Node exponent = node.Children[0];
-            RPN.Node power = exponent.Children[0];
-
-            RPN.Node log = new RPN.Node(new[] { exponent.Children[1] },
+            RPN.Node log = new RPN.Node(new[] { node[0, 1] },
                 new RPN.Token("ln", 1, RPN.Type.Function));
-            RPN.Node multiply = new RPN.Node(new[] { log, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-            return multiply;
+            return new Mul(node[0, 0], log);
         } 
     }
 }
