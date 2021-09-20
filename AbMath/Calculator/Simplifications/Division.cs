@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -56,13 +57,7 @@ namespace AbMath.Calculator.Simplifications
         {
             RPN.Node[] numerator = { node.Children[0].Children[1], node.Children[1].Children[1] };
             RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
-
-            RPN.Node top = new RPN.Node(new[] { denominator[0], numerator[1] },
-                new RPN.Token("*", 2, RPN.Type.Operator));
-            RPN.Node bottom = new RPN.Node(new[] { denominator[1], numerator[0] },
-                new RPN.Token("*", 2, RPN.Type.Operator));
-            RPN.Node division = new RPN.Node(new[] { bottom, top }, new RPN.Token("/", 2, RPN.Type.Operator));
-            return division;
+            return new Div(new Mul(numerator[1], denominator[0]), new Mul(numerator[0], denominator[1]));
         }
 
         public static bool DivisionFlipTwoRunnable(RPN.Node node)
@@ -72,12 +67,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node DivisionFlipTwo(RPN.Node node)
         {
-            RPN.Node numerator = node[1, 1];
-            RPN.Node denominator = new RPN.Node(new[] { node[0], node[1, 0] },
-                new RPN.Token("*", 2, RPN.Type.Operator));
-            RPN.Node division = new RPN.Node(new[] { denominator, numerator },
-                new RPN.Token("/", 2, RPN.Type.Operator));
-            return division;
+            return new Div(node[1,1], new Mul(node[1,0], node[0]));
         }
 
         public static bool DivisionCancelingRunnable(RPN.Node node)
