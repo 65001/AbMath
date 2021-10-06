@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -18,7 +19,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node multiplicationToExponent(RPN.Node node)
         {
-            return new RPN.Node(new[] { new RPN.Node(2), node[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
+            return new Pow(node[0], new RPN.Node(2));
         }
 
         public static bool multiplicationByOneRunnable(RPN.Node node)
@@ -28,12 +29,12 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node multiplicationByOne(RPN.Node node)
         {
-            return node.Children[1].IsNumber(1) ? node.Children[0] : node.Children[1];
+            return node.Children[1].IsNumber(1) ? node[0] : node[1];
         }
 
         public static bool multiplicationByZeroRunnable(RPN.Node node)
         {
-            return (node.Children[1].IsNumber(0) || node.Children[0].IsNumber(0)) && !node.ContainsDomainViolation();
+            return (node[1].IsNumber(0) || node[0].IsNumber(0)) && !node.ContainsDomainViolation();
         }
 
         public static RPN.Node multiplicationByZero(RPN.Node node)
@@ -94,13 +95,13 @@ namespace AbMath.Calculator.Simplifications
              *    ?
              *    f
              */
-            return node.Children[0].IsExponent() && node.Children[1].IsMultiplication() &&
-                   node.Children[0].Children[1].Matches(node.Children[1]);
+            return node[0].IsExponent() && node[1].IsMultiplication() &&
+                   node[0,1].Matches(node[1]);
         }
 
         public static RPN.Node increaseExponentThree(RPN.Node node)
         {
-            RPN.Node temp = node.Children[0].Children[0];
+            RPN.Node temp = node[0,0];
             temp.Replace(temp.GetNumber() + 1);
             node.Children[1].Remove(new RPN.Node(1));
             return node;
@@ -152,8 +153,7 @@ namespace AbMath.Calculator.Simplifications
             }
 
             RPN.Node numerator = division.Children[1];
-            RPN.Node multiply = new RPN.Node(new[] { numerator.Clone(), expression.Clone() },
-                new RPN.Token("*", 2, RPN.Type.Operator));
+            RPN.Node multiply = new Mul(expression.Clone(), numerator.Clone());
             numerator.Remove(multiply);
             expression.Remove(new RPN.Node(1));
             return node;
@@ -166,15 +166,9 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node divisionTimesDivision(RPN.Node node)
         {
-            RPN.Node[] numerator = { node.Children[0].Children[1], node.Children[1].Children[1] };
-            RPN.Node[] denominator = { node.Children[0].Children[0], node.Children[1].Children[0] };
-
-            RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
-            RPN.Token div = new RPN.Token("/", 2, RPN.Type.Operator);
-
-            RPN.Node top = new RPN.Node(numerator, multiply);
-            RPN.Node bottom = new RPN.Node(denominator, multiply);
-            RPN.Node division = new RPN.Node(new[] { bottom, top }, div);
+            RPN.Node top = new Mul(node[1, 1], node[0, 1]);
+            RPN.Node bottom = new Mul(node[1, 0], node[0, 0]);
+            RPN.Node division = new Div(top, bottom);
 
             node.Children[0].Remove(division);
             node.Children[1].Remove(new RPN.Node(1));
