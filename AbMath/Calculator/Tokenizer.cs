@@ -84,7 +84,7 @@ namespace AbMath.Calculator
 
                         //{ -> list ( 
                         
-                        if (characterType == Type.Operator && readAheadType == Type.Operator)
+                        if (characterType == Type.Operator && readAheadType == Type.Operator && !(_readAhead == "-"))
                         {
                             WriteToken("Operator", ref token, tokenType);
                             token = _character + _readAhead;

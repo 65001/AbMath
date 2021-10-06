@@ -226,5 +226,12 @@ namespace AbMath.Tests
             test.SetEquation("{5,2}3").Compute();
             Assert.AreEqual("3 5 2 list *", test.Polish.Print());
         }
+
+        [Test]
+        public void DoubleOperator()
+        {
+            RPN test = new RPN("3*-1").Compute();
+            Assert.AreEqual("-3", test.Polish.Print());
+        }
     }
 }
