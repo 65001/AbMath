@@ -6,7 +6,8 @@ namespace AbMath.Calculator.Operators
 {
     public class Pow : RPN.Node
     {
-        public Pow(RPN.Node bottom, RPN.Node power) : base(new RPN.Node[] {power, bottom}, new RPN.Token("^", 2, RPN.Type.Operator) )
+        private static RPN.Token _pow = new RPN.Token("^", 2, RPN.Type.Operator);
+        public Pow(RPN.Node bottom, RPN.Node power) : base(new RPN.Node[] {power, bottom}, _pow )
         {
 
         }
