@@ -54,7 +54,7 @@ namespace AbMath.Calculator
 
                 for (int i = 0; i < length; i++)
                 {
-                    localSpan = equationSpan.Slice(i);
+                    localSpan = equationSpan.Slice(i, 1);
                     _character = localSpan[0].ToString();
                     _readAhead = i < (length - 1) ? localSpan[1].ToString() : null;
 
