@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -23,26 +24,24 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool CoefficientOneReductionRunnable(RPN.Node node)
         {
-            return node.Children[1].IsMultiplication() && node.Children[1].Children[1].IsNumber() &&
-                   node.Children[1].Children[0].Matches(node.Children[0]);
+            return node[1].IsMultiplication() && node[1, 1].IsNumber() && node[1, 0].Matches(node[0]);
         }
 
         public static RPN.Node CoefficientOneReduction(RPN.Node node)
         {
-            node.Replace(node.Children[0], new RPN.Node(0));
-            node.Children[1].Replace(node.Children[1].Children[1],
-                new RPN.Node(node.Children[1].Children[1].GetNumber() - 1));
+            node.Replace(node[0], new RPN.Node(0));
+            node[1].Replace(node[1,1], new RPN.Node(node[1, 1].GetNumber() - 1));
             return node;
         }
 
         public static bool SubtractionByZeroRunnable(RPN.Node node)
         {
-            return node.Children[0].IsNumber(0);
+            return node[0].IsNumber(0);
         }
 
         public static RPN.Node SubtractionByZero(RPN.Node node)
         {
-            return node.Children[1];
+            return node[1];
         }
 
         public static bool ZeroSubtractedByFunctionRunnable(RPN.Node node)
@@ -52,8 +51,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node ZeroSubtractedByFunction(RPN.Node node)
         {
-            return new RPN.Node(new[] { new RPN.Node(-1), node.Children[0] },
-                new RPN.Token("*", 2, RPN.Type.Operator));
+            return new Mul(node[0], new RPN.Node(-1));
         }
 
         public static bool SubtractionDivisionCommonDenominatorRunnable(RPN.Node node)
@@ -64,25 +62,21 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node SubtractionDivisionCommonDenominator(RPN.Node node)
         {
-            RPN.Node subtraction = new RPN.Node(new[] { node[0, 1], node[1, 1] },
-                new RPN.Token("-", 2, RPN.Type.Operator));
-            RPN.Node division = new RPN.Node(new[] { node[0, 0], subtraction },
-                new RPN.Token("/", 2, RPN.Type.Operator));
-            return division;
+            return new Div(new Sub(node[1,1], node[0,1]), node[0,0]);
         }
 
         public static bool CoefficientReductionRunnable(RPN.Node node)
         {
             return (node[0].IsMultiplication() && node[1].IsMultiplication()) &&
-                   node.Children[0].Children[1].IsNumber() && node.Children[1].Children[1].IsNumber() &&
-                   node.Children[0].Children[0].Matches(node.Children[1].Children[0]);
+                   node[0,1].IsNumber() && node[1,1].IsNumber() &&
+                   node[0,0].Matches(node[1,0]);
         }
 
         public static RPN.Node CoefficientReduction(RPN.Node node)
         {
-            double coefficient = node.Children[1].Children[1].GetNumber() - node.Children[0].Children[1].GetNumber();
-            node.Children[0].Replace(node.Children[0].Children[1], new RPN.Node(0));
-            node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(coefficient));
+            double coefficient = node[1, 1].GetNumber() - node[0, 1].GetNumber();
+            node[0].Replace(node[0, 1], new RPN.Node(0));
+            node[1].Replace(node[1, 1], new RPN.Node(coefficient));
             return node;
         }
 
@@ -93,8 +87,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node ConstantToAddition(RPN.Node node)
         {
-            RPN.Node addition = new RPN.Node(new[] { new RPN.Node(node[0].GetNumber() * -1), node[1] }, new RPN.Token("+", 2, RPN.Type.Operator));
-            return addition;
+            return new Add(node[1], new RPN.Node(node[0].GetNumber() * -1));
         }
 
         public static bool FunctionToAdditionRunnable(RPN.Node node)
@@ -122,9 +115,7 @@ namespace AbMath.Calculator.Simplifications
         {
             //f(x) - (g(x) - h(x)) -> f(x) - g(x) + h(x) -> (f(x) + h(x)) - g(x)
             //We want to do this automatically
-            RPN.Node add = new RPN.Node(new RPN.Node[] {node[0, 0], node[1]}, new RPN.Token("+", 2, RPN.Type.Operator));
-            RPN.Node sub = new RPN.Node(new RPN.Node[] {node[0,1], add}, new RPN.Token("-", 2, RPN.Type.Operator));
-            return sub;
+            return new Sub(new Add(node[1], node[0,0]) ,  node[0,1]);
         }
     }
 }
