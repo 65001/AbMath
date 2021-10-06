@@ -106,7 +106,7 @@ namespace AbMath.Calculator
 
         private void Startup()
         {
-            Data = new DataStore(Equation);
+            Data = DataFactory.getInstance().generate(Equation);
         }
         #endregion
 

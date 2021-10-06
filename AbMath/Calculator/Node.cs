@@ -404,7 +404,7 @@ namespace AbMath.Calculator
                 return double.Parse(Token.Value);
             }
 
-            public Function? GetFunction(RPN.DataStore data)
+            public Function? GetFunction(DataStore data)
             {
                 if (!IsFunction())
                 {
@@ -414,7 +414,7 @@ namespace AbMath.Calculator
                 return data.Functions[this.Token.Value];
             }
 
-            public Operator? GetOperator(RPN.DataStore data)
+            public Operator? GetOperator(DataStore data)
             {
                 if (!IsOperator())
                 {
@@ -628,7 +628,7 @@ namespace AbMath.Calculator
                 return ToInfix(this, data);
             }
 
-            public string ToInfix(RPN.Node node, RPN.DataStore? data)
+            public string ToInfix(RPN.Node node, DataStore? data)
             {
                 StringBuilder infix = new StringBuilder();
                 Infix(node, infix, data);
