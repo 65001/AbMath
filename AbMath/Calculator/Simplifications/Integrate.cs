@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -19,13 +20,9 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node Propagation(RPN.Node node)
         {
-            RPN.Token addToken = new RPN.Token("+", 2, RPN.Type.Operator);
-
             RPN.Node integral = new RPN.Node(new RPN.Node[] { node[0].Clone(), node[1].Clone(), node[2].Clone(), node[3, 1].Clone() }, _integrate);
             node.Replace(node[3], node[3, 0]); //This saves a simplification step later
-            RPN.Node addition = new RPN.Node(new RPN.Node[] { integral, node.Clone() }, addToken);
-
-            return addition;
+            return new Add(node.Clone(), integral);
         }
 
         public static bool ConstantsRunnable(RPN.Node node)
@@ -35,9 +32,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node Constants(RPN.Node node)
         {
-            RPN.Node subtraction = new RPN.Node(new RPN.Node[] {node[1], node[0]}, new RPN.Token("-",2,RPN.Type.Operator));
-            RPN.Node multiplication = new RPN.Node(new RPN.Node[] {subtraction, node[3]}, new RPN.Token("*",2, RPN.Type.Operator));
-            return multiplication;
+            return new Mul(node[3], new Sub(node[0], node[1]));
         }
 
         public static bool CoefficientRunnable(RPN.Node node)
@@ -49,8 +44,7 @@ namespace AbMath.Calculator.Simplifications
         {
             RPN.Node coefficient = node[3, 1].Clone();
             RPN.Node integral = new RPN.Node(new RPN.Node[] { node[0].Clone(), node[1].Clone(), node[2].Clone(), node[3, 0].Clone() }, _integrate);
-            RPN.Node multiplication = new RPN.Node(new RPN.Node[] {integral, coefficient}, new RPN.Token("*", 2, RPN.Type.Operator));
-            return multiplication;
+            return new Mul(coefficient, integral);
         }
 
         public static bool SingleVariableRunnable(RPN.Node node)
@@ -60,11 +54,8 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node SingleVariable(RPN.Node node)
         {
-            RPN.Node end = new RPN.Node(new RPN.Node[] { new RPN.Node(2), node[0] }, new RPN.Token("^", 2, RPN.Type.Operator));
-            RPN.Node start = new RPN.Node(new RPN.Node[] {  new RPN.Node(2), node[1] }, new RPN.Token("^", 2, RPN.Type.Operator));
-            RPN.Node subtraction = new RPN.Node(new RPN.Node[] {start, end}, new RPN.Token("-", 2, RPN.Type.Operator));
-            RPN.Node division = new RPN.Node(new RPN.Node[] {new RPN.Node(2), subtraction}, new RPN.Token("/", 2, RPN.Type.Operator));
-            return division;
+            RPN.Node subtraction = new Sub(new Pow(node[0], new RPN.Node(2)), new Pow(node[1], new RPN.Node(2))); 
+            return new Div(subtraction, new RPN.Node(2));
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
 {
@@ -16,41 +17,36 @@ namespace AbMath.Calculator.Simplifications
             return new RPN.Node(double.NaN);
         }
 
-
         public static bool SqrtToFuncRunnable(RPN.Node node)
         {
-            return node.IsExponent() && node.Children[0].IsNumber(2) && node.Children[1].IsSqrt();
+            return node.IsExponent() && node[0].IsNumber(2) && node[1].IsSqrt();
         }
 
         public static RPN.Node SqrtToFunc(RPN.Node node)
         {
-            return node.Children[1].Children[0];
+            return node[1, 0];
         }
 
         public static bool SqrtToAbsRunnable(RPN.Node node)
         {
-            return node.IsSqrt() && node.Children[0].IsExponent() && node.Children[0].Children[0].IsNumber(2);
+            return node.IsSqrt() && node[0].IsExponent() && node[0,0].IsNumber(2);
         }
 
         public static RPN.Node SqrtToAbs(RPN.Node node)
         {
-            return new RPN.Node(new[] { node.Children[0].Children[1] }, new RPN.Token("abs", 1, RPN.Type.Function));
+            return new RPN.Node(new[] { node[0,1] }, new RPN.Token("abs", 1, RPN.Type.Function));
         }
 
         public static bool SqrtPowerFourRunnable(RPN.Node node)
         {
-            return node.IsSqrt() && node.Children[0].IsExponent() &&
-                   node.Children[0].Children[0].IsNumber() &&
-                   node.Children[0].Children[0].GetNumber() % 4 == 0;
+            return node.IsSqrt() && node[0].IsExponent() &&
+                   node[0,0].IsNumber() &&
+                   node[0,0].GetNumber() % 4 == 0;
         }
 
         public static RPN.Node SqrtPowerFour(RPN.Node node)
         {
-            return new RPN.Node(new[] {new RPN.Node(node.Children[0].Children[0].GetNumber() / 2), node.Children[0].Children[1]}, new RPN.Token("^", 2, RPN.Type.Operator));
+            return new Pow(node[0, 1], new RPN.Node(node[0,0].GetNumber() / 2));
         }
     }
-
-        
-
-    
 }
