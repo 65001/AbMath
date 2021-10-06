@@ -120,12 +120,6 @@ namespace AbMath.Calculator.Simplifications
             RPN.Node power = node[3, 0].Clone();
             RPN.Node end = node[0].Clone();
 
-            RPN.Node one = new RPN.Node(1);
-
-            RPN.Token _add = new RPN.Token("+", 2, RPN.Type.Operator);
-            RPN.Token _mul = new RPN.Token("*", 2, RPN.Type.Operator);
-            RPN.Token _div = new RPN.Token("/", 2, RPN.Type.Operator);
-            RPN.Token _exp = new RPN.Token("^", 2, RPN.Type.Operator);
             RPN.Token _fac = new RPN.Token("!", 1, RPN.Type.Operator);
             RPN.Token _total = new RPN.Token("total", (int)power.GetNumber(), RPN.Type.Function);
 
@@ -152,8 +146,7 @@ namespace AbMath.Calculator.Simplifications
 
                 RPN.Node fraction = new Div(numerator, denominator);
 
-                RPN.Node negativeOneExponent = new RPN.Node(new RPN.Node[] { j.Clone(), new RPN.Node(-1) }, _exp); //(-1)^j
-
+                RPN.Node negativeOneExponent = new Pow(new RPN.Node(-1), j.Clone()); //(-1)^j
                 RPN.Node multiplication = new Mul(new Mul(negativeOneExponent, fraction), new Mul(bernoulli, exponent));
                 total.AddChild(multiplication);
             }
