@@ -33,6 +33,22 @@ namespace AbMath.Calculator
         }
 
         /// <summary>
+        /// For meta functions
+        /// </summary>
+        /// <param name="Min"></param>
+        /// <param name="Args"></param>
+        /// <param name="Max"></param>
+        /// <param name="description"></param>
+        public Function(int Min, int Args, int Max)
+        {
+            MinArguments = Min;
+            Arguments = Args;
+            MaxArguments = Max;
+            Compute = null;
+            Description = null;
+        }
+
+        /// <summary>
         /// For functions without descriptions
         /// </summary>
         /// <param name="min"></param>

@@ -145,11 +145,6 @@ namespace AbMath.Calculator
                 _time = new List<TimeRecord>(4);
                 _variableStore = new Dictionary<string, string>();
                 Logger = new Logger();
-
-                DefaultFunctions();
-                DefaultOperators();
-                DefaultAliases();
-                DefaultFormats();
             }
 
             public void ClearTimeRecords()
@@ -247,59 +242,82 @@ namespace AbMath.Calculator
                 return times;
             }
 
-            public void AddLeftBracket(string value)
+            public DataStore AddLeftBracket(string value)
             {
                 _leftbracket.Add(value);
+                return this;
             }
             
-            public void AddLeftBracket(string[] value)
+            public DataStore AddLeftBracket(string[] value)
             {
                 _leftbracket.AddRange(value);
+                return this;
             }
 
-            public void AddRightBracket(string value)
+            public DataStore AddRightBracket(string value)
             {
                 _rightbracket.Add(value);
+                return this;
             }
 
-            public void AddRightBracket(string[] value)
+            public DataStore AddRightBracket(string[] value)
             {
                 _rightbracket.AddRange(value);
+                return this;
             }
 
-            public void AddAlias(string key, string value)
+            public DataStore AddAlias(string key, string value)
             {
                 _aliases.Add(key, value);
+                return this;
             }
 
-            public void AddStore(string variable,string value)
+            public DataStore AddStore(string variable,string value)
             {
                 if (_variableStore.ContainsKey(variable))
                 {
                     _variableStore[variable] = value;
-                    return;
+                    return this;
                 }
                 _variableStore.Add(variable, value);
+                return this;
             }
 
-            public void AddFunction(string key, Function func)
+            public DataStore AddFunction(string key, Function func)
             {
                 _functions.Add(key, func);
+                return this;
             }
 
-            public void RemoveFunction(string function)
+            public DataStore AddMetaFunction(string key, Function func)
             {
-                _functions.Remove(function);
+                _functions.Add(key, func);
+                _meta_functions.Add(key);
+                return this;
             }
 
-            public void AddOperator(string key, Operator ops)
+            public DataStore AddMetaFunction(string key)
+            {
+                _meta_functions.Add(key);
+                return this;
+            }
+
+            public DataStore AddOperator(string key, Operator ops)
             {
                 _operators.Add(key, ops);
+                return this;
             }
 
-            public void AddFormat(double number, string format)
+            public DataStore AddFormat(double number, string format)
             {
                 _autoFormat.Add(number,format);
+                return this;
+            }
+
+            public DataStore RemoveFunction(string function)
+            {
+                _functions.Remove(function);
+                return this;
             }
 
             public bool IsOperator(string value)
@@ -346,246 +364,6 @@ namespace AbMath.Calculator
                 if (IsLeftBracket(value)) { return Type.LParen; }
                 if (IsRightBracket(value)) { return Type.RParen; }
                 return Type.Variable;
-            }
-
-            private void DefaultAliases()
-            {
-                AddAlias("÷", "/");
-                AddAlias("gamma", "Γ");
-                AddAlias("pi","π");
-                AddAlias("≠", "!=");
-                AddAlias("≥", ">=");
-                AddAlias("≤", "<=");
-                AddAlias("ne","!=");
-                AddAlias("ge",">=");
-                AddAlias("le","<=");
-                AddAlias("and","&&");
-                AddAlias("or","||");
-                AddAlias("Σ","sum");
-                AddAlias("infinity","∞");
-                AddAlias("-infinity", "-∞");
-            }
-
-            private void DefaultOperators()
-            {
-                AddOperator("^", new Operator(Assoc.Right, 5, 2, DoOperators.Power));
-                AddOperator("E", new Operator(Assoc.Right, 5, 2, DoOperators.E));
-                AddOperator("!", new Operator(Assoc.Left, 5, 1, DoOperators.Factorial));
-
-                AddOperator("%", new Operator(Assoc.Left, 4, 2, DoOperators.Mod));
-
-                AddOperator("/", new Operator(Assoc.Left, 4, 2, DoOperators.Divide));
-
-                AddOperator("*", new Operator(Assoc.Left, 4, 2, DoOperators.Multiply));
-
-                AddOperator("+", new Operator(Assoc.Left, 3, 2, DoOperators.Add));
-
-                AddOperator("++", new Operator(Assoc.Left, 3, 1, DoOperators.AddSelf));
-
-                AddOperator("−", new Operator(Assoc.Left, 3, 2, DoOperators.Subtract));
-
-                AddOperator("-", new Operator(Assoc.Left, 3, 2, DoOperators.Subtract));
-
-#region Evaluation
-                AddOperator(">", new Operator(Assoc.Left, 2, 2, DoOperators.GreaterThan));
-
-                AddOperator("<", new Operator(Assoc.Left, 2, 2, DoOperators.LessThan));
-
-                AddOperator("=", new Operator(Assoc.Left, 2, 2, DoOperators.Equals));
-
-                AddOperator("==", new Operator(Assoc.Left, 2, 2, DoOperators.Equals));
-
-                AddOperator(">=", new Operator(Assoc.Left, 2, 2, DoOperators.GreaterThanOrEquals));
-
-                AddOperator("<=", new Operator(Assoc.Left, 2, 2, DoOperators.LessThanOrEquals));
-#endregion
-#region Logic
-                AddOperator("!=", new Operator(Assoc.Left, 1, 2, DoOperators.NotEquals));
-
-                AddOperator("&&", new Operator(Assoc.Left, 1, 2, DoOperators.And));
-
-                AddOperator("||", new Operator(Assoc.Left, 1, 2, DoOperators.Or));
-#endregion
-            }
-
-            private void DefaultFunctions()
-            {
-                #region Trig
-                AddFunction("sin", new Function(1, 1, 1, DoFunctions.Sin));
-
-                AddFunction("cos", new Function(1, 1, 1, DoFunctions.Cos));
-
-                AddFunction("tan", new Function(1, 1, 1, DoFunctions.Tan));
-
-                AddFunction("sec", new Function(1, 1, 1, DoFunctions.Sec));
-
-                AddFunction("csc", new Function(1, 1, 1, DoFunctions.Csc));
-
-                AddFunction("cot", new Function(1, 1, 1, DoFunctions.Cot));
-
-                AddFunction("arcsin", new Function(1, 1, 1, DoFunctions.Arcsin));
-
-                AddFunction("arccos", new Function(1, 1, 1, DoFunctions.Arccos));
-
-                AddFunction("arctan", new Function(1, 1, 1, DoFunctions.Arctan));
-
-                AddFunction("arcsec", new Function(1, 1, 1, DoFunctions.Arcsec));
-
-                AddFunction("arccsc", new Function(1, 1, 1, DoFunctions.Arccsc));
-
-                AddFunction("arccot", new Function(1, 1, 1, DoFunctions.Arccot));
-
-                AddFunction("rad", new Function(1, 1, 1, DoFunctions.rad));
-
-                AddFunction("deg", new Function(1, 1, 1, DoFunctions.deg));
-                #endregion
-
-                Description max = new Description();
-                max.Add("max(a,b,...)","Returns the highest value of all the passed in parameters.");
-                AddFunction("max", new Function(2,2,int.MaxValue,DoFunctions.Max, max));
-
-                Description min = new Description();
-                min.Add("min(a,b,...)","Returns the lowest value of all the passed in parameters.");
-                AddFunction("min", new Function(2,2,int.MaxValue,DoFunctions.Min, min));
-
-                Description sqrt = new Description();
-                sqrt.Add("sqrt(f(x))","Returns the square root of f(x).");
-                AddFunction("sqrt", new Function(1,1,1,DoFunctions.Sqrt, sqrt));
-
-                Description round = new Description();
-                round.Add("round(a)","Rounds 'a' to the nearest integer");
-                round.Add("round(a,b)", "Rounds 'a' to the 'b' position.");
-                round.Add("round(2.3) = 2");
-                round.Add("round(2.6) = 3");
-                round.Add("round(2.555,0) = 3");
-                round.Add("round(2.555,1) = 2.6");
-                round.Add("round(2.555,2) = 2.56");
-                AddFunction("round", new Function(1, 2, 2, DoFunctions.Round, round));
-
-                Description gcd = new Description();
-                gcd.Add("gcd(a,b)", "The greatest common denominator of 'a' and 'b'");
-                AddFunction("gcd", new Function(2, 2, 2, DoFunctions.Gcd, gcd));
-
-                Description lcm = new Description("lcm(a,b)","The least common multiple of 'a' and 'b'");
-                AddFunction("lcm", new Function(2, 2, 2, DoFunctions.Lcm, lcm));
-
-                Description ln = new Description("ln(a)","Takes the natural log of 'a'. Equivalent to log(e,a).");
-                AddFunction("ln", new Function(1, 1, 1, DoFunctions.ln, ln));
-
-                Description log = new Description("log(b,x)","Takes the log of 'x' with a base of 'b'.\nx = b^y <-> log(b,x) = y");
-                log.Add("log(x)","Returns the natural log of a specified number");
-                AddFunction("log", new Function(1,2,2, DoFunctions.Log, log));
-
-                #region Constants
-                Description pi = new Description("π", "Returns the value of π.");
-                AddFunction("π", new Function(0, 0, 0, DoFunctions.Pi, pi));
-
-                Description euler = new Description("e","Returns the euler number");
-                AddFunction("e", new Function(0, 0, 0, DoFunctions.EContstant, euler));
-                #endregion
-
-                Description bounded = new Description("bounded(low,x,high)","Returns low if (x < low)\nReturns high if (x > high)\nReturns x otherwise.");
-                AddFunction("bounded",new Function(3, 3, 3, DoFunctions.Bounded, bounded));
-
-                Description total = new Description("total(a_0,...,a_n)","Totals up and returns the sum of all parameters.");
-                AddFunction("total", new Function(1, 1, int.MaxValue, DoFunctions.Sum, total));
-
-                Description sum = new Description("sum(f(x),x,a,b)","Computes or returns the sum of f(x) from 'a' to 'b'.\n'x' shall represent the index variable.");
-                AddFunction("sum", new Function(4, 4, 4, sum));
-
-                Description avg = new Description("avg(a,...,b)","Returns the average of all the passed in parameters.");
-                AddFunction("avg", new Function(1,1,int.MaxValue, DoFunctions.Avg, avg));
-
-                Description random = new Description("random()","Returns a non-negative random integer number.");
-                random.Add("random(ceiling)","Returns a non-negative integer number that is below the ceiling");
-                random.Add("random(min,max)","Returns a random integer that is between the min and maximum.");
-                AddFunction("random", new Function(0, 0, 2, DoFunctions.Random, random));
-
-                Description rand = new Description("rand()", "Returns a non-negative random integer number.");
-                AddFunction("rand", new Function(0, 0, 0, DoFunctions.Random, rand));
-
-                Description seed = new Description("seed(a)","Sets the seed for the random number generator.");
-                AddFunction("seed", new Function(1, 1, 1, DoFunctions.Seed, seed));
-
-                Description abs = new Description("abs(x)","Returns the absolute value of 'x'.");
-                AddFunction("abs", new Function(1, 1, 1, DoFunctions.Abs, abs));
-
-                Description binomial = new Description("binomial(n,k)","Returns the value of (n!)/[k!(n - k)!].\nThis is the equivalent of (n choose k).\nRestrictions:0 <= k <= n");
-                AddFunction("binomial", new Function(2,2,2,DoFunctions.Binomial, binomial));
-
-                Description gamma = new Description("Γ(x)", "The gamma function is related to factorials as: Γ(x) = (x - 1)!.\nSince the gamma function is really hard to compute we are using Gergő Nemes Approximation.");
-                AddFunction("Γ", new Function(1, 1, 1, DoFunctions.Gamma, gamma));
-
-                #region MetaCommands
-                
-                Description derivative = new Description("derivative(f(x),x)","Takes the derivative of f(x) in respect to x.");
-                derivative.Add("derivative(f(x),x,n)","");
-                derivative.Add("derivative(f(x),x,2) = derivative(derivative(f(x),x),x)");
-                AddFunction("derivative", new Function(2, 2, 3, derivative));
-                
-
-                AddFunction("integrate", new Function()
-                {
-                    Arguments = 4,
-                    MinArguments = 4,
-                    MaxArguments = 5
-                }
-                );
-
-                AddFunction("table", new Function()
-                {
-                    Arguments = 4,
-                    MinArguments = 4,
-                    MaxArguments = 5
-                });
-
-                AddFunction("solve", new Function()
-                {
-                    Arguments = 2,
-                    MinArguments = 2,
-                    MaxArguments = 3
-                });
-
-                /*
-                AddFunction("plot", new Function()
-                {
-                    Arguments = 4,
-                    MinArguments = 4,
-                    MaxArguments = 4
-                });
-                */
-
-                AddFunction("list", new Function()
-                {
-                    Arguments = 2,
-                    MinArguments = 1,
-                    MaxArguments = int.MaxValue
-                });
-
-                _meta_functions.Add("derivative");
-                _meta_functions.Add("derive");
-                _meta_functions.Add("integrate");
-                _meta_functions.Add("table");
-                _meta_functions.Add("plot");
-                _meta_functions.Add("solve");
-                _meta_functions.Add("sum");
-
-                _meta_functions.Add("list");
-                #endregion
-            }
-            private void DefaultFormats()
-            {
-                AddFormat(Math.Sqrt(2)/2, "√2 / 2");
-                AddFormat(- Math.Sqrt(2) / 2, "-√2 / 2");
-
-                AddFormat(Math.Sqrt(3)/2, "√3 / 2");
-                AddFormat(- Math.Sqrt(3) / 2, "-√3 / 2");
-
-                AddFormat(Math.PI / 2, "π/2");
-
-                AddFormat(Math.PI / 3, "π/3");
-
-                AddFormat(Math.PI / 4, "π/4");
             }
         }
     }
