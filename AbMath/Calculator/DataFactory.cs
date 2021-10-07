@@ -198,10 +198,8 @@ namespace AbMath.Calculator
             derivative.Add("derivative(f(x),x,n)", "");
             derivative.Add("derivative(f(x),x,2) = derivative(derivative(f(x),x),x)");
             
-            
-            data.AddMetaFunction("derivative", new Function(2, 2, 3, derivative));
-
-            data.AddMetaFunction("integrate", new Function(4, 4, 5))
+            data.AddMetaFunction("derivative", new Function(2, 2, 3, derivative))
+                .AddMetaFunction("integrate", new Function(4, 4, 5))
                 .AddMetaFunction("table", new Function(4, 4, 5))
                 .AddMetaFunction("solve", new Function(2, 2, 3))
                 .AddMetaFunction("list", new Function(1, 2, int.MaxValue))
