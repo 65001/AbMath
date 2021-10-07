@@ -214,8 +214,7 @@ namespace AbMath.Calculator.Simplifications
         public static RPN.Node TrigIdentityCosToSin(RPN.Node node)
         {
             RPN.Node sin = new RPN.Node(new[] { node[0, 1, 0] }, new RPN.Token("sin", 1, RPN.Type.Function));
-            RPN.Node exponent = new RPN.Node(new[] { node[0, 0], sin }, new RPN.Token("^", 2, RPN.Type.Operator));
-            return exponent;
+            return new Pow(sin, node[0,0]);
         }
 
         public static bool TrigIdentitySinPlusCosRunnable(RPN.Node node)

@@ -4,6 +4,8 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using AbMath.Calculator.Functions;
+using AbMath.Calculator.Operators;
 using AbMath.Calculator.Simplifications;
 using AbMath.Utilities;
 
@@ -1462,14 +1464,9 @@ namespace AbMath.Calculator
                             Write($"\td/dx[ f(x) * g(x) ] -> f(x) * d/dx[ g(x) ] + d/dx[ f(x) ] * g(x)");
                         }
 
-                        RPN.Node fDerivative = new RPN.Node(new[] { Clone(fNode) }, _derive);
-                        RPN.Node gDerivative = new RPN.Node(new[] { Clone(gNode) }, _derive);
-
-                        RPN.Node multiply1 = new RPN.Node(new[] { gDerivative, fNode }, multiply);
-                        RPN.Node multiply2 = new RPN.Node(new[] { fDerivative, gNode }, multiply);
-
-                        RPN.Node add = new RPN.Node(new[] { multiply1, multiply2 },
-                            new RPN.Token("+", 2, RPN.Type.Operator));
+                        RPN.Node fDerivative = new Derive(fNode.Clone());
+                        RPN.Node gDerivative = new Derive(gNode.Clone());
+                        RPN.Node add = new Add(new Mul(gNode, fDerivative), new Mul(fNode, gDerivative));
 
                         //Remove myself from the tree
                         node.Remove(add);
@@ -1972,14 +1969,10 @@ namespace AbMath.Calculator
                     RPN.Node body = Clone(node.Children[0].Children[0]);
                     RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
-                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), body },
-                        new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node add = new RPN.Node(new[] { new RPN.Node(1), exponent },
-                        new RPN.Token("+", 2, RPN.Type.Operator));
-                    RPN.Node multiplication = new RPN.Node(new[] { new RPN.Node(-1), bodyDerive },
-                        new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node division = new RPN.Node(new[] { add, multiplication },
-                        new RPN.Token("/", 2, RPN.Type.Operator));
+                    RPN.Node exponent = new Pow(body, new RPN.Node(2));
+                    RPN.Node add = new Add(exponent, new RPN.Node(1));
+                    RPN.Node multiplication = new Mul(bodyDerive, new RPN.Node(-1));
+                    RPN.Node division = new Div(multiplication, add);
 
                     node.Replace(node.Children[0], division);
                     //Delete self from the tree
