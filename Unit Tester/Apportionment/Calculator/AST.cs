@@ -338,5 +338,19 @@ namespace AbMath.Tests
             RPN rpn = new RPN("x/y + z/y").Compute();
             Assert.AreEqual("x z + y /", rpn.Polish.Print());
         }
+
+        [Test]
+        public void DistributiveSimple()
+        {
+            RPN rpn = new RPN("f - (g - h)").Compute();
+            Assert.AreEqual("f h + g -", rpn.Polish.Print());
+        }
+
+        [Test]
+        public void ConstantDivisionFactorial()
+        {
+            RPN test = new RPN("sum(x/50,x,0,b)").Compute();
+            Assert.AreEqual("b b 1 + * 2 50 * /", test.Polish.Print());
+        }
     }
 }
