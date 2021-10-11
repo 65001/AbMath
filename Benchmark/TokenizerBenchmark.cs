@@ -12,7 +12,6 @@ namespace Benchmark
 {
     [MemoryDiagnoser]
     [SimpleJob(RuntimeMoniker.Net50)]
-    [RPlotExporter]
     public class TokenizerBenchmark
     {
         [Params(100,500)]
