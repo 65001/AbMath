@@ -1448,8 +1448,6 @@ namespace AbMath.Calculator
                     //Product Rule [Two expressions] 
                     else
                     {
-                        RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
-
                         RPN.Node fNode = node.Children[0].Children[0];
                         RPN.Node gNode = node.Children[0].Children[1];
 
@@ -1495,22 +1493,16 @@ namespace AbMath.Calculator
                 else if (node.Children[0].IsDivision())
                 {
                     //Quotient Rule
-                    RPN.Token multiply = new RPN.Token("*", 2, RPN.Type.Operator);
-
                     RPN.Node numerator = node.Children[0].Children[1];
                     RPN.Node denominator = node.Children[0].Children[0];
 
                     RPN.Node numeratorDerivative = new RPN.Node(new[] { Clone(numerator) }, _derive);
                     RPN.Node denominatorDerivative = new RPN.Node(new[] { Clone(denominator) }, _derive);
 
-                    RPN.Node multiplicationOne = new RPN.Node(new[] { numeratorDerivative, denominator }, multiply);
-                    RPN.Node multiplicationTwo = new RPN.Node(new[] { denominatorDerivative, numerator }, multiply);
-
-                    RPN.Node subtraction = new RPN.Node(new[] { multiplicationTwo, multiplicationOne },
-                        new RPN.Token("-", 2, RPN.Type.Operator));
-
-                    RPN.Node denominatorSquared = new RPN.Node(new[] { new RPN.Node(2), Clone(denominator) },
-                        new RPN.Token("^", 2, RPN.Type.Operator));
+                    RPN.Node multiplicationOne = new Mul(denominator, numeratorDerivative);
+                    RPN.Node multiplicationTwo = new Mul(numerator, denominatorDerivative);
+                    RPN.Node subtraction = new Sub(multiplicationOne, multiplicationTwo);
+                    RPN.Node denominatorSquared = new Pow(denominator.Clone(), new RPN.Node(2));
 
                     if (debug)
                     {
@@ -1559,23 +1551,15 @@ namespace AbMath.Calculator
                         {
                             //1
                             RPN.Node one = new RPN.Node(1);
-
-                            //(n - 1)
-                            RPN.Node subtraction = new RPN.Node(new[] { one, powerClone },
-                                new RPN.Token("-", 2, RPN.Type.Operator));
-
                             //x^(n - 1) 
-                            exponent = new RPN.Node(new RPN.Node[] { subtraction, baseNode },
-                                new RPN.Token("^", 2, RPN.Type.Operator));
+                            exponent = new Pow(baseNode, new Sub(powerClone, one));
                         }
                         else
                         {
-                            exponent = new RPN.Node(new RPN.Node[] { new RPN.Node(powerClone.GetNumber() - 1), baseNode },
-                                new RPN.Token("^", 2, RPN.Type.Operator));
+                            exponent = new Pow(baseNode, new RPN.Node(powerClone.GetNumber() - 1));
                         }
 
-                        RPN.Node multiplication = new RPN.Node(new[] { exponent, power },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiplication = new Mul(power, exponent);
 
                         node.Replace(node.Children[0], multiplication);
 
@@ -1853,12 +1837,9 @@ namespace AbMath.Calculator
                     RPN.Node body = node.Children[0].Children[0];
                     RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
                     RPN.Node csc = new RPN.Node(new[] { body }, new RPN.Token("csc", 1, RPN.Type.Function));
-                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), csc },
-                        new RPN.Token("^", 2, RPN.Type.Operator));
-                    RPN.Node temp = new RPN.Node(new[] { new RPN.Node(-1), exponent },
-                        new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node multiply =
-                        new RPN.Node(new[] { bodyDerive, temp }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node exponent = new Pow(csc, new RPN.Node(2));
+                    RPN.Node temp = new Mul(exponent, new RPN.Node(-1));
+                    RPN.Node multiply = new Mul(temp, bodyDerive);
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
