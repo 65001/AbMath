@@ -37,9 +37,19 @@ namespace AbMath.Calculator.Simplifications
             return node.Children[0].Children[0];
         }
 
+        public static bool LnPowerRunnable(RPN.Node node)
+        {
+            return node.IsExponent() && node[0].IsLn() && node[1].IsConstant("e");
+        }
+
+        public static RPN.Node LnPower(RPN.Node node)
+        {
+            return node.Children[0].Children[0];
+        }
+
         public static bool LogExponentExpansionRunnable(RPN.Node node)
         {
-            return node.IsLog() && node.Children[0].IsExponent() && !node.Children[0].Children[1].IsVariable();
+            return node.IsLog() && node[0].IsExponent();
         }
 
         public static RPN.Node LogExponentExpansion(RPN.Node node)
