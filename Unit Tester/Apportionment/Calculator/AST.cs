@@ -352,5 +352,12 @@ namespace AbMath.Tests
             RPN test = new RPN("sum(x/50,x,0,b)").Compute();
             Assert.AreEqual("b b 1 + * 2 50 * /", test.Polish.Print());
         }
+
+        [Test]
+        public void LogPowerExpansion()
+        {
+            RPN test = new RPN("log(b,f^g)").Compute();
+            Assert.AreEqual("g b f log *", test.Polish.Print());
+        }
     }
 }

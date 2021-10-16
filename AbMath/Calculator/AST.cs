@@ -120,13 +120,11 @@ namespace AbMath.Calculator
             logPowerExpansion.AddPreProcessingRule(LnToLog).AddPostProcessingRule(logToLn);
 
             Rule logPower = new Rule(Log.LogPowerRunnable, Log.LogPower, "b^log(b,x) -> x");
+            
             Rule logSummation = new Rule(Log.LogSummationRunnable, Log.LogSummation, "log(b,R) + log(b,S) -> log(b,R*S)");
             Rule logSubtraction = new Rule(Log.LogSubtractionRunnable, Log.LogSubtraction, "log(b,R) - log(b,S) -> log(b,R/S)");
 
-            //TODO: lnPower e^ln(f(x)) -> f(x)
-            //TODO: log(b,R^c) -> c * log(b,R)
-            //TODO: ln(e) -> 1
-
+            Rule lnPower = new Rule(Log.LnPowerRunnable, Log.LnPower, "e^ln(f(x)) -> f(x)");
             Rule lnSummation = new Rule(Log.LnSummationRunnable, Log.LnSummation, "ln(R) + ln(S) -> log(e,R) + log(e,S) -> ln(R*S)");
             Rule lnSubtraction = new Rule(Log.LnSubtractionRunnable, Log.LnSubtraction, "ln(R) - ln(S) -> log(e,R) - log(e,S) -> ln(R/S)");
             Rule lnPowerExpansion = new Rule(Log.LnPowerRuleRunnable, Log.LnPowerRule, "ln(R^c) -> c*ln(R)");
@@ -142,6 +140,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Log, lnSubtraction);
 
             ruleManager.Add(SimplificationMode.Log, lnPowerExpansion);
+            ruleManager.Add(SimplificationMode.Log, lnPower);
 
             ruleManager.Add(SimplificationMode.Log, logToLn);
         }
@@ -225,7 +224,7 @@ namespace AbMath.Calculator
 
             Rule increaseExponent = new Rule(Multiplication.increaseExponentRunnable, Multiplication.increaseExponent, "R1: f(x)^n * f(x) -> f(x)^(n + 1)");
             Rule increaseExponentTwo = new Rule(Multiplication.increaseExponentTwoRunnable, Multiplication.increaseExponentTwo, "R2: f(x)^n * f(x) -> f(x)^(n + 1)");
-            Rule increaseExponentThree = new Rule(Multiplication.increaseExponentThreeRunnable, Multiplication.increaseExponentThree, "R3: f(x)^n * f(x) -> f(x)^(n + 1");
+            Rule increaseExponentThree = new Rule(Multiplication.increaseExponentThreeRunnable, Multiplication.increaseExponentThree, "R3: f(x)^n * f(x) -> f(x)^(n + 1)");
 
             Rule expressionDivision = new Rule(Multiplication.expressionTimesDivisionRunnable, Multiplication.expressionTimesDivision, "f(x) * [g(x)/h(x)] -> [f(x) * g(x)]/h(x)");
             Rule DivisionDivision = new Rule(Multiplication.divisionTimesDivisionRunnable, Multiplication.divisionTimesDivision, "[f(x)/g(x)] * [h(x)/j(x)] -> [f(x) * h(x)]/[g(x) * j(x)]");
@@ -283,7 +282,7 @@ namespace AbMath.Calculator
             ruleManager.Add(SimplificationMode.Addition, complex);
             ruleManager.Add(SimplificationMode.Addition, division);
             //TODO: -c * f(x) + g(x) -> g(x) - c * f(x)
-            //TODO: f(x)/g(x) + i(x)/j(x) -> [f(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
+            //TODO: f(x)/g(x) + i(x)/j(x) -> [fx/(x)j(x)]/g(x)j(x) + i(x)g(x)/g(x)j(x) -> [f(x)j(x) + g(x)i(x)]/[g(x)j(x)]
         }
 
         private void GenerateExponentSimplifications()
