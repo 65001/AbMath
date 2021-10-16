@@ -1586,9 +1586,7 @@ namespace AbMath.Calculator
                         RPN.Node subtraction;
                         if (power.IsConstant())
                         {
-                            RPN.Node one = new RPN.Node(1);
-                            subtraction = new RPN.Node(new[] { one, powerClone },
-                                new RPN.Token("-", 2, RPN.Type.Operator));
+                            subtraction = new Sub(powerClone, new RPN.Node(1));
                         }
                         else
                         {
@@ -1596,12 +1594,8 @@ namespace AbMath.Calculator
                         }
 
                         //Replace n with (n - 1) 
-                        RPN.Node exponent = new RPN.Node(new RPN.Node[] { subtraction, baseNode },
-                            new RPN.Token("^", 2, RPN.Type.Operator));
-
-                        RPN.Node temp = new RPN.Node(new[] { exponent, power }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node multiply = new RPN.Node(new[] { bodyDerive, temp },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node exponent = new Pow(baseNode, subtraction);
+                        RPN.Node multiply = new Mul(new Mul(power, exponent), bodyDerive);
 
                         node.Replace(node.Children[0], multiply);
 
@@ -1623,8 +1617,7 @@ namespace AbMath.Calculator
 
                         RPN.Node exponent = baseNode.Parent;
                         RPN.Node powerDerivative = new RPN.Node(new[] { Clone(power) }, _derive);
-                        RPN.Node multiply = new RPN.Node(new[] { powerDerivative, exponent },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new Mul(exponent, powerDerivative);
                         node.Replace(power.Parent, multiply);
                         //Delete self from the tree
                         node.Remove();
@@ -1646,9 +1639,8 @@ namespace AbMath.Calculator
                         RPN.Node exponent = baseNode.Parent;
                         RPN.Node ln = new RPN.Node(new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
                         RPN.Node powerDerivative = new RPN.Node(new[] { Clone(power) }, _derive);
-                        RPN.Node temp = new RPN.Node(new[] { exponent, ln }, new RPN.Token("*", 2, RPN.Type.Operator));
-                        RPN.Node multiply = new RPN.Node(new[] { temp, powerDerivative },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new Mul(powerDerivative, new Mul(ln, exponent));
+                            
 
                         node.Replace(power.Parent, multiply);
                         //Delete self from the tree
@@ -1670,11 +1662,9 @@ namespace AbMath.Calculator
 
                         RPN.Node exponent = Clone(baseNode.Parent);
                         RPN.Node ln = new RPN.Node(new[] { Clone(baseNode) }, new RPN.Token("ln", 1, RPN.Type.Function));
-                        RPN.Node temp = new RPN.Node(new[] { Clone(power), ln },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node temp = new Mul(ln, power.Clone());
                         RPN.Node derive = new RPN.Node(new[] { temp }, _derive);
-                        RPN.Node multiply = new RPN.Node(new[] { exponent, derive },
-                            new RPN.Token("*", 2, RPN.Type.Operator));
+                        RPN.Node multiply = new Mul(derive, exponent);
 
                         node.Replace(power.Parent, multiply);
                         //Delete self from the tree
@@ -1699,12 +1689,9 @@ namespace AbMath.Calculator
                     }
 
                     RPN.Node body = node.Children[0].Children[0];
-
                     RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
-
                     RPN.Node cos = new RPN.Node(new[] { body }, new RPN.Token("cos", 1, RPN.Type.Function));
-
-                    RPN.Node multiply = new RPN.Node(new[] { cos, bodyDerive }, new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node multiply = new Mul(bodyDerive, cos);
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -1728,10 +1715,8 @@ namespace AbMath.Calculator
                     RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
                     RPN.Node sin = new RPN.Node(new[] { body }, new RPN.Token("sin", 1, RPN.Type.Function));
-                    RPN.Node negativeOneMultiply = new RPN.Node(new[] { new RPN.Node(-1), sin },
-                        new RPN.Token("*", 2, RPN.Type.Operator));
-                    RPN.Node multiply = new RPN.Node(new[] { negativeOneMultiply, bodyDerive },
-                        new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node negativeOneMultiply = new Mul(sin, new RPN.Node(-1));
+                    RPN.Node multiply = new Mul(bodyDerive, negativeOneMultiply);
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -1755,11 +1740,8 @@ namespace AbMath.Calculator
                     RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
                     RPN.Node sec = new RPN.Node(new[] { body }, new RPN.Token("sec", 1, RPN.Type.Function));
-                    RPN.Node exponent = new RPN.Node(new[] { new RPN.Node(2), sec },
-                        new RPN.Token("^", 2, RPN.Type.Operator));
-
-                    RPN.Node multiply = new RPN.Node(new[] { exponent, bodyDerive },
-                        new RPN.Token("*", 2, RPN.Type.Operator));
+                    RPN.Node exponent = new Pow(sec, new RPN.Node(2));
+                    RPN.Node multiply = new Mul(bodyDerive, exponent);
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
                     node.Remove();
@@ -1778,15 +1760,12 @@ namespace AbMath.Calculator
                         Write("\td/dx[ sec(g(x)) ] -> tan(g(x)) * sec(g(x)) * d/dx[ g(x) ]");
                     }
 
-                    RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
-
                     RPN.Node body = node.Children[0].Children[0];
                     RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
 
                     RPN.Node sec = node.Children[0];
                     RPN.Node tan = new RPN.Node(new[] { Clone(body) }, new RPN.Token("tan", 1, RPN.Type.Function));
-                    RPN.Node temp = new RPN.Node(new[] { sec, tan }, multiplyToken);
-                    RPN.Node multiply = new RPN.Node(new[] { bodyDerive, temp }, multiplyToken);
+                    RPN.Node multiply = new Mul(new Mul(tan, sec) , bodyDerive);
 
                     node.Replace(node.Children[0], multiply);
                     //Delete self from the tree
@@ -1805,18 +1784,13 @@ namespace AbMath.Calculator
                     {
                         Write("\td/dx[ csc(g(x)) ] -> - cot(g(x)) * csc(g(x)) * d/dx[ g(x) ] ");
                     }
-
-                    RPN.Token multiplyToken = new RPN.Token("*", 2, RPN.Type.Operator);
-
                     RPN.Node body = node.Children[0].Children[0];
                     RPN.Node bodyDerive = new RPN.Node(new[] { Clone(body) }, _derive);
                     RPN.Node csc = node.Children[0];
                     RPN.Node cot = new RPN.Node(new[] { Clone(body) }, new RPN.Token("cot", 1, RPN.Type.Function));
+                    RPN.Node multiply = new Mul(bodyDerive, new Mul(cot, csc));
 
-                    RPN.Node temp = new RPN.Node(new[] { csc, cot }, multiplyToken);
-                    RPN.Node multiply = new RPN.Node(new[] { temp, bodyDerive }, multiplyToken);
-
-                    node.Replace(node.Children[0], new RPN.Node(new[] { new RPN.Node(-1), multiply }, multiplyToken));
+                    node.Replace(node.Children[0], new Mul(multiply, new RPN.Node(-1)));
                     //Delete self from the tree
                     node.Remove();
                     //Chain Rule
