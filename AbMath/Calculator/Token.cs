@@ -149,7 +149,6 @@ namespace AbMath.Calculator
                 hash = hash * 23 + Arguments.GetHashCode();
                 hash = hash * 23 + Value.GetHashCode();
                 return hash; 
-
             }
         }
     }

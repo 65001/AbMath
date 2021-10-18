@@ -844,6 +844,11 @@ namespace AbMath.Calculator
                 return this.GetHash() == ((Node) (obj)).GetHash();
             }
 
+            public override int GetHashCode()
+            {
+                return ToPostFix().Print().GetHashCode();
+            }
+
             /// <summary>
             /// Compares two nodes to each other.
             /// The value it returns is dependent

@@ -485,8 +485,7 @@ namespace AbMath.Calculator
                 {
                     List<RPN.Node> denominator = node[0].Children;
                     List<RPN.Node> numerator = node[1].Children;
-
-
+                    //This is an O(n^2) code to do a set difference! 
                     for (int i = 0; i < numerator.Count; i++)
                     {
                         RPN.Node top = node[1, i];
