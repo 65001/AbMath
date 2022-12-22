@@ -20,11 +20,11 @@ namespace AbMath.Calculator
 
         }
 
-        public static OptimizerRuleEngine generate(Utilities.Logger logger, bool debugMode = false)
+        public static OptimizerRuleEngine generate(Utilities.Logger logger, Action<string, string, string> actionTableLogger, bool debugMode = false)
         {
             if (ruleManager == null)
             {
-                ruleManager = new OptimizerRuleEngine(logger, debugMode);
+                ruleManager = new OptimizerRuleEngine(logger, actionTableLogger, debugMode);
                 GenerateRuleSetSimplifications();
             }
             return ruleManager;

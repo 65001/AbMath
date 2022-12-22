@@ -61,10 +61,12 @@ namespace AbMath.Calculator.Simplifications
 
             if (isSubtraction)
             {
-                return new Sub(node.Clone(), sum);
+                return new Sub(sum, node.Clone());
             }
 
-            return new Add(node.Clone(), sum);
+            RPN.Node addition = new Add(node.Clone(), sum);
+
+            return addition;
         }
 
 

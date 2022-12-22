@@ -24,7 +24,9 @@ namespace AbMath.Calculator
         private Logger logger;
         private static HashSet<Rule> contains;
 
-        public OptimizerRuleEngine(Logger logger, bool debugMode = false)
+        private Action<string, string, string> actionTable;
+
+        public OptimizerRuleEngine(Logger logger, Action<string, string, string> actionTableLogger, bool debugMode = false)
         {
             if (ruleSet == null)
             {
@@ -44,6 +46,7 @@ namespace AbMath.Calculator
             hits = new Dictionary<AST.SimplificationMode, int>();
             debug = debugMode;
             this.logger = logger;
+            actionTable = actionTableLogger;
 
             if (debug)
             {
@@ -152,23 +155,24 @@ namespace AbMath.Calculator
             for (int i = 0; i < rules.Count; i++)
             {
                 Rule rule = rules[i];
-                if (rule.CanExecute(node))
+                if (!rule.CanExecute(node))
                 {
-
-                    RPN.Node temp = rule.Execute(node);
-                    if (debug)
-                    {
-                        sw.Stop();
-                    }
-
-                    if (rule.DebugMode())
-                    {
-                        Write("The output of : " + temp.ToInfix());
-                    }
-
-                    hits[mode] = hits[mode] + 1;
-                    return temp;
+                    continue;
                 }
+                String input = node.ToInfix();
+                RPN.Node temp = rule.Execute(node);
+                if (debug)
+                {
+                    sw.Stop();
+                }
+
+                if (rule.DebugMode())
+                {
+                    Write("The output of : " + temp.ToInfix());
+                }
+                actionTable.Invoke(rule.Name, input, temp.ToInfix());
+                hits[mode] = hits[mode] + 1;
+                return temp;
             }
 
             if (debug)
