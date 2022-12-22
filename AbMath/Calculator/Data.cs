@@ -112,7 +112,7 @@ namespace AbMath.Calculator
             /// If true, the program will write tables to the
             /// log
             /// </summary>
-            public bool DebugMode;
+            public volatile bool DebugMode;
 
             /// <summary>
             /// Implicit multiplication in some interpretations

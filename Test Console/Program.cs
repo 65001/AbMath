@@ -7,6 +7,7 @@ namespace Test_Console
     class Program
     {
         private static RPN RPN;
+        private static bool debug;
         static void Main(string[] args)
         {
             Console.Title = "AbMath v2.3.2";
@@ -31,8 +32,17 @@ namespace Test_Console
 
                     if (equation.Length == 0) { Console.Clear(); }
                 }
+                if (equation == "~debug")
+                {
+                    debug = !debug;
+                    continue;
+                }
 
                 RPN = new RPN(equation);
+                if (debug)
+                {
+                    RPN.Data.DebugMode = debug;
+                }
 
                 if (RPN.Data.MarkdownTables)
                 {
