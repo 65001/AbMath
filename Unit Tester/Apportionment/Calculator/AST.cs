@@ -8,6 +8,13 @@ namespace AbMath.Tests
     public class AST
     {
         [Test]
+        public void Sum()
+        {
+            RPN rpn = new RPN("sum(2x - 1,x,1,n)").Compute();
+            Assert.AreEqual("n 2 ^", rpn.Polish.Print());
+        }
+
+        [Test]
         public void IncreaseExponent()
         {
             RPN rpn = new RPN("sin(x)sin(x)sin(x)").Compute();
@@ -352,7 +359,7 @@ namespace AbMath.Tests
         public void ConstantDivisionFactorial()
         {
             RPN test = new RPN("sum(x/50,x,0,b)").Compute();
-            Assert.AreEqual("b b 1 + * 2 50 * /", test.Polish.Print());
+            Assert.AreEqual("b 2 ^ b + 2 50 * /", test.Polish.Print());
         }
 
         [Test]

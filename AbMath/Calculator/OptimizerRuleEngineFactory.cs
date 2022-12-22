@@ -111,6 +111,7 @@ namespace AbMath.Calculator
             ruleManager.AddSetRule(AST.SimplificationMode.Subtraction, setRule);
 
             Rule sameFunction = new Rule(Subtraction.SameFunctionRunnable, Subtraction.SameFunction, "f(x) - f(x) -> 0");
+            Rule sameFunctionObstructed = new Rule(Subtraction.SameFunctionObstructedRunnable, Subtraction.SameFunctionObstructed, " [g(x) + f(x)] - f(x) -> g(x)");
             Rule coefficientOneReduction = new Rule(Subtraction.CoefficientOneReductionRunnable, Subtraction.CoefficientOneReduction, "cf(x) - f(x) -> (c - 1)f(x)");
             Rule subtractionByZero = new Rule(Subtraction.SubtractionByZeroRunnable, Subtraction.SubtractionByZero, "f(x) - 0 -> f(x)");
             Rule ZeroSubtractedFunction = new Rule(Subtraction.ZeroSubtractedByFunctionRunnable, Subtraction.ZeroSubtractedByFunction, "0 - f(x) -> -f(x)");
@@ -123,6 +124,7 @@ namespace AbMath.Calculator
             Rule distributive = new Rule(Subtraction.DistributiveSimpleRunnable, Subtraction.DistributiveSimple, "f(x) - (g(x) - h(x)) -> f(x) - g(x) + h(x) -> (f(x) + h(x)) - g(x)");
 
             ruleManager.Add(AST.SimplificationMode.Subtraction, sameFunction);
+            ruleManager.Add(AST.SimplificationMode.Subtraction, sameFunctionObstructed);
             ruleManager.Add(AST.SimplificationMode.Subtraction, coefficientOneReduction);
             ruleManager.Add(AST.SimplificationMode.Subtraction, subtractionByZero);
             ruleManager.Add(AST.SimplificationMode.Subtraction, ZeroSubtractedFunction);
@@ -193,6 +195,7 @@ namespace AbMath.Calculator
             Rule negativeByConstant = new Rule(Multiplication.negativeTimesConstantRunnable, Multiplication.negativeTimesConstant, "-1 * c -> -c");
             Rule constantByNegative = new Rule(Multiplication.constantTimesNegativeRunnable, Multiplication.constantTimesNegative, "c * -1 -> -c");
             Rule negativeOneDistributed = new Rule(Multiplication.negativeOneDistributedRunnable, Multiplication.negativeOneDistributed, "-1[f(x) - g(x)] -> -f(x) + g(x) -> g(x) - f(x)");
+            Rule distributingToExpand = new Rule(Multiplication.distributeFunctionRunnable, Multiplication.distributeFunction, "f(x) * (f(x) + g(x)) -> f(x)^2 + f(x)g(x)");
             Rule dualNode = new Rule(Multiplication.dualNodeMultiplicationRunnable,
                 Multiplication.dualNodeMultiplication, "Dual Node");
 
@@ -215,6 +218,7 @@ namespace AbMath.Calculator
             ruleManager.Add(AST.SimplificationMode.Multiplication, negativeByConstant);
             ruleManager.Add(AST.SimplificationMode.Multiplication, constantByNegative);
             ruleManager.Add(AST.SimplificationMode.Multiplication, negativeOneDistributed);
+            ruleManager.Add(AST.SimplificationMode.Multiplication, distributingToExpand);
         }
 
         private static void GenerateAdditionSimplifications()

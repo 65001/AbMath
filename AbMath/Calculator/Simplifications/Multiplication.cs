@@ -239,5 +239,17 @@ namespace AbMath.Calculator.Simplifications
             node[1].Replace(1);
             return node;
         }
+
+        public static bool distributeFunctionRunnable(RPN.Node node)
+        {
+            return node[0].IsAddition() && node[1].Matches(node[0, 1]);
+        }
+
+        public static RPN.Node distributeFunction(RPN.Node node)
+        {
+            //f(x) * (f(x) + g(x)) -> f(x)^2 + f(x)g(x)
+            // [1]  * ([0,1] + [0,0]) -> 
+            return new Add( new Pow(node[1], new RPN.Node(2)), new Mul(node[0,1], node[0,0]));
+        }
     }
 }

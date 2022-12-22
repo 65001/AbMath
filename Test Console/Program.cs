@@ -9,7 +9,7 @@ namespace Test_Console
         private static RPN RPN;
         static void Main(string[] args)
         {
-            Console.Title = "AbMath v2.3.1";
+            Console.Title = "AbMath v2.3.2";
             Console.WindowWidth = Console.BufferWidth;
             Console.WriteLine("(C) 2022. Abhishek Sathiabalan");
 
