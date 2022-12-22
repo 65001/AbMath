@@ -193,9 +193,9 @@ namespace AbMath.Utilities
                 sb.AppendLine();
 
                 sb.Append(Sheet.Down);
-                sb.Append(' ', floor - Length);
+                sb.Append(' ', Math.Max(0, floor - Length) );
                 sb.Append(config.Title);
-                sb.Append(' ', ceiling);
+                sb.Append(' ', Math.Max(0, ceiling) );
                 sb.Append(Sheet.Down);
                 sb.AppendLine();
 

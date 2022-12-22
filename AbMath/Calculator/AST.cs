@@ -373,7 +373,10 @@ namespace AbMath.Calculator
                     if (!node.Children[1].IsNumberOrConstant() && node.Children[0].IsNumberOrConstant())
                     {
                         node.Swap(0, 1);
-                        Write("\tNode Swap: Numbers and constants take way.");
+                        if (debug)
+                        {
+                            Write("\tNode Swap: Numbers and constants take way.");
+                        }
                     }
                     //Sort functions alphabetically
                     else if (node[1].IsFunction() && node[0].IsFunction() && !node[1].IsConstant() &&
@@ -475,8 +478,10 @@ namespace AbMath.Calculator
                             }
                         }
                     }
-
-                    Write($"After Auto Sort: {node.ToInfix(_data)}");
+                    if (debug)
+                    {
+                        Write($"After Auto Sort: {node.ToInfix(_data)}");
+                    }
                 }
                 else if (node.IsFunction("internal_product") || node.IsFunction("product"))
                 {

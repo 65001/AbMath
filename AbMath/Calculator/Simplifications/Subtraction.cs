@@ -22,6 +22,16 @@ namespace AbMath.Calculator.Simplifications
             return new RPN.Node(0);
         }
 
+        public static bool SameFunctionObstructedRunnable(RPN.Node node)
+        {
+            return node[1].IsAddition() && node[1, 0].Matches(node[0]);
+        }
+
+        public static RPN.Node SameFunctionObstructed(RPN.Node node)
+        {
+            return node[1, 1];
+        }
+
         public static bool CoefficientOneReductionRunnable(RPN.Node node)
         {
             return node[1].IsMultiplication() && node[1, 1].IsNumber() && node[1, 0].Matches(node[0]);
