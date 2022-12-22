@@ -416,6 +416,49 @@ namespace AbMath.Calculator
                     node.Children.Sort();
                     InternalSimplification(node, new RPN.Token("*", 2, RPN.Type.Operator), new RPN.Node(0));
 
+
+                    double sum = 0;
+                    bool variableFound = false;
+                    foreach (RPN.Node child in node.Children)
+                    {
+                        if (child.IsNumber())
+                        {
+                            sum += child.GetNumber();
+                        }
+                        else if (child.IsMultiplication() && child.IsSolveable())
+                        {
+                            PostFix math = new PostFix(_rpn);
+                            RPN.Token[] tokens = child.ToPostFix().ToArray();
+                            double answer = math.Compute(tokens);
+                            sum += answer;
+                        }
+                        else if (child.IsVariable())
+                        {
+                            variableFound = true;
+                        }
+                    }
+
+
+                    if (variableFound)
+                    {
+                        bool firstNumberSetToSum = false; 
+                        foreach (RPN.Node child in node.Children)
+                        {
+                            if (child.IsNumber() || child.IsExpression() && child.IsSolveable())
+                            {
+                                if (!firstNumberSetToSum)
+                                {
+                                    child.Replace(sum);
+                                    firstNumberSetToSum = true;
+                                }
+                                else
+                                {
+                                    child.Replace(0);
+                                }
+                            }
+                        }
+                    }
+
                     Write($"After Auto Sort: {node.ToInfix(_data)}");
                 }
                 else if (node.IsFunction("internal_product") || node.IsFunction("product"))
@@ -1932,6 +1975,7 @@ namespace AbMath.Calculator
 
                 if (node.IsAddition())
                 {
+
                     if (node.isRoot || !node.Parent.IsFunction("internal_sum"))
                     {
                         //This prevents a stupid allocation and expansion and compression cycle
@@ -1940,6 +1984,15 @@ namespace AbMath.Calculator
                             RPN.Node sum = new RPN.Node(node.Children.ToArray(),
                                 new RPN.Token("internal_sum", node.Children.Count, RPN.Type.Function));
                             Assign(node, sum);
+                        }
+                        else if (node[1].IsSubtraction())
+                        {
+
+                            RPN.Node multiplication = new Mul(new RPN.Node(-1), node[1, 0]);
+
+                            RPN.Node sum = new RPN.Node( new RPN.Node[] { multiplication, node[1, 1], node[0] }, new RPN.Token("internal_sum", node.Children.Count, RPN.Type.Function));
+                            Assign(node, sum);
+
                         }
                     }
                     else if (node.Parent.IsFunction("internal_sum"))

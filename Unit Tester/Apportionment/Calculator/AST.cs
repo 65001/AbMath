@@ -59,6 +59,8 @@ namespace AbMath.Tests
         [Test]
         public void Simplification()
         {
+            Assert.AreNotEqual(1, double.Parse("-1"));
+
             RPN rpn = new RPN("3sin(x) - 4sin(x) + sin(x)").Compute();
             Assert.AreEqual("0", rpn.Polish.Print());
         }

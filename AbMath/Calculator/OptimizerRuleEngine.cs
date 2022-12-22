@@ -154,6 +154,7 @@ namespace AbMath.Calculator
                 Rule rule = rules[i];
                 if (rule.CanExecute(node))
                 {
+
                     RPN.Node temp = rule.Execute(node);
                     if (debug)
                     {

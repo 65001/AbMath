@@ -189,7 +189,7 @@ namespace AbMath.Calculator
             Rule expressionDivision = new Rule(Multiplication.expressionTimesDivisionRunnable, Multiplication.expressionTimesDivision, "f(x) * [g(x)/h(x)] -> [f(x) * g(x)]/h(x)");
             Rule DivisionDivision = new Rule(Multiplication.divisionTimesDivisionRunnable, Multiplication.divisionTimesDivision, "[f(x)/g(x)] * [h(x)/j(x)] -> [f(x) * h(x)]/[g(x) * j(x)]");
             Rule negativeTimesNegative = new Rule(Multiplication.negativeTimesnegativeRunnable, Multiplication.negativeTimesnegative, "(-c)(-C) -> (c)(C)");
-            Rule complexNegativeTimesNegative = new Rule(Multiplication.complexNegativeNegativeRunnable, Multiplication.complexNegativeNegative, "Complex: A negative times a negative is always positive.");
+            Rule complexNegativeTimesNegative = new Rule(Multiplication.complexNegativeNegativeRunnable, Multiplication.complexNegativeNegative, "-c * -k -> c * k");
             Rule negativeByConstant = new Rule(Multiplication.negativeTimesConstantRunnable, Multiplication.negativeTimesConstant, "-1 * c -> -c");
             Rule constantByNegative = new Rule(Multiplication.constantTimesNegativeRunnable, Multiplication.constantTimesNegative, "c * -1 -> -c");
             Rule negativeOneDistributed = new Rule(Multiplication.negativeOneDistributedRunnable, Multiplication.negativeOneDistributed, "-1[f(x) - g(x)] -> -f(x) + g(x) -> g(x) - f(x)");
@@ -227,7 +227,7 @@ namespace AbMath.Calculator
             Rule simpleCoefficient = new Rule(Addition.SimpleCoefficientRunnable, Addition.SimpleCoefficient, "cf(x) + f(x) -> (c + 1)f(x) + 0");
             Rule complexCoefficient = new Rule(Addition.ComplexCoefficientRunnable, Addition.ComplexCoefficient, "cf(x) + Cf(x) -> (c + C)f(x) + 0");
             Rule additionSwap = new Rule(Addition.AdditionSwapRunnable, Addition.AdditionSwap, "-f(x) + g(x) -> g(x) - f(x)");
-            Rule toSubtractionRuleOne = new Rule(Addition.AdditionToSubtractionRuleOneRunnable, Addition.AdditionToSubtractionRuleOne, "Addition can be converted to subtraction R1");
+            Rule toSubtractionRuleOne = new Rule(Addition.AdditionToSubtractionRuleOneRunnable, Addition.AdditionToSubtractionRuleOne, "f(x) + -1 * g(x) -> f(x) - g(x)");
             Rule toSubtractionRuleTwo = new Rule(Addition.AdditionToSubtractionRuleTwoRunnable, Addition.AdditionToSubtractionRuleTwo, "Addition can be converted to subtraction R2");
             Rule complex = new Rule(Addition.ComplexNodeAdditionRunnable, Addition.ComplexNodeAddition, "f(x) + f(x) - g(x) -> 2 * f(x) - g(x)");
             Rule division = new Rule(Addition.DivisionAdditionRunnable, Addition.DivisionAddition, "f(x)/g(x) + h(x)/g(x) -> [f(x) + h(x)]/g(x)");
@@ -375,7 +375,7 @@ namespace AbMath.Calculator
 
             ruleManager.AddSetRule(AST.SimplificationMode.Sum, setRule);
 
-            Rule propagation = new Rule(Sum.PropagationRunnable, Sum.Propagation, "sum(f(x) + g(x),x,a,b) -> sum(f(x),x,a,b) + sum(g(x),x,a,b)"); //No bounds change
+            Rule propagation = new Rule(Sum.PropagationRunnable, Sum.Propagation, "sum(f(x) ± g(x),x,a,b) -> sum(f(x),x,a,b) ± sum(g(x),x,a,b)"); //No bounds change
             Rule coefficient = new Rule(Sum.CoefficientRunnable, Sum.Coefficient, "sum(k * f(x),x,a,b) -> k * sum(f(x),x,a,b)"); //No bounds change
             Rule coefficientDivision = new Rule(Sum.CoefficientDivisionRunnable, Sum.CoefficientDivision, "sum(f(x)/k,x,a,b) -> sum(f(x),x,a,b)/k"); //No bounds change!
 

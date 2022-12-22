@@ -56,9 +56,17 @@ namespace AbMath.Calculator.Simplifications
         public static RPN.Node Propagation(RPN.Node node)
         {
             RPN.Node sum = new RPN.Node(new RPN.Node[] { node[0].Clone(), node[1].Clone(), node[2].Clone(), node[3, 1].Clone() }, _sum);
+            bool isSubtraction = node[3].IsSubtraction();
             node.Replace(node[3], node[3,0]); //This saves a simplification step later
+
+            if (isSubtraction)
+            {
+                return new Sub(node.Clone(), sum);
+            }
+
             return new Add(node.Clone(), sum);
         }
+
 
         public static bool VariableRunnable(RPN.Node node)
         {
