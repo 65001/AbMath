@@ -63,6 +63,8 @@ namespace AbMath.Calculator
 
         private Logger logger;
 
+        private Tables<string> rulesTables;
+
         public AST(RPN rpn)
         {
             _rpn = rpn;
@@ -90,6 +92,24 @@ namespace AbMath.Calculator
             return node;
         }
 
+        private void generateRulesTable()
+        {
+            this.rulesTables = new Tables<string>(new Config()
+            {
+                Format = Format.Default,
+                Title = Root.ToInfix()
+            });
+
+            this.rulesTables.Add(new Schema("Rule"));
+            this.rulesTables.Add(new Schema("Input"));
+            this.rulesTables.Add(new Schema("Output"));
+        }
+
+        private void RuleTable(String name, String input, String output)
+        {
+            this.rulesTables.Add(new String[] { name, input, output });
+        }
+
         /// <summary>
         /// Simplifies the current tree.
         /// </summary>
@@ -100,7 +120,9 @@ namespace AbMath.Calculator
 
             Stopwatch sw = new Stopwatch();
 
-            ruleManager = OptimizerRuleEngineFactory.generate(logger, debug);
+            generateRulesTable();
+
+            ruleManager = OptimizerRuleEngineFactory.generate(logger, RuleTable, debug);
             sw.Start();
             int pass = 0;
             string hash = string.Empty;
@@ -132,7 +154,8 @@ namespace AbMath.Calculator
 
                 if (debug)
                 {
-                    Write($"Pass:{pass} {Root.ToInfix(_data)}.");
+                    Write(this.rulesTables.ToString());
+                    generateRulesTable();
                 }
 
                 Simplify(Root);
@@ -178,9 +201,6 @@ namespace AbMath.Calculator
 
         private void Simplify(RPN.Node node)
         {
-            #if DEBUG
-                Write(Root.ToInfix(_data));       
-            #endif
             //We want to reduce this! 
             Simplify(node, SimplificationMode.Sqrt);
             Simplify(node, SimplificationMode.Log);
@@ -200,9 +220,6 @@ namespace AbMath.Calculator
             Simplify(node, SimplificationMode.Integral);
 
             Swap(node);
-            #if DEBUG
-                Write(Root.ToInfix(_data));
-            #endif
         }
 
         private void Simplify(RPN.Node node, SimplificationMode mode)

@@ -77,8 +77,6 @@ namespace AbMath.Calculator
             {
                 node = assignment;
             }
-            Write($"\t{Name}");
-
             return node;
 
         }
