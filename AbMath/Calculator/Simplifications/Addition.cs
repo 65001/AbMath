@@ -82,15 +82,14 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool AdditionToSubtractionRuleOneRunnable(RPN.Node node)
         {
-            return !(node[0].IsMultiplication() && node[1].IsMultiplication()) && node[0].IsMultiplication() &&
-                   node[0, 1].IsNumber(-1);
+            return node[0].IsMultiplication() && node[0, 1].IsNumber(-1);
         }
 
         public static RPN.Node AdditionToSubtractionRuleOne(RPN.Node node)
         {
-            node.Replace("-");
-            node[0].Replace(node[0,1], new RPN.Node(1));
-            return node;
+            //f(x) + -1 * g(x) -> f(x) - g(x)
+            RPN.Node sub = new Sub(node[1], node[0, 0]);
+            return sub;
         }
 
         public static bool AdditionToSubtractionRuleTwoRunnable(RPN.Node node)

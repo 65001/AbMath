@@ -24,7 +24,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static bool multiplicationByOneRunnable(RPN.Node node)
         {
-            return node.Children[0].IsNumber(1) || node.Children[1].IsNumber(1);
+            return node[0].IsNumber(1) || node[1].IsNumber(1);
         }
 
         public static RPN.Node multiplicationByOne(RPN.Node node)
@@ -114,12 +114,15 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node dualNodeMultiplication(RPN.Node node)
         {
+            // c * (k * f(x)) -> (c * k) * f(x) 
+            // 1 * [0,1] * [0,0] 
             double num1 = node[0,1].GetNumber();
             double num2 = node[1].GetNumber();
 
-            node[0].Replace(node[0, 1], new RPN.Node(1));
-            node.Replace(node[1], new RPN.Node(num1 * num2));
-            return node;
+           // node[0].Replace(node[0, 1], new RPN.Node(1));
+           // node.Replace(node[1], new RPN.Node(num1 * num2));
+
+            return new Mul( new RPN.Node(num1 * num2), node[0,0]);
         }
 
         public static bool multiplicationByOneComplexRunnable(RPN.Node node)

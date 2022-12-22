@@ -63,13 +63,13 @@ namespace AbMath.Calculator
 
         public RPN.Node Execute(RPN.Node node)
         {
+            String input = node.getRoot().ToInfix();
             RPN.Node assignment = PreOrPostprocess(preRule, node);
             if (assignment != null)
             {
                 node = assignment;
             }
 
-            Write($"\t{Name}");
             node = Compute.Invoke(node);
 
             assignment = PreOrPostprocess(postRule, node);
@@ -77,6 +77,7 @@ namespace AbMath.Calculator
             {
                 node = assignment;
             }
+            Write($"\t{Name}");
 
             return node;
 

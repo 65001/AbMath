@@ -218,7 +218,7 @@ namespace AbMath.Calculator
 
             public override string ToString()
             {
-                return Token.Value;
+                return this.ToInfix();
             }
 
             public string GetHash()
@@ -229,6 +229,14 @@ namespace AbMath.Calculator
             public bool isLeaf => Children.Count == 0;
             public bool isRoot => Parent is null;
 
+            public RPN.Node getRoot()
+            {
+                if (isRoot)
+                {
+                    return this;
+                }
+                return this.Parent.getRoot();
+            }
 
             public void AddChild(RPN.Node node)
             {
@@ -457,7 +465,13 @@ namespace AbMath.Calculator
 
             public bool IsNumber(double number)
             {
-                return Token.IsNumber() && double.Parse(Token.Value) == number;
+                if (!Token.IsNumber())
+                {
+                    return false;
+                }
+                double value = double.Parse(Token.Value);
+                bool same = value == number;
+                return same;
             }
 
             public bool IsInteger()
