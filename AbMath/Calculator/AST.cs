@@ -56,8 +56,8 @@ namespace AbMath.Calculator
         private readonly RPN.Token _derive = new RPN.Token("derive", 1, RPN.Type.Function);
         private readonly RPN.Token _sum = new RPN.Token("sum", 5, RPN.Type.Function);
 
-        public event EventHandler<string> Logger;
-        public event EventHandler<string> Output;
+        private List<string[]> rules_used;
+        
 
         private OptimizerRuleEngine ruleManager;
 
@@ -70,6 +70,7 @@ namespace AbMath.Calculator
             _rpn = rpn;
             _data = rpn.Data;
             logger = _data.Logger;
+            rules_used = new List<string[]>();
             RPN.Node.ResetCounter();
         }
 
@@ -94,20 +95,13 @@ namespace AbMath.Calculator
 
         private void generateRulesTable()
         {
-            this.rulesTables = new Tables<string>(new Config()
-            {
-                Format = Format.Default,
-                Title = Root.ToInfix()
-            });
-
-            this.rulesTables.Add(new Schema("Rule"));
-            this.rulesTables.Add(new Schema("Input"));
-            this.rulesTables.Add(new Schema("Output"));
+            Write($"{Root.ToInfix()}");
         }
 
-        private void RuleTable(String name, String input, String output)
+        private void RuleTable(string name, string input, string output)
         {
-            this.rulesTables.Add(new String[] { name, input, output });
+            Write($"\t{name} | {input} | {output}");
+            this.rules_used.Add(new string[] { name, input, output });
         }
 
         /// <summary>
@@ -152,15 +146,15 @@ namespace AbMath.Calculator
 
                 _data.AddTimeRecord("AST.GetHash", sw1);
 
-                if (debug)
-                {
-                    Write(this.rulesTables.ToString());
-                    generateRulesTable();
-                }
+                generateRulesTable();
 
                 Simplify(Root);
                 pass++;
             }
+
+
+            
+
             sw.Stop();
             _data.AddTimeRecord("AST Simplify", sw);
 
