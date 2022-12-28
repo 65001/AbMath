@@ -35,6 +35,7 @@ namespace Test_Console
                 if (equation == "~debug")
                 {
                     debug = !debug;
+                    Console.WriteLine($"Debug Mode: {debug}");
                     continue;
                 }
 
@@ -49,9 +50,6 @@ namespace Test_Console
                     Console.Clear();
                     Console.WriteLine($"Equation>``{equation}``");
                 }
-
-                RPN.Logger += Write;
-                RPN.Output += Write;
                 
                 RPN.Compute();
 

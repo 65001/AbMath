@@ -26,7 +26,7 @@ namespace AbMath.Calculator
         /// This event handler contains debug information that
         /// is created when DebugMode is on.
         /// </summary>
-        public event EventHandler<string> Logger;
+        //public event EventHandler<string> Logger;
 
         /// <summary>
         /// This event handler contains output from the program
@@ -34,7 +34,7 @@ namespace AbMath.Calculator
         /// You do not need to hook into this unless you are using a
         /// certain subset of meta-commands that create output.
         /// </summary>
-        public event EventHandler<string> Output; 
+        //public event EventHandler<string> Output; 
 
         public struct TimeRecord
         {
@@ -114,8 +114,6 @@ namespace AbMath.Calculator
         {
             //We bind late because otherwise there is no way that someone can attach into 
             //either of the below channels! 
-            Data.Logger.Bind(Channels.Debug, Logger);
-            Data.Logger.Bind(Channels.Output, Output);
 
             Tokens = _tokenizer.Tokenize();
             Data.Polish = _shunt.ShuntYard( this.Tokens  );
@@ -125,8 +123,6 @@ namespace AbMath.Calculator
             var logger = Data.Logger;
 
             AST ast = new AST(this);
-            ast.Output += Output;
-            ast.Logger += Logger;
 
             ast.Generate(this.Data.Polish);
             
