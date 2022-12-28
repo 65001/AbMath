@@ -108,10 +108,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node TanUnderToCot(RPN.Node node)
         {
-            RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("cot", 1, RPN.Type.Function));
-            RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
-            return node;
+            return new Mul(node[1], new Cot(node[0, 0]));
         }
 
         public static bool CosEvenIdentityRunnable(RPN.Node node)
