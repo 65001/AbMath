@@ -73,9 +73,9 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node ComplexCoefficient(RPN.Node node)
         {
-            double sum = (node.Children[0].Children[1].GetNumber() +
-                          node.Children[1].Children[1].GetNumber());
-            node.Children[1].Replace(node.Children[1].Children[1], new RPN.Node(sum));
+            double sum = (node[0, 1].GetNumber() +
+                          node[1, 1].GetNumber());
+            node[1].Replace(node[1, 1], new RPN.Node(sum));
             node[0].Remove(new RPN.Node(0));
             return node;
         }
