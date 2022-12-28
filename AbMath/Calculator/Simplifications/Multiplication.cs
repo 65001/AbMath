@@ -29,7 +29,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node multiplicationByOne(RPN.Node node)
         {
-            return node.Children[1].IsNumber(1) ? node[0] : node[1];
+            return node[1].IsNumber(1) ? node[0] : node[1];
         }
 
         public static bool multiplicationByZeroRunnable(RPN.Node node)
@@ -80,7 +80,7 @@ namespace AbMath.Calculator.Simplifications
         {
             RPN.Node temp = node.Children[0].Children[0];
             temp.Replace(temp.GetNumber() + 1);
-            node.Children[1].Children[0].Remove(new RPN.Node(1));
+            node[1, 0].Remove(new RPN.Node(1));
             return node;
         }
 
@@ -103,7 +103,7 @@ namespace AbMath.Calculator.Simplifications
         {
             RPN.Node temp = node[0,0];
             temp.Replace(temp.GetNumber() + 1);
-            node.Children[1].Remove(new RPN.Node(1));
+            node[1].Remove(new RPN.Node(1));
             return node;
         }
 
@@ -132,7 +132,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node multiplicationByOneComplex(RPN.Node node)
         {
-            return node[1].IsNumber(1) ? node.Children[0] : node.Children[1];
+            return node[1].IsNumber(1) ? node[0] : node[1];
         }
 
         public static bool expressionTimesDivisionRunnable(RPN.Node node)
@@ -144,18 +144,18 @@ namespace AbMath.Calculator.Simplifications
         {
             RPN.Node division;
             RPN.Node expression;
-            if (node.Children[0].IsDivision())
+            if (node[0].IsDivision())
             {
-                division = node.Children[0];
-                expression = node.Children[1];
+                division = node[0];
+                expression = node[1];
             }
             else
             {
-                division = node.Children[1];
-                expression = node.Children[0];
+                division = node[1];
+                expression = node[0];
             }
 
-            RPN.Node numerator = division.Children[1];
+            RPN.Node numerator = division[1];
             RPN.Node multiply = new Mul(expression.Clone(), numerator.Clone());
             numerator.Remove(multiply);
             expression.Remove(new RPN.Node(1));
@@ -173,8 +173,8 @@ namespace AbMath.Calculator.Simplifications
             RPN.Node bottom = new Mul(node[1, 0], node[0, 0]);
             RPN.Node division = new Div(top, bottom);
 
-            node.Children[0].Remove(division);
-            node.Children[1].Remove(new RPN.Node(1));
+            node[0].Remove(division);
+            node[1].Remove(new RPN.Node(1));
             return node;
         }
 

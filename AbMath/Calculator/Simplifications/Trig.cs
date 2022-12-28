@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using AbMath.Calculator.Functions;
 using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator.Simplifications
@@ -44,9 +45,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node CosOverSinComplex(RPN.Node node)
         {
-            RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("cot", 1, RPN.Type.Function));
-            return new Mul(node[1,1], cot);
+            return new Mul(node[1,1], new Cot(node[0, 0]) );
         }
 
         public static bool SecUnderToCosRunnable(RPN.Node node)
@@ -56,9 +55,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node SecUnderToCos(RPN.Node node)
         {
-            RPN.Node cos = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("cos", 1, RPN.Type.Function));
-            return new Mul(node[1], cos);
+            return new Mul(node[1], new Cos(node[0,0]));
         }
 
         public static bool CscUnderToSinRunnable(RPN.Node node)
@@ -68,9 +65,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node CscUnderToSin(RPN.Node node)
         {
-            RPN.Node sin = new RPN.Node(new[] { node[0,1] },
-                new RPN.Token("sin", 1, RPN.Type.Function));
-            return new Mul(node[1], sin);
+            return new Mul(node[1], new Sin(node[0, 1]) );
         }
 
         public static bool CotUnderToTanRunnable(RPN.Node node)
@@ -80,9 +75,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node CotUnderToTan(RPN.Node node)
         {
-            RPN.Node tan = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("tan", 1, RPN.Type.Function));
-            return new Mul(node[1], tan);
+            return new Mul(node[1], new Tan(node[0, 0]) );
         }
 
 
@@ -93,9 +86,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node CosUnderToSec(RPN.Node node)
         {
-            RPN.Node sec = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("sec", 1, RPN.Type.Function));
-            return new Mul(node[1], sec);
+            return new Mul(node[1], new Sec(node[0,0]) );
         }
 
         public static bool SinUnderToCscRunnable(RPN.Node node)
@@ -119,8 +110,7 @@ namespace AbMath.Calculator.Simplifications
         {
             RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
                 new RPN.Token("cot", 1, RPN.Type.Function));
-            RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1] },
-                new RPN.Token("*", 2, RPN.Type.Operator));
+            RPN.Node multiplication = new RPN.Node(new[] { cot, node.Children[1] }, new RPN.Token("*", 2, RPN.Type.Operator));
             return node;
         }
 
@@ -153,9 +143,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node SinOddIdentity(RPN.Node node)
         {
-            RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("sin", 1, RPN.Type.Function));
-            return new Mul(node[0,1], cot);
+            return new Mul(node[0,1], new Sin(node[0, 0]) );
         }
 
         public static bool TanOddIdentityRunnable(RPN.Node node)
@@ -165,9 +153,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node TanOddIdentity(RPN.Node node)
         {
-            RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("tan", 1, RPN.Type.Function));
-            return new Mul(node[0,1], cot);
+            return new Mul(node[0,1], new Tan(node[0, 0]) );
         }
 
         public static bool CotOddIdentityRunnable(RPN.Node node)
@@ -177,9 +163,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node CotOddIdentity(RPN.Node node)
         {
-            RPN.Node cot = new RPN.Node(new[] { node.Children[0].Children[0] },
-                new RPN.Token("cot", 1, RPN.Type.Function));
-            return new Mul(node[0,1], cot);
+            return new Mul(node[0,1], new Cot(node[0,0]) );
         }
 
         public static bool CscOddIdentityRunnable(RPN.Node node)
@@ -201,8 +185,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node TrigIdentitySinToCos(RPN.Node node)
         {
-            RPN.Node cos = new RPN.Node(new[] { node[0, 1, 0] }, new RPN.Token("cos", 1, RPN.Type.Function));
-            return new Pow(cos, node[0,0]);
+            return new Pow(new Cos(node[0,1,0]), node[0,0]);
         }
 
         public static bool TrigIdentityCosToSinRunnable(RPN.Node node)
@@ -213,8 +196,7 @@ namespace AbMath.Calculator.Simplifications
 
         public static RPN.Node TrigIdentityCosToSin(RPN.Node node)
         {
-            RPN.Node sin = new RPN.Node(new[] { node[0, 1, 0] }, new RPN.Token("sin", 1, RPN.Type.Function));
-            return new Pow(sin, node[0,0]);
+            return new Pow(new Sin(node[0, 1, 0]), node[0,0]);
         }
 
         public static bool TrigIdentitySinPlusCosRunnable(RPN.Node node)
@@ -245,8 +227,7 @@ namespace AbMath.Calculator.Simplifications
         public static RPN.Node CosOverSinToCotComplex(RPN.Node node)
         {
             //cos(x)/[sin(x) * f(x)] -> cot(x)/f(x) is also implemented due to swapping rules. 
-            RPN.Node cot = new RPN.Node(new[] { node[1, 0] }, new RPN.Token("cot", 1, RPN.Type.Function));
-            return new Div(cot, node[0,1]);
+            return new Div(new Cot(node[1, 0]), node[0,1]);
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using AbMath.Calculator.Operators;
 
 namespace AbMath.Calculator
 {
@@ -69,21 +70,36 @@ namespace AbMath.Calculator
             {
                 Stack<RPN.Node> stack = new Stack<RPN.Node>(5);
 
-                for (int i = 0; i < input.Length; i++)
+                foreach (Token token in input)
                 {
-                    RPN.Node node = new RPN.Node(input[i]);
-                    if (node.IsOperator() || node.IsFunction())
+                    RPN.Node node;
+
+                    switch (token.Value)
                     {
-                        //Due to the nature of PostFix we know that all children
-                        //of a function or operator have already been processed before this point
-                        //this ensures we do not have any overflows or exceptions.
-                        RPN.Node[] range = new RPN.Node[node.Token.Arguments];
-                        for (int j = 0; j < node.Token.Arguments; j++)
-                        {
-                            range[j] = stack.Pop();
-                        }
-                        node.AddChild(range);
+                        case "+":
+                            RPN.Node right = stack.Pop();
+                            RPN.Node left = stack.Pop();
+                            node = new Add( left, right);
+                            break;
+                        default:
+                            node = new RPN.Node(token);
+                            if (node.IsOperator() || node.IsFunction())
+                            {
+                                //Due to the nature of PostFix we know that all children
+                                //of a function or operator have already been processed before this point
+                                //this ensures we do not have any overflows or exceptions.
+                                RPN.Node[] range = new RPN.Node[node.Token.Arguments];
+                                for (int j = 0; j < node.Token.Arguments; j++)
+                                {
+                                    range[j] = stack.Pop();
+                                }
+                                node.AddChild(range);
+                            }
+                            break;
                     }
+
+                    
+                    
                     stack.Push(node); //Push new tree into the stack 
                 }
 
@@ -752,7 +768,7 @@ namespace AbMath.Calculator
                         }
                     }
 
-                    Infix(node.Children[1], infix, data);
+                    Infix(node[1], infix, data);
 
 
                     if (printOperator)
@@ -760,7 +776,7 @@ namespace AbMath.Calculator
                         infix.Append(node.Token.Value); //The operator 
                     }
 
-                    Infix(node.Children[0], infix, data);
+                    Infix(node[0], infix, data);
 
                     if (parenthesis)
                     {
@@ -782,7 +798,7 @@ namespace AbMath.Calculator
                     }
 
                     infix.Append(node.Token.Value);
-                    Infix(node.Children[0], infix, data);
+                    Infix(node[0], infix, data);
                     return;
                 }
 
