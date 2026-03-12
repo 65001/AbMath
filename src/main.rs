@@ -2,7 +2,7 @@ mod ast;
 mod rules;
 mod tokenizer;
 
-pub use crate::tokenizer::{tokenize, Assoc, DataStore, MathFunction, MathOperator, Token};
+pub use crate::tokenizer::{Assoc, DataStore, MathFunction, MathOperator, Token, tokenize};
 
 pub struct Shunter<'a> {
     _ds: &'a DataStore,
@@ -200,7 +200,7 @@ fn main() {
     }
 
     loop {
-        println!("Enter a math equation (or 'q' to quit):");
+        print!(">");
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
@@ -248,7 +248,7 @@ fn main() {
         let time_rules = start_rules.elapsed();
 
         println!("\n--- Results ---");
-        println!("Answer: {:?}", simplified_ast);
+        println!("Answer: {}", simplified_ast);
         println!("Phase Timings:");
         println!("  Tokenizer:   {:?}", time_tokenize);
         println!("  Shunting:    {:?}", time_shunt);
@@ -258,8 +258,8 @@ fn main() {
         println!("Rules Applied ({} total):", local_engine.logs.len());
         for log in &local_engine.logs {
             println!("  [{}]", log.rule_name);
-            println!("    Before: {:?}", log.before);
-            println!("    After:  {:?}", log.after);
+            println!("    Before: {}", log.before);
+            println!("    After:  {}", log.after);
         }
     }
 }

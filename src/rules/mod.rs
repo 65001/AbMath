@@ -1,6 +1,7 @@
 pub mod addition;
 pub mod derive;
 pub mod division;
+pub mod evaluate;
 pub mod exponent;
 pub mod integrate;
 pub mod log;
@@ -142,6 +143,8 @@ pub fn standard_rules() -> Vec<Box<dyn Rule>> {
         Box::new(integrate::SingleVariableRule),
         // Misc
         Box::new(misc::ZeroFactorialRule),
+        // Evaluate
+        Box::new(evaluate::EvaluateNumberRule),
     ]
 }
 
@@ -268,9 +271,9 @@ impl RuleEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::build_ast;
-    use crate::tokenizer::{tokenize, DataStore};
     use crate::Shunter;
+    use crate::ast::build_ast;
+    use crate::tokenizer::{DataStore, tokenize};
 
     fn get_ast_node(input: &str) -> Node {
         let ds = DataStore::default();

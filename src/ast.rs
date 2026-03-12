@@ -61,6 +61,90 @@ impl Hash for Node {
     }
 }
 
+impl std::fmt::Display for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Node::Number(val) => write!(f, "{}", val),
+            Node::Variable(name) => write!(f, "{}", name),
+            Node::Constant(c) => write!(f, "{}", c.name()),
+            Node::UnaryOp(op, inner) => {
+                if *op == MathOperator::Factorial {
+                    write!(f, "{}!", inner)
+                } else {
+                    write!(f, "{}{}", op.name(), inner)
+                }
+            }
+            Node::BinaryOp(op, left, right) => {
+                let l_needs_parens = match &**left {
+                    Node::BinaryOp(l_op, ..) => l_op.weight() < op.weight(),
+                    _ => false,
+                };
+                let r_needs_parens = match &**right {
+                    Node::BinaryOp(r_op, ..) => r_op.weight() <= op.weight(),
+                    _ => false,
+                };
+
+                if l_needs_parens {
+                    write!(f, "({})", left)?;
+                } else {
+                    write!(f, "{}", left)?;
+                }
+
+                if *op == MathOperator::Multiply {
+                    write!(f, " * ")?;
+                } else if *op == MathOperator::Pow {
+                    write!(f, "^")?;
+                } else {
+                    write!(f, " {} ", op.name())?;
+                }
+
+                if r_needs_parens {
+                    write!(f, "({})", right)
+                } else {
+                    write!(f, "{}", right)
+                }
+            }
+            Node::Function(func, args) => {
+                write!(f, "{}(", func.name())?;
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", arg)?;
+                }
+                write!(f, ")")
+            }
+            Node::List(args) => {
+                write!(f, "{{")?;
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", arg)?;
+                }
+                write!(f, "}}")
+            }
+            Node::Matrix(rows) => {
+                write!(f, "{{")?;
+                for (i, row) in rows.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{{")?;
+                    for (j, arg) in row.iter().enumerate() {
+                        if j > 0 {
+                            write!(f, ", ")?;
+                        }
+                        write!(f, "{}", arg)?;
+                    }
+                    write!(f, "}}")?;
+                }
+                write!(f, "}}")
+            }
+        }
+    }
+}
+
 impl Node {
     pub fn is_number(&self, val: f64) -> bool {
         if let Node::Number(v) = self {
@@ -227,7 +311,7 @@ pub fn build_ast(postfix: Vec<Token>) -> Result<Node, AstError> {
                 }
             }
             Token::Comma | Token::LParen(_) | Token::RParen(_) => {
-                return Err(AstError::InvalidToken(token))
+                return Err(AstError::InvalidToken(token));
             }
         }
     }
@@ -244,8 +328,8 @@ pub fn build_ast(postfix: Vec<Token>) -> Result<Node, AstError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tokenizer::{tokenize, DataStore};
     use crate::Shunter;
+    use crate::tokenizer::{DataStore, tokenize};
 
     fn get_ast_node(input: &str) -> Node {
         let ds = DataStore::default();
