@@ -7,6 +7,7 @@ pub mod integrate;
 pub mod log;
 pub mod misc;
 pub mod multiplication;
+pub mod piecewise;
 pub mod sqrt;
 pub mod subtraction;
 pub mod sum;
@@ -82,7 +83,9 @@ pub fn standard_rules() -> Vec<Box<dyn Rule>> {
         Box::new(multiplication::NegativeTimesConstantRule),
         Box::new(multiplication::NegativeOneDistributedRule),
         Box::new(multiplication::DistributeFunctionRule),
+        Box::new(multiplication::ConstantNodeMultiplicationRule),
         // Division
+        Box::new(division::DivisionIdentityRule),
         Box::new(division::DivisionByZeroRule),
         Box::new(division::DivisionByOneRule),
         Box::new(division::GCDRule),
@@ -141,6 +144,8 @@ pub fn standard_rules() -> Vec<Box<dyn Rule>> {
         Box::new(integrate::ConstantsRule),
         Box::new(integrate::CoefficientRule),
         Box::new(integrate::SingleVariableRule),
+        // Piecewise
+        Box::new(piecewise::EvaluatePiecewiseRule),
         // Misc
         Box::new(misc::ZeroFactorialRule),
         // Evaluate

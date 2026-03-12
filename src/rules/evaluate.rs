@@ -39,8 +39,42 @@ impl Rule for EvaluateNumberRule {
                                 None
                             }
                         }
+                        MathOperator::GreaterThan => {
+                            Some(Node::Number(if l > r { 1.0 } else { 0.0 }))
+                        }
+                        MathOperator::LessThan => Some(Node::Number(if l < r { 1.0 } else { 0.0 })),
+                        MathOperator::GreaterThanOrEqual => {
+                            Some(Node::Number(if l >= r { 1.0 } else { 0.0 }))
+                        }
+                        MathOperator::LessThanOrEqual => {
+                            Some(Node::Number(if l <= r { 1.0 } else { 0.0 }))
+                        }
+                        MathOperator::Equal => {
+                            Some(Node::Number(if (l - r).abs() < std::f64::EPSILON {
+                                1.0
+                            } else {
+                                0.0
+                            }))
+                        }
+                        MathOperator::NotEqual => {
+                            Some(Node::Number(if (l - r).abs() >= std::f64::EPSILON {
+                                1.0
+                            } else {
+                                0.0
+                            }))
+                        }
+                        MathOperator::And => {
+                            Some(Node::Number(if *l != 0.0 && *r != 0.0 { 1.0 } else { 0.0 }))
+                        }
+                        MathOperator::Or => {
+                            Some(Node::Number(if *l != 0.0 || *r != 0.0 { 1.0 } else { 0.0 }))
+                        }
                         _ => None,
                     }
+                } else if **left == Node::Constant(crate::tokenizer::MathFunction::NaN)
+                    || **right == Node::Constant(crate::tokenizer::MathFunction::NaN)
+                {
+                    Some(Node::Constant(crate::tokenizer::MathFunction::NaN))
                 } else {
                     None
                 }
@@ -52,6 +86,8 @@ impl Rule for EvaluateNumberRule {
                         MathOperator::Add => Some(Node::Number(*val)),
                         _ => None,
                     }
+                } else if **inner == Node::Constant(crate::tokenizer::MathFunction::NaN) {
+                    Some(Node::Constant(crate::tokenizer::MathFunction::NaN))
                 } else {
                     None
                 }

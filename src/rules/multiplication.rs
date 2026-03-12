@@ -462,13 +462,54 @@ impl Rule for DistributeFunctionRule {
     }
 }
 
+pub struct ConstantNodeMultiplicationRule;
+impl Rule for ConstantNodeMultiplicationRule {
+    fn name(&self) -> &'static str {
+        "ConstantNodeMultiplication"
+    }
+
+    fn apply(&self, node: &Node) -> Option<Node> {
+        if let Node::BinaryOp(MathOperator::Multiply, left, right) = node {
+            // (c * f(x)) * g(x) -> c * (f(x) * g(x))
+            if let Node::BinaryOp(MathOperator::Multiply, l_left, l_right) = &**left {
+                if l_left.get_number().is_some() && right.get_number().is_none() {
+                    return Some(Node::BinaryOp(
+                        MathOperator::Multiply,
+                        l_left.clone(),
+                        Box::new(Node::BinaryOp(
+                            MathOperator::Multiply,
+                            l_right.clone(),
+                            right.clone(),
+                        )),
+                    ));
+                }
+            }
+            // f(x) * (c * g(x)) -> c * (f(x) * g(x))
+            if let Node::BinaryOp(MathOperator::Multiply, r_left, r_right) = &**right {
+                if r_left.get_number().is_some() && left.get_number().is_none() {
+                    return Some(Node::BinaryOp(
+                        MathOperator::Multiply,
+                        r_left.clone(),
+                        Box::new(Node::BinaryOp(
+                            MathOperator::Multiply,
+                            left.clone(),
+                            r_right.clone(),
+                        )),
+                    ));
+                }
+            }
+        }
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Shunter;
     use crate::ast::build_ast;
     use crate::rules::RuleEngine;
-    use crate::tokenizer::{tokenize, DataStore};
-    use crate::Shunter;
+    use crate::tokenizer::{DataStore, tokenize};
 
     fn simplify_expr_with_rule(input: &str, rule: Box<dyn Rule>) -> Node {
         let ds = DataStore::default();

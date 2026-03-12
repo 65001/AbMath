@@ -75,6 +75,23 @@ impl std::fmt::Display for Node {
                 }
             }
             Node::BinaryOp(op, left, right) => {
+                if *op == MathOperator::Multiply {
+                    if let Node::Number(val) = &**left {
+                        if *val == -1.0 {
+                            let r_needs_parens = match &**right {
+                                Node::BinaryOp(r_op, ..) => r_op.weight() <= op.weight(),
+                                _ => false,
+                            };
+                            write!(f, "-")?;
+                            if r_needs_parens {
+                                return write!(f, "({})", right);
+                            } else {
+                                return write!(f, "{}", right);
+                            }
+                        }
+                    }
+                }
+
                 let l_needs_parens = match &**left {
                     Node::BinaryOp(l_op, ..) => l_op.weight() < op.weight(),
                     _ => false,

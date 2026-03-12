@@ -132,6 +132,34 @@ impl Rule for DivisionFlipTwoRule {
     }
 }
 
+pub struct DivisionIdentityRule;
+impl Rule for DivisionIdentityRule {
+    fn name(&self) -> &'static str {
+        "DivisionIdentity"
+    }
+
+    fn apply(&self, node: &Node) -> Option<Node> {
+        // x / x -> piecewise(x != 0, 1, NaN)
+        if let Node::BinaryOp(MathOperator::Divide, left, right) = node {
+            if left.matches_node(right) {
+                return Some(Node::Function(
+                    crate::tokenizer::MathFunction::Piecewise,
+                    vec![
+                        Node::BinaryOp(
+                            MathOperator::NotEqual,
+                            right.clone(),
+                            Box::new(Node::Number(0.0)),
+                        ),
+                        Node::Number(1.0),
+                        Node::Constant(crate::tokenizer::MathFunction::NaN),
+                    ],
+                ));
+            }
+        }
+        None
+    }
+}
+
 pub struct DivisionCancelingRule;
 impl Rule for DivisionCancelingRule {
     fn name(&self) -> &'static str {
@@ -207,3 +235,45 @@ impl Rule for PowerReductionRule {
 }
 
 // TODO: FactorialCancellation and FactorialRemoved wait on Factorial operator/function support in AST.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Shunter;
+    use crate::ast::build_ast;
+    use crate::rules::RuleEngine;
+    use crate::tokenizer::{DataStore, tokenize};
+
+    fn simplify_expr(input: &str) -> Node {
+        let mut ds = DataStore::default();
+        ds.implicit_multiplication_priority = true;
+        let tokens = tokenize(input, &ds);
+        let shunter = Shunter::new(&ds);
+        let rpn = shunter.shunt(tokens);
+        let ast = build_ast(rpn).unwrap();
+
+        let mut engine = RuleEngine::new();
+        for rule in crate::rules::standard_rules() {
+            engine.add_rule(rule);
+        }
+        engine.simplify(ast)
+    }
+
+    #[test]
+    fn test_division_identity() {
+        let ast = simplify_expr("x / x");
+        // Should evaluate to piecewise(x != 0, 1, NaN)
+        match ast {
+            Node::Function(crate::tokenizer::MathFunction::Piecewise, args) => {
+                assert_eq!(args.len(), 3);
+                assert!(matches!(
+                    args[0],
+                    Node::BinaryOp(MathOperator::NotEqual, _, _)
+                ));
+                assert_eq!(args[1], Node::Number(1.0));
+                assert_eq!(args[2], Node::Constant(crate::tokenizer::MathFunction::NaN));
+            }
+            _ => panic!("Expected Piecewise function, got {}", ast),
+        }
+    }
+}

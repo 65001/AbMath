@@ -1,10 +1,10 @@
 use nom::{
+    IResult,
     branch::alt,
     bytes::complete::tag,
     character::complete::{alpha1, char, digit1},
     combinator::{map, opt, recognize},
     sequence::pair,
-    IResult,
 };
 use std::fmt;
 
@@ -143,6 +143,8 @@ pub enum MathFunction {
     Table,
     Solve,
     Plot,
+    Piecewise,
+    NaN,
 }
 
 impl MathFunction {
@@ -189,6 +191,8 @@ impl MathFunction {
             "table" => Some(Self::Table),
             "solve" => Some(Self::Solve),
             "plot" => Some(Self::Plot),
+            "piecewise" => Some(Self::Piecewise),
+            "nan" => Some(Self::NaN),
             _ => None,
         }
     }
@@ -236,11 +240,13 @@ impl MathFunction {
             Self::Table => "table",
             Self::Solve => "solve",
             Self::Plot => "plot",
+            Self::Piecewise => "piecewise",
+            Self::NaN => "NaN",
         }
     }
 
     pub fn is_constant(&self) -> bool {
-        matches!(self, Self::Pi | Self::E)
+        matches!(self, Self::Pi | Self::E | Self::NaN)
     }
 }
 
